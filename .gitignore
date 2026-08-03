@@ -1,0 +1,10 @@
+# packaged builds
+*.modpkg
+*.zip
+
+# editor and OS noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/

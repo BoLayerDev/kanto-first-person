@@ -1,23 +1,22 @@
 {
   "id": "ds_fp_ceiling",
   "name": "Kanto in First Person - Interiors and Tweaks",
-  "version": "1.7.1",
+  "version": "1.20.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",
   "game_version": ">=0.0.0-0 <2.0.0",
   "category": "TOOL",
-  "priority": 200,
+  "priority": 10,
   "permissions": [
     "filesystem",
     "engine_internals"
   ],
   "dependencies": [],
-  "optional_dependencies": [
-    "DRAMATIC_SHAPE"
-  ],
+  "optional_dependencies": [],
   "conflicts": [],
   "incompatible": [],
   "experimental": false,
-  "description": "Companion patch for the Dramatic Shape Voxel Mod that finishes Kanto's first-person view. Interiors and caves gain real walls, a ceiling with headroom, and proper doors (including the two-cell double doors), all textured from each room's own art so a cave looks like rock and a Mart looks like a Mart. Outdoors, a painted horizon wraps the world so the map no longer ends in empty sky. Ledge hops get weight, with a crouch, a boosted arc and a landing settle. In the diorama rungs, an optional Sims-style cutaway melts the near walls as you walk. Everything is presentational: no collision, movement, scripts or saves are touched. Installs itself into Dramatic Shape, survives its updates, and backs out cleanly."
+  "description": "Companion patch for the Dramatic Shape Voxel Mod that finishes Kanto's first-person view. Interiors and caves gain real walls, a ceiling with headroom, and proper doors (including the two-cell double doors), all textured from each room's own art so a cave looks like rock and a Mart looks like a Mart. Outdoors, a painted horizon wraps the world so the map no longer ends in empty sky. Ledge hops get weight, with a crouch, a boosted arc and a landing settle. In the diorama rungs, an optional Sims-style cutaway melts the near walls as you walk. Everything is presentational: no collision, movement, scripts or saves are touched. Installs itself into Dramatic Shape, survives its updates, and backs out cleanly.",
+  "assets_transforms": "transform_birds.lua"
 }

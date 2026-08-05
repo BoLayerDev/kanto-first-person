@@ -1,5 +1,5 @@
 -- The BACKDROP: a distant horizon for the outdoor world.
--- payload-version: 2
+-- payload-version: 3
 --
 -- Dramatic Shape's outdoor maps end where their meshes end -- past the
 -- last connected map is sky meeting nothing.  This hangs a painted
@@ -38,6 +38,23 @@ local function status(s) _G.__ds_backdrop_status = s end
 status("loaded; awaiting the first outdoor frame")
 
 -- interiors and canopy maps belong to the ceiling, not the horizon
+
+-- Draw blocks run inside this rather than a bare pcall.  Every one of
+-- them changes graphics state -- colour, alpha, depth mode -- and a bare
+-- pcall that throws midway leaves that state set for the REST OF THE
+-- FRAME.  Anything drawn after us then inherits it: a stray alpha makes
+-- another mod's sprites invisible, a stray depth mode makes them sort
+-- wrongly, and the fault looks like theirs.  push("all")/pop() restores
+-- the lot whatever happens inside.
+local function guarded(fn)
+  -- headless, or a driver without a graphics stack: just run it
+  local g = love and love.graphics
+  if not (g and g.push and g.pop) then return pcall(fn) end
+  local pushed = pcall(g.push, "all")
+  pcall(fn)
+  if pushed then pcall(g.pop) end
+end
+
 local OPEN_AIR_TILESETS = {
   OVERWORLD = true, FOREST = true, PLATEAU = true, SHIP_PORT = true,
 }
@@ -101,7 +118,15 @@ local function texture()
   return image
 end
 
+-- If the companion mod has been deleted, its config bridge is gone and
+-- this module is an orphan: draw nothing. The ceiling module does the
+-- actual clean-up; this just keeps quiet in the meantime.
+local function abandoned()
+  return rawget(_G, "__ds_ceiling_config") == nil
+end
+
 function Backdrop.draw(state)
+  if abandoned() then return end
   local cfg = {}
   local pub = rawget(_G, "__ds_ceiling_config")
   if type(pub) == "function" then
@@ -121,7 +146,12 @@ function Backdrop.draw(state)
   end
 
   local tex = texture()
-  if not tex then return end
+  -- the chosen panorama can change while the game is running, so notice
+  -- when the published path is not the one we loaded
+  local want = rawget(_G, "__ds_backdrop_path")
+  if tex and want and want ~= texPath then tex = nil end
+  if not tex then
+    texPath = want return end
   if not mesh then
     mesh = build()
     if not mesh then
@@ -141,12 +171,12 @@ function Backdrop.draw(state)
     tex:setWrap("repeat", "clamp")
   end)
 
-  local drew = pcall(function()
+  local drew = true
+  guarded(function()
     -- behind everything: test against depth but never write to it, so no
     -- real geometry can ever be occluded by the painting
     love.graphics.setDepthMode("lequal", false)
     Voxel3D.draw(mesh, tex, Mat4.translate(px, 0, pz))
-    love.graphics.setDepthMode("lequal", true)
   end)
   if drew then
     status(("drawn at r=%d, drift %.3f"):format(RADIUS, (px * DRIFT) % 1))

@@ -1,5 +1,5 @@
 -- The SKY: clouds that drift, and birds that cross it.
--- payload-version: 21
+-- payload-version: 22
 --
 -- Two layers over the outdoor world, both purely atmospheric and neither
 -- touching anything the game can feel.
@@ -169,8 +169,47 @@ local RAINBOW_DIST = 1500    -- far enough to sit behind everything
 -- the height of the arc's feet buried five hundred units of it below the
 -- ground and left the bow invisible.  The centre must sit half the
 -- quad's height above the feet.
-local RAINBOW_FEET = 60      -- where the arc meets the ground
+-- FEET well below ground: the legs continue down BEHIND the terrain and
+-- the depth test crops them, instead of the arc stopping in mid-air at
+-- the texture's bottom edge.
+local RAINBOW_FEET = -160
+-- The bow is ABSOLUTE: bent around a partial cylinder so that, with its
+-- position and facing fixed once when the shower ends, some part of it
+-- still faces you from most directions. A flat quad cannot do this -- it
+-- either swivels to track the player or foreshortens to a sliver.
+local RAINBOW_CURVE = 0.9
+local rainbowMesh = nil
 local RAINBOW_SIZE = 2200    -- a bow should span the sky, not sit in it
+
+local function bowShell()
+  if rainbowMesh ~= nil then return rainbowMesh or nil end
+  local ok, mesh = pcall(function()
+    local SLATS = 14
+    -- radius chosen so the arc's CHORD spans the bow's width
+    local R = (RAINBOW_SIZE / 2) / math.sin(RAINBOW_CURVE / 2)
+    local h = RAINBOW_SIZE * 0.52 - RAINBOW_FEET
+    local verts, idx, quads = {}, {}, 0
+    for side = 0, 1 do
+      for i = 0, SLATS - 1 do
+        local a0 = (-0.5 + i / SLATS) * RAINBOW_CURVE
+        local a1 = (-0.5 + (i + 1) / SLATS) * RAINBOW_CURVE
+        local u0, u1 = i / SLATS, (i + 1) / SLATS
+        if side == 1 then a0, a1 = a1, a0; u0, u1 = u1, u0 end
+        local x0, z0 = math.sin(a0) * R, -math.cos(a0) * R + R
+        local x1, z1 = math.sin(a1) * R, -math.cos(a1) * R + R
+        verts[#verts + 1] = { x0, h, z0, u0, 0, 1 }
+        verts[#verts + 1] = { x1, h, z1, u1, 0, 1 }
+        verts[#verts + 1] = { x1, 0, z1, u1, 1, 1 }
+        verts[#verts + 1] = { x0, 0, z0, u0, 1, 1 }
+        Voxel3D.pushQuad(idx, quads)
+        quads = quads + 1
+      end
+    end
+    return Voxel3D.newMesh(verts, idx)
+  end)
+  rainbowMesh = (ok and mesh) or false
+  return rainbowMesh or nil
+end
 local rainbowImg = nil
 local bowAnchor = nil
 local twinkles, shooters = nil, nil
@@ -835,10 +874,14 @@ local function drawRainbow(cfg, px, pz, t)
         -- too. It is pinned once, where the shower left it, and stays
         -- there: walk toward it and you approach it, as you would.
         if not bowAnchor or bowAnchor.at ~= w.stoppedAt then
+          -- placed ONCE, where the shower ended: position AND facing are
+          -- fixed from this moment; the curve does the rest
           bowAnchor = {
             at = w.stoppedAt,
             x = px + math.cos(anti) * RAINBOW_DIST,
             z = pz + math.sin(anti) * RAINBOW_DIST,
+            face = math.atan2(px - (px + math.cos(anti) * RAINBOW_DIST),
+                              pz - (pz + math.sin(anti) * RAINBOW_DIST)),
           }
         end
         local bx, bz = bowAnchor.x, bowAnchor.z
@@ -849,19 +892,23 @@ local function drawRainbow(cfg, px, pz, t)
           -- solid enough to be a rainbow, sheer enough to be light
           love.graphics.setColor(1, 1, 1, a * 0.80)
           -- faces the player like the horizon does, and never approaches
-          Voxel3D.draw(birdMesh, rainbowImg,
-                       Mat4.mul(Mat4.mul(
-                         Mat4.translate(bx, RAINBOW_FEET
-                                        + RAINBOW_SIZE * 0.52 * 0.5, bz),
-                         -- STANDS IN THE WORLD, not on the camera. This
-                         -- was billboarded like the clouds and the birds,
-                         -- so it swung round as you looked about, which
-                         -- is exactly what gives a painted backdrop away.
-                         -- A bow hangs on the anti-solar axis and stays
-                         -- there while you turn your head.
-                         Mat4.rotateY(-((FirstPerson and FirstPerson.yaw)
-                                        or 0))),
-                         Mat4.scale(RAINBOW_SIZE, RAINBOW_SIZE * 0.52, 1)))
+          -- the shell is built at world size, so it takes no scale:
+          -- translate to the anchor, turn to the anchor-time facing, and
+          -- that is the whole transform, forever
+          local shell = bowShell()
+          if shell then
+            Voxel3D.draw(shell, rainbowImg,
+                         Mat4.mul(Mat4.translate(bx, RAINBOW_FEET, bz),
+                                  Mat4.rotateY(bowAnchor.face or 0)))
+          else
+            Voxel3D.draw(birdMesh, rainbowImg,
+                         Mat4.mul(Mat4.mul(
+                           Mat4.translate(bx, RAINBOW_FEET
+                                          + RAINBOW_SIZE * 0.52 * 0.5, bz),
+                           Mat4.rotateY(bowAnchor.face or 0)),
+                           Mat4.scale(RAINBOW_SIZE, RAINBOW_SIZE * 0.52,
+                                      1)))
+          end
         end)
         bowNote = (", rainbow %.0f%%"):format(a * 100)
       end

@@ -333,6 +333,25 @@ return function(mod)
     return ok and done
   end
   local function remove(path) pcall(fs.remove, path) end
+
+  -- Every file this mod writes into Dramatic Shape's folder is recorded
+  -- here as it is written, and removal walks the LEDGER rather than a
+  -- hardcoded list -- so it restores exactly what was done, including
+  -- files added by other versions of this mod.
+  local LEDGER = "ds_fp_ceiling_written.txt"
+  local function recordWrite(path)
+    local cur = read(LEDGER) or ""
+    if not cur:find(path, 1, true) then
+      write(LEDGER, cur .. path .. "\n")
+    end
+  end
+  local function writeTracked(path, content)
+    local ok = write(path, content)
+    if ok then recordWrite(path) end
+    return ok
+  end
+
+
   local function inSave(path)
     local ok, real = pcall(fs.getRealDirectory, path)
     if not ok or not real then return false end
@@ -432,7 +451,7 @@ return function(mod)
       local pre = vsPath .. ".pre-ceiling"
       if not read(pre) then write(pre, vs) end
     end
-    if not (write(base .. "/lib/Ceiling.lua", payload)
+    if not (writeTracked(base .. "/lib/Ceiling.lua", payload)
             and write(vsPath, vsPatched)) then
       say("could not write the patch: the save folder refused. Check that "
           .. "the game can write to its save directory (antivirus, a "
@@ -458,23 +477,23 @@ return function(mod)
           local pre = fpPath .. ".pre-ceiling"
           if not read(pre) then write(pre, fpSrc) end
         end
-        if write(base .. "/lib/Jump.lua", jump) then write(fpPath, fp2) end
+        if writeTracked(base .. "/lib/Jump.lua", jump) then write(fpPath, fp2) end
       else
         say("jump anchors not found; ledge hops keep their stock arc.")
       end
     end
     local sky = mod:read("payload_sky.lua")
-    if sky then write(base .. "/lib/SkyLayer.lua", sky) end
+    if sky then writeTracked(base .. "/lib/SkyLayer.lua", sky) end
     local flora = mod:read("payload_flora.lua")
-    if flora then write(base .. "/lib/Flora.lua", flora) end
-    if backdrop then write(base .. "/lib/Backdrop.lua", backdrop) end
-    if artwork then write(base .. "/lib/backdrop.png", artwork) end
+    if flora then writeTracked(base .. "/lib/Flora.lua", flora) end
+    if backdrop then writeTracked(base .. "/lib/Backdrop.lua", backdrop) end
+    if artwork then writeTracked(base .. "/lib/backdrop.png", artwork) end
     for _, extra in ipairs({ "backdrop2.png", "backdrop3.png",
                              "backdrop4.png", "posters.png",
                              "posters-pokecenter.png",
                              "posters-pokemart.png" }) do
       local blob = mod:read(extra)
-      if blob then write(base .. "/lib/" .. extra, blob) end
+      if blob then writeTracked(base.. "/lib/" .. extra, blob) end
     end
     _G.__ds_backdrop_path = chosenArt(base, read)
     _G.__ds_posters_dir = base .. "/lib/"
@@ -502,6 +521,21 @@ return function(mod)
 
   -- ------- back the patch out
   local function unpatch(base)
+    -- the ledger first: everything we ever wrote, exactly
+    local led = read(LEDGER)
+    if led then
+      for path in led:gmatch("[^\n]+") do
+        local pre = path .. ".pre-ceiling"
+        local orig = read(pre)
+        if orig then
+          write(path, orig)
+          remove(pre)
+        elseif inSave(path) then
+          remove(path)
+        end
+      end
+      remove(LEDGER)
+    end
     local vsPath = base .. "/lib/VoxelScene.lua"
     local mainPath = base .. "/main.lua"
     local ceilPath = base .. "/lib/Ceiling.lua"
@@ -528,7 +562,7 @@ return function(mod)
       if preMain then write(mainPath, preMain) end
       local fpPre = read(base .. "/lib/FirstPerson.lua.pre-ceiling")
       if fpPre then
-        write(base .. "/lib/FirstPerson.lua", fpPre)
+        writeTracked(base .. "/lib/FirstPerson.lua", fpPre)
         remove(base .. "/lib/FirstPerson.lua.pre-ceiling")
       end
       remove(base .. "/lib/Jump.lua")
@@ -547,6 +581,35 @@ return function(mod)
   local function manage(depth)
     local base, ver = findDS()
     _G.__ds_patch_base = base
+
+    -- TESTED VERSIONS ONLY. Splicing into an untested Dramatic Shape is
+    -- how you break someone's game from inside a mod they trusted; on an
+    -- unknown or newer version this now patches NOTHING, keeps whatever
+    -- was already restored, and explains itself in the log.
+    -- (1.3.0 is absol89's fork, which numbers itself independently)
+    local TESTED = { ["1.3.0"] = true, ["1.5.4"] = true, ["1.5.5"] = true,
+                     ["1.6.0"] = true, ["1.6.1"] = true, ["1.6.2"] = true }
+    if base and ver and not TESTED[ver] then
+      say(("Dramatic Shape %s is a version this patch has not been "
+           .. "tested against. NOT patching -- everything is left "
+           .. "stock. An update of Kanto in First Person will follow.")
+          :format(ver))
+      unpatch(base)
+      return
+    end
+
+    -- 1.6.2 DECLARES A CONFLICT with this mod, at the Dramatic Shape
+    -- author's request. Respect it: if the manifest names us, leave
+    -- everything stock and bow out. Fighting a conflict flag from inside
+    -- the other mod's folder is not a relationship, it is an infestation.
+    local dsManifest = base and read(base .. "/manifest.json")
+    if dsManifest and dsManifest:find("ds_fp_ceiling", 1, true) then
+      say("Dramatic Shape has declared a conflict with this mod. "
+          .. "Respecting it: nothing has been patched, and any earlier "
+          .. "patch has been removed. See the release notes.")
+      unpatch(base)
+      return
+    end
     if not base then
       say("Dramatic Shape is not installed; nothing to do.")
       return
@@ -589,7 +652,7 @@ return function(mod)
       local fpNow = read(fpPath2)
       if jumpSrc and fpNow then
         if read(base .. "/lib/Jump.lua") ~= jumpSrc then
-          write(base .. "/lib/Jump.lua", jumpSrc)
+          writeTracked(base .. "/lib/Jump.lua", jumpSrc)
         end
         if not fpNow:find("Jump.eyeOffset", 1, true) then
           local fp2 = splice(fpNow, FP_REQ_ANCHOR, FP_REQ_ADD)
@@ -618,7 +681,7 @@ return function(mod)
       local floraSrc = mod:read("payload_flora.lua")
       if floraSrc then
         if read(base .. "/lib/Flora.lua") ~= floraSrc then
-          write(base .. "/lib/Flora.lua", floraSrc)
+          writeTracked(base .. "/lib/Flora.lua", floraSrc)
         end
         if not vs:find("Flora.draw", 1, true) then
           local vs4 = vs
@@ -648,7 +711,7 @@ return function(mod)
       local skySrc = mod:read("payload_sky.lua")
       if skySrc then
         if read(base .. "/lib/SkyLayer.lua") ~= skySrc then
-          write(base .. "/lib/SkyLayer.lua", skySrc)
+          writeTracked(base .. "/lib/SkyLayer.lua", skySrc)
         end
         if not vs:find("SkyLayer.draw", 1, true) then
           local vs3 = vs
@@ -720,12 +783,12 @@ return function(mod)
       -- keep the horizon module and its painting in step as well
       local bd = mod:read("payload_backdrop.lua")
       if bd and read(base .. "/lib/Backdrop.lua") ~= bd then
-        write(base .. "/lib/Backdrop.lua", bd)
+        writeTracked(base .. "/lib/Backdrop.lua", bd)
         say("horizon module refreshed.")
       end
       if not read(base .. "/lib/backdrop.png") then
         local art = mod:read("backdrop.png")
-        if art then write(base .. "/lib/backdrop.png", art) end
+        if art then writeTracked(base .. "/lib/backdrop.png", art) end
       end
       -- extra panoramas and the poster sheet, refreshed whenever they
       -- differ so dropping new art in and rebooting is enough
@@ -735,13 +798,13 @@ return function(mod)
                                "posters-pokemart.png" }) do
         local blob = mod:read(extra)
         if blob and read(base .. "/lib/" .. extra) ~= blob then
-          write(base .. "/lib/" .. extra, blob)
+          writeTracked(base.. "/lib/" .. extra, blob)
         end
       end
       _G.__ds_backdrop_path = chosenArt(base, read)
       _G.__ds_posters_dir = base .. "/lib/"
       if myV > theirV then
-        if write(base .. "/lib/Ceiling.lua", mine) then
+        if writeTracked(base .. "/lib/Ceiling.lua", mine) then
           say(("ceiling module updated v%d -> v%d (Dramatic Shape %s.")
               :format(theirV, myV, ver) .. ")" .. laterNote())
         else

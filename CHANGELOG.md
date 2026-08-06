@@ -1,5 +1,109 @@
 # Changelog
 
+## 1.40.1
+
+- **Building backs: the door cell only, in the back wall's own brick.**
+  1.40.0 covered the mirrored door and five neighbours with the SIDE
+  wall's tile, which pasted the gable end's flat colour over brickwork
+  and ran past the corner of the house -- worse than the false door it
+  was hiding. Only the door cell is covered now, and the tile is sampled
+  ALONG THE SAME BACK WALL: the nearest cell left or right whose north
+  face is also exposed, which is by definition a neighbouring piece of
+  the wall being repaired. It falls back to the row behind only if the
+  wall is a single cell wide.
+
+## 1.40.0
+
+- **The head bob is gone.** It was the single most complained-about thing
+  this mod did, and it went right to the top of the Dramatic Shape
+  falling-out. Walking now moves the eye NOTHING. What remains responds
+  to events, which is what reads as weight rather than seasickness: the
+  ledge-hop crouch, arc and landing settle (JUMP FEEL), and the doorway
+  step (DOORWAY STEP). The walking sway went with the bob.
+- **Building backs: the mirrored door and its five neighbours.** Covering
+  only the door's own column left the frame and lintel showing either
+  side of the plain patch, which read as a bricked-up doorway. The cover
+  is now the door cell plus the cells beside and above it, all wearing
+  the side wall's art, so the whole feature disappears into plain wall.
+  A cell that is a REAL door -- some houses genuinely have a back
+  entrance -- is never covered, and there is a test holding that line.
+- **Version support, stated plainly:** works with Dramatic Shape 1.5.4,
+  1.5.5 and 1.6.0, and absol89's fork. 1.6.1 and 1.6.2 both declare a
+  conflict with this mod and are declined out of respect for it -- the
+  manifest scan catches the flag on either.
+- **REMOVE PATCH is no longer necessary** -- deleting the mod folder now
+  removes every trace via the write ledger, and both paths restore
+  Dramatic Shape byte for byte. The option stays for anyone who prefers
+  an explicit switch, but the folder is enough.
+
+## 1.39.0
+
+- **The rainbow is absolute.** Its position was already pinned where the
+  shower ended, but the arc itself was a flat quad turned to face the
+  camera -- so it swivelled to track you as you walked, which reads as
+  movement. A flat quad cannot be both fixed and legible: hold it still
+  and it foreshortens to a sliver from any angle but square on. The bow
+  is now BENT around a partial cylinder, both-sided, placed once with a
+  fixed facing and never touched again -- some part of it faces you from
+  most directions, the way the painted horizon works.
+- **Its feet run below the ground.** The legs used to stop in mid-air at
+  the texture's bottom edge; they now continue down behind the terrain
+  and the depth test crops them at the skyline, where a rainbow's legs
+  actually disappear.
+- For the avoidance of doubt: this release works with Dramatic Shape
+  1.5.4, 1.5.5, 1.6.0 and 1.6.1, and absol89's fork. Only 1.6.2 is
+  declined, in deference to its conflict flag.
+
+## 1.38.0
+
+Three changes about being a better neighbour, prompted by Dramatic
+Shape 1.6.2 and the discussion around it.
+
+- **Dramatic Shape's conflict flag is respected.** 1.6.2 declares a
+  conflict with this mod at its author's request. When that flag is
+  present, this mod patches NOTHING, removes any earlier patch, and
+  explains itself in the log. Fighting a conflict flag from inside the
+  other mod's folder is not a relationship.
+- **Untested Dramatic Shape versions are left stock.** The tolerant
+  splice used to try its luck on versions it had never seen. After a new
+  DS release shipped mid-cycle, that is over: on an unlisted version this
+  mod does not patch, keeps everything stock, and waits for an update. A
+  missing feature is recoverable; a bad splice in someone else's mod is
+  not. Tested: 1.5.4, 1.5.5, 1.6.0, 1.6.1, 1.6.2, and absol89's 1.3.0.
+- **A write ledger.** Every file this mod writes into Dramatic Shape's
+  folder is recorded as it is written, and BOTH removal paths -- the
+  REMOVE PATCH option and the delete-the-folder safety net -- now walk
+  that ledger: originals restored where they were backed up, everything
+  else deleted, ledger removed. Removal restores exactly what was done,
+  whatever version did it.
+
+## 1.37.0
+
+Two faults behind the uninstall complaints, both serious, both this
+mod's.
+
+- **The self-uninstall deleted nothing on most installs.** It looked for
+  Dramatic Shape at `mods/DRAMATIC_SHAPE`, a hardcoded folder name --
+  while the patcher itself finds Dramatic Shape properly, by scanning for
+  its manifest id. The folder is commonly `DramaticShapeVoxelMod`, and on
+  those installs REMOVE PATCH and the delete-the-folder safety net both
+  removed nothing at all. That is the pile of files left in
+  `mods/DramaticShapeVoxelMod`, and it is why the head bob was still
+  there after people uninstalled: `FirstPerson.lua` stayed patched. It
+  now finds the folder the same way the patcher does, with a fallback to
+  any mod folder carrying this mod's payload.
+- **The mod reported version 1.20.0 for sixteen releases.** Each bump
+  searched the manifest for the PREVIOUS version string; the first search
+  missed, and every one after it looked for a version that was never
+  there. Launchers trim the trailing zero, so players saw "1.2" against a
+  download labelled 1.36. The version is corrected, and a test now
+  asserts the manifest matches the newest changelog entry.
+
+To clear a bad install by hand: delete `ds_fp_ceiling` from your mods
+folder, then delete the whole `DramaticShapeVoxelMod` folder from
+`APPDATA/LOVE/pokemon-love2d/mods/` and re-import Dramatic Shape. That
+restores it exactly.
+
 ## 1.36.0
 
 - **MOUNTAINS removed.** Deriving the HEIGHT from how deep a cell sits

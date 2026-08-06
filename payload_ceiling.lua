@@ -1,5 +1,5 @@
 -- The interior CEILING and RISERS: the room's missing upper storey.
--- payload-version: 21
+-- payload-version: 23
 --
 -- v1/v2 proved the concept: a flat lid at wall height (16) closed the
 -- room in first person.  v3 is the liveable version:
@@ -382,7 +382,7 @@ local function posters(map)
     return cached.img, cached.frames
   end
   local base = rawget(_G, "__ds_posters_dir")
-             or "mods/DRAMATIC_SHAPE/lib/"
+             or ((rawget(_G, "__ds_patch_base") or "") .. "/lib/")
   local ok, img = pcall(function()
     local i = love.graphics.newImage(base .. file)
     i:setFilter("nearest", "nearest")
@@ -1232,10 +1232,59 @@ end
 -- stock again with nothing left to clean.
 local orphaned = nil
 
+-- FIND Dramatic Shape the way the patcher does: by its manifest id, not
+-- by a folder name. The folder is commonly `DramaticShapeVoxelMod`, and
+-- this hardcoded `mods/DRAMATIC_SHAPE`, so for most installs the
+-- self-uninstall deleted NOTHING -- which is exactly the pile of
+-- lingering files people found in their save directory, and why the head
+-- bob was still there after they removed the mod.
+local function findDS(fs)
+  local ok, names = pcall(fs.getDirectoryItems, "mods")
+  if not (ok and names) then return nil end
+  for _, name in ipairs(names) do
+    local okM, manifest = pcall(fs.read, "mods/" .. name .. "/manifest.json")
+    if okM and manifest
+       and manifest:find('"id"%s*:%s*"DRAMATIC_SHAPE"') then
+      return "mods/" .. name
+    end
+  end
+  -- last resort: any mod folder carrying OUR payload is one we patched
+  for _, name in ipairs(names) do
+    local okC = pcall(fs.read, "mods/" .. name .. "/lib/Ceiling.lua")
+    if okC then return "mods/" .. name end
+  end
+  return nil
+end
+
 local function selfRemove()
   local fs = love and love.filesystem
   if not fs then return end
-  local base = "mods/DRAMATIC_SHAPE"
+
+  -- THE LEDGER FIRST: the patcher records every path it writes, so
+  -- removal can restore exactly what was done without knowing anything
+  -- else about this or any other version of the mod.
+  local okL, led = pcall(fs.read, "ds_fp_ceiling_written.txt")
+  if okL and led then
+    for path in led:gmatch("[^\n]+") do
+      local okP, orig = pcall(fs.read, path .. ".pre-ceiling")
+      if okP and orig then
+        pcall(fs.write, path, orig)
+        pcall(fs.remove, path .. ".pre-ceiling")
+      else
+        pcall(fs.remove, path)
+      end
+    end
+    pcall(fs.remove, "ds_fp_ceiling_written.txt")
+    pcall(fs.write, "ds_fp_ceiling_log.txt",
+          "the companion mod was gone; the patch restored everything it "
+          .. "had written (from the ledger) and removed itself.\n")
+    return
+  end
+
+  -- no ledger (an install patched by an older version): fall back to
+  -- finding the folder and removing the known files
+  local base = findDS(fs)
+  if not base then return end
   -- originals first: a save-directory install was patched in place
   for _, rel in ipairs({ "/lib/VoxelScene.lua", "/lib/FirstPerson.lua",
                          "/main.lua" }) do

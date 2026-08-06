@@ -1,20 +1,20 @@
-<img width="1280" height="720" alt="photo_2026-08-05_20-50-24" src="https://github.com/user-attachments/assets/4d8bdc20-7b52-4e39-9b98-fa9850533975" />
-
 # Kanto in First Person — Interiors and Tweaks
 
-A companion mod for the [Dramatic Shape Voxel Mod](#requirements) that
-finishes Kanto's first-person view.
+A companion mod for the **Dramatic Shape Voxel Mod** that finishes Kanto's
+first-person view.
 
-Dramatic Shape turns Gen 1 into a voxel world and lets you stand inside
-it. This fills in what the original 2D maps never had to draw: interiors
-get real walls, a ceiling and proper doors; the outdoor world gets a
-horizon, weather and a sky with things in it; the woods get a canopy; and
-walking, hopping and stepping through doors all get some weight behind
-them.
+Dramatic Shape turns Gen 1 into a voxel world and lets you stand inside it.
+This fills in what the original 2D maps never had to draw: rooms get walls,
+ceilings, doors and pictures; the sky gets weather, birds and aircraft; the
+woods get a canopy with vines hanging from it; caves get rock, water and
+bats; and walking, hopping and stepping through a doorway all carry some
+weight.
 
 Everything here is presentational. Collision, movement, ledge rules,
-triggers, encounters, scripts and saves are untouched — nothing in this
-mod can move the player a single pixel.
+triggers, encounters, scripts and saves are untouched — nothing in this mod
+can move the player a single pixel.
+
+---
 
 ## What it adds
 
@@ -74,6 +74,7 @@ mod can move the player a single pixel.
   the wood walled at its rim and extending past the map edge into more
   wood.
 - **Hanging vines** that sway, and swing when you walk through them.
+- **Sun shafts** leaning down through the canopy.
 - **Tall grass with varied height**, leaning in the **wind** — gusts travel
   across a field rather than the whole meadow nodding at once.
 - **Insect swarms** over the grass by day and under the canopy.
@@ -85,8 +86,6 @@ mod can move the player a single pixel.
 
 ### Movement
 
-- **Head bob and sway**, driven by distance walked rather than by a clock,
-  so they stay locked to your feet and stop dead when you do.
 - **Jump feel**: the engine already hops you over ledges; this gives the
   hop a crouch, a boosted arc and a landing settle.
 - **A doorway step**: the eye dips and leans through a warp instead of
@@ -106,14 +105,17 @@ mod can move the player a single pixel.
 - The Gen 1 Recompilation Project
 - The **Dramatic Shape Voxel Mod**, installed and working
 
-Tested against Dramatic Shape 1.5.4 and 1.6.0, and against absol89's
-battle-art fork. On builds without a first-person rig the interior, canopy
+Tested against Dramatic Shape 1.5.4, 1.5.5 and 1.6.0, and against
+absol89's battle-art fork. Dramatic Shape 1.6.1 and 1.6.2 declare a
+conflict with this mod; this mod respects the flag, patches nothing, and
+removes any earlier patch. On builds without a first-person rig the interior, canopy
 and sky work in the diorama view and the movement features are skipped.
 
 ## Install
 
 1. Download the release `.zip`.
-2. Install via gen1recomp launcher.
+2. Unzip into your `mods/` folder so you have `mods/ds_fp_ceiling/`
+   alongside your Dramatic Shape folder.
 3. Start the game. The patch applies before Dramatic Shape loads, so it
    works on this boot — no restart.
 4. Set Dramatic Shape's VOXEL mode to **1ST** and go outside.
@@ -122,17 +124,20 @@ and sky work in the diorama view and the movement features are skipped.
 
 Either way works:
 
-- **Tidy:** turn REMOVE PATCH on and restart. Everything is restored byte
-  for byte.
-- **Or just delete the mod folder.** The patch notices the mod has gone,
-  puts Dramatic Shape's files back, deletes its own, and says so in
-  `ds_fp_ceiling_log.txt`.
+- **Just delete the mod folder.** This is enough on its own now: every
+  file written into Dramatic Shape's folder is recorded in a ledger, and
+  on the next boot the patch notices the mod has gone, walks that ledger
+  to restore Dramatic Shape byte for byte, deletes its own files, and
+  says so in `ds_fp_ceiling_log.txt`.
+- **Or use REMOVE PATCH** and restart, if you prefer an explicit switch.
+  It does the same thing from the same ledger; it is no longer
+  necessary.
 
 ## Options
 
 | Row | Default | What it does |
 | --- | --- | --- |
-| REMOVE PATCH | OFF | Turn ON and restart to uninstall cleanly |
+| REMOVE PATCH | OFF | Explicit uninstall; deleting the folder does the same |
 | CEILING | ON | Walls, ceilings and doors indoors |
 | HEADROOM | AIRY | Ceiling height: AIRY / MID / SNUG |
 | SIMS CUTAWAY | ON | Cutaway view in the diorama rungs |
@@ -168,7 +173,7 @@ Either way works:
 | WIND | BREEZE | Grass sway: OFF / BREEZE / GUSTY |
 | INSECTS | ON | Gnat swarms over grass and under the canopy |
 | PARTICLES | ON | Seeds, drips, fireflies, leaves, dust, spray, smoke |
-| JUMP FEEL | SUBTLE | Ledge-hop weight and head bob: OFF / SUBTLE / BIG |
+| JUMP FEEL | SUBTLE | Ledge-hop crouch, arc and landing: OFF / SUBTLE / BIG |
 | DOORWAY STEP | ON | The eye steps through warps instead of cutting |
 | DEBUG HUD | OFF | On-screen diagnostic panel |
 
@@ -230,15 +235,3 @@ textured from the game's own map renderer on your machine, and the bird
 frames are derived once from your own imported cache by this mod's asset
 transform. The panoramas, pictures, umbrellas, aircraft, door art and all
 generated sprites are original.
-
-
-## Credits and licence
-
-Built on the Dramatic Shape Voxel Mod, which does the actual hard work of
-rendering Kanto in three dimensions.
-
-No ROM data ships in this mod and none is read at runtime. Every texture
-is sampled from the game's own map renderer on your machine, and the bird
-frames are derived once from your own imported cache by this mod's asset
-transform. The horizon artwork, umbrellas, aircraft and all generated
-sprites are original.

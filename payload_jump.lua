@@ -1,5 +1,5 @@
 -- The JUMP: what a ledge hop feels like from inside the head.
--- payload-version: 3
+-- payload-version: 4
 --
 -- The engine already hops the player over a ledge, and Dramatic Shape's
 -- first-person rig already carries the eye along that arc -- but the arc
@@ -148,12 +148,12 @@ function Jump.eyeOffset(me)
       end
     end
 
-    -- the walk bob: two per stride, silenced while airborne (a hop has
-    -- its own arc and does not need a gait on top of it)
-    local bobAmp = BOB[cfg.jump or "SUBTLE"] or BOB.SUBTLE
-    if bobAmp > 0 and lift <= 0 then
-      off = off + math.sin(walked * BOB_PER_PX) * bobAmp * moving
-    end
+    -- THE WALK BOB IS GONE. It was the single most complained-about
+    -- thing this mod did -- the Dramatic Shape author called it "this
+    -- horrible up and down motion", and he was speaking for a crowd. The
+    -- hop, the landing settle and the doorway step below all remain:
+    -- they respond to EVENTS, which reads as weight; a bob runs all the
+    -- time, which reads as seasickness.
 
     -- the doorway step: a dip that eases back out, on its own clock
     if stepAt then
@@ -188,10 +188,9 @@ end
 -- looking and runs at HALF the bob's rate -- one lean per stride, not two
 -- -- which is what reads as walking rather than as bouncing.
 local function swayAmount()
-  local cfg = config()
-  local amp = (BOB[cfg.jump or "SUBTLE"] or 0) * SWAY_RATIO
-  if amp <= 0 then return 0 end
-  return math.sin(walked * BOB_PER_PX * 0.5) * amp * moving
+  -- the walking sway went with the bob; the doorway push is all that
+  -- moves the head laterally now
+  return 0
 end
 
 local function swayAxis()

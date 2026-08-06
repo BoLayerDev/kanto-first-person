@@ -1,5 +1,5 @@
 -- FLORA: grass with height to it, and the small moving things.
--- payload-version: 42
+-- payload-version: 44
 --
 -- TUFTS.  Dramatic Shape stands two thin rows of grass per tile, evenly,
 -- which is honest to the art and reads as a lawn.  Tall grass in this
@@ -628,19 +628,23 @@ function MOUND.buildBacks(map)
         return map.isDoorTileCell and map:isDoorTileCell(cx, cy)
       end)
       if okD and door then
-        -- straight up from the doorway, through the building, to the
-        -- last solid cell: that column is where the door repeats
+        -- JUST THE MIRRORED DOOR, in the back wall's OWN brick.
+        -- Six cells of the side wall's art was worse than the fault: it
+        -- pasted the gable end's flat purple over the brick and ran past
+        -- the corner of the house. Only the door cell is covered now,
+        -- and the tile comes from ALONG THE SAME BACK WALL -- the
+        -- nearest cell left or right whose north face is also exposed --
+        -- so the patch is the same brick as its neighbours and vanishes
+        -- into them.
+        -- A cell that is a REAL door in its own right is never covered:
+        -- some houses genuinely have a back entrance.
         for up = 1, 5 do
           local ay = cy - up
           if not walk(cx, ay) then
-            -- unless it is a door in its own right: some houses have a
-            -- real back entrance, and covering that would board it up
             local okB, isDoor = pcall(function()
               return map.isDoorTileCell and map:isDoorTileCell(cx, ay)
             end)
-            if not (okB and isDoor) then
-              body[ay * wc + cx] = true
-            end
+            if not (okB and isDoor) then body[ay * wc + cx] = true end
           else break end
         end
       end
@@ -652,16 +656,24 @@ function MOUND.buildBacks(map)
     local cy, cx = math.floor(key / wc), key % wc
     -- the north face is the back: exposed when the cell above is open
     if walk(cx, cy - 1) then
-      -- the side tile: the nearest cell of this building that is NOT
-      -- part of the frontage row, taken from its own left or right edge
+      -- THE BACK WALL'S OWN BRICK. Walk left and right along this same
+      -- row looking for a cell that is solid, is not itself patched, and
+      -- whose north face is exposed too -- that is a neighbouring piece
+      -- of the very wall being repaired, so the patch matches. Only if
+      -- the wall is one cell wide does this fall back to the row above.
       local side = nil
-      for _, dx in ipairs({ -1, 1, -2, 2, -3, 3 }) do
-        if body[cy * wc + cx + dx] == nil and not walk(cx + dx, cy) then
-          side = tileOf(cx + dx, cy)
-          if side then break end
+      for step = 1, 6 do
+        for _, dx in ipairs({ -step, step }) do
+          local nx = cx + dx
+          if not side and nx >= 0 and nx < wc
+             and not walk(nx, cy) and walk(nx, cy - 1)
+             and body[cy * wc + nx] == nil then
+            side = tileOf(nx, cy)
+          end
         end
+        if side then break end
       end
-      side = side or tileOf(cx, cy - 1) or tileOf(cx, cy)
+      side = side or tileOf(cx, cy + 1) or tileOf(cx, cy)
       if side then
         local uv = { uvFor(map, side) }
         local x0, z0 = cx * 16, cy * 16

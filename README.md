@@ -1,7 +1,7 @@
 # Kanto in First Person — Interiors and Tweaks
 
 A companion mod for the **Dramatic Shape Voxel Mod** that finishes Kanto's
-first-person view.
+first-person view. **Please note this only works with the 1.6.0 release of Dramatic Shape for now.**
 
 Dramatic Shape turns Gen 1 into a voxel world and lets you stand inside it.
 This fills in what the original 2D maps never had to draw: rooms get walls,
@@ -11,8 +11,7 @@ bats; and walking, hopping and stepping through a doorway all carry some
 weight.
 
 Everything here is presentational. Collision, movement, ledge rules,
-triggers, encounters, scripts and saves are untouched — nothing in this mod
-can move the player a single pixel.
+triggers, encounters, scripts and saves are untouched.
 
 ---
 

@@ -1,7 +1,8 @@
 # Kanto in First Person — Interiors and Tweaks
 
-A companion mod for the **Dramatic Shape Voxel Mod** that finishes Kanto's
-first-person view. **Please note this only works with the 1.6.0 release of Dramatic Shape for now.**
+A companion patch for the [Dramatic Shape Voxel
+Mod](https://github.com/absol89/DramaticShapeVoxelMod/releases) on the
+[Gen 1 Recomp](https://github.com/bryanthaboi/gen1recomp).<img width="756" height="494" alt="mountains" src="https://github.com/user-attachments/assets/8ebfedd8-ab88-4cbf-aa9d-ee4208af34d4" />
 
 Dramatic Shape turns Gen 1 into a voxel world and lets you stand inside it.
 This fills in what the original 2D maps never had to draw: rooms get walls,
@@ -43,8 +44,6 @@ triggers, encounters, scripts and saves are untouched.
 
 - **Rock overhead**: an uneven, sagging roof with **stalactites**, and
   **stalagmites** rising to meet them.
-- **Cave darkness** on the floors the engine marks unlit — and **Flash**
-  doesn't switch it off, it pushes the walls back.
 - **Still pools**, **torches guttering in the rock**, and **bats** that
   roost near the roof and scatter when you get close.
 
@@ -66,6 +65,10 @@ triggers, encounters, scripts and saves are untouched.
 - **Rainbows** after a shower, hung opposite the sun and standing where the
   rain left them.
 - **Chimney smoke** by day and **fog** over Lavender Town.
+- **Mountains**
+- **Tall trees**
+- **Risen Boulders**
+
 
 ### Woods and ground level
 
@@ -87,6 +90,7 @@ triggers, encounters, scripts and saves are untouched.
 
 - **Jump feel**: the engine already hops you over ledges; this gives the
   hop a crouch, a boosted arc and a landing settle.
+  **Jump** Ever wished you could jump back up those ledges? WELL NOW YOU CAN!
 - **A doorway step**: the eye dips and leans through a warp instead of
   cutting to the other side.
 
@@ -102,7 +106,7 @@ triggers, encounters, scripts and saves are untouched.
 ## Requirements
 
 - The Gen 1 Recompilation Project
-- The **Dramatic Shape Voxel Mod**, installed and working
+- The **Dramatic Shape Voxel Mod Battle Sprites Fork**, installed and working
 
 Tested against Dramatic Shape 1.5.4, 1.5.5 and 1.6.0, and against
 absol89's battle-art fork. Dramatic Shape 1.6.1 and 1.6.2 declare a
@@ -113,11 +117,8 @@ and sky work in the diorama view and the movement features are skipped.
 ## Install
 
 1. Download the release `.zip`.
-2. Unzip into your `mods/` folder so you have `mods/ds_fp_ceiling/`
-   alongside your Dramatic Shape folder.
-3. Start the game. The patch applies before Dramatic Shape loads, so it
-   works on this boot — no restart.
-4. Set Dramatic Shape's VOXEL mode to **1ST** and go outside.
+2. Use the Launcher for Gen1Recomp to install the mod from the zip file.
+3. Set Dramatic Shape's VOXEL mode to **1ST** and go outside.
 
 ## Removing it
 
@@ -128,9 +129,6 @@ Either way works:
   on the next boot the patch notices the mod has gone, walks that ledger
   to restore Dramatic Shape byte for byte, deletes its own files, and
   says so in `ds_fp_ceiling_log.txt`.
-- **Or use REMOVE PATCH** and restart, if you prefer an explicit switch.
-  It does the same thing from the same ledger; it is no longer
-  necessary.
 
 ## Options
 

@@ -1,5 +1,5 @@
 -- FLORA: grass with height to it, and the small moving things.
--- payload-version: 44
+-- payload-version: 64
 --
 -- TUFTS.  Dramatic Shape stands two thin rows of grass per tile, evenly,
 -- which is honest to the art and reads as a lawn.  Tall grass in this
@@ -601,6 +601,707 @@ MOUND.tufts, MOUND.seen = {}, {}
 -- alone: a shopfront should look like a shopfront.
 MOUND.BACKS = { cache = {}, EPS = 0.35 }
 
+-- ------- TRUNKS.
+-- The patcher lifts every tree-class bush onto empty air (Structures
+-- tags the stamp, the mesher raises it); these are the trunks that go
+-- underneath. Same hash as the splice -- (cx * 73856093 + cy * 19349663)
+-- % 3 -- so each trunk meets its own bush's base exactly. Tree cells are
+-- found the way the engine finds them: TileShape's authored `tree`
+-- class, sampled at the cell's canonical bottom-left tile. Drawn as two
+-- crossed quads of generated bark, with a short branch on every third
+-- tree.
+MOUND.TRUNK = { cache = {}, img = nil }
+do
+  local okTS, TS = pcall(V.require, "TileShape")
+  MOUND.TRUNK.ts = okTS and TS or nil
+end
+
+-- WHICH TILES a round object is drawn from decides what it IS. The
+-- palette theory died on a route: the grey rounds there are grey under a
+-- GREEN palette, because they are a different DRAWING -- the border-wall
+-- cell (tiles 64/65/80/81 on OVERWORLD), not the lone canopy
+-- (42/43/58/59). Dramatic Shape pins both into its cylinder pool, but
+-- they are distinct authored tile ids, and the ids are the exact,
+-- per-cell delineator that was wanted from the start. The gym rock
+-- (44-47 over 7/8/23/24) is authored as boulders outright.
+-- (Swapped from the first cut: in the shipped art the border-wall
+-- drawing is the GREEN tree rows and the lone-canopy drawing is the
+-- grey rock -- playtest beats archaeology.)
+MOUND.BOULDER_TILES = {
+  OVERWORLD = { [42] = true, [43] = true, [58] = true, [59] = true },
+  GYM = { [44] = true, [45] = true, [46] = true, [47] = true,
+          [7] = true, [8] = true, [23] = true, [24] = true },
+}
+-- and the TREES, named explicitly so the union below is complete
+MOUND.TREE_TILES = {
+  OVERWORLD = { [64] = true, [65] = true, [80] = true, [81] = true },
+}
+-- GHOST FILTER. Registry entries have appeared for cells that carry no
+-- round drawing at all -- bare trunks standing on pathways, clustered
+-- at map-section seams. Whatever publishes them, a support is only
+-- deserved where the cell's own tile is a KNOWN round id (tree set or
+-- boulder set). Where a tileset has no curated sets, the registry is
+-- trusted as-is, so uncatalogued tilesets lose nothing.
+function MOUND.roundUnion(tsid)
+  local b, t = MOUND.BOULDER_TILES[tsid], MOUND.TREE_TILES[tsid]
+  if not (b or t) then return nil end
+  local u = {}
+  for k in pairs(b or {}) do u[k] = true end
+  for k in pairs(t or {}) do u[k] = true end
+  return u
+end
+-- the registry of REAL stamps, filled by the Structures splice as each
+-- chunk meshes: cell key -> the exact lift the mesher applied. Building
+-- from this instead of re-deriving cells makes a support on a walkable
+-- path impossible by construction, and the heights can never drift.
+_G.__ds_round_cells = rawget(_G, "__ds_round_cells") or {}
+-- each lifted stamp's TRUE base, published by the mesher: DS bakes the
+-- cell's terrain height into the stamp template, so a bush on a ledge
+-- terrace sits at terrain + lift -- while supports rooted at y=0
+-- detached from their bushes on every terrace. THAT was the ghost: a
+-- short stem at ground level, its canopy floating at terrace height.
+_G.__ds_round_base = rawget(_G, "__ds_round_base") or {}
+
+function MOUND.stoneImg()
+  local T = MOUND.TRUNK
+  if T.stone ~= nil then return T.stone or nil end
+  local ok, img = pcall(function()
+    local W, H = 12, 24
+    local data = love.image.newImageData(W, H)
+    local DARK = { 0.30, 0.30, 0.33 }
+    local MID  = { 0.52, 0.52, 0.55 }
+    local LITE = { 0.68, 0.68, 0.70 }
+    for y = 0, H - 1 do
+      for x = 0, W - 1 do
+        local c = MID
+        if x == 0 or x == W - 1 or y == 11 or y == 12 then c = DARK
+        elseif (x * 5 + y * 3) % 11 == 0 then c = DARK
+        elseif (x * 2 + y * 7) % 9 == 0 then c = LITE end
+        data:setPixel(x, y, c[1], c[2], c[3], 1)
+      end
+    end
+    local i = love.graphics.newImage(data)
+    i:setFilter("nearest", "nearest")
+    return i
+  end)
+  T.stone = (ok and img) or false
+  return T.stone or nil
+end
+
+function MOUND.barkImg()
+  local T = MOUND.TRUNK
+  if T.img ~= nil then return T.img or nil end
+  local ok, img = pcall(function()
+    local W, H = 8, 32
+    local data = love.image.newImageData(W, H)
+    local DARK = { 0.28, 0.19, 0.11 }
+    local MID  = { 0.42, 0.29, 0.16 }
+    local LITE = { 0.55, 0.40, 0.22 }
+    for y = 0, H - 1 do
+      for x = 0, W - 1 do
+        local c = MID
+        if x == 0 or x == W - 1 then c = DARK
+        elseif (x + math.floor(y / 3)) % 4 == 0 then c = DARK
+        elseif (x * 3 + y) % 7 == 0 then c = LITE end
+        data:setPixel(x, y, c[1], c[2], c[3], 1)
+      end
+    end
+    local i = love.graphics.newImage(data)
+    i:setFilter("nearest", "nearest")
+    return i
+  end)
+  T.img = (ok and img) or false
+  return T.img or nil
+end
+
+function MOUND.buildTrunks(map)
+  MOUND.TRUNK.tN, MOUND.TRUNK.bN, MOUND.TRUNK.cells = 0, 0, {}
+  -- the engine reuses ONE map object across transitions, so the
+  -- registry is keyed by the map's stable id -- the same derivation the
+  -- splice uses. Keying by the object merged every map into one bucket,
+  -- and crossing a connection rained the previous map's cells onto the
+  -- new one as ghost stems until remeshes caught up.
+  local rk = map.id or (map.def and map.def.id) or map
+  local reg = (rawget(_G, "__ds_round_cells") or {})[rk] or {}
+  local tsid = tostring((map.def or {}).tileset or "")
+  local boulderSet = MOUND.BOULDER_TILES[tsid] or {}
+  local tV, tI, tQ = {}, {}, 0
+  local sV, sI, sQ = {}, {}, 0
+  local count = 0
+  for key, lift in pairs(reg) do
+    local cx, cy = key:match("^(-?%d+)|(-?%d+)$")
+    cx, cy = tonumber(cx), tonumber(cy)
+    if cx and cy and lift and lift > 0 then
+      local okT, tile = pcall(function()
+        if map.cellTile then return map:cellTile(cx, cy) end
+        return map:tileAt(cx * 2, cy * 2 + 1)
+      end)
+      local union = MOUND.roundUnion(tsid)
+      if union and not (okT and tile and union[tile]) then
+        -- a ghost: stamped, but the cell draws no round object
+        goto continue
+      end
+      -- THE CONNECTION BANDS. Adjacent maps BOTH author the rows where
+      -- they join, and each map's copy of that band contains round,
+      -- unwalkable tiles -- truthfully. But the band's presentation
+      -- belongs to whichever side you are standing on, so supports
+      -- built from THIS map's copy stand as ghosts at every seam
+      -- (near:12|0 12|1 9|0 on ROUTE_1's north edge was the proof). On
+      -- any side that has a connection, no support is built within two
+      -- cells of that edge or beyond it. Sides WITHOUT a connection --
+      -- the border tree walls -- keep every trunk.
+      do
+        local conn = (map.def or {}).connections or {}
+        local wc2 = map.widthCells or 0
+        local hc2 = map.heightCells or 0
+        if (conn.north and cy < 2)
+           or (conn.south and cy > hc2 - 3)
+           or (conn.west and cx < 2)
+           or (conn.east and cx > wc2 - 3) then
+          goto continue
+        end
+      end
+      -- THE WALKABILITY TEST, which cannot be lied to. Near connection
+      -- seams the base map data is padded with the border TREE block and
+      -- the overlay draws path on top -- so the tile id says "tree"
+      -- while the player strolls across it, which is exactly the ghost
+      -- rows on pathways. Collision has to match what the player can
+      -- actually do, so it tells the truth where the tile does not: a
+      -- real tree is never walkable, a path always is. Out-of-bounds
+      -- ring and strip cells return not-walkable and keep their trees.
+      do
+        local okW, wk = pcall(function()
+          return map:isWalkableCell(cx, cy)
+        end)
+        if okW and wk then goto continue end
+      end
+      local boulder = okT and tile and boulderSet[tile] or false
+      local base = (rawget(_G, "__ds_round_base") or {})
+                   [(cx * 16 + 8) .. "|" .. (cy * 16 + 8)] or 0
+      if boulder then
+        MOUND.TRUNK.bN = (MOUND.TRUNK.bN or 0) + 1
+      else
+        MOUND.TRUNK.tN = (MOUND.TRUNK.tN or 0) + 1
+      end
+      MOUND.TRUNK.cells[#MOUND.TRUNK.cells + 1] =
+        { cx, cy, boulder and "b" or "t" }
+      local mx, mz = cx * 16 + 8, cy * 16 + 8
+      if boulder then
+        -- SOLID: a four-sided box in two courses, wide below, narrower
+        -- above -- a stack of stones, not a panel
+        local function box(w, y0, y1, v0, v1)
+          local c = { { mx - w, mz - w }, { mx + w, mz - w },
+                      { mx + w, mz + w }, { mx - w, mz + w } }
+          for i = 1, 4 do
+            local a, b = c[i], c[i % 4 + 1]
+            sV[#sV + 1] = { b[1], y1, b[2], 1, v0, 1 }
+            sV[#sV + 1] = { a[1], y1, a[2], 0, v0, 1 }
+            sV[#sV + 1] = { a[1], y0, a[2], 0, v1, 1 }
+            sV[#sV + 1] = { b[1], y0, b[2], 1, v1, 1 }
+            Voxel3D.pushQuad(sI, sQ)
+            sQ = sQ + 1
+          end
+        end
+        box(4.5, base, base + lift * 0.55, 0.5, 1)
+        box(3.2, base + lift * 0.55, base + lift + 2, 0.05, 0.48)
+      else
+        local HW = 2.5
+        for _, axis in ipairs({ "x", "z" }) do
+          local x0, z0, x1, z1
+          if axis == "x" then
+            x0, z0, x1, z1 = mx - HW, mz, mx + HW, mz
+          else
+            x0, z0, x1, z1 = mx, mz - HW, mx, mz + HW
+          end
+          for _, flip in ipairs({ false, true }) do
+            local ax0, az0, ax1, az1 = x0, z0, x1, z1
+            if flip then ax0, az0, ax1, az1 = x1, z1, x0, z0 end
+            tV[#tV + 1] = { ax1, base + lift + 3, az1, 1, 0, 1 }
+            tV[#tV + 1] = { ax0, base + lift + 3, az0, 0, 0, 1 }
+            tV[#tV + 1] = { ax0, base, az0, 0, 1, 1 }
+            tV[#tV + 1] = { ax1, base, az1, 1, 1, 1 }
+            Voxel3D.pushQuad(tI, tQ)
+            tQ = tQ + 1
+          end
+        end
+        if (cx * 73856093 + cy * 19349663) % 3 == 2 then
+          local by = base + lift * 0.6
+          for _, w in ipairs({ { 0.2, 0.5 }, { 0.5, 0.2 } }) do
+            tV[#tV + 1] = { mx + 7, by + 4, mz, 1, w[1], 1 }
+            tV[#tV + 1] = { mx + 1, by, mz, 0, w[1], 1 }
+            tV[#tV + 1] = { mx + 1, by - 1.2, mz, 0, w[2], 1 }
+            tV[#tV + 1] = { mx + 7, by + 2.8, mz, 1, w[2], 1 }
+            Voxel3D.pushQuad(tI, tQ)
+            tQ = tQ + 1
+          end
+        end
+      end
+      count = count + 1
+      ::continue::
+    end
+  end
+  local tm = tQ > 0 and Voxel3D.newMesh(tV, tI) or nil
+  local sm = sQ > 0 and Voxel3D.newMesh(sV, sI) or nil
+  if not (tm or sm) then return nil end
+  return tm, sm, count
+end
+
+-- ------- MOUNTAIN PEAKS.
+-- The rock walls of the routes are authored: on OVERWORLD the mound
+-- drawing is `wall = { 2, 36 }` in Dramatic Shape's own tables -- "the
+-- rock pillar, the plateau body". Where those cells run in CLUSTERS,
+-- this stacks further courses of the same rock on top, rising toward
+-- the cluster's interior like a massif: each cell's height grows with
+-- its distance from the cluster's edge, so rims stay low and hearts
+-- peak. Every face is textured with the cell's OWN subtiles, band by
+-- band, so the drawn rock simply continues upward.
+--
+-- The gate stack, in the order the ghosts taught: authored tile id AND
+-- authored upright class AND not walkable AND outdoors AND not in a
+-- connection band. No stamps, no registry -- this derives from stable
+-- map data alone.
+MOUND.PEAK = { cache = {}, BAND = 16, STEP = 3, CAP = 12, MIN = 4,
+               REACH = 3 }
+MOUND.PEAK_TILES = {
+  OVERWORLD = { [2] = true, [36] = true },
+}
+
+function MOUND.buildPeaks(map)
+  local wc, hc = map.widthCells or 0, map.heightCells or 0
+  if wc == 0 or hc == 0 or not MOUND.TRUNK.ts then return nil end
+  local pool = MOUND.PEAK_TILES[tostring((map.def or {}).tileset or "")]
+  if not pool then return nil end
+  local okSh, shapes = pcall(MOUND.TRUNK.ts.forMap, map)
+  if not (okSh and shapes) then return nil end
+  local conn = (map.def or {}).connections or {}
+  local RING = 2
+  local rock, order = {}, {}
+  for cy = -RING, hc - 1 + RING do
+    for cx = -RING, wc - 1 + RING do
+      local banded = (conn.north and cy < 2)
+                     or (conn.south and cy > hc - 3)
+                     or (conn.west and cx < 2)
+                     or (conn.east and cx > wc - 3)
+      if not banded then
+        local okT, tile = pcall(function()
+          if map.cellTile then return map:cellTile(cx, cy) end
+          return map:tileAt(cx * 2, cy * 2 + 1)
+        end)
+        -- EVERY upright, unwalkable cell is a candidate; whether it
+        -- joins depends on the pool. Seeds are authored pool ids; the
+        -- SAME massif often runs two materials (the dark check and the
+        -- light orange), so contiguous candidates within REACH of a
+        -- seed join too -- the cluster vouches for them. A building
+        -- cannot join: walkable ground separates it, and even direct
+        -- wall contact leaks at most REACH cells before the cap bites.
+        if okT and tile then
+          local okC, sh = pcall(MOUND.TRUNK.ts.at, map, shapes, tile,
+                                cx * 2, cy * 2 + 1)
+          if okC and sh and (sh.class == "wall" or sh.class == "cliff")
+          then
+            local okW, wk = pcall(function()
+              return map:isWalkableCell(cx, cy)
+            end)
+            if not (okW and wk) then
+              -- BUILDING VETO: a candidate touching a roof-class cell
+              -- or a door is a building's wall, not rock -- the Poke
+              -- Center wore a summit for three cells of flood reach.
+              -- Seeds (authored rock ids) are immune; only the flooded
+              -- second material must prove itself.
+              local veto = false
+              if not pool[tile] then
+                for dy = -1, 1 do
+                  for dx = -1, 1 do
+                    if not veto and (dx ~= 0 or dy ~= 0) then
+                      local okN, t2 = pcall(function()
+                        if map.cellTile then
+                          return map:cellTile(cx + dx, cy + dy)
+                        end
+                        return map:tileAt((cx + dx) * 2,
+                                          (cy + dy) * 2 + 1)
+                      end)
+                      if okN and t2 then
+                        local okC2, s2 = pcall(MOUND.TRUNK.ts.at, map,
+                          shapes, t2, (cx + dx) * 2, (cy + dy) * 2 + 1)
+                        if okC2 and s2 and s2.class == "roof" then
+                          veto = true
+                        end
+                      end
+                      local okD, dr = pcall(function()
+                        return map.isDoorTileCell
+                               and map:isDoorTileCell(cx + dx, cy + dy)
+                      end)
+                      if okD and dr then veto = true end
+                    end
+                  end
+                end
+              end
+              if not veto then
+                local key = cx .. "|" .. cy
+                rock[key] = { cx = cx, cy = cy, top = (sh.h or 16),
+                              seed = pool[tile] or nil }
+                order[#order + 1] = key
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  -- keep candidates within REACH of a pool seed; drop the rest
+  do
+    local fr, seen = {}, {}
+    for key, c in pairs(rock) do
+      if c.seed then c.reach = 0; fr[#fr + 1] = key; seen[key] = true end
+    end
+    local h2 = 1
+    while fr[h2] do
+      local c = rock[fr[h2]]
+      h2 = h2 + 1
+      if c.reach < MOUND.PEAK.REACH then
+        for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+          local nk = (c.cx + d[1]) .. "|" .. (c.cy + d[2])
+          local nc = rock[nk]
+          if nc and not seen[nk] then
+            seen[nk] = true
+            nc.reach = c.reach + 1
+            fr[#fr + 1] = nk
+          end
+        end
+      end
+    end
+    local kept = {}
+    for _, key in ipairs(order) do
+      if seen[key] then kept[#kept + 1] = key else rock[key] = nil end
+    end
+    order = kept
+  end
+  if #order < MOUND.PEAK.MIN then return nil end
+
+  -- distance to the cluster edge, by BFS from every rim cell inward:
+  -- a rim cell is one with a missing neighbour
+  local frontier = {}
+  for key, c in pairs(rock) do
+    local n = 0
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+      if rock[(c.cx + d[1]) .. "|" .. (c.cy + d[2])] then n = n + 1 end
+    end
+    if n < 4 then
+      c.dist = 0
+      frontier[#frontier + 1] = key
+    end
+  end
+  local head = 1
+  while frontier[head] do
+    local c = rock[frontier[head]]
+    head = head + 1
+    for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+      local nk = (c.cx + d[1]) .. "|" .. (c.cy + d[2])
+      local nc = rock[nk]
+      if nc and nc.dist == nil then
+        nc.dist = c.dist + 1
+        frontier[#frontier + 1] = nk
+      end
+    end
+  end
+
+  -- extra bands above the drawn wall: rims get a little, hearts a lot,
+  -- with a per-cell jitter so ridgelines are not staircases
+  -- THE LINTEL. A door cell flanked by cluster rock on opposite sides
+  -- is a CAVE MOUTH -- Mt. Moon's entrance -- and skipping it (doors
+  -- are walkable) notched a slot of sky through the massif. Rock now
+  -- bridges over it: the bridge's underside sits one band above the
+  -- wall top so the doorway stays open, and its summit follows the
+  -- lower of its two shoulders.
+  do
+    local adds = {}
+    for cy = -RING, hc - 1 + RING do
+      for cx = -RING, wc - 1 + RING do
+        if not rock[cx .. "|" .. cy] then
+          local okD, dr = pcall(function()
+            return map.isDoorTileCell and map:isDoorTileCell(cx, cy)
+          end)
+          if okD and dr then
+            local L = rock[(cx - 1) .. "|" .. cy]
+            local R = rock[(cx + 1) .. "|" .. cy]
+            local U = rock[cx .. "|" .. (cy - 1)]
+            local D = rock[cx .. "|" .. (cy + 1)]
+            local a, b = nil, nil
+            if L and R then a, b = L, R
+            elseif U and D then a, b = U, D end
+            if a and b then
+              adds[#adds + 1] = {
+                key = cx .. "|" .. cy, cx = cx, cy = cy,
+                top = math.min(a.top, b.top) + MOUND.PEAK.BAND,
+                bridge = true,
+                dist = math.min(a.dist or 0, b.dist or 0),
+                shoulders = math.min(a.top, b.top),
+              }
+            end
+          end
+        end
+      end
+    end
+    for _, c in ipairs(adds) do
+      rock[c.key] = c
+      order[#order + 1] = c.key
+    end
+  end
+
+  -- JAGGED: distance gives the massif its profile, a strong per-cell
+  -- jitter breaks the staircase, and an occasional spire punches past
+  -- both -- so ridgelines read as rock, not battlements
+  for _, c in pairs(rock) do
+    local d = c.dist or 0
+    local h1 = (c.cx * 73856093 + c.cy * 19349663) % 4
+    local h2 = (c.cx * 2654435761 + c.cy * 40503) % 7
+    local spire = (h2 == 0) and 3 or 0
+    c.bands = math.min(1 + d * MOUND.PEAK.STEP + h1 + spire,
+                       MOUND.PEAK.CAP)
+    c.high = c.top + c.bands * MOUND.PEAK.BAND
+  end
+  -- a bridge never overtops its shoulders
+  for _, c in pairs(rock) do
+    if c.bridge then
+      for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+        local nc = rock[(c.cx + d[1]) .. "|" .. (c.cy + d[2])]
+        if nc and not nc.bridge then
+          c.high = math.min(c.high, nc.high)
+        end
+      end
+      if c.high < c.top + MOUND.PEAK.BAND then
+        c.high = c.top + MOUND.PEAK.BAND
+      end
+    end
+  end
+
+  local verts, indexMap, quads = {}, {}, 0
+  local function faceQuads(cx, cy, y0, y1, side)
+    -- one band of one face, as four 8px subtile quads (two columns,
+    -- two rows) so the rock art continues at true scale
+    local x0, z0 = cx * 16, cy * 16
+    for sy = 0, 1 do
+      for sx = 0, 1 do
+        local okS, t = pcall(function()
+          return map:tileAt(cx * 2 + sx, cy * 2 + sy)
+        end)
+        if okS and t then
+          local uv = { uvFor(map, t) }
+          local yT = y1 - sy * 8
+          local yB = yT - 8
+          local a, b
+          if side == "n" then
+            a = { x0 + 8 + sx * 8, z0 }
+            b = { x0 + sx * 8, z0 }
+          elseif side == "s" then
+            a = { x0 + sx * 8, z0 + 16 }
+            b = { x0 + 8 + sx * 8, z0 + 16 }
+          elseif side == "w" then
+            a = { x0, z0 + sx * 8 }
+            b = { x0, z0 + 8 + sx * 8 }
+          else
+            a = { x0 + 16, z0 + 8 + sx * 8 }
+            b = { x0 + 16, z0 + sx * 8 }
+          end
+          for _, flip in ipairs({ false, true }) do
+            local p, q = a, b
+            if flip then p, q = b, a end
+            verts[#verts + 1] = { p[1], yT, p[2], uv[1], uv[3], 0.85 }
+            verts[#verts + 1] = { q[1], yT, q[2], uv[2], uv[3], 0.85 }
+            verts[#verts + 1] = { q[1], yB, q[2], uv[2], uv[4], 0.85 }
+            verts[#verts + 1] = { p[1], yB, p[2], uv[1], uv[4], 0.85 }
+            Voxel3D.pushQuad(indexMap, quads)
+            quads = quads + 1
+          end
+        end
+      end
+    end
+  end
+  for _, key in ipairs(order) do
+    local c = rock[key]
+    -- exposed side faces, band by band, down to each neighbour's height
+    for _, d in ipairs({ { 1, 0, "e" }, { -1, 0, "w" },
+                         { 0, 1, "s" }, { 0, -1, "n" } }) do
+      local nc = rock[(c.cx + d[1]) .. "|" .. (c.cy + d[2])]
+      local floor2 = nc and nc.high or c.top
+      local y = c.high
+      while y > floor2 + 0.01 do
+        faceQuads(c.cx, c.cy, y - MOUND.PEAK.BAND, y, d[3])
+        y = y - MOUND.PEAK.BAND
+      end
+    end
+    -- a bridge's UNDERSIDE: the doorway's ceiling, in the same art
+    if c.bridge then
+      local x0, z0 = c.cx * 16, c.cy * 16
+      for sy = 0, 1 do
+        for sx = 0, 1 do
+          local okS, t = pcall(function()
+            return map:tileAt(c.cx * 2 + sx, c.cy * 2 + sy)
+          end)
+          if okS and t then
+            local uv = { uvFor(map, t) }
+            local qx, qz = x0 + sx * 8, z0 + sy * 8
+            verts[#verts + 1] = { qx, c.top, qz, uv[2], uv[3], 0.7 }
+            verts[#verts + 1] = { qx + 8, c.top, qz, uv[1], uv[3], 0.7 }
+            verts[#verts + 1] = { qx + 8, c.top, qz + 8, uv[1], uv[4], 0.7 }
+            verts[#verts + 1] = { qx, c.top, qz + 8, uv[2], uv[4], 0.7 }
+            Voxel3D.pushQuad(indexMap, quads)
+            quads = quads + 1
+          end
+        end
+      end
+    end
+    -- the cap, in the cell's own art
+    local x0, z0 = c.cx * 16, c.cy * 16
+    for sy = 0, 1 do
+      for sx = 0, 1 do
+        local okS, t = pcall(function()
+          return map:tileAt(c.cx * 2 + sx, c.cy * 2 + sy)
+        end)
+        if okS and t then
+          local uv = { uvFor(map, t) }
+          local qx, qz = x0 + sx * 8, z0 + sy * 8
+          verts[#verts + 1] = { qx + 8, c.high, qz, uv[1], uv[3], 1 }
+          verts[#verts + 1] = { qx, c.high, qz, uv[2], uv[3], 1 }
+          verts[#verts + 1] = { qx, c.high, qz + 8, uv[2], uv[4], 1 }
+          verts[#verts + 1] = { qx + 8, c.high, qz + 8, uv[1], uv[4], 1 }
+          Voxel3D.pushQuad(indexMap, quads)
+          quads = quads + 1
+        end
+      end
+    end
+  end
+  if quads == 0 then return nil end
+  return Voxel3D.newMesh(verts, indexMap), #order
+end
+
+-- ------- THE APRON.
+-- The map is a plateau with nothing past its rim: the eye sees a
+-- paper-thin edge and then void, all the way to the painted backdrop,
+-- and the world reads as SMALL. This continues each boundary cell's own
+-- tile outward, ring by ring, stepping gently down and fading with the
+-- same haze the neighbour maps use -- grass runs on as grass, water as
+-- water, because the tile IS the edge it extends. Built once per map as
+-- a single mesh from the atlas already bound: no new textures, a few
+-- hundred quads, memory cost as near nothing as makes no difference.
+--
+-- It sits a shade BELOW true ground, so real terrain -- and Dramatic
+-- Shape's own neighbour-map meshes on the connected sides -- always draw
+-- over it. No seams to manage, no need to know which sides connect.
+MOUND.APRON = { cache = {}, RINGS = 14, DROP = 2.5, SINK = 2 }
+
+function MOUND.buildApron(map)
+  local wc, hc = map.widthCells or 0, map.heightCells or 0
+  if wc == 0 or hc == 0 then return nil end
+  local function tileAtCell(cx, cy)
+    local ok, t = pcall(function()
+      if map.cellTile then return map:cellTile(cx, cy) end
+      return map:tileAt(cx * 2, cy * 2 + 1)
+    end)
+    return ok and t or nil
+  end
+  local function isWater(cx, cy)
+    local ok, w = pcall(function() return map:isWaterCell(cx, cy) end)
+    return ok and w
+  end
+  local function isWalk(cx, cy)
+    local ok, w = pcall(function() return map:isWalkableCell(cx, cy) end)
+    return ok and w
+  end
+  -- THE GROUND, not the obstacle. A map's boundary row is very often
+  -- the thing that STOPS you -- fences, ledges, tree lines -- and
+  -- continuing that outward smeared dark fence to the horizon. What
+  -- should continue is the ground the obstacle stands on: water stays
+  -- water, and otherwise the tile comes from the first WALKABLE cell
+  -- walking inward from the edge, which is the grass or path or sand
+  -- the boundary sits in.
+  local function groundTile(cx, cy, inx, iny)
+    if isWater(cx, cy) then return tileAtCell(cx, cy) end
+    for step = 0, 6 do
+      local nx, ny = cx + inx * step, cy + iny * step
+      if isWater(nx, ny) or isWalk(nx, ny) then
+        return tileAtCell(nx, ny)
+      end
+    end
+    return tileAtCell(cx, cy)
+  end
+  local verts, indexMap, quads = {}, {}, 0
+  local A = MOUND.APRON
+  local function ring(cx, cy, dirx, diry, tile)
+    local uv = { uvFor(map, tile) }
+    for r = 1, A.RINGS do
+      local fade = r / A.RINGS
+      -- the same cooling the neighbour maps get, deepened at the far rim
+      -- gently: the haze COOLS the distance, it must not black it out --
+      -- the streaks in the first cut were half darkness, half fence
+      local shade = (1 - fade * 0.18)
+      local y = -A.SINK - (r - 1) * A.DROP
+      local y2 = -A.SINK - r * A.DROP
+      -- the ring's near edge starts at the map's rim and each ring
+      -- steps one cell further out ALONG ITS OWN DIRECTION; the drop
+      -- runs the same way, so an east apron falls eastward, not south
+      local bx = cx * 16 + dirx * 16 * (r - 1)
+      local bz = cy * 16 + diry * 16 * (r - 1)
+      local ex = bx + (dirx ~= 0 and dirx * 16 or 0)
+      local ez = bz + (diry ~= 0 and diry * 16 or 0)
+      if dirx == 0 then
+        -- north/south: width in x, depth outward in z
+        verts[#verts + 1] = { bx + 16, y, bz, uv[1], uv[3], shade }
+        verts[#verts + 1] = { bx, y, bz, uv[2], uv[3], shade }
+        verts[#verts + 1] = { bx, y2, ez, uv[2], uv[4], shade }
+        verts[#verts + 1] = { bx + 16, y2, ez, uv[1], uv[4], shade }
+      else
+        -- east/west: width in z, depth outward in x
+        verts[#verts + 1] = { bx, y, bz + 16, uv[1], uv[3], shade }
+        verts[#verts + 1] = { bx, y, bz, uv[2], uv[3], shade }
+        verts[#verts + 1] = { ex, y2, bz, uv[2], uv[4], shade }
+        verts[#verts + 1] = { ex, y2, bz + 16, uv[1], uv[4], shade }
+      end
+      Voxel3D.pushQuad(indexMap, quads)
+      quads = quads + 1
+    end
+  end
+  -- north and south edges, each cell's GROUND continued outward
+  for cx = 0, wc - 1 do
+    local tN = groundTile(cx, 0, 0, 1)
+    if tN then ring(cx, 0, 0, -1, tN) end
+    local tS = groundTile(cx, hc - 1, 0, -1)
+    if tS then ring(cx, hc, 0, 1, tS) end
+  end
+  -- east and west
+  for cy = 0, hc - 1 do
+    local tW = groundTile(0, cy, 1, 0)
+    if tW then ring(0, cy, -1, 0, tW) end
+    local tE = groundTile(wc - 1, cy, -1, 0)
+    if tE then ring(wc, cy, 1, 0, tE) end
+  end
+  -- corners: carry the corner cell's tile out diagonally as a square
+  for _, c in ipairs({ { 0, 0, -1, -1 }, { wc - 1, 0, 1, -1 },
+                       { 0, hc - 1, -1, 1 }, { wc - 1, hc - 1, 1, 1 } }) do
+    local t = groundTile(c[1], c[2], -c[3], -c[4])
+    if t then
+      local uv = { uvFor(map, t) }
+      for rx = 1, A.RINGS do
+        for ry = 1, A.RINGS do
+          local r = math.max(rx, ry)
+          local shade = (1 - (r / A.RINGS) * 0.18)
+          local y = -A.SINK - (r - 1) * A.DROP
+          local bx = c[1] * 16 + c[3] * 16 * rx
+          local bz = c[2] * 16 + c[4] * 16 * ry
+          verts[#verts + 1] = { bx + 16, y, bz, uv[1], uv[3], shade }
+          verts[#verts + 1] = { bx, y, bz, uv[2], uv[3], shade }
+          verts[#verts + 1] = { bx, y, bz + 16, uv[2], uv[4], shade }
+          verts[#verts + 1] = { bx + 16, y, bz + 16, uv[1], uv[4], shade }
+          Voxel3D.pushQuad(indexMap, quads)
+          quads = quads + 1
+        end
+      end
+    end
+  end
+  if quads == 0 then return nil end
+  return Voxel3D.newMesh(verts, indexMap), quads
+end
+
 function MOUND.buildBacks(map)
   local wc, hc = map.widthCells or 0, map.heightCells or 0
   if wc == 0 or hc == 0 then return nil, 0 end
@@ -621,13 +1322,25 @@ function MOUND.buildBacks(map)
   -- the DOOR: the mesher repeats the door tile on the far face, so a
   -- house appears to have a second entrance round the back.  Cover that
   -- column and nothing else.
-  local body = {}
+  local body, doors = {}, {}
+  local function markColumn(cx, cy)
+    for up = 1, 5 do
+      local ay = cy - up
+      if not walk(cx, ay) then
+        local okB, isDoor = pcall(function()
+          return map.isDoorTileCell and map:isDoorTileCell(cx, ay)
+        end)
+        if not (okB and isDoor) then body[ay * wc + cx] = true end
+      else break end
+    end
+  end
   for cy = 0, hc - 1 do
     for cx = 0, wc - 1 do
       local okD, door = pcall(function()
         return map.isDoorTileCell and map:isDoorTileCell(cx, cy)
       end)
       if okD and door then
+        doors[#doors + 1] = { cx, cy }
         -- JUST THE MIRRORED DOOR, in the back wall's OWN brick.
         -- Six cells of the side wall's art was worse than the fault: it
         -- pasted the gable end's flat purple over the brick and ran past
@@ -638,14 +1351,28 @@ function MOUND.buildBacks(map)
         -- into them.
         -- A cell that is a REAL door in its own right is never covered:
         -- some houses genuinely have a back entrance.
-        for up = 1, 5 do
-          local ay = cy - up
-          if not walk(cx, ay) then
-            local okB, isDoor = pcall(function()
-              return map.isDoorTileCell and map:isDoorTileCell(cx, ay)
-            end)
-            if not (okB and isDoor) then body[ay * wc + cx] = true end
-          else break end
+        markColumn(cx, cy)
+      end
+    end
+  end
+
+  -- DOUBLE-WIDE DOORS. A department-store entrance spans two cells but
+  -- the engine flags only the warp cell, leaving its twin as a black
+  -- column beside the patch. If a solid, unflagged neighbour's body row
+  -- carries the SAME art as the door column's body row, it is the other
+  -- half of the doorway: mark it too. A false positive on a plain wall
+  -- is harmless -- it gets covered with its own matching brick.
+  for _, d in ipairs(doors) do
+    local cx, cy = d[1], d[2]
+    for _, dx in ipairs({ -1, 1 }) do
+      local nx = cx + dx
+      if nx >= 0 and nx < wc and not walk(nx, cy) then
+        local okN, nDoor = pcall(function()
+          return map.isDoorTileCell and map:isDoorTileCell(nx, cy)
+        end)
+        if not (okN and nDoor) then
+          local a, b = tileOf(nx, cy - 1), tileOf(cx, cy - 1)
+          if a and b and a == b then markColumn(nx, cy) end
         end
       end
     end
@@ -661,7 +1388,7 @@ function MOUND.buildBacks(map)
       -- whose north face is exposed too -- that is a neighbouring piece
       -- of the very wall being repaired, so the patch matches. Only if
       -- the wall is one cell wide does this fall back to the row above.
-      local side = nil
+      local side, donorX = nil, nil
       for step = 1, 6 do
         for _, dx in ipairs({ -step, step }) do
           local nx = cx + dx
@@ -669,12 +1396,44 @@ function MOUND.buildBacks(map)
              and not walk(nx, cy) and walk(nx, cy - 1)
              and body[cy * wc + nx] == nil then
             side = tileOf(nx, cy)
+            donorX = nx
           end
         end
         if side then break end
       end
       side = side or tileOf(cx, cy + 1) or tileOf(cx, cy)
-      if side then
+      if donorX then
+        -- THE DONOR'S OWN FOUR SUBTILES, each at true 8px scale. One
+        -- tile stretched over the 16px cell drew the brick at double
+        -- size -- a smear that matched nothing around it. The cell is
+        -- four tiles; the patch is now four quads, each sampling the
+        -- donor's matching quadrant, so the courses line up with the
+        -- wall either side.
+        local x0, z0 = cx * 16, cy * 16
+        local o = MOUND.BACKS.EPS
+        for sy = 0, 1 do
+          for sx = 0, 1 do
+            local okS, t = pcall(function()
+              return map:tileAt(donorX * 2 + sx, cy * 2 + sy)
+            end)
+            if okS and t then
+              local uv = { uvFor(map, t) }
+              local qx = x0 + sx * 8
+              local yT = 16 - sy * 8
+              verts[#verts + 1] = { qx + 8, yT, z0 - o,
+                                    uv[1], uv[3], 0.62 }
+              verts[#verts + 1] = { qx, yT, z0 - o, uv[2], uv[3], 0.62 }
+              verts[#verts + 1] = { qx, yT - 8, z0 - o,
+                                    uv[2], uv[4], 0.62 }
+              verts[#verts + 1] = { qx + 8, yT - 8, z0 - o,
+                                    uv[1], uv[4], 0.62 }
+              Voxel3D.pushQuad(indexMap, quads)
+              quads = quads + 1
+            end
+          end
+        end
+        backs = backs + 1
+      elseif side then
         local uv = { uvFor(map, side) }
         local x0, z0 = cx * 16, cy * 16
         local o = MOUND.BACKS.EPS
@@ -2807,6 +3566,28 @@ function Flora.draw(state, atlasFor)
             if okA then tx = a end
           end
 
+          -- MOUNTAIN PEAKS across the boundary. The massif looked
+          -- superb where you stood and went flat two maps over -- the
+          -- most immersive feature undoing itself at every seam. Each
+          -- neighbour's peaks are built from ITS OWN cells (same gates,
+          -- same builder, cached per map id) and drawn at the
+          -- neighbour's offset under the same haze as its grass, so a
+          -- ridge runs on into the distance instead of vanishing.
+          if cfg.peaks ~= false then
+            local rk2 = nmap.id or (nmap.def and nmap.def.id) or nmap
+            local pslot = MOUND.PEAK.cache[rk2]
+            if not pslot then
+              local mesh, n = MOUND.buildPeaks(nmap)
+              pslot = { mesh = mesh, count = n or 0 }
+              MOUND.PEAK.cache[rk2] = pslot
+            end
+            if pslot.mesh then
+              love.graphics.setColor(hr, hg, hb, 1)
+              Voxel3D.draw(pslot.mesh, tx, model)
+              love.graphics.setColor(1, 1, 1, 1)
+            end
+          end
+
           -- grass
           local gkey = cfg.grass or "SUBTLE"
           local per = BLADES[gkey] or 2
@@ -2837,6 +3618,110 @@ function Flora.draw(state, atlasFor)
       MOUND.trim(MOUND.tufts, 8)
     if drawnNb > 0 then
       nbNote = (", %d neighbour draws"):format(drawnNb)
+    end
+  end
+
+  -- ---------- trunks under the lifted trees
+  local trunkNote = ""
+  if outdoor and cfg.talltrees ~= false then
+    local regN = 0
+    local rk2 = map.id or (map.def and map.def.id) or map
+    for _ in pairs((rawget(_G, "__ds_round_cells") or {})[rk2] or {}) do
+      regN = regN + 1
+    end
+    local slot = MOUND.TRUNK.cache[map]
+    if not slot or slot.n ~= regN then
+      if slot then
+        if slot.trunks then pcall(slot.trunks.release, slot.trunks) end
+        if slot.stones then pcall(slot.stones.release, slot.stones) end
+      end
+      local tm, sm, n = MOUND.buildTrunks(map)
+      slot = { trunks = tm, stones = sm, count = n or 0, n = regN,
+               tN = MOUND.TRUNK.tN, bN = MOUND.TRUNK.bN,
+               cells = MOUND.TRUNK.cells }
+      MOUND.TRUNK.cache[map] = slot
+    end
+    local drew = false
+    if slot.trunks and MOUND.barkImg() then
+      guarded(function() Voxel3D.draw(slot.trunks, MOUND.barkImg(), nil) end)
+      drew = true
+    end
+    if slot.stones and MOUND.stoneImg() then
+      guarded(function() Voxel3D.draw(slot.stones, MOUND.stoneImg(), nil) end)
+      drew = true
+    end
+    if drew then
+      local near = ""
+      local pl = state and state.player
+      if pl and slot.cells and #slot.cells > 0 then
+        local px = (pl.px or 0) / 16
+        local py = (pl.py or 0) / 16
+        table.sort(slot.cells, function(a, b)
+          local da = (a[1] - px) ^ 2 + (a[2] - py) ^ 2
+          local db = (b[1] - px) ^ 2 + (b[2] - py) ^ 2
+          return da < db
+        end)
+        local bits = {}
+        for i = 1, math.min(3, #slot.cells) do
+          local c = slot.cells[i]
+          bits[#bits + 1] = c[1] .. "|" .. c[2] .. c[3]
+        end
+        near = " near:" .. table.concat(bits, " ")
+      end
+      trunkNote = (", %d trunks (%dt/%db%s)")
+                  :format(slot.count, slot.tN or 0, slot.bN or 0, near)
+    end
+  end
+
+  -- ---------- mountain peaks over the clustered rock
+  local peakNote = ""
+  if outdoor and cfg.peaks ~= false then
+    local rk0 = map.id or (map.def and map.def.id) or map
+    local slot = MOUND.PEAK.cache[rk0]
+    if not slot then
+      local mesh, n = MOUND.buildPeaks(map)
+      slot = { mesh = mesh, count = n or 0 }
+      MOUND.PEAK.cache[rk0] = slot
+    end
+    if slot.mesh then
+      local tx6 = nil
+      if atlasFor then
+        local okA6, a6 = pcall(atlasFor, map)
+        if okA6 then tx6 = a6 end
+      end
+      -- FADE IN over ~half a second on map entry, the same colour+alpha
+      -- path the fog uses -- a massif materialising beats one teleporting
+      MOUND.PEAK.f = (MOUND.PEAK.f or 0) + 1
+      if slot.born == nil then slot.born = MOUND.PEAK.f end
+      local a = math.min(1, (MOUND.PEAK.f - slot.born) / 30)
+      guarded(function()
+        love.graphics.setColor(1, 1, 1, a)
+        Voxel3D.draw(slot.mesh, tx6, nil)
+        love.graphics.setColor(1, 1, 1, 1)
+      end)
+      peakNote = (", peaks %d"):format(slot.count)
+    end
+  end
+
+  -- ---------- the apron: the world continued past its own rim
+  local apronNote = ""
+  if outdoor and cfg.apron ~= false then
+    local slot = MOUND.APRON.cache[map]
+    if not slot then
+      local mesh, n = MOUND.buildApron(map)
+      slot = { mesh = mesh, count = n or 0 }
+      MOUND.APRON.cache[map] = slot
+    end
+    if slot.mesh then
+      local tx5 = nil
+      if atlasFor then
+        local okA5, a5 = pcall(atlasFor, map)
+        if okA5 then tx5 = a5 end
+      end
+      guarded(function()
+        Voxel3D.draw(slot.mesh, tx5, nil)
+      end)
+      apronNote = (", apron %d"):format(slot.count)
     end
   end
 
@@ -2872,34 +3757,20 @@ function Flora.draw(state, atlasFor)
   local fogNote = drawFog(map, cfg, px, pz)
 
 
-  -- ---------- darkness: last, so it tints everything already drawn
+  -- CAVE DARKNESS removed. It drew nested shells to close the walls in,
+  -- exactly as the Lavender fog does -- but the fog sets a colour with
+  -- ALPHA before drawing and this never did, so the shells came out
+  -- fully opaque: a cave of flat slabs with the clear colour showing
+  -- through wherever they cut the room. It was wrong every time it was
+  -- switched on, which is worse than not existing.
   local darkNote = ""
-  if cfg.dark ~= false then
-    local d = darkness(map)
-    if d.dark then
-      shellMesh = shellMesh or buildShells()
-      if shellMesh then
-        -- Flash does not switch the dark off, it pushes it back: the
-        -- shells scale outward, so the cave opens up around you
-        local scale = d.flash and FLASH_MULT or 1
-        guarded(function()
-          love.graphics.setDepthMode("lequal", false)
-          Voxel3D.draw(shellMesh, white(),
-                       Mat4.mul(Mat4.translate(px, 0, pz),
-                                Mat4.scale(scale, 1, scale)))
-          love.graphics.setDepthMode("lequal", true)
-        end)
-        darkNote = d.flash and ", dark (FLASH)" or ", dark"
-      end
-    end
-  end
 
   local f = featureCache or {}
   status(("%s, %d particles, %d chimneys, %d shore%s%s%s"):format(tuftNote,
          live, #(f.chimneys or {}), #(f.shores or {}),
          isNight() and ", night" or "",
          canopyNote .. rainNote .. puddleNote .. stormNote
-           .. backNote .. nbNote .. lightNote .. caveNote .. vineNote
+           .. peakNote .. trunkNote .. apronNote .. backNote .. nbNote .. lightNote .. caveNote .. vineNote
            .. shaftNote .. fogNote,
          darkNote))
 end
@@ -2934,6 +3805,19 @@ function Flora.invalidate()
     if slot.mesh then pcall(slot.mesh.release, slot.mesh) end
   end
   MOUND.BACKS.cache = {}
+  for _, slot in pairs(MOUND.APRON.cache) do
+    if slot.mesh then pcall(slot.mesh.release, slot.mesh) end
+  end
+  MOUND.APRON.cache = {}
+  for _, slot in pairs(MOUND.TRUNK.cache) do
+    if slot.trunks then pcall(slot.trunks.release, slot.trunks) end
+    if slot.stones then pcall(slot.stones.release, slot.stones) end
+  end
+  MOUND.TRUNK.cache = {}
+  for _, slot in pairs(MOUND.PEAK.cache) do
+    if slot.mesh then pcall(slot.mesh.release, slot.mesh) end
+  end
+  MOUND.PEAK.cache = {}
   poolCache, sconceCache, bats, batsAt, batPics =
     nil, nil, nil, nil, nil
   puddleCache, bolts, boltAt, flash, wetness = nil, nil, nil, 0, 0

@@ -1,8 +1,7 @@
 # Kanto in First Person — Interiors and Tweaks
 
-A companion patch for the [Dramatic Shape Voxel
-Mod](https://github.com/absol89/DramaticShapeVoxelMod/releases) on the
-[Gen 1 Recomp](https://github.com/bryanthaboi/gen1recomp).<img width="756" height="494" alt="mountains" src="https://github.com/user-attachments/assets/8ebfedd8-ab88-4cbf-aa9d-ee4208af34d4" />
+A companion mod for the **Dramatic Shape Voxel Mod** that finishes Kanto's
+first-person view.
 
 Dramatic Shape turns Gen 1 into a voxel world and lets you stand inside it.
 This fills in what the original 2D maps never had to draw: rooms get walls,
@@ -12,7 +11,8 @@ bats; and walking, hopping and stepping through a doorway all carry some
 weight.
 
 Everything here is presentational. Collision, movement, ledge rules,
-triggers, encounters, scripts and saves are untouched.
+triggers, encounters, scripts and saves are untouched — nothing in this mod
+can move the player a single pixel.
 
 ---
 
@@ -65,10 +65,6 @@ triggers, encounters, scripts and saves are untouched.
 - **Rainbows** after a shower, hung opposite the sun and standing where the
   rain left them.
 - **Chimney smoke** by day and **fog** over Lavender Town.
-- **Mountains**
-- **Tall trees**
-- **Risen Boulders**
-
 
 ### Woods and ground level
 
@@ -84,13 +80,14 @@ triggers, encounters, scripts and saves are untouched.
   fireflies after dark, falling leaves, interior dust, spray at the water's
   edge, and the occasional distant rustle with nothing attached to it.
 - **The view carries past the map edge**: neighbouring maps draw their
-  grass too, hazed with distance so the join is not a cut.
+  grass too, hazed with distance so the join is not a cut -- and beyond
+  everything, each edge's own terrain continues outward as an apron,
+  falling gently away, so the world never ends in a paper-thin rim.
 
 ### Movement
 
 - **Jump feel**: the engine already hops you over ledges; this gives the
   hop a crouch, a boosted arc and a landing settle.
-  **Jump** Ever wished you could jump back up those ledges? WELL NOW YOU CAN!
 - **A doorway step**: the eye dips and leans through a warp instead of
   cutting to the other side.
 
@@ -106,10 +103,15 @@ triggers, encounters, scripts and saves are untouched.
 ## Requirements
 
 - The Gen 1 Recompilation Project
-- The **Dramatic Shape Voxel Mod Battle Sprites Fork**, installed and working
+- The **Dramatic Shape Voxel Mod**, installed and working
 
-Tested against Dramatic Shape 1.5.4, 1.5.5 and 1.6.0, and against
-absol89's battle-art fork. Dramatic Shape 1.6.1 and 1.6.2 declare a
+Tested against absol89's fork 1.7.6 -- the mainline since the upstream
+repository was deleted -- and against archived Dramatic Shape 1.5.4,
+1.5.5, 1.6.0 and 1.7.0.
+
+Incorporates **Ledge Leap 1.0.1** (a jump button: hop ledges from any
+side, bounce elsewhere -- JUMP KEY and PAD BUTTON rows, both with OFF).
+If you also run the standalone Ledge Leap, disable one copy. Dramatic Shape 1.6.1 and 1.6.2 declare a
 conflict with this mod; this mod respects the flag, patches nothing, and
 removes any earlier patch. On builds without a first-person rig the interior, canopy
 and sky work in the diorama view and the movement features are skipped.
@@ -117,8 +119,11 @@ and sky work in the diorama view and the movement features are skipped.
 ## Install
 
 1. Download the release `.zip`.
-2. Use the Launcher for Gen1Recomp to install the mod from the zip file.
-3. Set Dramatic Shape's VOXEL mode to **1ST** and go outside.
+2. Unzip into your `mods/` folder so you have `mods/ds_fp_ceilings/`
+   alongside your Dramatic Shape folder.
+3. Start the game. The patch applies before Dramatic Shape loads, so it
+   works on this boot — no restart.
+4. Set Dramatic Shape's VOXEL mode to **1ST** and go outside.
 
 ## Removing it
 
@@ -129,6 +134,9 @@ Either way works:
   on the next boot the patch notices the mod has gone, walks that ledger
   to restore Dramatic Shape byte for byte, deletes its own files, and
   says so in `ds_fp_ceiling_log.txt`.
+- **Or use REMOVE PATCH** and restart, if you prefer an explicit switch.
+  It does the same thing from the same ledger; it is no longer
+  necessary.
 
 ## Options
 
@@ -143,11 +151,17 @@ Either way works:
 | RAIL AND SKIRTING | ON | A picture rail near the ceiling |
 | DOORWAY LIGHT | ON | Daylight lying in through doorways |
 | CEILING LAMPS | ON | Hanging fittings with light pooled beneath |
-| BUILDING BACKS | ON | Covers the false door repeated on a building's back |
+| BUILDING BACKS | ON | Patches false back doors with the wall's own brick |
+| WORLD APRON | ON | Boundary terrain continues past the map's rim |
+| TALL TREES | ON | Rounds stand on trunks -- or stone stacks on rocky maps |
+| MOUNTAIN PEAKS | ON | Clustered rock rises into massifs, across map seams |
+| HEAD BOB | OFF | A gentle walk bob for those who miss it |
+| FAST CHUNKS | ON | Doubles the mesh-build slice so chunks land sooner |
+| JUMP KEY | SPACE | Ledge Leap: hop ledges from any side (J/L-CTRL/OFF) |
+| PAD BUTTON | Y | Ledge Leap on a pad (X/OFF) |
 | CAVE ROCK | ON | Uneven cave roof, stalactites and stalagmites |
 | CAVE POOLS | ON | Still water underground |
 | CAVE TORCHES | ON | Guttering torches set along cave walls |
-| CAVE DARKNESS | ON | Unlit floors close in; Flash widens the light |
 | BATS | ON | Roosts that scatter when you approach |
 | LAMPLIGHT | ON | Doorway lamps casting light that stops at walls |
 | HORIZON | ON | The painted backdrop outdoors |

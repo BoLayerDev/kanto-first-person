@@ -1,5 +1,5 @@
 -- The BACKDROP: a distant horizon for the outdoor world.
--- payload-version: 3
+-- payload-version: 5
 --
 -- Dramatic Shape's outdoor maps end where their meshes end -- past the
 -- last connected map is sky meeting nothing.  This hangs a painted
@@ -29,10 +29,36 @@ local Backdrop = {}
 local RADIUS = 900        -- far enough to read as distance, inside far plane
 local SEGMENTS = 64       -- around the full circle
 local Y_BOTTOM = -120     -- skirt below the horizon: no gap under the band
+-- and a DEEP skirt below that, for the diorama and 3RD rungs. Looking at
+-- the world from above and outside, the eye clears the map's own edge and
+-- sees under it -- where the painted band simply stopped and the void
+-- began, which is the horizon "cutting off" people report. This continues
+-- the panorama's BOTTOM ROW of pixels straight down: the same colour the
+-- land ends in, carried far enough below the map that nothing can see
+-- past it, at no cost in texture or detail.
+local Y_DEEP = -1400
+-- a floor across the middle, in that same bottom-row colour, so the gap
+-- is closed from directly overhead as well as from the side
+local FLOOR_RINGS = 3
 local Y_TOP = 300         -- headroom above it
 local DRIFT = 1 / 24000   -- texture drift per world pixel walked
 
 local mesh, image, failed = nil, nil, false
+local underMesh, whiteImg = nil, nil
+local groundColor = { 0.62, 0.60, 0.48 }   -- until the art is read
+
+local function white()
+  if whiteImg ~= nil then return whiteImg or nil end
+  local ok, img = pcall(function()
+    local d = love.image.newImageData(1, 1)
+    d:setPixel(0, 0, 1, 1, 1, 1)
+    local i = love.graphics.newImage(d)
+    i:setFilter("nearest", "nearest")
+    return i
+  end)
+  whiteImg = (ok and img) or false
+  return whiteImg or nil
+end
 
 local function status(s) _G.__ds_backdrop_status = s end
 status("loaded; awaiting the first outdoor frame")
@@ -98,12 +124,65 @@ local function build()
   return Voxel3D.newMesh(verts, indexMap)
 end
 
+-- the skirt and floor live on their own mesh, textured by the white
+-- pixel and tinted with the panorama's own ground colour: one flat tone
+local function buildUnder()
+  local verts, indexMap, quads = {}, {}, 0
+  for i = 0, SEGMENTS - 1 do
+    local a0 = (i / SEGMENTS) * math.pi * 2
+    local a1 = ((i + 1) / SEGMENTS) * math.pi * 2
+    local x0, z0 = math.cos(a0) * RADIUS, math.sin(a0) * RADIUS
+    local x1, z1 = math.cos(a1) * RADIUS, math.sin(a1) * RADIUS
+    verts[#verts + 1] = { x1, Y_BOTTOM, z1, 0.5, 0.5, 1 }
+    verts[#verts + 1] = { x0, Y_BOTTOM, z0, 0.5, 0.5, 1 }
+    verts[#verts + 1] = { x0, Y_DEEP, z0, 0.5, 0.5, 1 }
+    verts[#verts + 1] = { x1, Y_DEEP, z1, 0.5, 0.5, 1 }
+    Voxel3D.pushQuad(indexMap, quads)
+    quads = quads + 1
+    for r = 1, FLOOR_RINGS do
+      local o = (r - 1) / FLOOR_RINGS
+      local n = r / FLOOR_RINGS
+      local ro, rn = RADIUS * (1 - o), RADIUS * (1 - n)
+      verts[#verts + 1] = { math.cos(a1) * ro, Y_DEEP, math.sin(a1) * ro,
+                            0.5, 0.5, 1 }
+      verts[#verts + 1] = { math.cos(a0) * ro, Y_DEEP, math.sin(a0) * ro,
+                            0.5, 0.5, 1 }
+      verts[#verts + 1] = { math.cos(a0) * rn, Y_DEEP, math.sin(a0) * rn,
+                            0.5, 0.5, 1 }
+      verts[#verts + 1] = { math.cos(a1) * rn, Y_DEEP, math.sin(a1) * rn,
+                            0.5, 0.5, 1 }
+      Voxel3D.pushQuad(indexMap, quads)
+      quads = quads + 1
+    end
+  end
+  return Voxel3D.newMesh(verts, indexMap)
+end
+
 -- the panorama itself, written next to this module by the companion mod
 local function texture()
   if image or failed then return image end
   local ok, img = pcall(function()
     local path = rawget(_G, "__ds_backdrop_path")
                  or "mods/DRAMATIC_SHAPE/lib/backdrop.png"
+    -- THE GROUND COLOUR, read once from the art itself: the average of
+    -- the panorama's bottom row is the colour its land ends in, and the
+    -- skirt and floor are painted in that single flat tone. Stretching
+    -- the bottom ROW downward smeared every colour in it -- trees,
+    -- fields, shore -- into vertical taffy; a plain of one colour reads
+    -- as distant ground.
+    pcall(function()
+      local data = love.image.newImageData(path)
+      local w, h = data:getWidth(), data:getHeight()
+      local r, g, b, n = 0, 0, 0, 0
+      for x = 0, w - 1, 8 do
+        local pr, pg, pb, pa = data:getPixel(x, h - 1)
+        if pa > 0.5 then r, g, b, n = r + pr, g + pg, b + pb, n + 1 end
+      end
+      if n > 0 then
+        groundColor = { r / n, g / n, b / n }
+      end
+      data:release()
+    end)
     local i = love.graphics.newImage(path)
     i:setWrap("repeat", "clamp")
     i:setFilter("nearest", "nearest")
@@ -176,6 +255,15 @@ function Backdrop.draw(state)
     -- behind everything: test against depth but never write to it, so no
     -- real geometry can ever be occluded by the painting
     love.graphics.setDepthMode("lequal", false)
+    -- the solid ground first, so the painted band draws over its top edge
+    underMesh = underMesh or buildUnder()
+    local wp = white()
+    if underMesh and wp then
+      love.graphics.setColor(groundColor[1], groundColor[2],
+                             groundColor[3], 1)
+      Voxel3D.draw(underMesh, wp, Mat4.translate(px, 0, pz))
+      love.graphics.setColor(1, 1, 1, 1)
+    end
     Voxel3D.draw(mesh, tex, Mat4.translate(px, 0, pz))
   end)
   if drew then
@@ -188,6 +276,8 @@ end
 function Backdrop.invalidate()
   if mesh then pcall(mesh.release, mesh) end
   mesh = nil
+  if underMesh then pcall(underMesh.release, underMesh) end
+  underMesh = nil
 end
 
 return Backdrop

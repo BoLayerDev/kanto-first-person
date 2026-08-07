@@ -1,5 +1,5 @@
 -- The JUMP: what a ledge hop feels like from inside the head.
--- payload-version: 4
+-- payload-version: 5
 --
 -- The engine already hops the player over a ledge, and Dramatic Shape's
 -- first-person rig already carries the eye along that arc -- but the arc
@@ -119,6 +119,9 @@ end
 -- The eye offset for this frame, in world pixels.  Called from the rig's
 -- head expression (lib/FirstPerson.lua) once per eye, so it must be cheap
 -- and must never throw: a bad frame here would take the camera with it.
+local bobT, bobEnv, bobPhase = nil, 0, 0
+local BOB_AMP, BOB_HZ = 1.5, 2.1
+
 function Jump.eyeOffset(me)
   local ok, offset = pcall(function()
     local cfg = config()
@@ -148,12 +151,33 @@ function Jump.eyeOffset(me)
       end
     end
 
-    -- THE WALK BOB IS GONE. It was the single most complained-about
-    -- thing this mod did -- the Dramatic Shape author called it "this
-    -- horrible up and down motion", and he was speaking for a crowd. The
-    -- hop, the landing settle and the doorway step below all remain:
-    -- they respond to EVENTS, which reads as weight; a bob runs all the
-    -- time, which reads as seasickness.
+    -- THE WALK BOB: opt-in, OFF by default. Its removal was the single
+    -- most complained-about thing this mod ever undid -- and its
+    -- presence was the most complained-about thing it ever did. Both
+    -- crowds were right about themselves, so it is a HEAD BOB toggle
+    -- now: off, the camera responds only to events (hop, landing,
+    -- doorway), which reads as weight; on, a gentle sine rides each
+    -- step, eased in and out so starting and stopping never snap.
+    if cfg.headbob == true then
+      local moving = me and me.moving and not (lift > 0)
+      local last = bobT or t
+      local raw = math.min(t - last, 1)
+      -- phase must not leap on a hitch; the envelope's DECAY may -- a
+      -- big step just settles it at zero, which is where it was headed
+      local dt = math.min(raw, 0.1)
+      bobT = t
+      if moving then
+        bobEnv = math.min(1, (bobEnv or 0) + dt / 0.18)
+      else
+        bobEnv = math.max(0, (bobEnv or 0) - raw / 0.25)
+      end
+      if (bobEnv or 0) > 0 then
+        bobPhase = (bobPhase or 0) + dt * math.pi * 2 * BOB_HZ
+        off = off - math.sin(bobPhase) * BOB_AMP * bobEnv
+      else
+        bobPhase = 0
+      end
+    end
 
     -- the doorway step: a dip that eases back out, on its own clock
     if stepAt then

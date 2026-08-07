@@ -1,5 +1,406 @@
 # Changelog
 
+## 1.50.0
+
+- **Ridges run across map boundaries.** MOUNTAIN PEAKS built only the
+  current map, so the massif you stood in went flat two maps over --
+  the most immersive feature undoing itself at every seam. Each
+  NEIGHBOUR map's peaks are now built from its own cells (same gates,
+  same builder, cached per map id) and drawn at the neighbour's offset
+  under the same distance haze as its grass -- the ridge continues into
+  the blue instead of vanishing. Connection bands still keep both sides
+  of a seam corridor clear, so the crossing itself stays open.
+- **HEAD BOB restored as a toggle, OFF by default.** Its removal was
+  the most requested reversal this mod has had; its presence was the
+  most complained-about thing it ever did. Both crowds were right about
+  themselves. Off (the default), the camera responds only to events --
+  hop, landing, doorway -- exactly as since 1.3x. On, a gentle sine
+  rides each step, eased in over a few frames and eased out to exactly
+  zero on stopping, and it stands down during hops so the two never
+  fight. The old guarantee has a test: with the toggle off, a moving
+  player's eye does not move.
+
+## 1.49.0
+
+The upstream Dramatic Shape repository was deleted by its author;
+absol89's fork is now the mainline. This release moves with it.
+
+- **absol89's fork 1.7.6 is fully supported.** Three things needed
+  doing, each verified by the fork harness against the actual release:
+  - 1.7.6 renamed the mod id to BATTLE_ART_VOXEL_FORK; discovery now
+    accepts either identity.
+  - 1.7.6 is whitelisted, and -- unlike the old 1.3.0-era fork -- it
+    SHIPS the FirstPerson rig, so the jump payload installs there too.
+  - The fork's sources mix LF with Windows-pasted CRLF regions, one of
+    them exactly around the mesher's stamp expansion. Every anchored
+    find written with \n silently misses a line ending \r\n -- the
+    silent-no-op failure class -- so every engine source is normalised
+    on read before any splice looks at it.
+  All previously supported upstream versions (1.3.0-fork through 1.7.0)
+  remain supported for anyone running archived copies.
+- **JUMP BUTTON: Ledge Leap 1.0.1 incorporated**, design intact and
+  credited: Space (or J / L-CTRL) and pad Y (or X) hop a faced ledge
+  from ANY side -- including up -- via the engine's own forced two-cell
+  walk, arc and chirp; anything else gets a bounce on the spot. The arc
+  rides hopFrames, which the first-person camera already turns into
+  vertical lift, so the button and JUMP FEEL compose automatically. New
+  JUMP KEY and PAD BUTTON rows (with OFF); if you run the standalone
+  Ledge Leap alongside, set these OFF or remove one copy -- two
+  listeners means two hops per press.
+
+## 1.48.0
+
+- **FAST CHUNKS (new toggle, on): geometry stops appearing in front of
+  you.** The "draw distance" was never a distance -- Dramatic Shape
+  cooks chunk meshes inside a per-frame time budget, and the 5ms idle
+  slice could not keep pace with a walking player. The slice is doubled
+  while the option is on, read from the config bridge at load, so an
+  orphaned install reverts to stock. Costs a few ms per frame while
+  chunks stream; turn it off on weak hardware.
+- **Buildings refuse the massif.** The flooded second material now
+  vetoes any candidate touching a roof-class cell or a door -- the Poke
+  Center wore a summit for three cells of flood reach. Authored rock ids
+  are immune; only flooded cells must prove themselves.
+- **Cave mouths get a LINTEL.** A door cell flanked by cluster rock on
+  opposite sides is a cave entrance; skipping it (doors are walkable)
+  notched a slot of sky through the massif over Mt. Moon. Rock now
+  bridges across, its underside one band above the wall top so the
+  doorway stays open, its summit never overtopping its shoulders, with
+  a ceiling face so the pass reads solid from below.
+
+## 1.47.1
+
+Three refinements to MOUNTAIN PEAKS from the first playtest.
+
+- **The second material joins the massif.** The same rock wall often
+  runs two drawings -- the dark check and the light orange -- and only
+  the authored pool ids erupted. Any contiguous upright, unwalkable cell
+  within three cells of a pool seed now joins: the cluster vouches for
+  it, whatever its tile id. A building cannot join -- walkable ground
+  separates it, and even direct wall contact leaks at most three cells
+  before the reach cap bites.
+- **Taller and jagged.** Distance step 2 -> 3 bands, cap 7 -> 12
+  (hearts near 200px over the wall), per-cell jitter widened to four
+  bands, and roughly one cell in seven throws a three-band SPIRE past
+  its neighbours -- so ridgelines read as rock, not battlements.
+- **Peaks fade in** over about half a second on map entry, on the same
+  colour+alpha path the fog uses -- a massif materialising instead of
+  teleporting. (Trunks appearing with their bushes as chunks stream is
+  the engine's own behaviour: the supports pop exactly when Dramatic
+  Shape's bushes do, never alone.)
+
+## 1.47.0
+
+- **MOUNTAIN PEAKS: the clustered rock rises.** The route rock is
+  authored -- on OVERWORLD, Dramatic Shape's own tables pin the mound
+  drawing as `wall = { 2, 36 }` ("the rock pillar, the plateau body").
+  Where those cells run in clusters of four or more, further courses of
+  the same rock now stack on top, rising toward the cluster's interior:
+  each cell's height grows with its BFS distance from the cluster's rim
+  (plus a per-cell jitter so ridgelines are not staircases), up to seven
+  extra courses at the heart. Every face and cap is textured with the
+  cell's own four subtiles, band by band, so the drawn rock simply
+  continues upward at true scale.
+  - The full gate stack applies, in the order the ghosts taught:
+    authored tile id AND authored upright class AND not walkable AND
+    outdoors AND not in a connection band. No stamps, no registry --
+    this derives from stable map data alone, so none of the seam
+    machinery is even involved.
+  - Lone pillars and pairs stay stock (cluster minimum four); indoor
+    maps are untouched; a new MOUNTAIN PEAKS toggle (on) turns it off
+    entirely.
+  - Honest limits: heights root at the wall's authored top, so rock on
+    elevated terraces may need the terrain-base treatment the trees got
+    -- one playtest will say. And if this art pack binds the orange
+    check to different ids, the pool is a one-line table edit
+    (MOUND.PEAK_TILES), exactly like the tree/boulder swap was.
+
+## 1.46.0
+
+- **BUILDING BACKS: the false-door patch is now real brick.** Two
+  faults, both visible in one department-store screenshot:
+  - The cover stretched ONE 8px tile over the 16px cell -- brick at
+    double size, a smear that matched nothing around it. The patch is
+    now FOUR quads, each sampling the matching quadrant of a donor cell
+    along the same back wall, so the courses line up with the brick on
+    either side and the cover vanishes into it.
+  - A double-wide entrance spans two cells but the engine flags only
+    the warp cell, leaving its twin as a black column beside the patch.
+    If a solid, unflagged neighbour's body row carries the same art as
+    the door column's, it is the other half of the doorway and is
+    covered too. A false positive on a plain wall is harmless: it gets
+    covered with its own matching brick.
+
+## 1.45.8
+
+- **The ghosts were never headless -- their heads were upstairs.
+  Supports now root at each stamp's TRUE terrain base.** The nearest-
+  cell diagnostic plus two screenshots finally showed canopies floating
+  far ABOVE the bare stems: Dramatic Shape bakes each cell's terrain
+  height into the stamp template, so a bush on a ledge terrace sits at
+  terrain + lift -- while every support rose from flat y=0. On flat
+  ground they met perfectly (the "PERFECT" trees); on Kanto's terraced
+  route mouths -- which is exactly where connections cluster, hence
+  every seam correlation -- the stem stopped at ground level and its
+  canopy floated at terrace height, reading as a ghost. The mesher
+  splice now publishes each lifted stamp's true base (the minimum of its
+  template's own geometry), and every trunk, stack and branch roots
+  there. Upgraded in place on old installs, with a harness scenario for
+  the upgrade and a terraced-stamp test that must touch its terrace
+  exactly.
+
+## 1.45.7
+
+- **The seam ghosts, by the numbers: connection bands are now support-
+  free.** The nearest-cell diagnostic named the ghosts as `12|0 12|1
+  9|0` on ROUTE_1 -- the connection overlap rows. Adjacent maps BOTH
+  author the rows where they join; each map's copy of that band contains
+  round, unwalkable tiles, truthfully -- so every earlier gate passed --
+  but the band's presentation belongs to whichever side the player is
+  on. On any edge that has a connection, supports are no longer built
+  within two cells of that edge or in the ring beyond it. Edges without
+  a connection -- the border tree walls -- keep every trunk, as before.
+  The harness models the seam exactly: round ids, unwalkable, in the
+  band, and must stay bare, while the unconnected-edge ring tree keeps
+  its trunk.
+
+## 1.45.6
+
+- **Diagnostic release.** The FLOR line now names the three built
+  support cells NEAREST THE PLAYER, with kinds -- `near:12|7b 13|7t
+  14|7b`. Stand inside a ghost cluster and the HUD identifies the exact
+  registry cells producing it, plus which kind they resolved to. One
+  screenshot from inside the ghosts turns the remaining archaeology
+  deterministic. Nothing else is changed; the trees, boulders, stacks
+  and heights are untouched.
+
+## 1.45.5
+
+- **THE ghost bug, found by its own confession: the registry was keyed
+  by a map object the engine REUSES.** The new HUD diagnostic showed the
+  identical tree/boulder split and the identical boulder cell keys on
+  two different maps -- impossible unless the bucket was shared. It was:
+  the engine keeps ONE map object and mutates it on every transition, so
+  "keyed per map" merged every map into a single pot, and crossing a
+  connection rained the previous map's cells onto the new one as
+  indiscriminate ghost stems -- wooden stems around boulders, supports
+  on paths -- until remeshes caught up. Exactly the reported behaviour.
+  The registry (publish, tombstone, and read) is now keyed by the map's
+  stable ID string. A regression test plants another map's entries in
+  the registry and asserts they grow nothing here.
+- The HUD split now belongs to the map being drawn, not the last map
+  built, and the splice-upgrade shim recognises this edition too --
+  stripping the tombstone before the lift block, since the tombstone
+  contains no `return` and the lift pattern would overrun it.
+
+## 1.45.4
+
+- **The seam ghosts, actually: superseded singles, now tombstoned.**
+  Route 22's count dropping 275 -> 27 proved the gates work; the
+  survivors stood BESIDE grounded big trees, which was the tell. When a
+  chunk first meshes a 2x2 tree straddling its border, the cells go down
+  the SINGLE-cell path -- stamped, published, lifted. A later, fuller
+  remesh forms the grouped big tree for those same cells, drawn
+  grounded, and the singles are never recreated -- but the registry
+  never forgot them, leaving supports under nothing, clustered exactly
+  where big trees stand. The group stamp site now writes a TOMBSTONE:
+  claiming a 2x2 deletes its four member cells from the registry. A
+  harness test lifts the injected deletion out of the patched file and
+  runs it: exactly the four members go, nothing else.
+- **The FLOR line now reads like `27 trunks (19t/8b 12|7 13|7 14|7)`** --
+  a tree/boulder split plus the first three boulder cells' coordinates.
+  If any ghost survives the tombstone, its next screenshot names the
+  exact cells, and the archaeology takes minutes instead of releases.
+
+## 1.45.3
+
+- **The seam ghosts are gone: supports never stand on walkable ground.**
+  The tile-id filter could not catch them because their tiles LIE: near
+  map connections the base data is padded with the border TREE block and
+  the overlay draws path on top, so `tileAt` says tree while the player
+  strolls across the cell -- which is why the ghosts hugged the seams
+  and reported healthy tile ids. Collision cannot lie the same way: it
+  has to match what the player can actually do. A registry entry on a
+  WALKABLE cell now builds nothing. Real trees and boulders are never
+  walkable and are untouched; out-of-bounds ring and strip cells read
+  not-walkable and keep their trunks; and the harness now includes a
+  lying seam cell -- tree id, walkable -- that must stay bare.
+
+## 1.45.2
+
+- **Ghost trunks filtered out; the trees and boulders are untouched.**
+  Bare supports were standing on pathways, clustered at map-section
+  seams -- registry entries for cells that draw no round object at all.
+  A support is now built only where the cell's own tile is a KNOWN round
+  id (the tree set or the boulder set for that tileset); path tiles fail
+  that test and get nothing, while edge and connection-strip trees pass
+  it, because the strip serves the neighbour's real tree ids. Tilesets
+  without curated sets trust the registry as before, so nothing is lost
+  where the catalogue is thin. The working delineation, the solid stone
+  stacks and the exact stamp-to-support heights are all unchanged.
+
+## 1.45.1
+
+- **Fixed: every support vanished for anyone upgrading from 1.43.x.**
+  Those releases spliced a lift with no publish, and the splice's own
+  marker made 1.45.0's idempotence check say "already done" -- so the
+  publishing edition never landed, the registry stayed empty, and the
+  bushes floated with nothing beneath while the lifts lived on. The
+  patcher now recognises an older edition of its own splice, strips it
+  back to the stock line, and applies the current one -- with a test
+  that regresses the file and asserts the upgrade, without duplicates.
+
+## 1.45.0
+
+Three fixes to TALL TREES from the Viridian playtest, one of them
+structural.
+
+- **Supports are built only under REAL stamps.** The HUD's "660 trunks"
+  in Viridian was the tell: re-deriving tree cells from TileShape
+  over-matched wildly, which is what scattered supports across walkable
+  paths. The Structures splice now PUBLISHES each cell it actually
+  stamps (keyed per map, with the exact lift the mesher applies), and
+  the payload builds supports only from that registry -- a support with
+  nothing above it is now impossible by construction, and trunk heights
+  can never drift from bush heights. The mesh rebuilds as chunks stream
+  in.
+- **Tree and boulder ids were swapped.** In the shipped art the
+  border-wall drawing is the GREEN tree rows and the lone canopy is the
+  grey rock. Playtest beats archaeology; the sets are corrected.
+- **Stone supports are solid.** The crossed-panel stack read as flat
+  sheets; a boulder now stands on a four-sided BOX in two courses --
+  wide below, narrower above -- so it reads as piled stone from every
+  angle.
+
+## 1.44.1
+
+- **Boulders stand on stone stacks -- delineated by TILE ID, per cell.**
+  The palette theory died on a route: grey rounds under a green palette,
+  because they are a different DRAWING. The border-wall cell (tiles
+  64/65/80/81 on OVERWORLD) is what reads as boulders; the lone canopy
+  (42/43/58/59) is the tree. Both sit in Dramatic Shape's cylinder pool,
+  but the authored ids are distinct -- the exact code-level delineator
+  wanted from the start. Boulder cells now get a two-course stone stack
+  (still lifted, still height-varied, so they hover as cairns); tree
+  cells keep trunk and branches; both kinds mix correctly on one map.
+  The gym rock (44-47 over 7/8/23/24) is stacked too.
+- **Border rounds get their supports.** Dramatic Shape stamps rounds in
+  a ring PAST the map edge (Structures' ROUND_RING); the support scan
+  stopped at the boundary, so edge trees hovered on nothing. The scan
+  now walks the same two-cell ring.
+
+## 1.44.0
+
+- **Stone stacks under stone-palette rounds.** The grey "boulders" that
+  1.43.1 put on tree trunks are, in the engine's own data, TREES: the
+  same eight tile ids as every route's round trees, coloured grey by the
+  map's assigned SGB palette (Pewter's, the caves', the tower's). There
+  is no boulder tile to key on -- the palette IS the distinction, and it
+  is deterministic engine data, not sampled pixels. On the stone
+  palettes (PEWTER, CAVE, GRAYMON, INDIGO) a lifted round now stands on
+  a two-course STACK OF STONES -- squat, speckled, no branches -- and
+  everywhere else on a trunk, as before. The lift itself is unchanged,
+  so Pewter's rocks hover as stacked cairns rather than lollipops.
+
+## 1.43.1
+
+TALL TREES did nothing in 1.43.0, for two independent reasons -- either
+alone would have sufficed.
+
+- **The splice only ran on a FRESH install.** An already-patched game
+  took the "ceiling patch active / module updated" branch, which
+  refreshed payloads but never touched Structures or the mesher, so the
+  lift was never spliced in. The tree splice now runs on every boot, on
+  both branches, idempotently -- and re-lands automatically if a
+  Dramatic Shape update overwrites the files.
+- **It was keyed to the wrong class.** In TileShape's own tables the
+  class named `tree` is the flat upright of the hedgerow tree-LINES; the
+  round bush is class `cylinder`, and `tree` never reaches the
+  round-stamp path at all. Both the lift and the trunks were checking a
+  class that SOUNDED right instead of the one the engine routes there --
+  the mountains lesson, relearned. Both sides now key on `cylinder`,
+  hedgerows explicitly get no trunks, and a test holds each line.
+
+## 1.43.0
+
+- **TALL TREES: the round bushes stand on trunks.** Dramatic Shape
+  authors its trees -- every round bush is a `tree`-class shape in
+  TileShape's own tables, built as a "round stamp" by Structures and
+  expanded by the mesher. No colour guessing anywhere: the stamp is
+  tagged with a LIFT at creation, guarded by that authored class, and the
+  mesher applies it on expansion. Heights vary per cell (three steps, by
+  position hash), and this mod draws the trunks underneath -- crossed
+  quads of generated bark, a branch on every third tree -- sharing the
+  same hash so each trunk meets its own bush's base exactly.
+  - This deepens the patch by two one-line splices (Structures,
+    ChunkMesher), both anchored exactly, both in the write ledger, both
+    reading the config bridge -- so with TALL TREES off, or this mod
+    deleted, the lift is zero and the geometry is stock.
+  - Known limits, stated plainly: collision is untouched (you cannot walk
+    under a raised bush); the big 2x2 canopy-group trees stay grounded
+    for now; CUT bushes rebuild their chunk and vanish correctly.
+  - New TALL TREES toggle, on by default.
+
+## 1.42.1
+
+Both halves of "the world past the rim" redone after the first playtest.
+
+- **The under-horizon is one flat tone, sampled from the art.** Pinning
+  the skirt to the panorama's bottom ROW smeared every colour in it --
+  trees, fields, shore -- into vertical streaks. The skirt and floor are
+  now a single colour: the average of the panorama's own bottom row,
+  read once from the file, so each horizon grounds itself in the tone
+  its painted land actually ends in.
+- **The apron continues the GROUND, not the obstacle.** A map's boundary
+  row is very often the thing that stops you -- fences, ledges, tree
+  lines -- and continuing that outward drew dark fence to the horizon.
+  Water still continues as water; anything else takes its tile from the
+  first WALKABLE cell inward from the edge, which is the grass, path or
+  sand the boundary stands in. Hazing softened from 45% to 18%: distance
+  should cool, not black out.
+
+## 1.42.0
+
+- **WORLD APRON: the world continues past its own rim.** The map was a
+  plateau with nothing beyond its edge -- a paper-thin rim and then void
+  all the way to the painted backdrop, which made the world read as
+  SMALL. Each boundary cell's own tile now continues outward, ring by
+  ring, stepping gently down and fading with the same haze the
+  neighbouring maps use: grass runs on as grass, water as water, sand as
+  sand, because the tile IS the edge it extends.
+  - Cost: one static mesh per map, built once from the atlas already
+    bound. No new textures, a few hundred quads -- memory cost as near
+    nothing as makes no difference.
+  - It sits a shade below true ground level, so real terrain and
+    Dramatic Shape's own neighbour-map meshes always draw over it: no
+    seams, no z-fighting, no connection bookkeeping.
+  - New WORLD APRON toggle, on by default.
+
+## 1.41.0
+
+- **Dramatic Shape 1.7.0 is supported.** Nothing in 1.7.0 blocks this mod
+  -- its conflict flag is unchanged and every anchor this patch uses is
+  intact; what was stopping it was this mod's own untested-version gate,
+  added after 1.6.2. 1.7.0 is now tested and listed. Its diorama viewport
+  and chroma key are set for the whole frame, so this mod's passes are
+  cut and keyed with everything else rather than fighting it.
+- **Renamed to `ds_fp_ceilings`** -- plural, which it should always have
+  been. NOTE: the launcher matches conflicts by id, so Dramatic Shape's
+  `"conflicts": ["ds_fp_ceiling"]` no longer matches this mod's id. This
+  mod therefore checks Dramatic Shape's manifest ITSELF, still matching
+  the old spelling, and stands down exactly as before. The rename is not
+  a way round the flag.
+- **CAVE DARKNESS removed.** It drew nested shells to close the walls in,
+  the same mesh the Lavender fog uses -- but the fog sets a colour with
+  ALPHA before drawing and this never did, so the shells came out fully
+  opaque: a cave of flat slabs with the clear colour showing through
+  them. It was wrong every time it was switched on.
+- **The horizon no longer cuts off from above.** Looking at the world
+  from the diorama and 3RD rungs, the eye clears the map's own edge and
+  saw under it, where the painted band stopped and the void began. The
+  panorama's bottom row of pixels now continues straight down and across
+  a floor, in the exact colour the painted land ends in.
+
 ## 1.40.1
 
 - **Building backs: the door cell only, in the back wall's own brick.**

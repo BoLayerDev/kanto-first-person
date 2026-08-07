@@ -30,7 +30,11 @@
 -- boot backs the patch out.  Dramatic Shape itself gains an FP CEILING
 -- row for the runtime toggle.
 
-local DS_ID = "DRAMATIC_SHAPE"
+-- The original author deleted the upstream; absol89's fork carries the
+-- torch and renamed its id at 1.7.6. Either identity is Dramatic Shape
+-- to this patch.
+local DS_IDS = { "DRAMATIC_SHAPE", "BATTLE_ART_VOXEL_FORK" }
+local DS_ID = "DRAMATIC_SHAPE"   -- kept for messages
 local STATE_FILE = "ds_fp_ceiling_state"
 local MARK = "Ceiling.draw"   -- present in VoxelScene.lua only when patched
 
@@ -130,6 +134,23 @@ return function(mod)
     { key = "rock", label = "CAVE ROCK", type = "toggle", default = true },
     { key = "backs", label = "BUILDING BACKS", type = "toggle",
       default = true },
+    { key = "apron", label = "WORLD APRON", type = "toggle",
+      default = true },
+    { key = "talltrees", label = "TALL TREES", type = "toggle",
+      default = true },
+    { key = "peaks", label = "MOUNTAIN PEAKS", type = "toggle",
+      default = true },
+    { key = "fastchunks", label = "FAST CHUNKS", type = "toggle",
+      default = true },
+    { key = "headbob", label = "HEAD BOB", type = "toggle",
+      default = false },
+    { key = "jumpkey", label = "JUMP KEY", type = "choice",
+      default = "space",
+      choices = { { "SPACE", "space" }, { "J", "j" },
+                  { "L-CTRL", "lctrl" }, { "OFF", "off" } } },
+    { key = "jumppad", label = "PAD BUTTON", type = "choice",
+      default = "y",
+      choices = { { "Y", "y" }, { "X", "x" }, { "OFF", "off" } } },
     { key = "pools", label = "CAVE POOLS", type = "toggle", default = true },
     { key = "sconces", label = "CAVE TORCHES", type = "toggle",
       default = true },
@@ -155,7 +176,6 @@ return function(mod)
       choices = { { "OFF", "OFF" }, { "SUBTLE", "SUBTLE" },
                   { "WILD", "WILD" } } },
     { key = "particles", label = "PARTICLES", type = "toggle", default = true },
-    { key = "dark", label = "CAVE DARKNESS", type = "toggle", default = true },
     { key = "rain", label = "RAIN", type = "choice", default = "SOMETIMES",
       choices = { { "OFF", "OFF" }, { "SOMETIMES", "SOMETIMES" },
                   { "ALWAYS", "ALWAYS" } } },
@@ -211,6 +231,11 @@ return function(mod)
       fittings = opt("fittings", true) ~= false,
       rock = opt("rock", true) ~= false,
       backs = opt("backs", true) ~= false,
+      apron = opt("apron", true) ~= false,
+      talltrees = opt("talltrees", true) ~= false,
+      peaks = opt("peaks", true) ~= false,
+      fastchunks = opt("fastchunks", true) ~= false,
+      headbob = opt("headbob", false) == true,
       pools = opt("pools", true) ~= false,
       sconces = opt("sconces", true) ~= false,
       bats = opt("bats", true) ~= false,
@@ -220,7 +245,6 @@ return function(mod)
       jump = opt("jump", "SUBTLE"),
       grass = opt("grass", "SUBTLE"),
       particles = opt("particles", true) ~= false,
-      dark = opt("dark", true) ~= false,
       rain = opt("rain", "SOMETIMES"),
       umbrellas = opt("umbrellas", true) ~= false,
       puddles = opt("puddles", true) ~= false,
@@ -366,15 +390,30 @@ return function(mod)
     return src:sub(1, s - 1) .. add .. src:sub(e + 1)
   end
 
+  -- ------- reading engine sources: normalise line endings first.
+  -- absol89's 1.7.6 mixes LF with Windows-pasted CRLF regions -- one of
+  -- them exactly around the mesher's stamp expansion -- and an anchored
+  -- find written with \n silently misses a line that ends \r\n.
+  local function readSrc(p)
+    local s2 = read(p)
+    if s2 then s2 = s2:gsub("\r\n", "\n") end
+    return s2
+  end
+
   -- ------- find Dramatic Shape and its version
   local function findDS()
     local ok, names = pcall(fs.getDirectoryItems, "mods")
     if not ok or not names then return nil end
     for _, name in ipairs(names) do
       local manifest = read("mods/" .. name .. "/manifest.json")
-      if manifest and manifest:find('"id"%s*:%s*"' .. DS_ID .. '"') then
-        local version = manifest:match('"version"%s*:%s*"([^"]+)"') or "?"
-        return "mods/" .. name, version
+      if manifest then
+        for _, id in ipairs(DS_IDS) do
+          if manifest:find('"id"%s*:%s*"' .. id .. '"') then
+            local version = manifest:match('"version"%s*:%s*"([^"]+)"')
+                            or "?"
+            return "mods/" .. name, version
+          end
+        end
       end
     end
     return nil
@@ -409,6 +448,157 @@ return function(mod)
     if not s2 then return nil end
     return vs:sub(1, s2 - 1) .. before .. line .. after .. vs:sub(e2 + 1),
            "terrain line"
+  end
+
+  -- ------- TALL TREES: two one-line splices, applied on EVERY boot.
+  -- 1.43.0 ran this only inside the fresh apply() -- an install that was
+  -- already patched took the "module updated" branch instead, so the
+  -- splice never landed and the feature did nothing. Idempotent: each
+  -- file is checked for its own marker before anything is written.
+  local function spliceTallTrees(base)
+      do
+        local stPath = base .. "/lib/Structures.lua"
+        local st = readSrc(stPath)
+        -- UPGRADE an older edition of this same splice: 1.43.x injected
+        -- a lift with no publish, and its marker made the idempotence
+        -- check say "already done" -- so 1.45's registry stayed empty
+        -- and every support vanished while the lifts lived on. A prior
+        -- injected block is stripped back to the stock line first; the
+        -- current one then applies as if fresh.
+        if st and st:find("__ds_tree_lift", 1, true)
+           and not st:find("__ds_round_key", 1, true) then
+          -- the TOMBSTONE strips first: its block contains no `return`,
+          -- so the lift pattern (which requires one) would overrun it
+          -- and eat everything through the next site
+          local stripped = st:gsub(
+            ",\n%s+%-%- ds_fp_ceilings __ds_round_tomb.-end%)%(%) }",
+            " }", 1)
+          stripped = stripped:gsub(
+            ",\n%s+%-%- ds_fp_ceilings.-return.-end%)%(%) }", " }", 1)
+          if stripped ~= st and stripped:find("{ quads = tpl.quads,"
+               .. " mx = cx %* 16 %+ 8, mz = cy %* 16 %+ 8 }") then
+            st = stripped
+            write(stPath, st)
+          end
+        end
+        local stOld = "          S.roundStamps[#S.roundStamps + 1] =\n"
+                      .. "            { quads = tpl.quads, mx = cx * 16 + 8,"
+                      .. " mz = cy * 16 + 8 }"
+        if st and st:find(stOld, 1, true) and not st:find("__ds_tree_lift") then
+          local stNew = "          S.roundStamps[#S.roundStamps + 1] =\n"
+          .. "            { quads = tpl.quads, mx = cx * 16 + 8,"
+          .. " mz = cy * 16 + 8,\n"
+          .. "              -- ds_fp_ceilings: trees stand on trunks; the\n"
+          .. "              -- stamped cell is published so the companion\n"
+          .. "              -- builds supports under REAL stamps only\n"
+          .. "              lift = (function() local _c ="
+          .. " rawget(_G, \"__ds_ceiling_config\")\n"
+          .. "                _c = _c and _c()\n"
+          .. "                if not (_c and _c.talltrees and s.class =="
+          .. " \"cylinder\") then return 0 end\n"
+          .. "                local _h = (cx * 73856093 + cy * 19349663)"
+          .. " % 3\n"
+          .. "                local _l = 8 + _h * 6\n"
+          .. "                -- __ds_round_key: the engine REUSES one map\n"
+          .. "                -- object across transitions, so entries are\n"
+          .. "                -- keyed by the map's stable id string\n"
+          .. "                local _r = rawget(_G, \"__ds_round_cells\")\n"
+          .. "                local _k = map.id or (map.def and map.def.id)"
+          .. " or tostring(map)\n"
+          .. "                if _r then _r[_k] = _r[_k] or {}\n"
+          .. "                  _r[_k][cx .. \"|\" .. cy] = _l end\n"
+          .. "                _G.__ds_tree_lift = true\n"
+          .. "                return _l end)() }"
+        writeTracked(stPath, (st:gsub(stOld:gsub("%p", "%%%1"), function()
+            return stNew
+          end, 1)))
+        end
+        -- THE TOMBSTONE. Chunks that first mesh a 2x2 tree straddling
+        -- their border take the SINGLE-cell path -- stamped, published,
+        -- lifted -- and a later, fuller remesh forms the grouped big
+        -- tree for those same cells, drawn grounded, singles never
+        -- recreated. The registry never forgot, so supports stood
+        -- beside the big trees with nothing above them. When the group
+        -- site claims a 2x2, its four member cells are now DELETED from
+        -- the registry. (The `_t` field evaluates the deletion and
+        -- vanishes: a function call's nil result adds no field.)
+        local st2 = readSrc(stPath)
+        local tombOld = "              { quads = tpl.quads, mx = cx * 16"
+                        .. " + 16, mz = cy * 16 + 16,\n"
+                        .. "                r = 16 }"
+        if st2 and st2:find(tombOld, 1, true)
+           and not st2:find("__ds_round_tomb") then
+          local tombNew = "              { quads = tpl.quads, mx = cx * 16"
+            .. " + 16, mz = cy * 16 + 16,\n"
+            .. "                r = 16,\n"
+            .. "                -- ds_fp_ceilings __ds_round_tomb: a group\n"
+            .. "                -- supersedes its four member cells\n"
+            .. "                _t = (function()\n"
+            .. "                  local _r = rawget(_G, \"__ds_round_cells\")\n"
+            .. "                  local _k = map.id or (map.def and"
+            .. " map.def.id) or tostring(map)\n"
+            .. "                  if _r and _r[_k] then\n"
+            .. "                    for _dy = 0, 1 do for _dx = 0, 1 do\n"
+            .. "                      _r[_k][(cx + _dx) .. \"|\" ..\n"
+            .. "                              (cy + _dy)] = nil\n"
+            .. "                    end end\n"
+            .. "                  end\n"
+            .. "                end)() }"
+          local applied = st2:gsub(tombOld:gsub("%p", "%%%1"),
+                                   function() return tombNew end, 1)
+          if applied ~= st2 then writeTracked(stPath, applied) end
+        end
+        local cmPath = base .. "/lib/ChunkMesher.lua"
+        local cm = readSrc(cmPath)
+        local cmOld = "          s2[2] = c[2]\n"
+        -- upgrade an older mesher splice (lift only, no base publish):
+        -- strip our line back to stock so the current edition applies
+        if cm and cm:find("st.lift", 1, true)
+           and not cm:find("__ds_round_base", 1, true) then
+          cm = cm:gsub("s2%[2%] = c%[2%] %+ %(st%.lift or 0%)[^\n]*\n",
+                       "s2[2] = c[2]\n", 1)
+          write(cmPath, cm)
+        end
+        -- FAST CHUNKS: Dramatic Shape cooks chunk meshes inside a
+        -- per-frame budget, and the 5ms idle slice is why geometry
+        -- lands right in front of a walking player. With the option on
+        -- the idle slice is doubled -- read from the config bridge at
+        -- load, so an orphaned install reverts to stock.
+        do
+          local fcOld = "local IDLE_SLICE = 0.005\n"
+          if cm and cm:find(fcOld, 1, true)
+             and not cm:find("fastchunks", 1, true) then
+            cm = cm:gsub("local IDLE_SLICE = 0%.005\n",
+              "local IDLE_SLICE = 0.005 + ((function()\n"
+              .. "  local _c = rawget(_G, \"__ds_ceiling_config\")\n"
+              .. "  _c = _c and _c()\n"
+              .. "  return (_c and _c.fastchunks) and 0.007 or 0\n"
+              .. "end)()) -- ds_fp_ceilings fastchunks\n", 1)
+            write(cmPath, cm)
+          end
+        end
+        if cm and cm:find(cmOld, 1, true)
+           and not cm:find("st.lift", 1, true) then
+          local inPlaceCm = inSave(cmPath)
+          if inPlaceCm and not read(cmPath .. ".pre-ceiling") then
+            write(cmPath .. ".pre-ceiling", cm)
+          end
+          writeTracked(cmPath, (cm:gsub(
+            "          s2%[2%] = c%[2%]\n",
+            "          s2[2] = c[2] + (st.lift or 0)"
+            .. " -- ds_fp_ceilings __ds_round_base\n"
+            .. "          if st.lift and st.lift > 0 then\n"
+            .. "            local _rb = rawget(_G, \"__ds_round_base\")\n"
+            .. "            if _rb then\n"
+            .. "              local _bk = st.mx .. \"|\" .. st.mz\n"
+            .. "              if not _rb[_bk] or c[2] < _rb[_bk] then\n"
+            .. "                _rb[_bk] = c[2]\n"
+            .. "              end\n"
+            .. "            end\n"
+            .. "          end\n", 1)))
+        end
+      end
+
   end
 
   local function apply(base, ver, vs)
@@ -464,7 +654,7 @@ return function(mod)
     -- the jump: module plus the rig splice, both optional
     local jump = mod:read("payload_jump.lua")
     local fpPath = base .. "/lib/FirstPerson.lua"
-    local fpSrc = read(fpPath)
+    local fpSrc = readSrc(fpPath)
     if jump and fpSrc and not fpSrc:find("Jump.eyeOffset", 1, true) then
       local fp2 = splice(fpSrc, FP_REQ_ANCHOR, FP_REQ_ADD)
       fp2 = fp2 and splice(fp2, FP_EYE_ANCHOR, FP_EYE_ADD)
@@ -483,6 +673,7 @@ return function(mod)
       end
     end
     local sky = mod:read("payload_sky.lua")
+    spliceTallTrees(base)
     if sky then writeTracked(base .. "/lib/SkyLayer.lua", sky) end
     local flora = mod:read("payload_flora.lua")
     if flora then writeTracked(base .. "/lib/Flora.lua", flora) end
@@ -588,7 +779,10 @@ return function(mod)
     -- was already restored, and explains itself in the log.
     -- (1.3.0 is absol89's fork, which numbers itself independently)
     local TESTED = { ["1.3.0"] = true, ["1.5.4"] = true, ["1.5.5"] = true,
-                     ["1.6.0"] = true, ["1.6.1"] = true, ["1.6.2"] = true }
+                     ["1.6.0"] = true, ["1.6.1"] = true, ["1.6.2"] = true,
+                     ["1.7.0"] = true,
+                     -- absol89's fork, the mainline since the deletion
+                     ["1.7.6"] = true }
     if base and ver and not TESTED[ver] then
       say(("Dramatic Shape %s is a version this patch has not been "
            .. "tested against. NOT patching -- everything is left "
@@ -603,6 +797,11 @@ return function(mod)
     -- everything stock and bow out. Fighting a conflict flag from inside
     -- the other mod's folder is not a relationship, it is an infestation.
     local dsManifest = base and read(base .. "/manifest.json")
+    -- Matched on the OLD id deliberately. This mod's own id is
+    -- `ds_fp_ceilings` now, which the launcher would no longer match
+    -- against Dramatic Shape's `"conflicts": ["ds_fp_ceiling"]` -- so
+    -- without this the rename would quietly become a way round a flag
+    -- its author meant. The substring catches either spelling.
     if dsManifest and dsManifest:find("ds_fp_ceiling", 1, true) then
       say("Dramatic Shape has declared a conflict with this mod. "
           .. "Respecting it: nothing has been patched, and any earlier "
@@ -615,7 +814,7 @@ return function(mod)
       return
     end
     local vsPath = base .. "/lib/VoxelScene.lua"
-    local vs = read(vsPath)
+    local vs = readSrc(vsPath)
     if not vs then
       say("could not read " .. vsPath .. "; nothing changed.")
       return
@@ -649,7 +848,7 @@ return function(mod)
       -- in place if it has not been done, idempotently.
       local jumpSrc = mod:read("payload_jump.lua")
       local fpPath2 = base .. "/lib/FirstPerson.lua"
-      local fpNow = read(fpPath2)
+      local fpNow = readSrc(fpPath2)
       if jumpSrc and fpNow then
         if read(base .. "/lib/Jump.lua") ~= jumpSrc then
           writeTracked(base .. "/lib/Jump.lua", jumpSrc)
@@ -813,6 +1012,7 @@ return function(mod)
       else
         say("ceiling patch active (Dramatic Shape " .. ver .. ").")
       end
+      spliceTallTrees(base)
     elseif wantOn then
       apply(base, ver, vs)
     else
@@ -836,6 +1036,16 @@ return function(mod)
   -- patcher did at boot; line two is what the Ceiling module inside
   -- Dramatic Shape decided THIS frame (via a shared global), or the fact
   -- that it never loaded, which is its own diagnosis.
+  -- the JUMP BUTTON (Ledge Leap 1.0.1, incorporated -- see
+  -- jump_button.lua). pcall-guarded: if the engine lacks any of the
+  -- documented surfaces it uses, the button quietly does not exist and
+  -- the render patch is unaffected.
+  pcall(function()
+    local src = mod:read("jump_button.lua")
+    local chunk = assert(load(src, "@jump_button.lua"))
+    chunk()(mod)
+  end)
+
   mod.hooks:wrap("render.hud", function(next, game, viewport)
     next(game, viewport)
     -- HORIZON ART, re-read each frame. It was resolved once at boot, so

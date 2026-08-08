@@ -1,5 +1,229 @@
 # Changelog
 
+## 1.57.2
+
+- **THE INSTALLER STOPS CHOOSING A BASE.** It cannot see which family
+  member the launcher ENABLED: a disabled Dramatic Shape folder beside
+  a live Dramaless is indistinguishable from the save directory, and
+  1.57.1 kept patching the dormant sibling while the live one went
+  bare -- which is why the Discord hand-hack worked on a machine with
+  one base installed and this mod failed on a machine with two. Every
+  Dramatic Shape descendant on disk is now managed, each under its own
+  per-base state; patching a disabled copy is inert by definition, so
+  the live one is always among the patched. The boot log names each.
+
+- **PAYLOADS SELF-LOCATE.** The copy actually executing was loaded
+  from the live base by definition, so Flora and Ceiling now read
+  their own chunk path and claim the runtime globals (asset dirs, the
+  patch base) for that folder -- settling the horizon art and sound
+  paths however many siblings were patched. The ambience loader's
+  fallback list also gains DRAMALESS_SHAPE and TERRARIUM, matching
+  the Discord finding.
+
+## 1.57.1
+
+- **DRAMALESS SHAPE ACTUALLY INSTALLS.** Three compounding blockers,
+  all diagnosed from one screenshot. (1) The tested-versions gate did
+  not know "1.6.2.ST": fork-suffixed numbers now pass when their
+  leading x.y.z is a tested base. (2) State was one global file, so
+  the old Dramatic Shape install's "patched" state, applied to a base
+  this mod had never touched, shunted boot into the REMOVAL path --
+  teardown noise, no apply, nothing loaded. State is per-base now; a
+  legacy file follows its own base (the one bearing the splice mark)
+  and is cleared from any other. (3) The spliced requires were bare,
+  so one failing payload would have taken VoxelScene down whole: the
+  splice now loads each payload guarded, degrades a failure to a
+  no-op, and prints the actual error on that module's HUD line.
+
+- On a fresh fork install the status line announces the detected base
+  and version. If a payload still refuses to load under a fork, its
+  HUD line now says exactly why.
+
+## 1.57.0
+
+- **HEAD BOB IS STANDALONE.** JUMP FEEL scales the hop-derived motion
+  only; the walk bob no longer requires it. With the jump row OFF the
+  hop terms zero out and the bob walks on.
+
+- **DEPTH BLUR THROUGH THE FRONT DOOR.** Forcing TiltShift.level
+  directly lost every frame to the engine, whose pipeline record
+  re-asserts the persisted option through update() -- which is why
+  1.56.x showed nothing. The mod now calls Pipelines.setLevel
+  ("tiltshift"), the documented engine API the T-SHIFT row itself
+  uses, on transitions only, remembering the player's own setting and
+  restoring it on leaving first person or turning the row OFF.
+
+- **FORK COMPATIBILITY.** DRAMALESS_SHAPE (Stahltier's fork of 1.6.2,
+  with TERRARIUM merges) and TERRARIUM join the known-id list beside
+  the battle-art fork, and a second detection pass recognises ANY
+  Dramatic Shape descendant by anatomy -- a lib/VoxelScene.lua that
+  requires Voxel3D -- whatever it renamed itself to. The splices'
+  multi-anchor fallbacks (built for the 1.3.0-era battle-art build)
+  carry the rest; a fork install announces itself on the status line.
+  Wilds of Kanto needs nothing: it adds entities and touches none of
+  the files this mod splices, so the two coexist by construction --
+  its overworld Pokemon simply ride the same sprite pipeline.
+
+- **THE BOOT-TWICE RITUAL ENDS.** Payloads register their live module
+  tables (and the V loader) in _G.__ds_live; after any refresh write,
+  the installer compiles the new source against the same V and merges
+  it into the table every caller already holds. One transitional
+  double boot remains for THIS update (running sessions predate the
+  registration); every update after lands live.
+
+## 1.56.2
+
+- **SPLASHES ARE AN OUTDOOR EFFECT.** Interior tile art can match the
+  shore scan's pattern (a Viridian house counts four "shore" cells),
+  so the splash fountain now requires the outdoor flag rather than
+  trusting the scan indoors. The scan itself is untouched.
+
+- **THE STUB SUSPECT, AND A LINE OF TRUTH.** Flora resolves the
+  first-person rig once at module load; if that require raced the load
+  order and failed, Flora holds a placeholder whose FOV assignment
+  goes nowhere and whose blend reads a constant 0 -- FP FOV and DEPTH
+  BLUR would both do exactly nothing while every other feature works,
+  which is the reported shape. applyLens now retries the require each
+  frame until the real rig arrives. And the FLOR debug line grows a
+  lens report -- rig-or-STUB, both row values, TiltShift presence, the
+  live FP blend, and the bob's own state (envelope, odometer, jump
+  multiplier, or row-off) published from inside the eye expression --
+  so the next screenshot names the failing link outright.
+
+## 1.56.1
+
+- **THE CEILING MODULE ACTUALLY SHIPS.** Ceiling.lua only refreshes on
+  installed setups when its payload-version header RISES -- and no
+  ceiling change since windows arrived ever bumped it, so 1.53.0
+  through 1.55.0's windows, placement fixes, grain, beams and roses
+  were all silently discarded at every boot ("ceiling patch active"
+  is that path's message). The header now reads 24 and the whole
+  backlog lands at once. No code changes in this release; the code
+  was fine, the courier wasn't.
+
+- **BOOT TWICE.** Module refreshes are written during boot, after the
+  engine has loaded the old copies -- the mod's own "changes complete
+  on next boot" notice has always meant exactly this. First boot
+  writes; second boot runs. This applies to the head bob fix, FP FOV
+  and DEPTH BLUR from 1.56.0, which are most likely already on disk
+  and one boot from alive.
+
+## 1.56.0
+
+- **HEAD BOB WORKS.** The toggle read `me.moving`, a field the rig's
+  entity never carries in this engine -- always nil, so the bob never
+  engaged. It now runs off the module's own distance-driven sources,
+  maintained a screen above it all along: phase from the odometer,
+  amplitude from the walk ease. Locked to the feet, immune to
+  framerate, stops mid-stride when you do -- the file's stated design,
+  finally wired to itself.
+
+- **FP FOV.** NARROW (55) / NORMAL (65) / WIDE (75) / ULTRA (85). The
+  rig folds FirstPerson.FOV into its camera blend every frame, so the
+  row assigns it and that is the entire feature.
+
+- **DEPTH BLUR.** The engine's tilt-shift is a finished depth-of-field
+  pass whose geometry is exactly right in first person: the sharp
+  mid-band holds the played space while the far top and near ground
+  soften. The DEPTH BLUR row (OFF/1/2/3) borrows it by forcing the
+  level while the FP blend is up, remembering the engine's own T-SHIFT
+  setting and handing it back the moment first person ends or the row
+  goes OFF. No splice: two per-frame writes into machinery the engine
+  already runs.
+
+## 1.54.2
+
+- **WINDOW PLACEMENT AS SPECIFIED.** Never on the wall faced on
+  entering (the north run: that is where the game stations its
+  objects, and a pane behind a bookcase reads as a mistake). Side
+  walls allowed; the front-door wall allowed, but never beside the
+  door -- the existing door-spacing rule covers that. Density rises
+  from one eligible cell in three to one in two, since corners and
+  door clearance already shorten the side and door-wall runs, and
+  the north geometry from 1.54.1 stays in place as a dead path.
+
+- **WINDOWS ALWAYS REPORT.** The ceiling debug note now states the
+  window count even at zero, and says "windows: NO IMAGE" if the
+  procedural pane texture failed to build -- so if a room still shows
+  none, one screenshot of the note tells us whether placement or the
+  texture is at fault.
+
+## 1.54.1
+
+- **WINDOWS APPEAR NOW.** 1.53.0's back-wall exclusion was aimed at
+  the wrong wall: it excluded the north-void face -- which in a Gen 1
+  interior is the PRINCIPAL wall, the one the camera looks at and the
+  one the 2D art itself draws windows on. With that gone, and corners
+  and doors eating the short side runs, no building had any windows.
+  The excluded direction is now the SOUTH wall -- the street-facing
+  run the door passes through, the true interior face of the
+  building's front-door side, which the player almost never faces.
+  The north wall also gets its own axes and pane geometry (it had
+  neither, having never been reachable). Door spacing, edge rules and
+  poster avoidance are unchanged.
+
+- **A HEAVIER LEAF FALL.** Pick rate 16 -> 34 per second and the
+  particle pool 220 -> 300, so a grove now sheds a proper drift
+  without recycling the rain or the fireflies early.
+
+## 1.54.0
+
+- **CRICKETS AFTER DARK.** A night bed that plays OUTSIDE ONLY, and
+  only where the outdoor beds play -- towns, cities and routes -- laid
+  over whichever of the two is up. Night is read from the same
+  palette-derived test the street lights use, so the crickets arrive
+  and leave with the lamps.
+
+- **RAIN YOU CAN HEAR.** A rain bed keyed to the same flag the
+  droplets, puddles and umbrellas already run on, faded in with the
+  weather and out with it, a shade louder than the place bed so
+  weather reads over place. Both new beds ride the AMBIENT SOUND
+  level, its OFF switch, and the crossfade ramps; both fall silent
+  indoors.
+
+## 1.53.1
+
+- **SPLASHES at the waterline.** Roughly once a second somewhere along
+  the nearby shore, one spot throws a small fountain: five to eight
+  droplets, half foam-white and half a new water-blue, fanned in a
+  ring and pulled back down by the same ballistics the spray already
+  obeys. Rides the existing shoreline scan, the particle pool, and the
+  PARTICLES toggle; with the shore-lapping bed underneath, the water's
+  edge now moves and sounds like one.
+
+## 1.53.0
+
+- **WINDOWS.** Interior walls now carry panes: a procedural 12x14
+  window texture (dark frame, cross mullion, sky-blue glass with a
+  corner highlight) hung the way the posters are hung, a hair proud of
+  the wall and facing the room. Three exclusions, by design: never on
+  the back wall (the face whose void is north), never beside a door
+  (not on a door cell, not through one, not one cell along the wall
+  either side), and never at a wall's edge (both along-wall neighbours
+  must be standing wall with the void on the same side, so no pane at
+  a corner or on a one-cell stub). Windows claim their cell before the
+  posters hang, so the posters' no-neighbours rule keeps pictures away
+  from every pane. Organic interiors -- caves, the forest, the tunnels
+  -- get none, on the same list that keeps pictures off their walls.
+  Its own WINDOWS toggle row, on by default.
+
+- **FOOTSTEPS BY SURFACE.** Rock underfoot through the caves and route
+  tunnels, boards in every built interior, both on cell entry like the
+  grass rustle. Outdoor non-grass steps stay silent: there is no dirt
+  take, and silence beats a wrong sound on every step of a journey.
+  FOOTSTEPS toggle row.
+
+- **DOORS ON THE THRESHOLD.** The outdoor flag flipping across a map
+  change is a doorway crossed. Marts, Centres and lobbies ring the
+  shop bell; caves, tunnels and the forest have no door to sound;
+  every other interior gets the house door -- the interior side names
+  the sound whichever way the player is going. DOOR SOUND toggle row.
+
+- **THE SHORE LAPS.** water.mp3 is a bed apart from the crossfade: its
+  volume follows the player's distance to the nearest shoreline cell
+  (full a stride from the waterline, gone past 130 units), riding the
+  AMBIENT SOUND level and its OFF switch like the other beds.
+
 ## 1.52.0
 
 - **BUILDING BACKS is retired for now.** The plain-wall patch on north

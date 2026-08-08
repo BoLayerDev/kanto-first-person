@@ -280,4 +280,11 @@ function Backdrop.invalidate()
   underMesh = nil
 end
 
+-- live registration: the installer hot-swaps refreshed modules
+-- into the running session through this table, killing the
+-- boot-twice ritual (see main.lua, hotSwap)
+_G.__ds_live = rawget(_G, "__ds_live") or {}
+_G.__ds_live.Backdrop = Backdrop
+_G.__ds_live.V = _G.__ds_live.V or V
+
 return Backdrop

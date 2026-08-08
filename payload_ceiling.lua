@@ -1,5 +1,5 @@
 -- The interior CEILING and RISERS: the room's missing upper storey.
--- payload-version: 23
+-- payload-version: 26
 --
 -- v1/v2 proved the concept: a flat lid at wall height (16) closed the
 -- room in first person.  v3 is the liveable version:
@@ -38,6 +38,21 @@
 -- movement, no scripts.
 
 local V = ...
+-- SELF-LOCATION. The installer manages every family base because it
+-- cannot see which one the launcher enabled -- but THIS copy, the one
+-- actually executing, was loaded from the live base by definition. If
+-- the chunk name carries the folder, claim the runtime globals for it,
+-- which settles the asset paths however many siblings were patched.
+pcall(function()
+  local src = debug.getinfo(1, "S").source or ""
+  local home = src:match("@?(.-mods/[^/]+)/lib/")
+  if home then
+    local rel = home:match("(mods/[^/]+)$") or home
+    _G.__ds_patch_base = rel
+    _G.__ds_posters_dir = rel .. "/lib/"
+  end
+end)
+
 
 local Voxel3D = V.require("Voxel3D")
 local TileShape = V.require("TileShape")
@@ -370,6 +385,44 @@ local NO_POSTERS = {
 
 -- one loaded sheet per file, so switching rooms does not reload
 local posterSheets = {}
+
+-- ------- WINDOWS.
+-- A pane on interior walls, drawn like the posters: a quad a hair proud
+-- of the wall, facing the room. The texture is made, not shipped: a
+-- dark frame, a cross mullion, and a pale sky-blue pane with a corner
+-- highlight, at 12x14 so the nearest-filter keeps it crisp and period.
+local winImg = nil
+local function windowImg()
+  if winImg ~= nil then return winImg or nil end
+  local ok, img = pcall(function()
+    local W, Hh = 12, 14
+    local d = love.image.newImageData(W, Hh)
+    for y = 0, Hh - 1 do
+      for x = 0, W - 1 do
+        local edge = x == 0 or y == 0 or x == W - 1 or y == Hh - 1
+        local mull = x == math.floor(W / 2)
+                     or y == math.floor(Hh / 2)
+        if edge or mull then
+          d:setPixel(x, y, 0.24, 0.18, 0.14, 1)      -- frame and bars
+        else
+          -- the pane: sky at the top shading to a paler sill light,
+          -- with a diagonal highlight so it reads as glass
+          local tsh = y / Hh
+          local r = 0.52 + 0.10 * (1 - tsh)
+          local g = 0.72 + 0.08 * (1 - tsh)
+          local b = 0.88
+          if (x + y) % 7 == 0 then r, g, b = 0.78, 0.88, 0.96 end
+          d:setPixel(x, y, r, g, b, 1)
+        end
+      end
+    end
+    local i = love.graphics.newImage(d)
+    i:setFilter("nearest", "nearest")
+    return i
+  end)
+  winImg = (ok and img) or false
+  return winImg or nil
+end
 
 local function posters(map)
   local tid = (map and map.def and map.def.tileset)
@@ -758,6 +811,8 @@ local function build(map, H, mode, pcx, pcy, tex)
     end
   end
 
+  -- which cells kept their lid, gathered for the beam pass
+  local lidded = {}
   for cy = 0, hc - 1 do
     for cx = 0, wc - 1 do
       local ch = h[cy][cx]
@@ -783,8 +838,17 @@ local function build(map, H, mode, pcx, pcy, tex)
         if d <= HOLE_RADIUS then lid = false end
       end
       if lid then
+        lidded[cy] = lidded[cy] or {}
+        lidded[cy][cx] = true
         local x0, z0 = cx * 16, cy * 16
         local shade = CEIL_SHADE[(cx + cy) % 2 + 1]
+        -- TONAL GRAIN: a couple of percent of deterministic per-cell
+        -- drift over the checker, which is the difference between a
+        -- plastered lid and a painted slab. Buildings only -- the
+        -- caves have rock for this
+        if cfg.ceildetail ~= false and not organic then
+          shade = shade + (hash01(cx, cy, 163) - 0.5) * 0.07
+        end
         local uv = ceilTile and { uvFor(map, ceilTile) } or { 0, 0, 0, 0 }
         quads = pushQuad(verts, indexMap, quads,
                          { x0, H, z0 + 16 }, { x0 + 16, H, z0 + 16 },
@@ -814,6 +878,62 @@ local function build(map, H, mode, pcx, pcy, tex)
             quads = pushRiserFace(verts, indexMap, quads, map,
                                   cx, cy, ch, H, "nx", ceilTile, accentFor)
           end
+        end
+      end
+    end
+  end
+
+  -- ---- BEAMS: the timber the houses always implied. A dark joist
+  -- every fourth cell, run along the room's LONG axis (a beam across
+  -- the short span is how ceilings are actually built, and it reads
+  -- instantly), dropped a hand's depth below the lid: a bottom face
+  -- and two flanks, lit unevenly so the wood turns. Only over cells
+  -- that kept their lid, so the cutaway melts beams and ceiling
+  -- together. Houses only: Marts, Centres and lobbies keep the clean
+  -- commercial lid, and the caves have rock.
+  local beams = 0
+  if cfg.ceildetail ~= false and not organic
+     and tilesetId ~= "MART" and tilesetId ~= "POKECENTER"
+     and tilesetId ~= "LOBBY" then
+    local along_x = wc >= hc
+    local BD, BW = 2.2, 1.6
+    local buv = ceilTile and { uvFor(map, ceilTile) } or { 0, 0, 0, 0 }
+    for cy = 0, hc - 1 do
+      for cx = 0, wc - 1 do
+        if lidded[cy] and lidded[cy][cx]
+           and ((along_x and cy % 4 == 2) or
+                (not along_x and cx % 4 == 2)) then
+          local x0, z0 = cx * 16, cy * 16
+          if along_x then
+            local zc = z0 + 8
+            quads = pushQuad(verts, indexMap, quads,
+              { x0, H - BD, zc + BW }, { x0 + 16, H - BD, zc + BW },
+              { x0 + 16, H - BD, zc - BW }, { x0, H - BD, zc - BW },
+              buv, 0.30)
+            quads = pushQuad(verts, indexMap, quads,
+              { x0, H, zc + BW }, { x0 + 16, H, zc + BW },
+              { x0 + 16, H - BD, zc + BW }, { x0, H - BD, zc + BW },
+              buv, 0.26)
+            quads = pushQuad(verts, indexMap, quads,
+              { x0 + 16, H, zc - BW }, { x0, H, zc - BW },
+              { x0, H - BD, zc - BW }, { x0 + 16, H - BD, zc - BW },
+              buv, 0.22)
+          else
+            local xc = x0 + 8
+            quads = pushQuad(verts, indexMap, quads,
+              { xc - BW, H - BD, z0 }, { xc - BW, H - BD, z0 + 16 },
+              { xc + BW, H - BD, z0 + 16 }, { xc + BW, H - BD, z0 },
+              buv, 0.30)
+            quads = pushQuad(verts, indexMap, quads,
+              { xc + BW, H, z0 }, { xc + BW, H, z0 + 16 },
+              { xc + BW, H - BD, z0 + 16 }, { xc + BW, H - BD, z0 },
+              buv, 0.26)
+            quads = pushQuad(verts, indexMap, quads,
+              { xc - BW, H, z0 + 16 }, { xc - BW, H, z0 },
+              { xc - BW, H - BD, z0 }, { xc - BW, H - BD, z0 + 16 },
+              buv, 0.22)
+          end
+          beams = beams + 1
         end
       end
     end
@@ -965,6 +1085,12 @@ local function build(map, H, mode, pcx, pcy, tex)
     local x, z = cx * 16 + 8, cy * 16 + 8
     local top = ceilY - 0.6
     local bulb = top - LAMP_DROP
+    -- the ROSE: a pale disc flat to the ceiling where the flex meets
+    -- it, anchoring the pendant to the surface it hangs from
+    glowQuad({ x - 3.4, ceilY - 0.15, z + 3.4 },
+             { x + 3.4, ceilY - 0.15, z + 3.4 },
+             { x + 3.4, ceilY - 0.15, z - 3.4 },
+             { x - 3.4, ceilY - 0.15, z - 3.4 }, 0.58)
     -- the flex, thin and dark enough to read as a cord
     glowQuad({ x - 0.6, top, z }, { x + 0.6, top, z },
              { x + 0.6, bulb, z }, { x - 0.6, bulb, z }, 0.30)
@@ -1075,10 +1201,83 @@ local function build(map, H, mode, pcx, pcy, tex)
   -- how you leave, and a poster across one looks like a mistake because
   -- it is.
   local hung = {}
+  local wVerts, wIdx, wQuads = {}, {}, 0
   -- the module's own door test, which counts warps as well as door
   -- tiles; the poster code used to ask a weaker question and hung
   -- pictures over doorways the warp list knew about
   local doorish = isDoor
+
+  -- WHERE A WINDOW MAY GO, per the room's owner: NEVER on the wall
+  -- you face on entering (the north-void run -- that is where the
+  -- game stations its objects and featured tiles, and a pane behind
+  -- a bookcase reads as a mistake). Side walls are fine, and so is
+  -- the front-door wall itself -- just not beside the door, which
+  -- the door-spacing rule below already guarantees. The exteriors
+  -- will not match, and do not need to: the interiors of these games
+  -- never resembled their shells anyway.
+  --   none NEXT TO A DOOR -- not on a door cell, not through one, and
+  --     not one cell along the wall from one either side;
+  --   none AT A WALL'S EDGE -- both along-wall neighbours must be
+  --     standing wall with the void on the same side, so a pane never
+  --     hangs at a corner or on a one-cell stub.
+  -- Windows go in before posters and claim their cell in `hung`, so
+  -- the posters' own no-neighbours rule keeps pictures off and away
+  -- from every pane.
+  local function placeWindow(cx, cy, dir)
+    if not windowImg() then return end
+    if dir == "nz" then return end
+    if math.floor(hash01(cx, cy, 151) * 2) ~= 0 then return end
+    local ax, ay = 0, 0            -- along the wall
+    local dx, dy = 0, 0            -- through it, toward the void
+    if dir == "pz" then ax, dy = 1, 1
+    elseif dir == "nz" then ax, dy = 1, -1
+    elseif dir == "px" then ay, dx = 1, 1
+    else ay, dx = 1, -1 end        -- nx
+    if isDoor(cx, cy) or isDoor(cx + dx, cy + dy)
+       or isDoor(cx - ax, cy - ay) or isDoor(cx + ax, cy + ay) then
+      return
+    end
+    for _, sgn in ipairs({ -1, 1 }) do
+      local nx2, ny2 = cx + ax * sgn, cy + ay * sgn
+      if outside(nx2, ny2) then return end            -- wall ends here
+      if not outside(nx2 + dx, ny2 + dy) then return end -- face turns
+    end
+    for ddy = -1, 1 do
+      for ddx = -1, 1 do
+        if hung[(cy + ddy) .. ":" .. (cx + ddx)] then return end
+      end
+    end
+    hung[cy .. ":" .. cx] = true
+    local halfW, halfH, midY = 5.0, 5.6, POSTER_HEIGHT
+    local y0, y1 = midY - halfH, midY + halfH
+    local x0, z0 = cx * 16, cy * 16
+    local o = EPS + 0.35
+    local c1, c2, c3, c4
+    if dir == "pz" then
+      local z = z0 + 16 - o
+      c1 = { x0 + 8 + halfW, y1, z }; c2 = { x0 + 8 - halfW, y1, z }
+      c3 = { x0 + 8 - halfW, y0, z }; c4 = { x0 + 8 + halfW, y0, z }
+    elseif dir == "nz" then
+      local z = z0 + o
+      c1 = { x0 + 8 - halfW, y1, z }; c2 = { x0 + 8 + halfW, y1, z }
+      c3 = { x0 + 8 + halfW, y0, z }; c4 = { x0 + 8 - halfW, y0, z }
+    elseif dir == "px" then
+      local x = x0 + 16 - o
+      c1 = { x, y1, z0 + 8 - halfW }; c2 = { x, y1, z0 + 8 + halfW }
+      c3 = { x, y0, z0 + 8 + halfW }; c4 = { x, y0, z0 + 8 - halfW }
+    else -- nx
+      local x = x0 + o
+      c1 = { x, y1, z0 + 8 + halfW }; c2 = { x, y1, z0 + 8 - halfW }
+      c3 = { x, y0, z0 + 8 - halfW }; c4 = { x, y0, z0 + 8 + halfW }
+    end
+    local shade = 1.0
+    wVerts[#wVerts + 1] = { c1[1], c1[2], c1[3], 0, 0, shade }
+    wVerts[#wVerts + 1] = { c2[1], c2[2], c2[3], 1, 0, shade }
+    wVerts[#wVerts + 1] = { c3[1], c3[2], c3[3], 1, 1, shade }
+    wVerts[#wVerts + 1] = { c4[1], c4[2], c4[3], 0, 1, shade }
+    Voxel3D.pushQuad(wIdx, wQuads)
+    wQuads = wQuads + 1
+  end
 
   local function hangPoster(cx, cy, dir)
     if not posterImg or (posterFrames or 0) < 1 then return end
@@ -1151,6 +1350,9 @@ local function build(map, H, mode, pcx, pcy, tex)
         local gone = melted(cy)
         for _, sd in ipairs(sides) do
           if sd[2] then
+            if cfg.windows ~= false and not gone and not organic then
+              placeWindow(cx, cy, sd[1])
+            end
             if posterImg and not gone then hangPoster(cx, cy, sd[1]) end
             if cfg.shadows ~= false then contactShadow(cx, cy, sd[1]) end
             if cfg.rails ~= false and not gone and not organic then
@@ -1207,15 +1409,20 @@ local function build(map, H, mode, pcx, pcy, tex)
   if gQuads > 0 then gMesh = Voxel3D.newMesh(gVerts, gIdx) end
   local dMesh = nil
   if dQuads > 0 then dMesh = Voxel3D.newMesh(dVerts, dIdx) end
+  local wMesh = nil
+  if wQuads > 0 then wMesh = Voxel3D.newMesh(wVerts, wIdx) end
+  note = note .. (windowImg() and (", %d windows"):format(wQuads)
+                  or ", windows: NO IMAGE")
   note = note .. ((dQuads > 0) and (", %d doors"):format(dQuads) or "")
   note = note .. ((pQuads > 0) and (", %d posters"):format(pQuads) or "")
   note = note .. ((shadows > 0) and (", %d shadows"):format(shadows) or "")
   note = note .. ((rails > 0) and (", %d rails"):format(rails) or "")
   note = note .. ((spills > 0) and (", %d spills"):format(spills) or "")
   note = note .. ((lamps > 0) and (", %d fittings"):format(lamps) or "")
+  note = note .. ((beams > 0) and (", %d beams"):format(beams) or "")
   note = note .. ((rocks > 0) and (", %d rock, %d spikes")
                                   :format(rocks, spikes) or "")
-  return mesh, note, pMesh, posterImg, gMesh, dMesh
+  return mesh, note, pMesh, posterImg, gMesh, dMesh, wMesh
 end
 
 -- ------- SELF-UNINSTALL.
@@ -1417,10 +1624,11 @@ function Ceiling.draw(state, atlasFor)
   local key = table.concat({ mode, H, pcx or "-", pcy or "-" }, ":")
   if not cache or cache.map ~= map or cache.key ~= key then
     if cache and cache.mesh then pcall(cache.mesh.release, cache.mesh) end
-    local mesh, note, pMesh, pImg, gMesh, dMesh =
+    local mesh, note, pMesh, pImg, gMesh, dMesh, wMesh =
       build(map, H, mode, pcx, pcy, tex)
     cache = { map = map, key = key, mesh = mesh, note = tostring(note),
-              posters = pMesh, sheet = pImg, glow = gMesh, doors = dMesh }
+              posters = pMesh, sheet = pImg, glow = gMesh, doors = dMesh,
+              windows = wMesh }
   end
   if cache.mesh then
     status(mapId .. ": DRAWING " .. cache.note
@@ -1433,6 +1641,9 @@ function Ceiling.draw(state, atlasFor)
       end
       if cache.posters and cache.sheet then
         Voxel3D.draw(cache.posters, cache.sheet, nil)
+      end
+      if cache.windows and windowImg() then
+        Voxel3D.draw(cache.windows, windowImg(), nil)
       end
       -- light: spill and fittings, warm and translucent, over the room
       if cache.glow then
@@ -1456,7 +1667,17 @@ function Ceiling.invalidate()
   if cache and cache.posters then pcall(cache.posters.release, cache.posters) end
   if cache and cache.glow then pcall(cache.glow.release, cache.glow) end
   if cache and cache.doors then pcall(cache.doors.release, cache.doors) end
+  if cache and cache.windows then
+    pcall(cache.windows.release, cache.windows)
+  end
   cache = nil
 end
+
+-- live registration: the installer hot-swaps refreshed modules
+-- into the running session through this table, killing the
+-- boot-twice ritual (see main.lua, hotSwap)
+_G.__ds_live = rawget(_G, "__ds_live") or {}
+_G.__ds_live.Ceiling = Ceiling
+_G.__ds_live.V = _G.__ds_live.V or V
 
 return Ceiling

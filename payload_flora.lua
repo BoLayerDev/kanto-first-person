@@ -55,6 +55,21 @@
 -- walk costs no more than a short one.
 
 local V = ...
+-- SELF-LOCATION. The installer manages every family base because it
+-- cannot see which one the launcher enabled -- but THIS copy, the one
+-- actually executing, was loaded from the live base by definition. If
+-- the chunk name carries the folder, claim the runtime globals for it,
+-- which settles the asset paths however many siblings were patched.
+pcall(function()
+  local src = debug.getinfo(1, "S").source or ""
+  local home = src:match("@?(.-mods/[^/]+)/lib/")
+  if home then
+    local rel = home:match("(mods/[^/]+)$") or home
+    _G.__ds_patch_base = rel
+    _G.__ds_posters_dir = rel .. "/lib/"
+  end
+end)
+
 
 local Voxel3D = V.require("Voxel3D")
 local okTS, TileShape = pcall(V.require, "TileShape")
@@ -168,12 +183,12 @@ local BLADE_MIN, BLADE_MAX = 7, 20                 -- pixel heights
 local BLADE_W = 7
 
 -- ------- particles
-local POOL = 220
+local POOL = 300
 local SEED_RATE = 22        -- per second while moving through grass
 local DRIP_RATE = 3.5
 local FLY_TARGET = 14       -- fireflies aloft at once, after dark
 local LEAF_RATE = 2.2       -- per second under canopy
-local TLEAF_RATE = 16       -- picks per second off the lifted trees
+local TLEAF_RATE = 34       -- picks per second off the lifted trees
                             -- (misses -- far cells, boulders -- thin it,
                             -- and the pool is the hard ceiling; a leaf
                             -- is one textured quad, so even a heavy
@@ -2477,6 +2492,7 @@ local function makeTex()
     tleaf = flake(0.36, 0.66, 0.26),
     dust  = dot(0.95, 0.92, 0.80, true),
     foam  = dot(0.92, 0.96, 1.0, true),
+    dropb = dot(0.55, 0.75, 0.95, true),  -- thrown water, not foam
     smoke = dot(0.72, 0.72, 0.70, true),
   }
 end
@@ -3229,6 +3245,28 @@ local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor,
         end
       end
 
+      -- and, less often, a proper SPLASH: one spot on the waterline
+      -- throws a small fountain -- half foam-white, half water-blue,
+      -- fanned in a ring and pulled straight back down by the same
+      -- gravity the spray already obeys. (Rate inline: this chunk sits
+      -- at Lua's 200-local cap, so no new constant local.)
+      if outdoor and #shores > 0 and tex.foam
+         and math.random() < 0.9 * dt then
+        local pick = shores[math.random(#shores)]
+        local sx, sz = pick[1] * 16 + 8, pick[2] * 16 + 8
+        if math.abs(sx - px) < 190 and math.abs(sz - pz) < 190 then
+          for j = 1, 5 + math.random(3) do
+            local a = math.random() * math.pi * 2
+            local sp = 6 + math.random() * 12
+            spawn((j % 2 == 0) and "foam" or "dropb",
+                  sx + (math.random() - 0.5) * 6, 2,
+                  sz + (math.random() - 0.5) * 6,
+                  math.cos(a) * sp, 22 + math.random() * 16,
+                  math.sin(a) * sp, 0.7 + math.random() * 0.5, 1.6)
+          end
+        end
+      end
+
       -- chimney smoke: one plume per building, thinning as it climbs
       local chimneys = featureCache and featureCache.chimneys or {}
       if #chimneys > 0 and tex.smoke then
@@ -3372,7 +3410,7 @@ local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor,
               q.x = q.x + math.sin(t * 0.35 + ph) * 3 * dt
               q.z = q.z + math.cos(t * 0.28 + ph) * 3 * dt
               q.y = q.y + q.vy * dt * 0.4
-            elseif q.kind == "foam" then
+            elseif q.kind == "foam" or q.kind == "dropb" then
               q.vy = q.vy - 40 * dt
               q.x = q.x + q.vx * dt
               q.y = q.y + q.vy * dt
@@ -3488,10 +3526,21 @@ end
 MOUND.AMB = { srcs = {}, beat = -1e9,
               FILES = { cave = "amb-cave.mp3", forest = "amb-forest.mp3",
                         town = "amb-town.mp3", route = "amb-route.mp3",
-                        g1 = "sfx-grass1.mp3", g2 = "sfx-grass2.mp3" },
-              -- the beds loop; the grass steps are one-shots
+                        g1 = "sfx-grass1.mp3", g2 = "sfx-grass2.mp3",
+                        door = "sfx-door.mp3",
+                        shopdoor = "sfx-shopdoor.mp3",
+                        cstep = "sfx-cavestep.mp3",
+                        wstep = "sfx-woodstep.mp3",
+                        water = "amb-water.mp3",
+                        night = "amb-night.mp3",
+                        rain = "amb-rain.mp3" },
+              -- the beds loop; the steps and doors are one-shots.
+              -- water is a bed apart: its volume follows the shore
+              -- rather than the crossfade, lapping louder the closer
+              -- the player stands to the waterline
               LOOPS = { cave = true, forest = true,
-                        town = true, route = true },
+                        town = true, route = true, water = true,
+                        night = true, rain = true },
               -- named volumes for the AMBIENT SOUND row; MID is the
               -- default and noticeably hotter than 1.51.0's fixed 0.35,
               -- which playtested too quiet under the game's own music
@@ -3515,6 +3564,8 @@ function MOUND.AMB.src(k)
   end
   dirs[#dirs + 1] = "mods/DRAMATIC_SHAPE/lib/"
   dirs[#dirs + 1] = "mods/BATTLE_ART_VOXEL_FORK/lib/"
+  dirs[#dirs + 1] = "mods/DRAMALESS_SHAPE/lib/"
+  dirs[#dirs + 1] = "mods/TERRARIUM/lib/"
   local src, err = nil, "no directories to try"
   for _, dir in ipairs(dirs) do
     for _, kind in ipairs({ "stream", "static" }) do
@@ -3547,7 +3598,74 @@ function MOUND.AMB.keyOf(map, outdoor)
   return "route"
 end
 
-function MOUND.AMB.tick(map, outdoor, cfg, dt, px, pz)
+-- THE LENS. Two per-frame writes into machinery the engine already
+-- owns, which is why neither needs a splice. FOV: the rig folds
+-- FirstPerson.FOV into its orbit blend every frame, so assigning it is
+-- the entire feature. DEPTH BLUR: TiltShift is a finished
+-- worldPresent depth-of-field pass the engine runs on the voxel
+-- canvas; in first person its geometry happens to be exactly right --
+-- the sharp mid-band holds the played space while the far top and
+-- near ground soften -- so this borrows it by forcing its level while
+-- the FP blend is up, remembering the engine's own level and handing
+-- it back the moment first person ends or the row turns OFF.
+function MOUND.applyLens(cfg)
+  if not (FirstPerson and FirstPerson.FOV) then
+    local ok, fp = pcall(V.require, "FirstPerson")
+    if ok and fp and fp.FOV then FirstPerson = fp end
+  end
+  if FirstPerson and FirstPerson.FOV then
+    local deg = ({ NARROW = 55, NORMAL = 65,
+                   WIDE = 75, ULTRA = 85 })[cfg.fpfov or "NORMAL"] or 65
+    FirstPerson.FOV = math.rad(deg)
+  end
+  if not MOUND.TSinit then
+    MOUND.TSinit = true
+    local ok, ts = pcall(V.require, "TiltShift")
+    MOUND.TS = ok and ts or nil
+  end
+  local ts = MOUND.TS
+  if not ts then return end
+  local lvl = tonumber(cfg.dof) or 0
+  local fp = 0
+  pcall(function() fp = FirstPerson.blendEased() or 0 end)
+  -- forcing ts.level directly lost every frame to the engine, whose
+  -- pipeline record re-asserts the persisted option through update().
+  -- So go through the front door instead: Pipelines.setLevel is the
+  -- documented engine API the T-SHIFT row itself uses. Called only on
+  -- transitions, with the player's own setting remembered and restored.
+  if not MOUND.PLinit then
+    MOUND.PLinit = true
+    local ok, pl = pcall(require, "src.render.Pipelines")
+    MOUND.PL = ok and pl or nil
+  end
+  local wantLvl = (lvl > 0 and fp > 0.5) and lvl or nil
+  if wantLvl and ts.level ~= wantLvl then
+    if MOUND.TSheld == nil then MOUND.TSheld = ts.level or 0 end
+    if MOUND.PL and MOUND.PL.setLevel then
+      pcall(MOUND.PL.setLevel, "tiltshift", wantLvl)
+    end
+    ts.level = wantLvl          -- belt and braces for this frame
+  elseif not wantLvl and MOUND.TSheld ~= nil then
+    if MOUND.PL and MOUND.PL.setLevel then
+      pcall(MOUND.PL.setLevel, "tiltshift", MOUND.TSheld)
+    end
+    ts.level = MOUND.TSheld
+    MOUND.TSheld = nil
+  end
+end
+
+-- one line of truth for the whole lens-and-bob chain, on the FLOR note
+function MOUND.lensNote(cfg)
+  local real = (FirstPerson and FirstPerson.FOV) and "rig" or "STUB"
+  local fp = 0
+  pcall(function() fp = FirstPerson.blendEased() or 0 end)
+  local jn = rawget(_G, "__ds_jump_note") or "jump:silent"
+  return (", lens:%s fov:%s dof:%s ts:%s fp:%.2f %s"):format(
+    real, tostring(cfg.fpfov), tostring(cfg.dof),
+    MOUND.TS and "ok" or "nil", fp, jn)
+end
+
+function MOUND.AMB.tick(map, outdoor, cfg, dt, px, pz, shoreF)
   MOUND.AMB.beat = now()
   -- the watchdog reads THROUGH the global so a module reload (new
   -- MOUND, new srcs) hands it the live state instead of a dead capture
@@ -3580,31 +3698,95 @@ function MOUND.AMB.tick(map, outdoor, cfg, dt, px, pz)
   if lvl == false then lvl = "OFF" end
   MOUND.AMB.VOL = MOUND.AMB.VOLS[lvl] or MOUND.AMB.VOLS.MID
   local want = (lvl ~= "OFF") and MOUND.AMB.keyOf(map, outdoor) or nil
-  -- GRASS STEPS: entering a tall-grass cell rustles, the two takes
-  -- alternating so back-and-forth pacing never stutters one sample.
+  -- ONE-SHOTS. steps by surface on cell ENTRY (the same edge the
+  -- encounter system rolls on), and a door on crossing a threshold.
   -- Cell ENTRY is the trigger (not per-frame presence), which is the
   -- same edge the encounter system rolls on, so it sounds like what
   -- it is: a step into the grass.
-  if cfg.grasssfx ~= false and px then
+  local tidNow = tostring(((map and map.def) or {}).tileset
+                 or (map and map.tileset and map.tileset.id) or "")
+  local function oneShot(k, vol)
+    local sc = MOUND.AMB.src(k)
+    if sc then
+      pcall(function()
+        sc:stop()
+        sc:setVolume(vol or MOUND.AMB.STEP_VOL)
+        sc:play()
+      end)
+    end
+  end
+  if px then
     local cx, cy = math.floor(px / 16), math.floor(pz / 16)
     local ck = cx .. "|" .. cy
     if ck ~= MOUND.AMB.lastCell then
       MOUND.AMB.lastCell = ck
       local okG, g = pcall(function() return map:isGrassCell(cx, cy) end)
-      if okG and g then
+      if okG and g and cfg.grasssfx ~= false then
+        -- the two grass takes alternate so back-and-forth pacing
+        -- never stutters one sample
         MOUND.AMB.stepFlip = not MOUND.AMB.stepFlip
-        local sc = MOUND.AMB.src(MOUND.AMB.stepFlip and "g1" or "g2")
-        if sc then
-          pcall(function()
-            sc:stop()
-            sc:setVolume(MOUND.AMB.STEP_VOL)
-            sc:play()
-          end)
+        oneShot(MOUND.AMB.stepFlip and "g1" or "g2")
+      elseif cfg.stepsfx ~= false then
+        -- surface steps: rock underfoot in the caves and tunnels,
+        -- boards in every built interior. Outdoor non-grass stays
+        -- silent -- dirt paths have no take, and silence beats a
+        -- wrong sound on every step of a journey
+        if tidNow == "CAVERN" or tidNow == "UNDERGROUND" then
+          oneShot("cstep", 0.55)
+        elseif not outdoor and tidNow ~= "FOREST" then
+          oneShot("wstep", 0.5)
         end
       end
     end
   end
+  -- DOORS on the threshold: the outdoor flag flipping across a map
+  -- change is a doorway crossed in either direction. Marts, Centres
+  -- and lobbies ring the shop bell; caves, tunnels and the forest
+  -- have no door to sound; every other interior gets the house door.
+  -- The interior side of the crossing names the sound, whichever way
+  -- the player is going.
+  local rkNow = (map and map.id) or (map and map.def and map.def.id)
+                or tostring(map)
+  if MOUND.AMB.prevRk ~= nil and rkNow ~= MOUND.AMB.prevRk
+     and cfg.doorsfx ~= false
+     and MOUND.AMB.prevOut ~= nil and outdoor ~= MOUND.AMB.prevOut then
+    local inTid = outdoor and (MOUND.AMB.prevTid or "") or tidNow
+    if inTid == "MART" or inTid == "POKECENTER" or inTid == "LOBBY" then
+      oneShot("shopdoor", 0.8)
+    elseif inTid ~= "CAVERN" and inTid ~= "UNDERGROUND"
+           and inTid ~= "FOREST" then
+      oneShot("door", 0.8)
+    end
+  end
+  if rkNow ~= MOUND.AMB.prevRk then
+    MOUND.AMB.prevRk, MOUND.AMB.prevTid = rkNow, tidNow
+  end
+  MOUND.AMB.prevOut = outdoor
   if want then MOUND.AMB.src(want) end   -- lazy: a bed loads when first wanted
+  -- the water bed rises with the shoreline: full a stride from the
+  -- waterline, gone past earshot, and never keyed to the crossfade
+  MOUND.AMB.waterT = 0
+  if lvl ~= "OFF" and outdoor and (shoreF or 0) > 0.03 then
+    MOUND.AMB.waterT = MOUND.AMB.VOL * 0.9 * math.min(1, shoreF)
+    MOUND.AMB.src("water")
+  end
+  -- crickets after dark, OUTSIDE ONLY and only where the outdoor beds
+  -- play (towns, cities, routes): `want` is already exactly that test,
+  -- so night rides on top of whichever of the two is up
+  MOUND.AMB.nightT = 0
+  if lvl ~= "OFF" and outdoor and isNight()
+     and (want == "town" or want == "route") then
+    MOUND.AMB.nightT = MOUND.AMB.VOL * 0.85
+    MOUND.AMB.src("night")
+  end
+  -- rain, whenever it rains where you can hear it (the same flag the
+  -- droplets and puddles run on), a shade over the bed so weather
+  -- reads over place
+  MOUND.AMB.rainT = 0
+  if lvl ~= "OFF" and outdoor and raining then
+    MOUND.AMB.rainT = MOUND.AMB.VOL * 1.05
+    MOUND.AMB.src("rain")
+  end
   if want and MOUND.AMB.srcs[want] == false then
     local e = (MOUND.AMB.err or {})[want] or "unknown"
     MOUND.AMB.note = (", amb:%s FAIL %s"):format(want, e:sub(-60))
@@ -3619,6 +3801,9 @@ function MOUND.AMB.tick(map, outdoor, cfg, dt, px, pz)
     if sc and MOUND.AMB.LOOPS[k] then
       pcall(function()
         local target = (k == want) and MOUND.AMB.VOL or 0
+        if k == "water" then target = MOUND.AMB.waterT or 0 end
+        if k == "night" then target = MOUND.AMB.nightT or 0 end
+        if k == "rain" then target = MOUND.AMB.rainT or 0 end
         local v = sc:getVolume()
         if v < target then v = math.min(target, v + MOUND.AMB.UP * dt)
         elseif v > target then v = math.max(target, v - MOUND.AMB.DOWN * dt) end
@@ -3646,7 +3831,19 @@ function Flora.draw(state, atlasFor)
   local dt = lastT and math.min(0.1, t - lastT) or 0
   lastT = t
   local outdoor = isOutdoor(map)
-  pcall(MOUND.AMB.tick, map, outdoor, cfg, dt, px, pz)
+  local shoreF = 0
+  if featureCache and featureCache.shores then
+    for i = 1, #featureCache.shores do
+      local sh = featureCache.shores[i]
+      local dx = sh[1] * 16 + 8 - px
+      local dz = sh[2] * 16 + 8 - pz
+      local d = math.sqrt(dx * dx + dz * dz)
+      local f = 1 - d / 130
+      if f > shoreF then shoreF = f end
+    end
+  end
+  pcall(MOUND.AMB.tick, map, outdoor, cfg, dt, px, pz, shoreF)
+  pcall(MOUND.applyLens, cfg)
   local yaw = (FirstPerson and FirstPerson.yaw) or 0
 
   -- Are we in the world at eye level -- inside the head, or on the boom
@@ -4080,7 +4277,8 @@ function Flora.draw(state, atlasFor)
          isNight() and ", night" or "",
          canopyNote .. rainNote .. puddleNote .. stormNote
            .. peakNote .. trunkNote .. apronNote .. backNote .. nbNote .. lightNote .. caveNote .. vineNote
-           .. shaftNote .. fogNote .. (MOUND.AMB.note or ""),
+           .. shaftNote .. fogNote .. (MOUND.AMB.note or "")
+           .. (MOUND.lensNote and MOUND.lensNote(cfg) or ""),
          darkNote))
 end
 
@@ -4147,5 +4345,12 @@ function Flora.invalidate()
   end
   MOUND.AMB.srcs = {}
 end
+
+-- live registration: the installer hot-swaps refreshed modules
+-- into the running session through this table, killing the
+-- boot-twice ritual (see main.lua, hotSwap)
+_G.__ds_live = rawget(_G, "__ds_live") or {}
+_G.__ds_live.Flora = Flora
+_G.__ds_live.V = _G.__ds_live.V or V
 
 return Flora

@@ -125,8 +125,11 @@ local BOB_AMP, BOB_HZ = 1.5, 2.1
 function Jump.eyeOffset(me)
   local ok, offset = pcall(function()
     local cfg = config()
+    -- JUMP FEEL scales the hop-derived motion only; the walk bob is a
+    -- STANDALONE option now and runs even with the jump row OFF, so
+    -- mult=0 no longer returns early -- it just zeroes the hop terms
     local mult = BOOST[cfg.jump or "SUBTLE"]
-    if not mult or mult <= 0 then return 0 end
+    if not mult or mult <= 0 then mult = 0 end
 
     local lift = (me and me.lift) or 0
     local t = now()
@@ -143,7 +146,7 @@ function Jump.eyeOffset(me)
     -- The engine gives no warning of a hop, so this reads the first
     -- frames of the arc itself and dips against them -- brief, and it
     -- resolves into the rise rather than fighting it.
-    if riseAt and lift > 0 then
+    if riseAt and lift > 0 and mult > 0 then
       local age = t - riseAt
       if age < CROUCH_TIME then
         local k = 1 - age / CROUCH_TIME
@@ -159,24 +162,24 @@ function Jump.eyeOffset(me)
     -- doorway), which reads as weight; on, a gentle sine rides each
     -- step, eased in and out so starting and stopping never snap.
     if cfg.headbob == true then
-      local moving = me and me.moving and not (lift > 0)
-      local last = bobT or t
-      local raw = math.min(t - last, 1)
-      -- phase must not leap on a hitch; the envelope's DECAY may -- a
-      -- big step just settles it at zero, which is where it was headed
-      local dt = math.min(raw, 0.1)
-      bobT = t
-      if moving then
-        bobEnv = math.min(1, (bobEnv or 0) + dt / 0.18)
-      else
-        bobEnv = math.max(0, (bobEnv or 0) - raw / 0.25)
+      -- FIXED in 1.56.0: this block read `me.moving`, a field the
+      -- rig's entity never carries in this engine -- always nil, so
+      -- the toggle did nothing. The module has better sources of both
+      -- facts, maintained by advance() right above: `moving` is the
+      -- distance-driven ease (0..1, fading in over a stride and out
+      -- over a quarter second), and `walked` is the odometer. Phase
+      -- from DISTANCE, amplitude from the ease: locked to the feet,
+      -- immune to framerate, stops mid-stride when you do -- which
+      -- was this file's stated design all along.
+      local env = (lift > 0) and 0 or (moving or 0)
+      if env > 0.01 then
+        off = off - math.sin(walked * 0.22) * BOB_AMP * env
       end
-      if (bobEnv or 0) > 0 then
-        bobPhase = (bobPhase or 0) + dt * math.pi * 2 * BOB_HZ
-        off = off - math.sin(bobPhase) * BOB_AMP * bobEnv
-      else
-        bobPhase = 0
-      end
+      _G.__ds_jump_note = ("bob:on env:%.2f walk:%.0f mult:%.1f")
+                          :format(env, walked or 0, mult or -1)
+    end
+    if cfg.headbob ~= true then
+      _G.__ds_jump_note = "bob:row-off"
     end
 
     -- the doorway step: a dip that eases back out, on its own clock
@@ -254,5 +257,12 @@ function Jump.swayZ(me)
   end)
   return (ok and type(v) == "number" and v) or 0
 end
+
+-- live registration: the installer hot-swaps refreshed modules
+-- into the running session through this table, killing the
+-- boot-twice ritual (see main.lua, hotSwap)
+_G.__ds_live = rawget(_G, "__ds_live") or {}
+_G.__ds_live.Jump = Jump
+_G.__ds_live.V = _G.__ds_live.V or V
 
 return Jump

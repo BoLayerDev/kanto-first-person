@@ -33,7 +33,13 @@
 -- The original author deleted the upstream; absol89's fork carries the
 -- torch and renamed its id at 1.7.6. Either identity is Dramatic Shape
 -- to this patch.
-local DS_IDS = { "DRAMATIC_SHAPE", "BATTLE_ART_VOXEL_FORK" }
+-- Every known citizen of the family tree. DRAMALESS_SHAPE is
+-- Stahltier's fork of 1.6.2 (with TERRARIUM merges); TERRARIUM is
+-- BrenoBertucci's 1.3.0 fork; the battle-art build was already here.
+-- Anything NOT on this list is caught by the content scan below, which
+-- recognises the shape of the mod rather than its name.
+local DS_IDS = { "DRAMATIC_SHAPE", "BATTLE_ART_VOXEL_FORK",
+                 "DRAMALESS_SHAPE", "TERRARIUM" }
 local DS_ID = "DRAMATIC_SHAPE"   -- kept for messages
 local STATE_FILE = "ds_fp_ceiling_state"
 local MARK = "Ceiling.draw"   -- present in VoxelScene.lua only when patched
@@ -59,10 +65,21 @@ local function firstAnchor(src, list)
 end
 
 local REQ_ANCHOR = REQ_ANCHORS[1]
-local REQ_ADD = REQ_ANCHOR .. '\nlocal Ceiling = V.require("Ceiling")'
-                          .. '\nlocal Backdrop = V.require("Backdrop")'
-                          .. '\nlocal SkyLayer = V.require("SkyLayer")'
-                          .. '\nlocal Flora = V.require("Flora")'
+local REQ_ADD = REQ_ANCHOR .. [[
+-- ds_fp_ceilings: a failed payload names its error on the HUD and
+-- degrades to a no-op instead of taking VoxelScene down with it
+local function __dsMod(name, statusKey)
+  local ok, m = pcall(V.require, name)
+  if ok and type(m) == "table" then return m end
+  _G[statusKey] = name .. " load failed: " .. tostring(m)
+  return setmetatable({}, { __index = function()
+    return function() end
+  end })
+end
+local Ceiling = __dsMod("Ceiling", "__ds_ceiling_status")
+local Backdrop = __dsMod("Backdrop", "__ds_backdrop_status")
+local SkyLayer = __dsMod("SkyLayer", "__ds_sky_status")
+local Flora = __dsMod("Flora", "__ds_flora_status")]]
 
 local SCENE_ANCHOR = [[  Voxel3D.draw(terrain, atlasFor(state.map), nil)
   for i, nb in ipairs(state.neighbors or {}) do
@@ -180,6 +197,22 @@ return function(mod)
                   { "HIGH", "HIGH" } } },
     { key = "grasssfx", label = "GRASS STEPS", type = "toggle",
       default = true },
+    { key = "stepsfx", label = "FOOTSTEPS", type = "toggle",
+      default = true },
+    { key = "doorsfx", label = "DOOR SOUND", type = "toggle",
+      default = true },
+    { key = "windows", label = "WINDOWS", type = "toggle",
+      default = true },
+    { key = "ceildetail", label = "CEILING DETAIL", type = "toggle",
+      default = true },
+    { key = "fpfov", label = "FP FOV", type = "choice",
+      default = "NORMAL",
+      choices = { { "NARROW", "NARROW" }, { "NORMAL", "NORMAL" },
+                  { "WIDE", "WIDE" }, { "ULTRA", "ULTRA" } } },
+    { key = "dof", label = "DEPTH BLUR", type = "choice",
+      default = "OFF",
+      choices = { { "OFF", "OFF" }, { "1", "1" }, { "2", "2" },
+                  { "3", "3" } } },
     { key = "rain", label = "RAIN", type = "choice", default = "SOMETIMES",
       choices = { { "OFF", "OFF" }, { "SOMETIMES", "SOMETIMES" },
                   { "ALWAYS", "ALWAYS" } } },
@@ -256,6 +289,12 @@ return function(mod)
       particles = opt("particles", true) ~= false,
       ambience = opt("ambience", "MID"),
       grasssfx = opt("grasssfx", true) ~= false,
+      stepsfx = opt("stepsfx", true) ~= false,
+      doorsfx = opt("doorsfx", true) ~= false,
+      windows = opt("windows", true) ~= false,
+      ceildetail = opt("ceildetail", true) ~= false,
+      fpfov = opt("fpfov", "NORMAL"),
+      dof = opt("dof", "OFF"),
       rain = opt("rain", "SOMETIMES"),
       umbrellas = opt("umbrellas", true) ~= false,
       puddles = opt("puddles", true) ~= false,
@@ -412,21 +451,82 @@ return function(mod)
   end
 
   -- ------- find Dramatic Shape and its version
-  local function findDS()
+  -- HOT SWAP. A refreshed module written mid-session used to sit inert
+  -- until the next boot, because the engine's loader had already cached
+  -- the old chunk -- hence the boot-twice ritual. Payloads now register
+  -- their live tables (and the V loader) in _G.__ds_live, so after a
+  -- refresh write, the new source is compiled against the same V and
+  -- its functions merged into the SAME table every caller already
+  -- holds. Sessions running pre-registration payloads swap on their
+  -- next boot and every boot after that is single.
+  local function hotSwap(name, src)
+    local ok = pcall(function()
+      local live = rawget(_G, "__ds_live")
+      if not (live and live[name] and live.V and src) then
+        error("not registered")
+      end
+      local chunk = assert(load(src, "@hotswap:" .. name))
+      local fresh = chunk(live.V)
+      if type(fresh) ~= "table" then error("no module returned") end
+      local old = live[name]
+      for k in pairs(old) do old[k] = nil end
+      for k, v in pairs(fresh) do old[k] = v end
+      live[name] = old
+    end)
+    if ok then say(name .. " hot-swapped into the running session.") end
+    return ok
+  end
+
+  -- EVERY family member, not the first. The installer cannot see which
+  -- base the launcher has ENABLED -- a disabled Dramatic Shape folder
+  -- sitting beside a live Dramaless is indistinguishable from here, and
+  -- 1.57.1 kept patching the dormant one while the live one went bare.
+  -- So it stops choosing: every Dramatic Shape descendant on disk gets
+  -- managed, each under its own per-base state. Patching a disabled
+  -- copy is inert by definition; patching all of them means the live
+  -- one is always among them.
+  local function findDSAll()
     local ok, names = pcall(fs.getDirectoryItems, "mods")
-    if not ok or not names then return nil end
+    if not ok or not names then return {} end
+    local found, seen = {}, {}
+    local function note(name, id)
+      if seen[name] then return end
+      seen[name] = true
+      local manifest = read("mods/" .. name .. "/manifest.json") or ""
+      local version = manifest:match('"version"%s*:%s*"([^"]+)"') or "?"
+      local vs = read("mods/" .. name .. "/lib/VoxelScene.lua")
+      if vs and vs:find("Voxel3D", 1, true) then
+        found[#found + 1] = {
+          base = "mods/" .. name, ver = version,
+          id = id or manifest:match('"id"%s*:%s*"([^"]+)"') or name,
+          marked = vs:find(MARK, 1, true) and true or false,
+        }
+      end
+    end
     for _, name in ipairs(names) do
       local manifest = read("mods/" .. name .. "/manifest.json")
       if manifest then
         for _, id in ipairs(DS_IDS) do
           if manifest:find('"id"%s*:%s*"' .. id .. '"') then
-            local version = manifest:match('"version"%s*:%s*"([^"]+)"')
-                            or "?"
-            return "mods/" .. name, version
+            note(name, id)
           end
         end
       end
     end
+    for _, name in ipairs(names) do note(name, nil) end
+    -- mark-bearers first: existing installs keep their continuity and
+    -- their globals win the last-writer race below
+    table.sort(found, function(a, b)
+      if a.marked ~= b.marked then return not a.marked end
+      return a.base < b.base
+    end)
+    return found
+  end
+
+  local function findDS()
+    local all = findDSAll()
+    local pick = all[#all] or nil   -- a marked base when one exists
+    if pick then return pick.base, pick.ver, pick.id end
     return nil
   end
 
@@ -643,10 +743,21 @@ return function(mod)
           .. "patch knows; nothing was changed.")
       return
     end
-    local reqAdd = anchor .. '\nlocal Ceiling = V.require("Ceiling")'
-                          .. '\nlocal Backdrop = V.require("Backdrop")'
-                          .. '\nlocal SkyLayer = V.require("SkyLayer")'
-                          .. '\nlocal Flora = V.require("Flora")'
+    local reqAdd = anchor .. [[
+-- ds_fp_ceilings: a failed payload names its error on the HUD and
+-- degrades to a no-op instead of taking VoxelScene down with it
+local function __dsMod(name, statusKey)
+  local ok, m = pcall(V.require, name)
+  if ok and type(m) == "table" then return m end
+  _G[statusKey] = name .. " load failed: " .. tostring(m)
+  return setmetatable({}, { __index = function()
+    return function() end
+  end })
+end
+local Ceiling = __dsMod("Ceiling", "__ds_ceiling_status")
+local Backdrop = __dsMod("Backdrop", "__ds_backdrop_status")
+local SkyLayer = __dsMod("SkyLayer", "__ds_sky_status")
+local Flora = __dsMod("Flora", "__ds_flora_status")]]
     local vsPatched = splice(vs, anchor, reqAdd)
     local how = nil
     if vsPatched then vsPatched, how = spliceScene(vsPatched) end
@@ -720,7 +831,11 @@ return function(mod)
                              "posters-pokemart.png",
                              "amb-cave.mp3", "amb-forest.mp3",
                              "amb-town.mp3", "amb-route.mp3",
-                             "sfx-grass1.mp3", "sfx-grass2.mp3" }) do
+                             "amb-water.mp3", "amb-night.mp3",
+                             "amb-rain.mp3",
+                             "sfx-grass1.mp3", "sfx-grass2.mp3",
+                             "sfx-door.mp3", "sfx-shopdoor.mp3",
+                             "sfx-cavestep.mp3", "sfx-woodstep.mp3" }) do
       local blob = mod:read(extra)
       if blob then writeTracked(base.. "/lib/" .. extra, blob) end
     end
@@ -807,8 +922,31 @@ return function(mod)
   end
 
   -- ------- decide, once, at load
-  local function manage(depth)
-    local base, ver = findDS()
+  local function manageOne(base, ver, foundId, depth)
+    -- STATE IS PER BASE now. One global state file was fine when there
+    -- was one Dramatic Shape; switching to a fork made the old state
+    -- claim "patched" about a base this mod had never touched, which
+    -- shunted boot into the REMOVAL path -- teardown noise, no apply,
+    -- nothing loaded. Each base gets its own state file; a legacy file
+    -- follows its own base (the one bearing the splice mark) and is
+    -- cleared from any other.
+    if base then
+      local tag = base:gsub("[^%w]", "_")
+      local legacy = read("ds_fp_ceiling_state")
+      STATE_FILE = "ds_fp_ceiling_state--" .. tag
+      if legacy then
+        local vsNow = read(base .. "/lib/VoxelScene.lua") or ""
+        if vsNow:find(MARK, 1, true) and not read(STATE_FILE) then
+          write(STATE_FILE, legacy)   -- it was ours; carry it over
+        end
+        remove("ds_fp_ceiling_state")
+        say("state migrated to per-base tracking.")
+      end
+    end
+    if base and foundId and foundId ~= "DRAMATIC_SHAPE" then
+      say(("base found: %s %s (fork-compatible mode)."):format(
+          foundId, ver))
+    end
     _G.__ds_patch_base = base
 
     -- TESTED VERSIONS ONLY. Splicing into an untested Dramatic Shape is
@@ -821,7 +959,10 @@ return function(mod)
                      ["1.7.0"] = true,
                      -- absol89's fork, the mainline since the deletion
                      ["1.7.6"] = true }
-    if base and ver and not TESTED[ver] then
+    -- forks suffix their numbering (Dramaless ships as "1.6.2.ST"):
+    -- when the leading x.y.z is a tested base, the suffix rides along
+    local verBase = ver and ver:match("^(%d+%.%d+%.%d+)")
+    if base and ver and not (TESTED[ver] or TESTED[verBase]) then
       say(("Dramatic Shape %s is a version this patch has not been "
            .. "tested against. NOT patching -- everything is left "
            .. "stock. An update of Kanto in First Person will follow.")
@@ -879,7 +1020,7 @@ return function(mod)
         if inSave(p) then remove(p) end
       end
       remove(STATE_FILE)
-      if (depth or 0) < 1 then manage(1) end
+      if (depth or 0) < 1 then manageOne(base, ver, foundId, 1) end
     elseif patched then
       if stateVer ~= ver then write(STATE_FILE, ver) end
       -- The jump arrived after earlier patches shipped: splice the rig
@@ -890,6 +1031,7 @@ return function(mod)
       if jumpSrc and fpNow then
         if read(base .. "/lib/Jump.lua") ~= jumpSrc then
           writeTracked(base .. "/lib/Jump.lua", jumpSrc)
+          hotSwap("Jump", jumpSrc)
         end
         if not fpNow:find("Jump.eyeOffset", 1, true) then
           local fp2 = splice(fpNow, FP_REQ_ANCHOR, FP_REQ_ADD)
@@ -919,6 +1061,7 @@ return function(mod)
       if floraSrc then
         if read(base .. "/lib/Flora.lua") ~= floraSrc then
           writeTracked(base .. "/lib/Flora.lua", floraSrc)
+          hotSwap("Flora", floraSrc)
         end
         if not vs:find("Flora.draw", 1, true) then
           local vs4 = vs
@@ -949,6 +1092,7 @@ return function(mod)
       if skySrc then
         if read(base .. "/lib/SkyLayer.lua") ~= skySrc then
           writeTracked(base .. "/lib/SkyLayer.lua", skySrc)
+          hotSwap("SkyLayer", skySrc)
         end
         if not vs:find("SkyLayer.draw", 1, true) then
           local vs3 = vs
@@ -1021,6 +1165,7 @@ return function(mod)
       local bd = mod:read("payload_backdrop.lua")
       if bd and read(base .. "/lib/Backdrop.lua") ~= bd then
         writeTracked(base .. "/lib/Backdrop.lua", bd)
+        hotSwap("Backdrop", bd)
         say("horizon module refreshed.")
       end
       if not read(base .. "/lib/backdrop.png") then
@@ -1035,7 +1180,11 @@ return function(mod)
                                "posters-pokemart.png",
                                "amb-cave.mp3", "amb-forest.mp3",
                                "amb-town.mp3", "amb-route.mp3",
-                               "sfx-grass1.mp3", "sfx-grass2.mp3" }) do
+                               "amb-water.mp3", "amb-night.mp3",
+                               "amb-rain.mp3",
+                               "sfx-grass1.mp3", "sfx-grass2.mp3",
+                               "sfx-door.mp3", "sfx-shopdoor.mp3",
+                               "sfx-cavestep.mp3", "sfx-woodstep.mp3" }) do
         local blob = mod:read(extra)
         if blob and read(base .. "/lib/" .. extra) ~= blob then
           writeTracked(base.. "/lib/" .. extra, blob)
@@ -1045,6 +1194,7 @@ return function(mod)
       _G.__ds_posters_dir = base .. "/lib/"
       if myV > theirV then
         if writeTracked(base .. "/lib/Ceiling.lua", mine) then
+          hotSwap("Ceiling", mine)
           say(("ceiling module updated v%d -> v%d (Dramatic Shape %s.")
               :format(theirV, myV, ver) .. ")" .. laterNote())
         else
@@ -1062,7 +1212,18 @@ return function(mod)
     end
   end
 
-  local ok, err = pcall(manage)
+  local ok, err = pcall(function()
+    local family = findDSAll()
+    if #family == 0 then
+      say("no Dramatic Shape family mod found in mods/.")
+      return
+    end
+    for _, c in ipairs(family) do
+      say(("managing %s %s%s"):format(c.id, c.ver,
+          c.marked and " (installed)" or ""))
+      manageOne(c.base, c.ver, c.id, 0)
+    end
+  end)
   if not ok then say("unexpected error: " .. tostring(err)) end
 
   -- the boot log: everything said above, readable from the save folder

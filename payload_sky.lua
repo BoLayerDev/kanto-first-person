@@ -1261,4 +1261,11 @@ function Sky.invalidate()
   ground = nil
 end
 
+-- live registration: the installer hot-swaps refreshed modules
+-- into the running session through this table, killing the
+-- boot-twice ritual (see main.lua, hotSwap)
+_G.__ds_live = rawget(_G, "__ds_live") or {}
+_G.__ds_live.SkyLayer = Sky
+_G.__ds_live.V = _G.__ds_live.V or V
+
 return Sky

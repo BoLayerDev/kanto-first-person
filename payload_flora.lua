@@ -1,5 +1,5 @@
 -- FLORA: grass with height to it, and the small moving things.
--- payload-version: 64
+-- payload-version: 65
 --
 -- TUFTS.  Dramatic Shape stands two thin rows of grass per tile, evenly,
 -- which is honest to the art and reads as a lawn.  Tall grass in this
@@ -168,11 +168,16 @@ local BLADE_MIN, BLADE_MAX = 7, 20                 -- pixel heights
 local BLADE_W = 7
 
 -- ------- particles
-local POOL = 150
+local POOL = 220
 local SEED_RATE = 22        -- per second while moving through grass
 local DRIP_RATE = 3.5
 local FLY_TARGET = 14       -- fireflies aloft at once, after dark
 local LEAF_RATE = 2.2       -- per second under canopy
+local TLEAF_RATE = 16       -- picks per second off the lifted trees
+                            -- (misses -- far cells, boulders -- thin it,
+                            -- and the pool is the hard ceiling; a leaf
+                            -- is one textured quad, so even a heavy
+                            -- shower costs what the rain already does)
 local DUST_TARGET = 12      -- motes hanging in an interior
 local FOAM_RATE = 5         -- per second near a shoreline
 local SMOKE_RATE = 2.4      -- per chimney per second
@@ -610,7 +615,7 @@ MOUND.BACKS = { cache = {}, EPS = 0.35 }
 -- class, sampled at the cell's canonical bottom-left tile. Drawn as two
 -- crossed quads of generated bark, with a short branch on every third
 -- tree.
-MOUND.TRUNK = { cache = {}, img = nil }
+MOUND.TRUNK = { cache = {}, nbcache = {}, img = nil }
 do
   local okTS, TS = pcall(V.require, "TileShape")
   MOUND.TRUNK.ts = okTS and TS or nil
@@ -714,8 +719,42 @@ function MOUND.barkImg()
   return T.img or nil
 end
 
-function MOUND.buildTrunks(map)
+-- HOW A STEM PROVES ITS CANOPY WAS DRAWN. Registry entries are published
+-- when Structures CREATES a stamp -- but ChunkMesher decides later
+-- whether the stamp is ever MESHED, and two of its rules discard stamps
+-- outright: ring stamps wholly buried under a connected neighbour's
+-- body rect (skipAll = containedInMask) and, in body-only builds, every
+-- ring stamp. A discarded stamp draws no round object, so its stem
+-- stands bare on whatever the neighbour draws there -- which at a
+-- connection is the walkway. THOSE are the seam ghosts on pathways.
+--
+-- Two gates, both replicas of facts the mesher already established, so
+-- neither can strand a drawn canopy:
+--   1. the MASK GATE re-runs the mesher's own containment test (same
+--      rects, same not-over-body condition): a stamp the full build
+--      provably skipped gets no stem, full stop.
+--   2. the BASE GATE requires the stamp's __ds_round_base entry, which
+--      is written ONLY inside the mesher's quad expansion -- a stamp
+--      that was never expanded never wrote one. Entries land when the
+--      async full build does, so the cache watches the base count and
+--      rebuilds as they arrive (late stems pop in with their trees,
+--      exactly as the trees themselves do).
+function MOUND.buildTrunks(map, nbRects)
   MOUND.TRUNK.tN, MOUND.TRUNK.bN, MOUND.TRUNK.cells = 0, 0, {}
+  local bw = ((map.def or {}).width or 0) * 32
+  local bh = ((map.def or {}).height or 0) * 32
+  local function buriedUnderNeighbour(mx, mz)
+    local sx0, sz0, sx1, sz1 = mx - 8, mz - 8, mx + 8, mz + 8
+    -- the mesher only skips stamps NOT over the body; match it exactly
+    if sx1 > 0 and sx0 < bw and sz1 > 0 and sz0 < bh then return false end
+    for _, mk in ipairs(nbRects or {}) do
+      if sx0 >= mk[1] and sx1 <= mk[3]
+         and sz0 >= mk[2] and sz1 <= mk[4] then
+        return true
+      end
+    end
+    return false
+  end
   -- the engine reuses ONE map object across transitions, so the
   -- registry is keyed by the map's stable id -- the same derivation the
   -- splice uses. Keying by the object merged every map into one bucket,
@@ -741,26 +780,14 @@ function MOUND.buildTrunks(map)
         -- a ghost: stamped, but the cell draws no round object
         goto continue
       end
-      -- THE CONNECTION BANDS. Adjacent maps BOTH author the rows where
-      -- they join, and each map's copy of that band contains round,
-      -- unwalkable tiles -- truthfully. But the band's presentation
-      -- belongs to whichever side you are standing on, so supports
-      -- built from THIS map's copy stand as ghosts at every seam
-      -- (near:12|0 12|1 9|0 on ROUTE_1's north edge was the proof). On
-      -- any side that has a connection, no support is built within two
-      -- cells of that edge or beyond it. Sides WITHOUT a connection --
-      -- the border tree walls -- keep every trunk.
-      do
-        local conn = (map.def or {}).connections or {}
-        local wc2 = map.widthCells or 0
-        local hc2 = map.heightCells or 0
-        if (conn.north and cy < 2)
-           or (conn.south and cy > hc2 - 3)
-           or (conn.west and cx < 2)
-           or (conn.east and cx > wc2 - 3) then
-          goto continue
-        end
-      end
+      -- (The CONNECTION-BAND suppression that lived here from 1.45.7 is
+      -- retired. It was a tourniquet for the seam ghosts, whose real
+      -- causes -- the shared-object registry, group supersession, and
+      -- above all supports rooted at flat ground under terraced stamps
+      -- -- were each fixed properly afterwards. With those fixes in
+      -- place the band rule only starved LEGITIMATE seam rows of their
+      -- stems, leaving floating rounds along every connected edge. The
+      -- walkability gate below still keeps path-overlay cells bare.)
       -- THE WALKABILITY TEST, which cannot be lied to. Near connection
       -- seams the base map data is padded with the border TREE block and
       -- the overlay draws path on top -- so the tile id says "tree"
@@ -775,16 +802,28 @@ function MOUND.buildTrunks(map)
         end)
         if okW and wk then goto continue end
       end
-      local boulder = okT and tile and boulderSet[tile] or false
+      -- MASK GATE: the mesher discarded this stamp under a neighbour's
+      -- body, so its canopy was never drawn -- the seam ghost exactly
+      if buriedUnderNeighbour(cx * 16 + 8, cy * 16 + 8) then
+        goto continue
+      end
+      -- BASE GATE: no base entry means the full build never expanded
+      -- this stamp's quads -- no drawn round, no stem. A build still in
+      -- flight lands its entries shortly and the cache's base count
+      -- triggers the rebuild that grows the stem then.
       local base = (rawget(_G, "__ds_round_base") or {})
-                   [(cx * 16 + 8) .. "|" .. (cy * 16 + 8)] or 0
+                   [rk .. ":" .. (cx * 16 + 8) .. "|" .. (cy * 16 + 8)]
+      if base == nil then goto continue end
+      local boulder = okT and tile and boulderSet[tile] or false
       if boulder then
         MOUND.TRUNK.bN = (MOUND.TRUNK.bN or 0) + 1
       else
         MOUND.TRUNK.tN = (MOUND.TRUNK.tN or 0) + 1
       end
       MOUND.TRUNK.cells[#MOUND.TRUNK.cells + 1] =
-        { cx, cy, boulder and "b" or "t" }
+        { cx, cy, boulder and "b" or "t",
+          -- the crown's underside, where a leaf lets go
+          (not boulder) and (base + lift + 3) or nil }
       local mx, mz = cx * 16 + 8, cy * 16 + 8
       if boulder then
         -- SOLID: a four-sided box in two courses, wide below, narrower
@@ -2433,6 +2472,9 @@ local function makeTex()
     drip  = dot(0.62, 0.78, 0.95, true),
     fly   = dot(1.0, 0.95, 0.45, true),
     leaf  = flake(0.78, 0.62, 0.22),
+    -- the lifted trees drop GREEN leaves: fresh off a living crown,
+    -- where the forest's amber ones have been down a while
+    tleaf = flake(0.36, 0.66, 0.26),
     dust  = dot(0.95, 0.92, 0.80, true),
     foam  = dot(0.92, 0.96, 1.0, true),
     smoke = dot(0.72, 0.72, 0.70, true),
@@ -3077,7 +3119,8 @@ end
 -- Particles were the last big block left inside Flora.draw; lifting it
 -- out keeps that function under LuaJIT's 60-upvalue ceiling as features
 -- accumulate.
-local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor)
+local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor,
+                             treeCells)
   local live = 0
   if cfg.particles ~= false then
     tex = tex or makeTex()
@@ -3133,6 +3176,28 @@ local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor)
               pz + math.sin(a) * r,
               (math.random() - 0.5) * 8, -7 - math.random() * 5,
               (math.random() - 0.5) * 8, 5.5, 2.6)
+      end
+
+      -- green leaves letting go of the lifted trees' crowns: pick a
+      -- random stem cell; trees within reach shed, everything else is
+      -- a miss (which is what keeps the shower gentle)
+      if treeCells and #treeCells > 0 and tex.tleaf then
+        local n = TLEAF_RATE * dt
+        while n > 0 do
+          if n < 1 and math.random() > n then break end
+          local c = treeCells[math.random(#treeCells)]
+          if c[3] == "t" and c[4] then
+            local mx, mz = c[1] * 16 + 8, c[2] * 16 + 8
+            if math.abs(mx - px) < 180 and math.abs(mz - pz) < 180 then
+              spawn("tleaf", mx + (math.random() - 0.5) * 11,
+                    c[4] + 3 + math.random() * 6,
+                    mz + (math.random() - 0.5) * 11,
+                    (math.random() - 0.5) * 7, -6 - math.random() * 4,
+                    (math.random() - 0.5) * 7, 4.5, 3.6)
+            end
+          end
+          n = n - 1
+        end
       end
 
       -- dust turning in interior air: kept topped up rather than emitted
@@ -3284,7 +3349,7 @@ local function drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor)
                 q.y, q.vy, q.life = 1, 0, math.min(q.life, 0.12)
                 q.size = 3.2
               end
-            elseif q.kind == "leaf" then
+            elseif q.kind == "leaf" or q.kind == "tleaf" then
               -- tumbling fall: sideways drift reverses on its own clock
               local ph = i * 0.9
               q.x = q.x + (q.vx + math.sin(t * 1.4 + ph) * 9) * dt
@@ -3399,6 +3464,176 @@ local function abandoned()
   return rawget(_G, "__ds_ceiling_config") == nil
 end
 
+
+-- ------------------------------------------------------------------
+-- AMBIENCE.  One looping bed per kind of place -- cave, forest, town,
+-- route -- crossfaded as you move between them, silent indoors.  The
+-- files ride the same pipeline as the poster sheets: installed into
+-- Dramatic Shape's lib folder and streamed from there, so a missing
+-- file costs its bed and nothing else.
+--
+-- WHICH BED a map wants is decided the way the rest of this module
+-- decides everything: tileset first (CAVERN and FOREST are authored),
+-- then the map's own id for the outdoor split -- TOWN/CITY ids get the
+-- town bed, everything else outdoors is a route.  Interiors fade all
+-- four out rather than stopping dead, so walking into a Mart sounds
+-- like a door closing behind you.
+--
+-- THE WATCHDOG.  Flora.draw only runs while a voxel rung is live, so
+-- dropping to 2D (or the mode failing) would strand the beds playing
+-- forever.  A once-only wrap of love.update watches for the heartbeat
+-- Flora.draw leaves each frame and fades everything out when it stops.
+-- zero new top-level locals: this main chunk sits exactly at Lua's
+-- 200-local cap, so the whole feature hangs off MOUND, which exists
+MOUND.AMB = { srcs = {}, beat = -1e9,
+              FILES = { cave = "amb-cave.mp3", forest = "amb-forest.mp3",
+                        town = "amb-town.mp3", route = "amb-route.mp3",
+                        g1 = "sfx-grass1.mp3", g2 = "sfx-grass2.mp3" },
+              -- the beds loop; the grass steps are one-shots
+              LOOPS = { cave = true, forest = true,
+                        town = true, route = true },
+              -- named volumes for the AMBIENT SOUND row; MID is the
+              -- default and noticeably hotter than 1.51.0's fixed 0.35,
+              -- which playtested too quiet under the game's own music
+              VOLS = { LOW = 0.35, MID = 0.62, HIGH = 0.92 },
+              STEP_VOL = 0.85,        -- the grass steps, over the bed
+              UP = 0.30, DOWN = 0.55 } -- volume per second, in and out
+
+function MOUND.AMB.src(k)
+  local got = MOUND.AMB.srcs[k]
+  if got ~= nil then return got or nil end
+  -- every plausible home for the file, tried in order; the error from
+  -- the last attempt is kept and surfaced on the debug line, because a
+  -- silent pcall was how 1.51.0 shipped a feature nobody could hear
+  local dirs = {}
+  local pd = rawget(_G, "__ds_posters_dir")
+  if pd then dirs[#dirs + 1] = pd end
+  local bp = rawget(_G, "__ds_backdrop_path")
+  if type(bp) == "string" then
+    local d = bp:match("^(.*/)[^/]+$")
+    if d then dirs[#dirs + 1] = d end
+  end
+  dirs[#dirs + 1] = "mods/DRAMATIC_SHAPE/lib/"
+  dirs[#dirs + 1] = "mods/BATTLE_ART_VOXEL_FORK/lib/"
+  local src, err = nil, "no directories to try"
+  for _, dir in ipairs(dirs) do
+    for _, kind in ipairs({ "stream", "static" }) do
+      local ok, got2 = pcall(function()
+        local sc = love.audio.newSource(dir .. MOUND.AMB.FILES[k], kind)
+        sc:setLooping(MOUND.AMB.LOOPS[k] and true or false)
+        sc:setVolume(MOUND.AMB.LOOPS[k] and 0 or MOUND.AMB.STEP_VOL)
+        return sc
+      end)
+      if ok and got2 then src = got2 break end
+      err = tostring(got2)
+    end
+    if src then break end
+  end
+  MOUND.AMB.err = MOUND.AMB.err or {}
+  MOUND.AMB.err[k] = (not src) and err or nil
+  MOUND.AMB.srcs[k] = src or false
+  return src
+end
+
+function MOUND.AMB.keyOf(map, outdoor)
+  local def = (map and map.def) or {}
+  local tid = tostring(def.tileset
+              or (map and map.tileset and map.tileset.id) or "")
+  if tid == "CAVERN" then return "cave" end
+  if tid == "FOREST" then return "forest" end
+  if not outdoor then return nil end
+  local id = tostring((map and map.id) or def.id or "")
+  if id:find("TOWN") or id:find("CITY") then return "town" end
+  return "route"
+end
+
+function MOUND.AMB.tick(map, outdoor, cfg, dt, px, pz)
+  MOUND.AMB.beat = now()
+  -- the watchdog reads THROUGH the global so a module reload (new
+  -- MOUND, new srcs) hands it the live state instead of a dead capture
+  _G.__ds_amb_state = MOUND.AMB
+  if not rawget(_G, "__ds_amb_hooked") then
+    _G.__ds_amb_hooked = true
+    pcall(function()
+      local prev = love.update
+      love.update = function(...)
+        if prev then prev(...) end
+        local st = rawget(_G, "__ds_amb_state")
+        if st and love.timer.getTime() - st.beat > 0.5 then
+          for k2, sc in pairs(st.srcs) do
+            if sc and st.LOOPS and st.LOOPS[k2] then
+              pcall(function()
+                local v = sc:getVolume()
+                if v > 0.01 then sc:setVolume(v * 0.92)
+                elseif sc:isPlaying() then sc:stop() end
+              end)
+            end
+          end
+        end
+      end
+    end)
+  end
+  -- the row is a CHOICE now (OFF/LOW/MID/HIGH); pre-1.52 saves may
+  -- still hold a boolean, and both readings are honoured
+  local lvl = cfg.ambience
+  if lvl == true or lvl == nil then lvl = "MID" end
+  if lvl == false then lvl = "OFF" end
+  MOUND.AMB.VOL = MOUND.AMB.VOLS[lvl] or MOUND.AMB.VOLS.MID
+  local want = (lvl ~= "OFF") and MOUND.AMB.keyOf(map, outdoor) or nil
+  -- GRASS STEPS: entering a tall-grass cell rustles, the two takes
+  -- alternating so back-and-forth pacing never stutters one sample.
+  -- Cell ENTRY is the trigger (not per-frame presence), which is the
+  -- same edge the encounter system rolls on, so it sounds like what
+  -- it is: a step into the grass.
+  if cfg.grasssfx ~= false and px then
+    local cx, cy = math.floor(px / 16), math.floor(pz / 16)
+    local ck = cx .. "|" .. cy
+    if ck ~= MOUND.AMB.lastCell then
+      MOUND.AMB.lastCell = ck
+      local okG, g = pcall(function() return map:isGrassCell(cx, cy) end)
+      if okG and g then
+        MOUND.AMB.stepFlip = not MOUND.AMB.stepFlip
+        local sc = MOUND.AMB.src(MOUND.AMB.stepFlip and "g1" or "g2")
+        if sc then
+          pcall(function()
+            sc:stop()
+            sc:setVolume(MOUND.AMB.STEP_VOL)
+            sc:play()
+          end)
+        end
+      end
+    end
+  end
+  if want then MOUND.AMB.src(want) end   -- lazy: a bed loads when first wanted
+  if want and MOUND.AMB.srcs[want] == false then
+    local e = (MOUND.AMB.err or {})[want] or "unknown"
+    MOUND.AMB.note = (", amb:%s FAIL %s"):format(want, e:sub(-60))
+  elseif want then
+    local sc0 = MOUND.AMB.srcs[want]
+    local okV, v0 = pcall(function() return sc0:getVolume() end)
+    MOUND.AMB.note = (", amb:%s %.2f"):format(want, okV and v0 or -1)
+  else
+    MOUND.AMB.note = ", amb:off"
+  end
+  for k, sc in pairs(MOUND.AMB.srcs) do
+    if sc and MOUND.AMB.LOOPS[k] then
+      pcall(function()
+        local target = (k == want) and MOUND.AMB.VOL or 0
+        local v = sc:getVolume()
+        if v < target then v = math.min(target, v + MOUND.AMB.UP * dt)
+        elseif v > target then v = math.max(target, v - MOUND.AMB.DOWN * dt) end
+        sc:setVolume(v)
+        if v > 0.004 then
+          if not sc:isPlaying() then sc:play() end
+        elseif sc:isPlaying() and target == 0 then
+          sc:stop()
+        end
+      end)
+    end
+  end
+  return want
+end
+
 function Flora.draw(state, atlasFor)
   if abandoned() then return end
   local cfg = config()
@@ -3411,6 +3646,7 @@ function Flora.draw(state, atlasFor)
   local dt = lastT and math.min(0.1, t - lastT) or 0
   lastT = t
   local outdoor = isOutdoor(map)
+  pcall(MOUND.AMB.tick, map, outdoor, cfg, dt, px, pz)
   local yaw = (FirstPerson and FirstPerson.yaw) or 0
 
   -- Are we in the world at eye level -- inside the head, or on the boom
@@ -3537,7 +3773,8 @@ function Flora.draw(state, atlasFor)
     end
   end
 
-  local live = drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor)
+  local live = drawParticles(state, map, cfg, px, pz, yaw, t, dt, outdoor,
+                             (MOUND.TRUNK.cache[map] or {}).cells)
   local rainNote = drawRain(state, cfg, px, pz, yaw, t, dt, raining)
   local puddleNote = drawPuddles(map, cfg, raining, dt, atlasFor, outdoor)
   local stormNote = drawStorm(cfg, px, pz, yaw, t, dt,
@@ -3588,6 +3825,57 @@ function Flora.draw(state, atlasFor)
             end
           end
 
+          -- TRUNKS across the boundary, same cure as the peaks: the
+          -- neighbour's rounds are drawn lifted (its own mesh bakes the
+          -- lifts) but stems were built for the CURRENT map only, so a
+          -- route's trees floated in the distance until you crossed
+          -- over. Each neighbour's stems now build from ITS OWN
+          -- registry (same gates, same builder, cached per map id) and
+          -- draw at the neighbour's offset under its haze. The BASE
+          -- GATE does the seam hygiene for free here too: a neighbour
+          -- is meshed body-only, whose build skips every ring stamp
+          -- before expansion, so its ring cells never earn base entries
+          -- and no stem grows outside the neighbour's body.
+          if cfg.talltrees ~= false then
+            local rkT = nmap.id or (nmap.def and nmap.def.id) or nmap
+            local regN2, baseN2 = 0, 0
+            local rbT = rawget(_G, "__ds_round_base") or {}
+            for key in pairs((rawget(_G, "__ds_round_cells") or {})[rkT]
+                             or {}) do
+              regN2 = regN2 + 1
+              local kx, ky = key:match("^(-?%d+)|(-?%d+)$")
+              if kx and rbT[rkT .. ":" .. (tonumber(kx) * 16 + 8) .. "|"
+                           .. (tonumber(ky) * 16 + 8)] ~= nil then
+                baseN2 = baseN2 + 1
+              end
+            end
+            local tslot = MOUND.TRUNK.nbcache[rkT]
+            if not tslot or tslot.n ~= regN2 or tslot.baseN ~= baseN2 then
+              if tslot then
+                if tslot.trunks then
+                  pcall(tslot.trunks.release, tslot.trunks)
+                end
+                if tslot.stones then
+                  pcall(tslot.stones.release, tslot.stones)
+                end
+              end
+              local tm2, sm2 = MOUND.buildTrunks(nmap, nil)
+              tslot = { trunks = tm2, stones = sm2,
+                        n = regN2, baseN = baseN2 }
+              MOUND.TRUNK.nbcache[rkT] = tslot
+            end
+            if tslot.trunks or tslot.stones then
+              love.graphics.setColor(hr, hg, hb, 1)
+              if tslot.trunks and MOUND.barkImg() then
+                Voxel3D.draw(tslot.trunks, MOUND.barkImg(), model)
+              end
+              if tslot.stones and MOUND.stoneImg() then
+                Voxel3D.draw(tslot.stones, MOUND.stoneImg(), model)
+              end
+              love.graphics.setColor(1, 1, 1, 1)
+            end
+          end
+
           -- grass
           local gkey = cfg.grass or "SUBTLE"
           local per = BLADES[gkey] or 2
@@ -3624,19 +3912,40 @@ function Flora.draw(state, atlasFor)
   -- ---------- trunks under the lifted trees
   local trunkNote = ""
   if outdoor and cfg.talltrees ~= false then
-    local regN = 0
+    local regN, baseN = 0, 0
     local rk2 = map.id or (map.def and map.def.id) or map
-    for _ in pairs((rawget(_G, "__ds_round_cells") or {})[rk2] or {}) do
+    local rb0 = rawget(_G, "__ds_round_base") or {}
+    for key in pairs((rawget(_G, "__ds_round_cells") or {})[rk2] or {}) do
       regN = regN + 1
+      -- how many of THIS map's registry cells the mesher has confirmed
+      -- (base entries land as the async full build expands each stamp);
+      -- a change means stems are ready to grow or ghosts to retire
+      local kx, ky = key:match("^(-?%d+)|(-?%d+)$")
+      if kx and rb0[rk2 .. ":" .. (tonumber(kx) * 16 + 8) .. "|"
+                   .. (tonumber(ky) * 16 + 8)] ~= nil then
+        baseN = baseN + 1
+      end
+    end
+    -- the mesher's neighbour-body rects, rebuilt from the same offsets
+    -- the scene draws with, so the mask gate answers as the mesher did
+    local nbRects = {}
+    for _, nb in ipairs(state.neighbors or {}) do
+      if nb.map and nb.map.def then
+        nbRects[#nbRects + 1] = { nb.ox or 0, nb.oy or 0,
+                                  (nb.ox or 0) + nb.map.def.width * 32,
+                                  (nb.oy or 0) + nb.map.def.height * 32 }
+      end
     end
     local slot = MOUND.TRUNK.cache[map]
-    if not slot or slot.n ~= regN then
+    if not slot or slot.n ~= regN or slot.baseN ~= baseN
+       or slot.nbN ~= #nbRects then
       if slot then
         if slot.trunks then pcall(slot.trunks.release, slot.trunks) end
         if slot.stones then pcall(slot.stones.release, slot.stones) end
       end
-      local tm, sm, n = MOUND.buildTrunks(map)
+      local tm, sm, n = MOUND.buildTrunks(map, nbRects)
       slot = { trunks = tm, stones = sm, count = n or 0, n = regN,
+               baseN = baseN, nbN = #nbRects,
                tN = MOUND.TRUNK.tN, bN = MOUND.TRUNK.bN,
                cells = MOUND.TRUNK.cells }
       MOUND.TRUNK.cache[map] = slot
@@ -3771,7 +4080,7 @@ function Flora.draw(state, atlasFor)
          isNight() and ", night" or "",
          canopyNote .. rainNote .. puddleNote .. stormNote
            .. peakNote .. trunkNote .. apronNote .. backNote .. nbNote .. lightNote .. caveNote .. vineNote
-           .. shaftNote .. fogNote,
+           .. shaftNote .. fogNote .. (MOUND.AMB.note or ""),
          darkNote))
 end
 
@@ -3814,6 +4123,11 @@ function Flora.invalidate()
     if slot.stones then pcall(slot.stones.release, slot.stones) end
   end
   MOUND.TRUNK.cache = {}
+  for _, slot in pairs(MOUND.TRUNK.nbcache) do
+    if slot.trunks then pcall(slot.trunks.release, slot.trunks) end
+    if slot.stones then pcall(slot.stones.release, slot.stones) end
+  end
+  MOUND.TRUNK.nbcache = {}
   for _, slot in pairs(MOUND.PEAK.cache) do
     if slot.mesh then pcall(slot.mesh.release, slot.mesh) end
   end
@@ -3828,6 +4142,10 @@ function Flora.invalidate()
   tuftCache, partMesh, shellMesh, parts = nil, nil, nil, nil
   shaftMesh, drops, rainUntil, dryUntil = nil, nil, nil, nil
   featureCache = nil
+  for _, sc in pairs(MOUND.AMB.srcs) do
+    if sc then pcall(sc.stop, sc) end
+  end
+  MOUND.AMB.srcs = {}
 end
 
 return Flora

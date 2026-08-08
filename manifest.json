@@ -1,7 +1,7 @@
 {
-  "id": "ds_fp_ceilings",
+  "id": "ds_fp_ceiling",
   "name": "Kanto in First Person - Interiors and Tweaks",
-  "version": "1.50.0",
+  "version": "1.52.0",
   "api": 2,
   "entry": "main.lua",
   "profile": "content",

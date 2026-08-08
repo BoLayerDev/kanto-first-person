@@ -132,8 +132,6 @@ return function(mod)
     { key = "fittings", label = "CEILING LAMPS", type = "toggle",
       default = true },
     { key = "rock", label = "CAVE ROCK", type = "toggle", default = true },
-    { key = "backs", label = "BUILDING BACKS", type = "toggle",
-      default = true },
     { key = "apron", label = "WORLD APRON", type = "toggle",
       default = true },
     { key = "talltrees", label = "TALL TREES", type = "toggle",
@@ -176,6 +174,12 @@ return function(mod)
       choices = { { "OFF", "OFF" }, { "SUBTLE", "SUBTLE" },
                   { "WILD", "WILD" } } },
     { key = "particles", label = "PARTICLES", type = "toggle", default = true },
+    { key = "ambience", label = "AMBIENT SOUND", type = "choice",
+      default = "MID",
+      choices = { { "OFF", "OFF" }, { "LOW", "LOW" }, { "MID", "MID" },
+                  { "HIGH", "HIGH" } } },
+    { key = "grasssfx", label = "GRASS STEPS", type = "toggle",
+      default = true },
     { key = "rain", label = "RAIN", type = "choice", default = "SOMETIMES",
       choices = { { "OFF", "OFF" }, { "SOMETIMES", "SOMETIMES" },
                   { "ALWAYS", "ALWAYS" } } },
@@ -230,7 +234,12 @@ return function(mod)
       spill = opt("spill", true) ~= false,
       fittings = opt("fittings", true) ~= false,
       rock = opt("rock", true) ~= false,
-      backs = opt("backs", true) ~= false,
+      -- BUILDING BACKS is retired for now: the plain-wall patch on
+      -- north faces misfired on several house drawings and in places
+      -- covered the door itself. Forced off (and the row removed)
+      -- until the face detection is rebuilt; the builder stays in
+      -- Flora for that day.
+      backs = false,
       apron = opt("apron", true) ~= false,
       talltrees = opt("talltrees", true) ~= false,
       peaks = opt("peaks", true) ~= false,
@@ -245,6 +254,8 @@ return function(mod)
       jump = opt("jump", "SUBTLE"),
       grass = opt("grass", "SUBTLE"),
       particles = opt("particles", true) ~= false,
+      ambience = opt("ambience", "MID"),
+      grasssfx = opt("grasssfx", true) ~= false,
       rain = opt("rain", "SOMETIMES"),
       umbrellas = opt("umbrellas", true) ~= false,
       puddles = opt("puddles", true) ~= false,
@@ -559,6 +570,27 @@ return function(mod)
                        "s2[2] = c[2]\n", 1)
           write(cmPath, cm)
         end
+        -- UPGRADE the position-keyed base publish to map-keyed. The old
+        -- keys were bare "mx|mz" in map-LOCAL coordinates, so two maps'
+        -- cells at the same local position shared one key -- and the
+        -- companion's base gate, asking "was THIS map's stamp ever
+        -- meshed?", could be answered by a DIFFERENT map's stamp. That
+        -- was the Celadon ghost row: path cells whose own stamp was
+        -- never expanded borrowed a neighbouring map's base entry and
+        -- kept their stems until a local rebuild caught up. Keys now
+        -- carry the map id, and the collision is impossible.
+        if cm and cm:find("__ds_round_base", 1, true)
+           and not cm:find("__ds_round_mapkey", 1, true) then
+          local stripped = cm:gsub(
+            "s2%[2%] = c%[2%] %+ %(st%.lift or 0%)"
+            .. " %-%- ds_fp_ceilings __ds_round_base\n"
+            .. ".-\n          end\n",
+            "s2[2] = c[2]\n", 1)
+          if stripped ~= cm then
+            cm = stripped
+            write(cmPath, cm)
+          end
+        end
         -- FAST CHUNKS: Dramatic Shape cooks chunk meshes inside a
         -- per-frame budget, and the 5ms idle slice is why geometry
         -- lands right in front of a walking player. With the option on
@@ -586,11 +618,14 @@ return function(mod)
           writeTracked(cmPath, (cm:gsub(
             "          s2%[2%] = c%[2%]\n",
             "          s2[2] = c[2] + (st.lift or 0)"
-            .. " -- ds_fp_ceilings __ds_round_base\n"
+            .. " -- ds_fp_ceilings __ds_round_base __ds_round_mapkey\n"
             .. "          if st.lift and st.lift > 0 then\n"
             .. "            local _rb = rawget(_G, \"__ds_round_base\")\n"
             .. "            if _rb then\n"
-            .. "              local _bk = st.mx .. \"|\" .. st.mz\n"
+            .. "              local _mk = map.id or (map.def and"
+            .. " map.def.id) or tostring(map)\n"
+            .. "              local _bk = _mk .. \":\" .. st.mx"
+            .. " .. \"|\" .. st.mz\n"
             .. "              if not _rb[_bk] or c[2] < _rb[_bk] then\n"
             .. "                _rb[_bk] = c[2]\n"
             .. "              end\n"
@@ -682,7 +717,10 @@ return function(mod)
     for _, extra in ipairs({ "backdrop2.png", "backdrop3.png",
                              "backdrop4.png", "posters.png",
                              "posters-pokecenter.png",
-                             "posters-pokemart.png" }) do
+                             "posters-pokemart.png",
+                             "amb-cave.mp3", "amb-forest.mp3",
+                             "amb-town.mp3", "amb-route.mp3",
+                             "sfx-grass1.mp3", "sfx-grass2.mp3" }) do
       local blob = mod:read(extra)
       if blob then writeTracked(base.. "/lib/" .. extra, blob) end
     end
@@ -994,7 +1032,10 @@ return function(mod)
       for _, extra in ipairs({ "backdrop2.png", "backdrop3.png",
                                "backdrop4.png", "posters.png",
                                "posters-pokecenter.png",
-                               "posters-pokemart.png" }) do
+                               "posters-pokemart.png",
+                               "amb-cave.mp3", "amb-forest.mp3",
+                               "amb-town.mp3", "amb-route.mp3",
+                               "sfx-grass1.mp3", "sfx-grass2.mp3" }) do
         local blob = mod:read(extra)
         if blob and read(base .. "/lib/" .. extra) ~= blob then
           writeTracked(base.. "/lib/" .. extra, blob)

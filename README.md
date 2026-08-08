@@ -119,7 +119,7 @@ and sky work in the diorama view and the movement features are skipped.
 ## Install
 
 1. Download the release `.zip`.
-2. Unzip into your `mods/` folder so you have `mods/ds_fp_ceilings/`
+2. Unzip into your `mods/` folder so you have `mods/ds_fp_ceiling/`
    alongside your Dramatic Shape folder.
 3. Start the game. The patch applies before Dramatic Shape loads, so it
    works on this boot — no restart.

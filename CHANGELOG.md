@@ -1,6 +1,131 @@
 # Changelog
 
+## 1.52.0
+
+- **BUILDING BACKS is retired for now.** The plain-wall patch on north
+  faces misfired on several house drawings and in places covered the
+  door itself. The option row is removed and the config bridge forces
+  it off; the builder stays in Flora for the day the face detection is
+  rebuilt.
+
+- **AMBIENT SOUND is a menu row.** OFF / LOW / MID / HIGH in the mod
+  options, defaulting to MID (0.62) -- noticeably hotter than
+  1.51.1's fixed 0.35, which playtested too quiet under the game's own
+  music. LOW is the old level; HIGH is 0.92. Pre-1.52 saves holding
+  the old boolean are read correctly.
+
+- **GRASS STEPS.** Stepping into a tall-grass cell rustles, the two
+  takes alternating so back-and-forth pacing never stutters one
+  sample. Cell ENTRY is the trigger -- the same edge the encounter
+  system rolls on -- so it sounds like what it is: a step into the
+  grass. Its own toggle row, on by default; the files ride the same
+  install pipeline as the beds.
+
+## 1.51.1
+
+- **The last path ghosts are gone: base entries are now MAP-KEYED.**
+  The 1.50.2 base gate asked "was this map's stamp ever meshed?" --
+  but the answer table was keyed by bare local position, and two maps'
+  cells at the same local coordinates shared one key. A Celadon path
+  cell whose own stamp was never expanded could borrow a neighbouring
+  map's entry and keep its stem until a local rebuild caught up --
+  which is exactly the row that stood on the path and vanished as you
+  approached. The mesher splice now writes `mapid:mx|mz` and every
+  reader asks with the same key, so the collision is impossible. The
+  installer upgrades the old splice in place (strip to stock,
+  reapply); reboot once and every map meshes fresh under the new keys.
+
+- **The leaf shower is much heavier.** The spawn is a burst loop (the
+  same shape as the grass seeds), the pick rate is up from 3.4 to 16
+  per second, and the particle pool grows from 150 to 220 so a heavy
+  shower cannot starve the rain, smoke or fireflies. Each leaf is one
+  textured quad from a shared 8x8 image -- the cost is what the rain
+  already pays.
+
+- **The silent ambience now explains itself.** The beds failing to
+  load was swallowed by a pcall, so 1.51.0 shipped a feature nobody
+  could hear. The loader now tries every plausible install directory
+  (the posters path, the backdrop's own folder, both historical mod
+  folder names) and both source types, and the FLOR debug line grows
+  an `amb:` entry -- the live bed and its volume when working, or the
+  load error when not, so the next screenshot says exactly what went
+  wrong.
+
+## 1.51.0
+
+- **The lifted trees shed green leaves.** A new particle rides the
+  forest leaf's tumble physics but wears a fresh green flake, and lets
+  go from the crowns of the stem-bearing trees themselves: spawns pick
+  a random cell from the trunk registry, so where the trees are is
+  where the leaves fall, released from each crown's actual height
+  (base + lift). Boulders and far cells are discarded picks, which is
+  what keeps the shower gentle.
+
+- **Ambient sound beds.** Four looping beds -- cave, forest, town,
+  route -- crossfaded as you move between areas, faded out (not cut)
+  indoors. CAVERN and FOREST classify by authored tileset; outdoors,
+  TOWN/CITY map ids take the town bed and everything else is a route.
+  The mp3s install into Dramatic Shape's lib folder alongside the
+  poster sheets and stream from there, so a missing file costs its bed
+  and nothing else. A once-only love.update watchdog fades everything
+  out if the voxel mode stops drawing, so dropping to the 2D pipeline
+  never strands a loop playing. Set `ambience = false` in the config
+  to switch the beds off. (The whole feature hangs off an existing
+  table: Flora's main chunk sits exactly at Lua's 200-local cap.)
+
+## 1.50.3
+
+- **Stems run across map boundaries.** Same cure as 1.50.0 gave the
+  mountain peaks: a neighbour's rounds draw lifted (its own mesh bakes
+  the lifts) but stems were built for the current map only, so a
+  route's trees floated in the distance until you crossed over. Each
+  neighbour's stems now build from its own registry -- same gates,
+  same builder, cached per map id -- and draw at the neighbour's
+  offset under its haze. The 1.50.2 BASE GATE does the seam hygiene
+  for free: neighbours are meshed body-only, which skips every ring
+  stamp before expansion, so a neighbour's ring cells never earn base
+  entries and no stem grows outside its body.
+
+## 1.50.2
+
+- **The seam ghosts on pathways are gone -- and only they are.** The
+  registry publishes a cell when Structures CREATES a stamp, but the
+  mesher decides later whether the stamp is ever DRAWN, and it discards
+  ring stamps wholly buried under a connected neighbour's body
+  (`containedInMask`). Those discarded stamps kept their registry
+  entries, so bare trunks stood on the neighbour's walkway at every
+  connection. Two gates now make a stem prove its canopy exists, both
+  replicas of facts the mesher already established, so neither can
+  strand a drawn round: the MASK GATE re-runs the mesher's own
+  containment test (same rects, same not-over-body condition), and the
+  BASE GATE requires the stamp's `__ds_round_base` entry, which is
+  written only inside the mesher's quad expansion. Base entries land as
+  the async full build does, so the trunk cache watches the confirmed
+  count and rebuilds as they arrive -- late stems pop in with their
+  trees, exactly as the trees themselves do.
+
+## 1.50.1
+
+- **The floating rounds along map edges have their stems back.** The
+  stemless ones were all in CONNECTION BANDS -- the two cells beside
+  any connected edge, where 1.45.7 suppressed every support as a
+  tourniquet for the seam ghosts. The ghosts' real causes were each
+  fixed properly afterwards (the shared-object registry, group
+  supersession, and supports rooted at flat ground under terraced
+  stamps), so the band rule had become pure collateral: it starved
+  legitimate border rows of their trunks while the walkability,
+  tile-union and real-stamp gates carried the actual protection. The
+  rule is retired for supports; the walkable-liar seam cells still
+  build nothing, and the harness asserts both directions.
+
 ## 1.50.0
+
+- **The folder and id are `ds_fp_ceiling` again** (singular -- the
+  1.41.0 pluralisation is reverted). If you installed any 1.41-1.49
+  build, delete the `ds_fp_ceilings` folder; upgrades from 1.40.x or
+  earlier just overwrite in place. The launcher once more matches
+  Dramatic Shape's old conflict flag natively on archived 1.6.1/1.6.2
+  copies, which is the behaviour this mod enforced by hand anyway.
 
 - **Ridges run across map boundaries.** MOUNTAIN PEAKS built only the
   current map, so the massif you stood in went flat two maps over --

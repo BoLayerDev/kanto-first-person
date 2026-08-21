@@ -13,7 +13,6 @@ local PHASES = {
 }
 
 local HOSTS = {
-  "DRAMATIC_SHAPE",
   "BATTLE_ART_VOXEL_FORK",
   "DRAMALESS_SHAPE",
 }

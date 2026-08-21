@@ -353,8 +353,8 @@ return function(T)
   T.test("builds the voxel_companion wire descriptor expected by clients", function()
     local API = load_api()
     local dispatcher = API.new({
-      host_id = "DRAMATIC_SHAPE",
-      host_version = "1.9.0",
+      host_id = "BATTLE_ART_VOXEL_FORK",
+      host_version = "1.9.7",
       capabilities = {
         API.CAPABILITIES.WORLD_SNAPSHOT,
         API.CAPABILITIES.CAMERA_DELTA,
@@ -362,8 +362,8 @@ return function(T)
     })
     local provider = dispatcher:provider()
     T.equal(provider.api, 1)
-    T.equal(provider.host.id, "DRAMATIC_SHAPE")
-    T.equal(provider.host.version, "1.9.0")
+    T.equal(provider.host.id, "BATTLE_ART_VOXEL_FORK")
+    T.equal(provider.host.version, "1.9.7")
     T.equal(provider.capabilities.world_snapshot, 1)
     T.equal(provider.capabilities.camera_delta, 1)
     T.truthy(type(provider.register) == "function")

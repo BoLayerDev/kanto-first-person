@@ -25,7 +25,6 @@ Release range: `>=0.2.17 <0.3.0`. Development builds report `0.0.0-dev`, so CI p
 
 | Host ID | Audited version | Audited commit | Companion API | Stable gate |
 |---|---:|---|---|---|
-| `DRAMATIC_SHAPE` | 1.9.0 | `cd10ac3` | Local adapter `a395bbc` passes contract tests and four-engine co-load checks | Host review and GPU run open |
 | `BATTLE_ART_VOXEL_FORK` | 1.9.7 | `fcbe541` | Local adapter `0185b44` passes contract tests | Host review and GPU run open |
 | `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | Local adapter `bc24063` passes contract tests | Host review and GPU run open |
 

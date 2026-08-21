@@ -34,4 +34,4 @@ Decision: new v2 source is MIT. Legacy assets stay under the creator grant and o
 
 ## D007 — Stable host gate
 
-Decision: Dramatic Shape, Battle Art, and Dramaless Shape must all pass the same API contract before `2.0.0` stable.
+Decision: Battle Art and Dramaless Shape must both pass the same API contract before `2.0.0` stable.

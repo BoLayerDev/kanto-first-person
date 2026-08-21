@@ -29,7 +29,7 @@ A host can expose the reference dispatcher or a conforming implementation:
 ```lua
 host.exports.voxel_companion = {
   api = 1,
-  host = { id = "DRAMATIC_SHAPE", version = "1.9.0" },
+  host = { id = "BATTLE_ART_VOXEL_FORK", version = "1.9.7" },
   capabilities = { world_snapshot = 1, camera_delta = 1, ... },
   register = function(spec) ... end,
 }
@@ -40,8 +40,8 @@ The reference module has this constructor:
 ```lua
 local Companion = load_companion_api_v1()
 local dispatcher = Companion.new({
-  host_id = "DRAMATIC_SHAPE",
-  host_version = "1.9.0",
+  host_id = "BATTLE_ART_VOXEL_FORK",
+  host_version = "1.9.7",
   capabilities = {
     "render_phases",
     "camera_delta",

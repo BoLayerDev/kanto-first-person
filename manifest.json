@@ -13,7 +13,6 @@
   "affects_link": true,
   "dependencies": [],
   "optional_dependencies": [
-    "DRAMATIC_SHAPE",
     "BATTLE_ART_VOXEL_FORK",
     "DRAMALESS_SHAPE"
   ],

@@ -5,7 +5,7 @@ v2 rewrite adds first-person world detail without reading, changing, restoring,
 or deleting another mod's files.
 
 Current release state: **`2.0.0-alpha.1` development source**. It is not a
-stable end-user release. All three local host adapters pass source-level
+stable end-user release. Both local host adapters pass source-level
 contract tests, but host-owner releases, real GPU tests, visual parity, asset
 rights, devices, and stable release gates are still open.
 
@@ -28,7 +28,6 @@ Development is pinned to:
 - Gen1recomp `v0.2.18` at `70d7b6383e2c005857013dc897fd096886b08f0b`.
 - Gen1recomp baseline `dev` at `06e06e305bbcefe97c216a31bb25265ffb5e6b18`.
 - Gen1recomp current `dev` at `087a2751895899ad6e79800599ae27a8f40cf1e3`.
-- `DRAMATIC_SHAPE` 1.9.0 at `cd10ac3158db9a53e2e33efa3651935723715c9b`.
 - `BATTLE_ART_VOXEL_FORK` 1.9.7 at `fcbe541676cd7f245fa73df3d01dcbabec37a1fe`.
 - `DRAMALESS_SHAPE` 2.0.3 at `f14795b17e85d5d5baedcad63944065e446a4b0b`.
 

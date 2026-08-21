@@ -2,7 +2,6 @@ local Client = {}
 Client.__index = Client
 
 local DEFAULT_HOSTS = {
-  "DRAMATIC_SHAPE",
   "BATTLE_ART_VOXEL_FORK",
   "DRAMALESS_SHAPE",
 }

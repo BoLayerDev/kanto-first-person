@@ -40,11 +40,11 @@ return function(T)
     T.falsy(match)
     T.equal(err, "no compatible voxel host")
 
-    local a = provider("DRAMATIC_SHAPE")
+    local a = provider("BATTLE_ART_VOXEL_FORK")
     local b = provider("DRAMALESS_SHAPE")
     local many = Client.new({
       find = function(id)
-        if id == "DRAMATIC_SHAPE" then return a end
+        if id == "BATTLE_ART_VOXEL_FORK" then return a end
         if id == "DRAMALESS_SHAPE" then return b end
       end,
       spec = {},
@@ -55,7 +55,7 @@ return function(T)
   end)
 
   T.test("client rejects missing required capabilities", function()
-    local mod = provider("DRAMATIC_SHAPE", { world_snapshot = 1 })
+    local mod = provider("BATTLE_ART_VOXEL_FORK", { world_snapshot = 1 })
     local client = Client.new({
       find = function() return mod end,
       spec = {},
@@ -100,9 +100,9 @@ return function(T)
   end)
 
   T.test("client captures the validated host register function", function()
-    local mod, handle = provider("DRAMATIC_SHAPE")
+    local mod, handle = provider("BATTLE_ART_VOXEL_FORK")
     local client = Client.new({
-      find = function(id) if id == "DRAMATIC_SHAPE" then return mod end end,
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
       spec = {},
     })
     T.truthy(client:resolve())
@@ -113,10 +113,10 @@ return function(T)
   end)
 
   T.test("client validates registration handles", function()
-    local mod = provider("DRAMATIC_SHAPE")
+    local mod = provider("BATTLE_ART_VOXEL_FORK")
     mod.exports.voxel_companion.register = function() return {} end
     local client = Client.new({
-      find = function(id) if id == "DRAMATIC_SHAPE" then return mod end end,
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
       spec = {},
     })
     local handle, err = client:attach()
@@ -130,7 +130,7 @@ return function(T)
       })
     end
     local guarded = Client.new({
-      find = function(id) if id == "DRAMATIC_SHAPE" then return mod end end,
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
       spec = {},
     })
     local ok, guardedHandle, guardedError = pcall(guarded.attach, guarded)
@@ -140,9 +140,9 @@ return function(T)
   end)
 
   T.test("client captures validated handle lifecycle functions", function()
-    local mod, handle = provider("DRAMATIC_SHAPE")
+    local mod, handle = provider("BATTLE_ART_VOXEL_FORK")
     local client = Client.new({
-      find = function(id) if id == "DRAMATIC_SHAPE" then return mod end end,
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
       spec = {},
     })
     T.equal(client:attach(), handle)
@@ -155,7 +155,7 @@ return function(T)
   end)
 
   T.test("client builds a host-specific registration descriptor", function()
-    local mod, handle = provider("DRAMATIC_SHAPE")
+    local mod, handle = provider("BATTLE_ART_VOXEL_FORK")
     mod.exports.voxel_companion.capabilities.shadow_pass = 1
     local registered
     mod.exports.voxel_companion.register = function(spec)
@@ -163,7 +163,7 @@ return function(T)
       return handle
     end
     local client = Client.new({
-      find = function(id) if id == "DRAMATIC_SHAPE" then return mod end end,
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
       spec = function(selected)
         return {
           id = "ds_fp_ceiling",

@@ -13,11 +13,11 @@ Exit: the project is recoverable and no legacy artifact is mistaken for reproduc
 
 - Freeze the host-neutral API and ownership rules.
 - Add a synthetic reference dispatcher and contract suite.
-- Implement isolated adapters for Dramatic Shape, Battle Art, and Dramaless Shape.
+- Implement isolated adapters for Battle Art and Dramaless Shape.
 - Verify callback order, faults, disposal, camera deltas, baseline draw packets,
   and honest optional capability rejection.
 
-Exit: all three hosts pass the same conformance suite without runtime source patching.
+Exit: both hosts pass the same conformance suite without runtime source patching.
 
 ## Goal 2 — Kernel alpha
 
@@ -66,4 +66,4 @@ Exit: `2.0.0-rc.1` is reproducible and all support claims have evidence.
 - Publish matching root ZIP and `.modpkg` with SHA-256 values and attestation.
 - Publish exact compatibility, migration, recovery, and rollback data.
 
-Exit: all three host adapters and every claimed platform are certified.
+Exit: both host adapters and every claimed platform are certified.

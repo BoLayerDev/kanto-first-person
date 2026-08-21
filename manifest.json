@@ -1,0 +1,25 @@
+{
+  "id": "ds_fp_ceiling",
+  "name": "Kanto First Person",
+  "version": "2.0.0-alpha.1",
+  "api": 2,
+  "entry": "main.lua",
+  "profile": "overhaul",
+  "games": ["gen1"],
+  "game_version": ">=0.2.17 <0.3.0",
+  "category": "GRAPHICS",
+  "priority": 110,
+  "permissions": [],
+  "affects_link": true,
+  "dependencies": [],
+  "optional_dependencies": [
+    "DRAMATIC_SHAPE",
+    "BATTLE_ART_VOXEL_FORK",
+    "DRAMALESS_SHAPE"
+  ],
+  "conflicts": [],
+  "github": "BoLayerDev/kanto-first-person",
+  "experimental": true,
+  "description": "An experimental clean companion rewrite for first-person voxel hosts. It adds Kanto world, atmosphere, camera, and audio intent without reading or changing host files. Ledge Leap remains unavailable in this alpha.",
+  "assets_transforms": "transform_birds.lua"
+}

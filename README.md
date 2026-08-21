@@ -125,6 +125,7 @@ own imported cache on that player's machine and does not package ROM data.
 - [Feature parity ledger](docs/feature-parity.md)
 - [Option migration](docs/options-migration.md)
 - [Machine-readable release gates](docs/release-gates.json)
+- [Recovery record](docs/recovery-record.md)
 - [Roadmap](ROADMAP.md)
 - [Current status](PROJECT_STATUS.md)
 - [Contribution rules](CONTRIBUTING.md)

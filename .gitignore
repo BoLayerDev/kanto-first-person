@@ -1,6 +1,28 @@
 # packaged builds
 *.modpkg
 *.zip
+dist/
+build/
+coverage/
+test-results/
+benchmarks/results/
+
+# private evidence and local game material
+evidence/private/
+evidence/runtime/
+private-fixtures/
+baseroms/
+roms/
+*.gb
+*.gbc
+*.sav
+
+# local tool state
+.cache/
+.tmp/
+.luarocks/
+__pycache__/
+*.pyc
 
 # editor and OS noise
 .DS_Store

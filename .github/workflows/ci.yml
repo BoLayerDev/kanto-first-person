@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lua:
+    name: LuaJIT / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Enable the Windows compiler
+        if: runner.os == 'Windows'
+        uses: step-security/msvc-dev-cmd@22c98154b708dbd743e6f27a933cf6ceba3305c4 # v1
+
+      - name: Install pinned LuaJIT language version
+        uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
+        with:
+          luaVersion: luajit-2.1.0-beta3
+
+      - name: Compile all Lua source
+        run: lua tools/check_syntax.lua
+
+      - name: Validate repository policy
+        run: lua tools/validate_project.lua
+
+      - name: Run ROM-free tests
+        run: lua tools/run_tests.lua
+
+      - name: Test release controls
+        run: python -m unittest tests.tools.test_package_release
+
+  gen1recomp:
+    name: Gen1recomp / ${{ matrix.target }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: v0.2.17
+            commit: 44f4680b24823629489ed5a2adad648d0dceb640
+            compat_version: 0.2.17
+          - target: v0.2.18
+            commit: 70d7b6383e2c005857013dc897fd096886b08f0b
+            compat_version: 0.2.18
+          - target: dev-baseline
+            commit: 06e06e305bbcefe97c216a31bb25265ffb5e6b18
+            compat_version: 0.2.17
+          - target: dev-current
+            commit: 087a2751895899ad6e79800599ae27a8f40cf1e3
+            compat_version: 0.2.18
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install pinned LuaJIT language version
+        uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
+        with:
+          luaVersion: luajit-2.1.0-beta3
+
+      - name: Fetch the audited engine tool only
+        shell: bash
+        run: |
+          set -euo pipefail
+          engine="$RUNNER_TEMP/gen1recomp"
+          git init "$engine"
+          git -C "$engine" remote add origin https://github.com/bryanthaboi/gen1recomp.git
+          git -C "$engine" fetch --depth 1 origin "${{ matrix.commit }}"
+          git -C "$engine" checkout --detach FETCH_HEAD
+          test "$(git -C "$engine" rev-parse HEAD)" = "${{ matrix.commit }}"
+
+      - name: Validate the API 2 manifest and sandbox boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/gen1recomp/tools/modkit.py" validate \
+            --strict --base fixture "$GITHUB_WORKSPACE"
+
+      - name: Test the stamped engine compatibility range
+        shell: bash
+        env:
+          COMPAT_VERSION: ${{ matrix.compat_version }}
+        run: |
+          set -euo pipefail
+          lua - <<'LUA'
+          local root = assert(os.getenv("RUNNER_TEMP")) .. "/gen1recomp"
+          local Semver = assert(loadfile(root .. "/src/mods/Semver.lua"))()
+          local file = assert(io.open("manifest.json", "rb"))
+          local body = file:read("*a")
+          file:close()
+          local range = assert(body:match('"game_version"%s*:%s*"([^"]+)"'))
+          local version = assert(os.getenv("COMPAT_VERSION"))
+          assert(Semver.satisfies(version, range),
+            version .. " is outside manifest range " .. range)
+          LUA
+
+      - name: Scan for ROM-derived content
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 "$RUNNER_TEMP/gen1recomp/tools/modkit.py" lint "$GITHUB_WORKSPACE"
+
+      - name: Build a private reproducible package
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/kfp-package-${{ matrix.target }}"
+          python3 tools/package_release.py \
+            --engine "$RUNNER_TEMP/gen1recomp" \
+            --output-dir "$out" \
+            --epoch 1787270400
+          python3 - "$out" <<'PY'
+          import json
+          import pathlib
+          import sys
+          output = pathlib.Path(sys.argv[1])
+          attestations = list(output.glob("*-attestation.json"))
+          assert len(attestations) == 1
+          record = json.loads(attestations[0].read_text(encoding="utf-8"))
+          assert record["publishable"] is False
+          assert record["source_dirty"] is False
+          assert len(list(output.glob("*.modpkg"))) == 1
+          assert len(list(output.glob("*.zip"))) == 1
+          PY
+
+      - name: Reproduce the package byte for byte
+        if: matrix.target == 'v0.2.18'
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/kfp-package-${{ matrix.target }}"
+          second="$RUNNER_TEMP/kfp-package-${{ matrix.target }}-repeat"
+          python3 tools/package_release.py \
+            --engine "$RUNNER_TEMP/gen1recomp" \
+            --output-dir "$second" \
+            --epoch 1787270400
+          cmp "$first"/*.modpkg "$second"/*.modpkg
+          cmp "$first"/*.zip "$second"/*.zip

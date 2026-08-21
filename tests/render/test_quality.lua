@@ -1,0 +1,26 @@
+return function(T)
+  local Quality = assert(loadfile(T.root .. "/src/render/Quality.lua"))()
+
+  T.test("quality resolves explicit and automatic tiers", function()
+    T.equal(Quality.resolve("LOW", "HIGH", "windows"), "LOW")
+    T.equal(Quality.resolve("AUTO", "BALANCED", "windows"), "BALANCED")
+    T.equal(Quality.resolve("AUTO", nil, "portmaster"), "LOW")
+    T.equal(Quality.resolve("AUTO", nil, "windows"), "HIGH")
+  end)
+
+  T.test("quality policy matches locked budgets", function()
+    local high = Quality.policy("HIGH")
+    T.equal(high.buildBudgetMs, 2.0)
+    T.equal(high.cacheBytes, 128 * 1024 * 1024)
+    T.equal(high.drawCallTarget, 48)
+    local low = Quality.policy("LOW")
+    T.equal(low.panoramaWidth, 1024)
+    T.equal(low.density, 0.3)
+  end)
+
+  T.test("unknown quality values fail to AUTO", function()
+    T.equal(Quality.normalize("ultra"), "AUTO")
+    T.equal(Quality.normalize(nil), "AUTO")
+    T.equal(Quality.normalize("medium"), "BALANCED")
+  end)
+end

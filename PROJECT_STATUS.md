@@ -36,7 +36,7 @@ Last updated: 2026-08-21
 ## Recovery point
 
 - Original baseline remains available at Git commit `94d0151be839f02fea4a35ab1c3df41fbaddc6c1`.
-- Source checkpoint `0f453187210d3d388a02196affee413994df1a77` is
+- Runtime checkpoint `568ef6994fa9cb8daae5fc0853bab6b589b961f2` is
   committed locally and passes an independent-clone restore test.
 - The private remote still has the original `v2-rewrite` baseline. GitHub
   rejected the checkpoint push because the active `BoLayerDev` OAuth token
@@ -45,8 +45,8 @@ Last updated: 2026-08-21
 
 ## Next actions
 
-1. Renew the personal GitHub credential with `workflow` scope, push the two
-   local checkpoint commits, and repeat the restore test from the private
+1. Renew the personal GitHub credential with `workflow` scope, push the local
+   checkpoint commits, and repeat the restore test from the private
    remote.
 2. Run both adapter branches in real Gen1recomp GPU sessions.
 3. Complete corrected 1.60 visual and device evidence.

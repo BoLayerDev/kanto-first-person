@@ -28,8 +28,11 @@ a waiver for a failed release gate.
   quality tiers, and transitions.
 - Wildlife birds and ground flocks emit no runtime draw packet because no
   approved public derived-asset resolver is available.
-- Third-person ceilings, lamplight, and the debug HUD have no certified runtime
-  consumer and stay hidden.
+- Third-person and diorama ceilings now emit portable NONE, CUTAWAY, and FULL
+  policies. Ceiling detail emits portable beams and roses. Their controls are
+  visible, but camera-mode placement and GPU review remain open.
+- Night lamplight and the debug HUD have no certified runtime consumer and stay
+  hidden.
 - Rich battle props, object-shadow passes, and terrain lifts remain disabled on
   a host that does not advertise the matching optional capability.
 

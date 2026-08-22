@@ -68,6 +68,14 @@ function Interior:compile(context, buffer)
   local height = tonumber(config.headroom_pixels)
     or U.headroom(U.option(config, "headroom", "AIRY"))
   local cutaway = U.option(config, "cutaway", true)
+  local ceilingCutaway = cutaway
+  local emitCeiling = true
+  if world.mode == "third_person" or world.mode == "diorama" then
+    local policy = U.option(config, "third_person_ceiling", "CUTAWAY")
+    emitCeiling = policy ~= "NONE"
+    ceilingCutaway = policy ~= "FULL"
+  end
+  local ceilingDetail = emitCeiling and U.option(config, "ceiling_detail", true)
   local index = U.indexCells(world)
   local posterTextures = {}
 
@@ -85,10 +93,30 @@ function Interior:compile(context, buffer)
         or U.hasTag(world, "interior")) then
       local x, y, z, size = U.cellPosition(world, cell)
       local material = U.material(cell, "interior")
-      addInstance(buffer, "opaque_after_terrain", "ceiling:" .. material, material,
-        { primitive = "box", width = size, height = 1, depth = size,
-          cutaway = cutaway, role = "ceiling" },
-        { x = x, y = y + height, z = z, cellX = cell.x, cellZ = cell.z }, self.id)
+      if emitCeiling then
+        addInstance(buffer, "opaque_after_terrain", "ceiling:" .. material, material,
+          { primitive = "box", width = size, height = 1, depth = size,
+            cutaway = ceilingCutaway, role = "ceiling" },
+          { x = x, y = y + height, z = z, cellX = cell.x, cellZ = cell.z }, self.id)
+      end
+
+      if ceilingDetail then
+        addInstance(buffer, "opaque_after_terrain", "ceiling_beam_x:" .. material,
+          material, { primitive = "box", width = size, height = 1, depth = 1,
+            cutaway = ceilingCutaway, role = "ceiling" },
+          { x = x, y = y + height - 0.75, z = z,
+            cellX = cell.x, cellZ = cell.z }, self.id)
+        addInstance(buffer, "opaque_after_terrain", "ceiling_beam_z:" .. material,
+          material, { primitive = "box", width = 1, height = 1, depth = size,
+            cutaway = ceilingCutaway, role = "ceiling" },
+          { x = x, y = y + height - 0.75, z = z,
+            cellX = cell.x, cellZ = cell.z }, self.id)
+        addInstance(buffer, "opaque_after_terrain", "ceiling_roses:" .. material,
+          material, { primitive = "box", width = 2, height = 0.5, depth = 2,
+            cutaway = ceilingCutaway, role = "ceiling" },
+          { x = x, y = y + height - 1, z = z,
+            cellX = cell.x, cellZ = cell.z }, self.id)
+      end
 
       local directions = {
         { -1, 0, "west", 1, size }, { 1, 0, "east", 1, size },

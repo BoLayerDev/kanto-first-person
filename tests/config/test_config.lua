@@ -89,7 +89,7 @@ return function(T)
     for key in pairs(counts) do T.truthy(accounted[key], key) end
   end)
 
-  T.test("unavailable alpha options stay mapped but are hidden", function()
+  T.test("available options are visible and unavailable alpha options stay hidden", function()
     local ledge, rows = nil, {}
     for _, row in ipairs(Config.optionSchema()) do
       rows[row.key] = row
@@ -101,12 +101,14 @@ return function(T)
     T.truthy(ledge.label:find("GAMEPLAY", 1, true))
     T.truthy(ledge.description:find("movement", 1, true))
     for _, key in ipairs({
-      "third", "ceildetail", "birds", "groundflock", "lights",
+      "birds", "groundflock", "lights",
       "ledge_leap", "jumpkey", "jumppad", "debug",
     }) do
       T.equal(rows[key].visible_if.key, "__kfp_alpha_feature_ready", key)
       T.equal(rows[key].visible_if.equals, true, key)
     end
+    T.falsy(rows.third.visible_if)
+    T.falsy(rows.ceildetail.visible_if)
   end)
 
   T.test("schema and policy accessors return defensive copies", function()

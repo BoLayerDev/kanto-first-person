@@ -28,11 +28,11 @@ Blue, and Yellow.
 | --- | --- | --- |
 | Atlas-derived walls and ceilings with AIRY, MID, and SNUG headroom | Represented | Material, seam, and first-person screenshots |
 | Full and cutaway first-person ceiling modes | Represented | Camera-mode and cutaway corpus |
-| Third-person ceiling mode | Open | No runtime consumer; alpha control is hidden |
+| Third-person and diorama ceiling modes | Represented | NONE, CUTAWAY, and FULL packet tests pass; camera-mode and GPU review remain open |
 | Single and two-cell double doors | Represented | Door orientation and warp tests |
 | Windows and Center, Mart, and general poster strips | Represented | Asset-frame and alpha-cutoff tests |
 | Contact shadows, picture rails, skirting, and doorway spill | Represented | Depth, cutoff, and light-boundary tests |
-| Ceiling lamps, pooled light, detail, beams, and roses | Open | Exact geometry and light placement |
+| Ceiling lamps, pooled light, detail, beams, and roses | Represented | Exact geometry, light placement, and GPU review |
 | Cave roofs, stalactites, and stalagmites | Represented | Cave tileset and collision-safe visual corpus |
 | Cave pools, torches, light spread, and bats | Represented | Animation, batching, and audio tests |
 

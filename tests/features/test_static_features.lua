@@ -56,6 +56,61 @@ return function(T)
     T.truthy(kinds.contact_shadows)
   end)
 
+  T.test("camera-mode ceiling policy and detail remain explicit", function()
+    local function compile(mode, policy, detail, cutaway)
+      local buffer = newBuffer()
+      Interior.new({ util = Util }):compile(context({
+        id = "HOUSE", width = 1, height = 1, cellSize = 16,
+        mode = mode, tags = { interior = true },
+        cells = { { x = 0, z = 0, y = 0, walkable = true,
+          material = "room", tags = { room = true } } },
+      }, {
+        ceiling = true, cutaway = cutaway, third_person_ceiling = policy,
+        ceiling_detail = detail, contact_shadows = false,
+      }), buffer)
+      return buffer:seal().phases.opaque_after_terrain
+    end
+
+    local function byKey(commands)
+      local seen = {}
+      for _, command in ipairs(commands) do seen[command.key] = command end
+      return seen
+    end
+
+    local function assertCeiling(commands, expectedCutaway, expectedDetail)
+      local seen = byKey(commands)
+      local keys = { "ceiling:room" }
+      if expectedDetail then
+        keys[#keys + 1] = "ceiling_beam_x:room"
+        keys[#keys + 1] = "ceiling_beam_z:room"
+        keys[#keys + 1] = "ceiling_roses:room"
+      end
+      for _, key in ipairs(keys) do
+        T.truthy(seen[key], key)
+        T.equal(seen[key].prototype.role, "ceiling", key)
+        T.equal(seen[key].prototype.cutaway, expectedCutaway, key)
+      end
+      if not expectedDetail then
+        T.falsy(seen["ceiling_beam_x:room"])
+        T.falsy(seen["ceiling_beam_z:room"])
+        T.falsy(seen["ceiling_roses:room"])
+      end
+    end
+
+    for _, mode in ipairs({ "third_person", "diorama" }) do
+      local none = compile(mode, "NONE", true, true)
+      for _, command in ipairs(none) do
+        T.falsy(command.key:match("^ceiling"), mode)
+      end
+
+      assertCeiling(compile(mode, "CUTAWAY", true, false), true, true)
+      assertCeiling(compile(mode, "FULL", true, true), false, true)
+    end
+
+    assertCeiling(compile("third_person", "FULL", false, true), false, false)
+    assertCeiling(compile("first_person", "NONE", true, false), false, true)
+  end)
+
   T.test("cave feature batches roofs pools sconces and bats", function()
     local world = {
       id = "ROCK_TUNNEL", width = 1, height = 1, cellSize = 16,

@@ -63,7 +63,7 @@ local SPECS = {
   { key = "third", field = "third_person_ceiling", label = "3RD CEILING",
     type = "choice", default = "CUTAWAY",
     choices = choices("NONE", "CUTAWAY", "FULL"),
-    groups = { "geometry", "camera" }, hiddenAlpha = true },
+    groups = { "geometry", "camera" } },
   { key = "contact_shadows", field = "contact_shadows",
     label = "CONTACT SHADOWS", type = "toggle", default = true,
     groups = { "geometry", "lighting" } },
@@ -77,7 +77,7 @@ local SPECS = {
   { key = "fittings", field = "ceiling_lamps", label = "CEILING LAMPS",
     type = "toggle", default = true, groups = { "geometry", "lighting" } },
   { key = "ceildetail", field = "ceiling_detail", label = "CEILING DETAIL",
-    type = "toggle", default = true, groups = { "geometry" }, hiddenAlpha = true },
+    type = "toggle", default = true, groups = { "geometry" } },
   { key = "windows", field = "windows", label = "WINDOWS", type = "toggle",
     default = true, groups = { "geometry", "lighting" } },
 

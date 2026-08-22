@@ -30,7 +30,7 @@ return function(T)
   local goldenHashes = {
     -- A changed hash requires a deliberate review of the declarative command
     -- diff. These hashes do not represent pixel output.
-    indoor = "aca626bd",
+    indoor = "31ee13fa",
     cave = "8df56caa",
     forest = "5058d6cd",
     city_lavender = "73db7b05",

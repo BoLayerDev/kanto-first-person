@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
 
@@ -147,6 +147,7 @@ function OptionsMenu() {
   const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setEdition = useJourneyStore((state) => state.setEdition)
   const setQuality = useJourneyStore((state) => state.setQuality)
+  const menuButtons = useRef<Array<HTMLButtonElement | null>>([])
   const item = MENU_ITEMS[menuIndex]
 
   useEffect(() => {
@@ -156,10 +157,14 @@ function OptionsMenu() {
       const key = event.key.toLowerCase()
       if (['arrowup', 'w'].includes(key)) {
         event.preventDefault()
-        setMenuIndex((menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length)
+        const nextIndex = (menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length
+        setMenuIndex(nextIndex)
+        menuButtons.current[nextIndex]?.focus()
       } else if (['arrowdown', 's'].includes(key)) {
         event.preventDefault()
-        setMenuIndex((menuIndex + 1) % MENU_ITEMS.length)
+        const nextIndex = (menuIndex + 1) % MENU_ITEMS.length
+        setMenuIndex(nextIndex)
+        menuButtons.current[nextIndex]?.focus()
       } else if (['arrowleft', 'a'].includes(key)) {
         event.preventDefault()
         const index = EDITIONS.indexOf(edition)
@@ -173,6 +178,7 @@ function OptionsMenu() {
         window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
       } else if (['escape', 'x'].includes(key)) {
         setMenuIndex(0)
+        menuButtons.current[0]?.focus()
       }
     }
     window.addEventListener('keydown', handleKey)
@@ -199,6 +205,7 @@ function OptionsMenu() {
               className={index === menuIndex ? 'is-selected' : ''}
               aria-current={index === menuIndex ? 'page' : undefined}
               key={menuItem.label}
+              ref={(button) => { menuButtons.current[index] = button }}
               onClick={() => setMenuIndex(index)}
               onPointerEnter={() => setMenuIndex(index)}
             >

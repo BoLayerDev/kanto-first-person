@@ -104,7 +104,15 @@ test.describe('mobile field terminal', () => {
 
     await page.keyboard.press('ArrowDown')
     await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toBeFocused()
     await expect(page.getByRole('heading', { name: 'The world gets bigger.' })).toBeVisible()
+
+    await page.keyboard.press('Enter')
+    await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toHaveAttribute('aria-current', 'page')
+
+    await page.keyboard.press('x')
+    await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toHaveAttribute('aria-current', 'page')
+    await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 
     await page.getByRole('button', { name: 'SUPPORT CENTER' }).click()
     await expect(page.getByRole('button', { name: 'SUPPORT CENTER' })).toHaveAttribute('aria-current', 'page')

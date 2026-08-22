@@ -566,7 +566,7 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
       <figure className="archive-system-map">
         <img
           src={`${import.meta.env.BASE_URL}activity-system-share.svg`}
-          alt="Diagram showing commits passing through CI into the homepage log and complete research archive"
+          alt="Diagram showing commits passing through CI into the homepage Research Log"
           loading="lazy"
         />
         <figcaption>

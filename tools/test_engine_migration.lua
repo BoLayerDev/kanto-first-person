@@ -397,13 +397,23 @@ check(defended.ok == true, "fail-closed Loader boot failed")
 local defendedKfp = defended.loader.exports[KFP_ID].kfp
 local hostTest = defended.loader.exports[HOST_ID].migration_test
 local hostStatus = hostTest.status()
-check(defendedKfp.status().state == "disposed", "KFP did not fault closed")
-check(defendedKfp.status().resources.disposed == true,
-  "faulted KFP resources stayed live")
+check(defendedKfp.status().state == "waiting_for_host",
+  "KFP did not return to the safe no-host state")
+check(defendedKfp.status().host.state == "inactive",
+  "faulted KFP kept a host active")
+check(defendedKfp.status().resources.active == 0
+    and defendedKfp.status().resources.disposed == false,
+  "faulted KFP did not release its host scope")
 check(hostStatus.errorCount == 1 and hostStatus.extensions[1].faulted == true,
   "companion dispatcher did not record the integrity fault")
 check(hostTest.errors()[1].message:find("legacy KFP splice markers", 1, true),
   "integrity fault message is missing")
 defended.loader.hooks:call("core.quit_to_launcher", function() return true end)
+check(defendedKfp.status().state == "disposed",
+  "faulted KFP runtime did not dispose on quit")
+check(defendedKfp.status().resources.disposed == true,
+  "faulted KFP runtime resources stayed live on quit")
+check(#hostTest.status().extensions == 0,
+  "faulted KFP registration survived quit")
 
 io.write("engine Loader migration safety passed\n")

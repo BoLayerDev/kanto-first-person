@@ -363,6 +363,8 @@ return function(T)
     T.truthy(control.hook("core.quit_to_launcher")(
       function() return true end
     ))
+    T.equal(mod.exports.kfp.status().state, "disposed")
+    T.truthy(mod.exports.kfp.status().resources.disposed)
     T.equal(control.listenerCount(), 0)
     assertHostUnchanged(host)
   end)
@@ -386,8 +388,10 @@ return function(T)
     T.truthy(host.dispatcher:errors()[1].message:find(
       "legacy KFP splice markers detected", 1, true
     ))
-    T.equal(mod.exports.kfp.status().state, "disposed")
-    T.truthy(mod.exports.kfp.status().resources.disposed)
+    T.equal(mod.exports.kfp.status().state, "waiting_for_host")
+    T.equal(mod.exports.kfp.status().host.state, "inactive")
+    T.equal(mod.exports.kfp.status().resources.active, 0)
+    T.falsy(mod.exports.kfp.status().resources.disposed)
 
     local startReport = host.dispatcher:start({ world = runtime.snapshot })
     T.equal(startReport.succeeded, 0)
@@ -402,6 +406,8 @@ return function(T)
     T.truthy(control.hook("core.quit_to_launcher")(
       function() return true end
     ))
+    T.equal(mod.exports.kfp.status().state, "disposed")
+    T.truthy(mod.exports.kfp.status().resources.disposed)
     T.equal(control.listenerCount(), 0)
     T.equal(#host.dispatcher:status().extensions, 0)
     assertHostUnchanged(host)

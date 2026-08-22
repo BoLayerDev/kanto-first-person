@@ -103,6 +103,13 @@ function App.new(options)
     platform = "",
     pendingDoorway = false,
     subscriptions = {},
+    runtimeDisposed = false,
+    connectionSequence = 0,
+    activeConnectionGeneration = nil,
+    hostProvider = nil,
+    hostScope = nil,
+    connectionError = nil,
+    retiredClient = nil,
   }, App)
 end
 
@@ -159,12 +166,29 @@ function App:_makeConfig()
   self.config = self.configService:snapshot()
 end
 
-function App:_makeResources()
+function App:_makeRuntime()
   self.resourceOwner = self.modules.ResourceOwner.new({
     diagnostics = self.diagnostics,
   })
-  local audioOwner = assert(self.resourceOwner:child("audio"))
-  local textureOwner = assert(self.resourceOwner:child("textures"))
+  self.metrics = self.modules.Metrics.new({
+    clock = self.clock,
+    capacity = 240,
+  })
+  self.quality = self.modules.Quality.policy(
+    self.config.quality,
+    self.hostTier,
+    self.platform
+  )
+end
+
+function App:_makeResources(generation)
+  local hostOwner, ownerError = self.resourceOwner:child(
+    "host:" .. tostring(generation)
+  )
+  if not hostOwner then error(ownerError or "host resource owner failed", 0) end
+  self.hostOwner = hostOwner
+  local audioOwner = assert(hostOwner:child("audio"))
+  local textureOwner = assert(hostOwner:child("textures"))
   local newSource
   if love and love.audio and type(love.audio.newSource) == "function"
       and type(self.mod.assets) == "table"
@@ -245,10 +269,6 @@ function App:_makeFeatures()
 end
 
 function App:_makeRenderer()
-  self.metrics = self.modules.Metrics.new({
-    clock = self.clock,
-    capacity = 240,
-  })
   self.quality = self.modules.Quality.policy(
     self.config.quality,
     self.hostTier,
@@ -433,7 +453,96 @@ function App:_update(context)
   end
 end
 
-function App:_extensionSpec(provider)
+function App:_hostActive(generation)
+  local scope = self.hostScope
+  return not self.runtimeDisposed
+    and type(scope) == "table"
+    and scope.released ~= true
+    and scope.generation == generation
+    and self.activeConnectionGeneration == generation
+end
+
+function App:_releaseHostScope(generation, reason)
+  local scope = self.hostScope
+  if type(scope) ~= "table" or scope.generation ~= generation
+      or scope.released == true then
+    return false
+  end
+  scope.released = true
+
+  local function release(label, object, method, ...)
+    local callback = type(object) == "table" and object[method]
+    if type(callback) ~= "function" then return end
+    local ok, err = pcall(callback, object, ...)
+    if not ok then
+      emit(self, "error", "CORE.HOST_SCOPE_RELEASE_FAILED",
+        "A host-scoped KFP resource did not release cleanly.", {
+          component = label,
+          error = tostring(err),
+          reason = tostring(reason),
+        })
+    end
+  end
+
+  -- Retire scene packets before their texture catalog and owner. The owner is
+  -- the final backstop for every resource that a partial setup left behind.
+  release("features", self.featureSet, "dispose")
+  release("compiler", self.compiler, "dispose")
+  release("textures", self.textureCatalog, "dispose", reason)
+  release("audio", self.audioBackend, "dispose", reason)
+  if self.resourceOwner and self.hostOwner then
+    local released, err = self.resourceOwner:release(
+      self.hostOwner,
+      reason or "host_scope_released"
+    )
+    if not released and err ~= "not_owned" then
+      emit(self, "error", "CORE.HOST_OWNER_RELEASE_FAILED",
+        "The host-scoped resource owner did not release cleanly.", {
+          error = tostring(err),
+          reason = tostring(reason),
+        })
+    end
+  end
+
+  self.hostOwner = nil
+  self.audioBackend = nil
+  self.textureCatalog = nil
+  self.featureSet = nil
+  self.camera = nil
+  self.audioFeature = nil
+  self.renderer = nil
+  self.sceneCache = nil
+  self.compiler = nil
+  self.world = nil
+  self.worldIndex = nil
+  self.sceneKey = nil
+  self.pendingDoorway = false
+  self.hostProvider = nil
+  self.hostCapabilities = {}
+  self.hostId = "unknown"
+  self.hostVersion = "unknown"
+  self.hostTier = "AUTO"
+  self.platform = ""
+  self.quality = self.modules.Quality.policy(
+    self.config.quality,
+    self.hostTier,
+    self.platform
+  )
+  self.activeConnectionGeneration = nil
+  self.hostScope = nil
+
+  emit(self, "info", "COMPANION.HOST_SCOPE_RELEASED",
+    "KFP released the retired voxel host scope.", {
+      generation = generation,
+      reason = tostring(reason),
+    })
+  return true
+end
+
+function App:_beginHostScope(provider, generation)
+  if self.runtimeDisposed then return nil, "runtime_disposed" end
+  if self.hostScope then return nil, "host_scope_overlap" end
+
   provider = type(provider) == "table" and provider or {}
   local capabilities = type(provider.capabilities) == "table"
     and provider.capabilities or {}
@@ -444,19 +553,65 @@ function App:_extensionSpec(provider)
   for name, version in pairs(capabilities) do
     if tonumber(version) == 1 then self.hostCapabilities[name] = 1 end
   end
+  self.hostProvider = provider
+  self.activeConnectionGeneration = generation
+  self.hostScope = {
+    generation = generation,
+    released = false,
+    hostId = self.hostId,
+    hostVersion = self.hostVersion,
+  }
+
+  local ok, err = pcall(function()
+    self:_makeResources(generation)
+    self:_makeFeatures()
+    self:_makeRenderer()
+  end)
+  if not ok then
+    self:_releaseHostScope(generation, "host_scope_setup_failed")
+    return nil, tostring(err)
+  end
+  return self.hostScope
+end
+
+function App:_hostDisposed(generation, reason)
+  if self.activeConnectionGeneration ~= generation then return end
+  if self.client then self.retiredClient = self.client end
+  self.client = nil
+  self.connectionError = tostring(reason or "host_dispose")
+  self:_releaseHostScope(generation, reason or "host_dispose")
+  if not self.runtimeDisposed then self.state = "waiting_for_host" end
+end
+
+function App:_drainRetiredClient()
+  local retired = self.retiredClient
+  self.retiredClient = nil
+  if retired then retired:detach() end
+end
+
+function App:_extensionSpec(provider, generation)
+  local scope, scopeError = self:_beginHostScope(provider, generation)
+  if not scope then error(scopeError or "host scope setup failed", 0) end
+  local capabilities = self.hostCapabilities
   local render = {}
   for _, phase in ipairs(PHASES) do
     local name = phase
-    render[name] = function(context) self:_render(name, context) end
+    render[name] = function(context)
+      if self:_hostActive(generation) then self:_render(name, context) end
+    end
   end
   if tonumber(capabilities.shadow_pass) == 1 then
     render.shadow_casters = function(context)
-      self:_render("shadow_casters", context)
+      if self:_hostActive(generation) then
+        self:_render("shadow_casters", context)
+      end
     end
   end
   if tonumber(capabilities.battle_pass) == 1 then
     render.battle_opaque = function(context)
-      self:_render("battle_opaque", context)
+      if self:_hostActive(generation) then
+        self:_render("battle_opaque", context)
+      end
     end
   end
   return {
@@ -476,48 +631,119 @@ function App:_extensionSpec(provider)
       "battle_pass",
       "integrity_status",
     },
-    attach = function(services) self:_attachServices(services) end,
+    attach = function(services)
+      if self:_hostActive(generation) then self:_attachServices(services) end
+    end,
     lifecycle = {
       start = function(context)
-        if type(context.world) == "table" then
+        if self:_hostActive(generation) and type(context.world) == "table" then
           self:_captureWorld(context.world, "start")
         end
       end,
+      dispose = function(_, reason)
+        self:_hostDisposed(generation, reason or "host_dispose")
+      end,
     },
     worldChanged = function(snapshot)
+      if not self:_hostActive(generation) then return end
       local source = type(snapshot.world) == "table" and snapshot.world or snapshot
       self:_captureWorld(source, "world_changed")
     end,
     update = function(frame)
-      self:_update(frame)
+      if self:_hostActive(generation) then self:_update(frame) end
     end,
     render = render,
     modifyCamera = function(camera)
+      if not self:_hostActive(generation) then
+        return {
+          positionDelta = { x = 0, y = 0, z = 0 },
+          rotationDelta = { yaw = 0, pitch = 0, roll = 0 },
+          fovDelta = 0,
+        }
+      end
       local source = type(camera.camera) == "table" and camera.camera or camera
       return self.featureSet:cameraDelta(source)
     end,
     invalidate = function(reason)
+      if not self:_hostActive(generation) then return end
       self.compiler:invalidate(reason or "host_invalidated", false)
       self.renderer:invalidateAll()
       self.featureSet:invalidate()
       self:_requestScene()
     end,
-    dispose = function()
-      self:_disposeRuntime("host_dispose")
-    end,
   }
+end
+
+function App:_newClient(generation)
+  return self.modules.Client.new({
+    find = function(id) return self.mod.find(id) end,
+    hostIds = HOSTS,
+    spec = function(provider)
+      return self:_extensionSpec(provider, generation)
+    end,
+    diagnostics = self.diagnostics,
+  })
+end
+
+function App:_disconnectCurrent(reason)
+  local generation = self.activeConnectionGeneration
+  local client = self.client
+  self.client = nil
+  if client then client:detach() end
+  if generation then self:_releaseHostScope(generation, reason) end
+  if not self.runtimeDisposed then self.state = "waiting_for_host" end
 end
 
 function App:_connect()
   if self.runtimeDisposed then return false, "runtime_disposed" end
-  if self.client:status().state == "attached" then return true end
-  local handle, err = self.client:attach()
+  self:_drainRetiredClient()
+
+  local generation = self.connectionSequence + 1
+  local candidate = self:_newClient(generation)
+  local selected, resolveError = candidate:resolve()
+  local current = self.client and self.client:status() or nil
+  if selected and current and current.state == "attached"
+      and self.hostScope and self.hostProvider == selected.provider then
+    return true
+  end
+
+  if self.hostScope or (current and current.state == "attached") then
+    self:_disconnectCurrent("host_topology_changed")
+  end
+
+  self.client = candidate
+  if not selected then
+    self.connectionError = resolveError
+    self.state = "waiting_for_host"
+    emit(self, "warn", "COMPANION.INACTIVE",
+      "KFP is inactive until exactly one compatible voxel host is enabled.",
+      { error = tostring(resolveError) })
+    return false, resolveError
+  end
+
+  self.connectionSequence = generation
+  local handle, err = candidate:attach()
   if not handle then
+    self:_releaseHostScope(generation, "host_registration_failed")
+    self.connectionError = err
+    self.state = "waiting_for_host"
     emit(self, "warn", "COMPANION.INACTIVE",
       "KFP is inactive until exactly one compatible voxel host is enabled.",
       { error = tostring(err) })
-    return false
+    return false, err
   end
+  if self.activeConnectionGeneration ~= generation or not self.hostScope then
+    if self.retiredClient == candidate then self.retiredClient = nil end
+    candidate:detach()
+    self.connectionError = "host_faulted_during_registration"
+    self.state = "waiting_for_host"
+    emit(self, "warn", "COMPANION.INACTIVE",
+      "KFP host registration faulted before it became active.", {
+        error = self.connectionError,
+      })
+    return false, self.connectionError
+  end
+  self.connectionError = nil
   self.state = "attached"
   return true
 end
@@ -537,14 +763,14 @@ function App:_optionChanged(event)
   self.config = self.configService:refresh(reason)
   if self.config == previous then return end
   self:_resolveQuality(self.hostTier, self.platform)
-  self.compiler:invalidate("options_changed", false)
-  self.renderer:invalidateAll()
-  self.featureSet:invalidate()
+  if self.compiler then self.compiler:invalidate("options_changed", false) end
+  if self.renderer then self.renderer:invalidateAll() end
+  if self.featureSet then self.featureSet:invalidate() end
   self:_requestScene()
 end
 
 function App:_mapEntered(event)
-  if self.runtimeDisposed or type(event) ~= "table" then return end
+  if self.runtimeDisposed or not self.hostScope or type(event) ~= "table" then return end
   self.pendingDoorway = event.via == "warp"
 end
 
@@ -573,12 +799,15 @@ end
 function App:_disposeRuntime(reason)
   if self.runtimeDisposed then return end
   self.runtimeDisposed = true
-  if self.featureSet then self.featureSet:dispose() end
-  if self.compiler then self.compiler:dispose() end
-  if self.textureCatalog then self.textureCatalog:dispose(reason) end
-  if self.audioBackend then self.audioBackend:dispose(reason) end
+  local generation = self.activeConnectionGeneration
+  local client = self.client
+  self.client = nil
+  if client then client:detach() end
+  self:_drainRetiredClient()
+  if generation then self:_releaseHostScope(generation, reason) end
   if self.resourceOwner then self.resourceOwner:dispose(reason) end
   self.world = nil
+  self.worldIndex = nil
   self.sceneKey = nil
   self.state = "disposed"
   emit(self, "info", "CORE.RUNTIME_DISPOSED", "KFP runtime resources were released.", {
@@ -587,13 +816,13 @@ function App:_disposeRuntime(reason)
 end
 
 function App:dispose(reason)
-  if self.client then self.client:detach() end
-  self:_disposeRuntime(reason or "app_dispose")
+  if self.runtimeDisposed then return true end
   for index = #self.subscriptions, 1, -1 do
     local unsubscribe = self.subscriptions[index]
     if type(unsubscribe) == "function" then pcall(unsubscribe) end
     self.subscriptions[index] = nil
   end
+  self:_disposeRuntime(reason or "app_dispose")
   return true
 end
 
@@ -601,17 +830,7 @@ function App:start()
   if self.state ~= "new" then return false, "already_started" end
   self:_loadModules()
   self:_makeConfig()
-  self:_makeResources()
-  self:_makeFeatures()
-  self:_makeRenderer()
-  self.client = self.modules.Client.new({
-    find = function(id) return self.mod.find(id) end,
-    hostIds = HOSTS,
-    spec = function(provider)
-      return self:_extensionSpec(provider)
-    end,
-    diagnostics = self.diagnostics,
-  })
+  self:_makeRuntime()
 
   self.subscriptions[#self.subscriptions + 1] = self.mod.events:on(
     "mods.loaded",
@@ -645,7 +864,10 @@ function App:start()
 end
 
 function App:status()
-  local client = self.client and self.client:status() or { state = "not_started" }
+  local client = self.client and self.client:status() or {
+    state = self.runtimeDisposed and "disposed" or "inactive",
+    error = self.connectionError,
+  }
   local scene = self.compiler and self.compiler:status() or nil
   local audio = self.audioBackend and self.audioBackend:status() or nil
   local textures = self.textureCatalog and self.textureCatalog:status() or nil

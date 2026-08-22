@@ -35,9 +35,11 @@ Last updated: 2026-08-21
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
-- Two isolated Yellow QA profiles are prepared outside Git for the exact Battle
-  Art and Dramaless PR branches. They must be refreshed to the final KFP commit
-  before launch. Red and Blue imports are not present.
+- Two isolated Yellow QA profiles were refreshed to KFP `ee5b735`, activated,
+  and launched with the exact Battle Art and Dramaless PR branches. Both passed
+  a preliminary 1920 x 1080 interior load. The full scene, lifecycle,
+  performance, and soak matrix is still open. Red and Blue imports are not
+  present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
@@ -55,17 +57,15 @@ Last updated: 2026-08-21
 
 ## Next actions
 
-1. Close the user-owned Gen1recomp session, activate the two isolated Yellow
-   QA identities, and run both adapter branches at verified 1920 x 1080.
-2. Complete the Yellow visual, lifecycle, performance, transition, and soak
+1. Complete the Yellow visual, lifecycle, performance, transition, and soak
    matrix; import legally owned Red and Blue copies before their private runs.
-3. Obtain host-owner review and released adapter versions from
+2. Obtain host-owner review and released adapter versions from
    `absol89/DramaticShapeVoxelMod#29` and `artyrambles/DRAMALESS_SHAPE#47`.
-4. Keep the private rights inventory hash aligned if any covered legacy asset
+3. Keep the private rights inventory hash aligned if any covered legacy asset
    changes; never publish the original permission pages.
-5. Create or import a protected GPG release key, back it up, and record only
+4. Create or import a protected GPG release key, back it up, and record only
    its public fingerprint in repository configuration and release evidence.
-6. Complete performance, leak, platform, reproducibility, and uninstall gates.
+5. Complete performance, leak, platform, reproducibility, and uninstall gates.
 
 ## Completion rule
 

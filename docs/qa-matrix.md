@@ -84,3 +84,11 @@ Yellow can run with the currently installed private import. Red and Blue stay
 open until the user imports legally owned copies. Windows is the immediate
 native platform. Other platform claims stay experimental until device-owner
 evidence uses this same matrix.
+
+## Current runtime checkpoint
+
+The exact KFP `ee5b735` checkpoint and both submitted host adapters launched
+in isolated Windows identities with Yellow. Each host rendered the same
+interior and remained responsive at a verified 1920 x 1080 client size. This
+is preliminary load evidence only. No scene-class, visual-acceptance,
+performance, lifecycle, transition, or soak row is complete yet.

@@ -18,7 +18,8 @@ a waiver for a failed release gate.
 
 - The public suite is ROM-free and does not prove real-game visual output.
 - Yellow is the only private game import currently available for local review.
-  Red and Blue remain open.
+  Both host adapters passed one preliminary Windows interior load at 1920 x
+  1080, but the full Yellow corpus remains open. Red and Blue remain open.
 - Represented effects still need host/GPU review. This includes interiors,
   caves, map edges, weather, skies, camera behavior, audio, battles, shadows,
   quality tiers, and transitions.

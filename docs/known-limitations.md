@@ -18,10 +18,11 @@ a waiver for a failed release gate.
 
 - The public suite is ROM-free and does not prove real-game visual output.
 - Yellow is the only private game import currently available for local review.
-  Initial Windows captures were invalid as KFP evidence. KFP was disabled for
-  Battle Art. Dramaless had KFP enabled for Yellow, but initialization did not
-  complete. A diagnostic run and the full Yellow corpus remain open. Red and
-  Blue remain open.
+  KFP was disabled for the first Battle Art capture. Dramaless loaded and
+  attached KFP, but the selected Valley horizon was absent from the live scene.
+  ROM-free production tracing accepts the expected outdoor and indoor draw
+  packets, so live diagnostic and GPU review remain open. Red and Blue remain
+  open.
 - Represented effects still need host/GPU review. This includes interiors,
   caves, map edges, weather, skies, camera behavior, audio, battles, shadows,
   quality tiers, and transitions.

@@ -89,7 +89,11 @@ evidence uses this same matrix.
 
 The exact KFP `ee5b735` files and both submitted host adapters were placed in
 isolated Windows identities with Yellow. The first runtime inspection found
-KFP disabled for Battle Art. Dramaless had its Yellow enable flag set, but KFP
-did not register its option schema and did not initialize. Those captures are
-not KFP runtime evidence. No scene-class, visual-acceptance, performance,
-lifecycle, transition, or soak row is complete yet.
+KFP disabled for Battle Art, so that capture is only a host baseline. Dramaless
+loaded KFP, registered all 54 option rows, and attached in a production Loader
+probe. Its live outdoor scene did not show the selected Valley horizon. A
+ROM-free production-path trace accepted the horizon plus indoor ceiling and
+wall batches with no submission failure, so a probe-enabled restart must now
+separate live scene state from GPU presentation. No scene-class,
+visual-acceptance, performance, lifecycle, transition, or soak row is complete
+yet.

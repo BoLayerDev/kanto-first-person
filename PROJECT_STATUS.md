@@ -37,11 +37,13 @@ Last updated: 2026-08-21
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
 - Two isolated Yellow QA profiles were refreshed to KFP `ee5b735` and launched
   with the exact Battle Art and Dramaless PR branches. Runtime inspection found
-  that KFP was disabled for Battle Art. Dramaless had its Yellow enable flag
-  set, but KFP did not register its option schema, so it failed or stopped
-  before initialization. The captured scenes do not count as KFP runtime
-  evidence. A diagnostic restart and the full matrix remain open. Red and Blue
-  imports are not present.
+  that KFP was disabled for Battle Art, so that scene is a host-only baseline.
+  Dramaless loaded KFP, registered all 54 option rows, and attached in a
+  production Loader probe, but its live outdoor scene did not show the selected
+  Valley horizon. A ROM-free production-path trace submitted the horizon and
+  indoor geometry without errors, which narrows the open fault to live scene
+  state or GPU presentation. A diagnostic restart and the full matrix remain
+  open. Red and Blue imports are not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.

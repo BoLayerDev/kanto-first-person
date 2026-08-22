@@ -206,8 +206,10 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
   await expect(banner.getByRole('link', { name: /SOURCE 79b3851/ })).toHaveAttribute('href', /commit\/79b3851/)
 
-  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'RESEARCH ARCHIVE', 'OPEN GITHUB']) {
-    await page.getByRole('button', { name: label }).click()
+  const routes = ['features', 'guide', 'support', 'rebuild', 'activity', 'github']
+  for (const [index, route] of routes.entries()) {
+    await page.evaluate((hash) => { window.location.hash = hash }, route)
+    await expect(page.locator('.menu-window > button').nth(index + 1)).toHaveAttribute('aria-current', 'page')
     await expect(banner).toBeVisible()
   }
 })

@@ -18,8 +18,9 @@ Status terms:
 - **Open**: real output, timing, assets, or host behavior still needs evidence.
 - **Retired**: v2 intentionally does not implement the old behavior.
 
-Every represented visual item remains **Open** until it passes synthetic render
-tests and private in-game review on Red, Blue, and Yellow.
+Every represented visual item remains **Open** until it passes declarative
+packet checks, synthetic render review, and private in-game review on Red,
+Blue, and Yellow.
 
 ## Interior and cave
 
@@ -136,6 +137,17 @@ The current `MOUNTAIN PEAKS` feature is separate from the retired `mountains`
 attempt.
 
 ## Release parity gates
+
+`tests/integration/test_synthetic_scene_golden.lua` now provides the public,
+ROM-free declarative packet lane. Its authored fixtures cover interior, cave,
+forest, city and Lavender, connected route edges, shore, mountain, day, night,
+rain, storm, and supported and unsupported battle output. Reviewed hashes lock
+packet structure. The test also checks API v1 portable commands, phases,
+materials, batch and tier limits, borrowed-host-object isolation, path removal,
+and distinct HIGH, BALANCED, and LOW output.
+
+This lane is not a pixel golden and does not prove GPU, host, real-map, or game
+parity. Those claims remain open until the later gates provide direct evidence.
 
 No item is complete until the applicable gates pass:
 

@@ -167,6 +167,33 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.height).toBe(900)
 })
 
+test('keeps the home vital labels fully visible', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const metrics = await page.locator('.home-vitals small').evaluateAll((labels) => labels.map((label) => {
+    const labelBox = label.getBoundingClientRect()
+    const cellBox = label.parentElement!.getBoundingClientRect()
+    const style = getComputedStyle(label)
+    return {
+      bottomInsideCell: labelBox.bottom <= cellBox.bottom,
+      fontSize: Number.parseFloat(style.fontSize),
+      lineHeight: Number.parseFloat(style.lineHeight),
+      overflow: style.overflow,
+      topInsideCell: labelBox.top >= cellBox.top,
+    }
+  }))
+
+  expect(metrics).toHaveLength(3)
+  for (const label of metrics) {
+    expect(label.topInsideCell).toBe(true)
+    expect(label.bottomInsideCell).toBe(true)
+    expect(label.overflow).toBe('visible')
+    expect(label.fontSize).toBeGreaterThanOrEqual(7.5)
+    expect(label.lineHeight).toBeGreaterThan(label.fontSize)
+  }
+})
+
 test('keeps the verified coming-soon status above every menu page', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)

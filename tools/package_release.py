@@ -233,8 +233,16 @@ def validate_relative_path(relative: str) -> None:
         or "\\" in relative
         or unicodedata.normalize("NFC", relative) != relative
         or any(ord(character) < 32 or ord(character) == 127 for character in relative)
-        or any(part in ("", ".", "..") for part in parts)
-        or any(":" in part or part.endswith((" ", ".")) for part in parts)
+        or any(
+            part in ("", ".", "..", "__pycache__")
+            or part.startswith(".")
+            for part in parts
+        )
+        or any(
+            any(character in '<>:"|?*' for character in part)
+            or part.endswith((" ", "."))
+            for part in parts
+        )
         or any(part.split(".", 1)[0].upper() in WINDOWS_DEVICE_NAMES for part in parts)
     ):
         raise RuntimeError(f"unsafe package path: {relative!r}")
@@ -493,6 +501,31 @@ def deterministic_zip(source: Path, output: Path, files: list[str]) -> None:
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             archive.writestr(info, (source / relative).read_bytes(), compresslevel=9)
+
+
+def verify_modpkg_runtime(modpkg: Path, staging: Path, files: list[str]) -> None:
+    expected_runtime = set(files)
+    expected_entries = expected_runtime | {".modkit/pack.json"}
+    with zipfile.ZipFile(modpkg, "r") as archive:
+        names = [entry.filename for entry in archive.infolist()]
+        if len(names) != len(set(names)):
+            raise RuntimeError("modpkg contains duplicate package paths")
+        actual_entries = set(names)
+        if actual_entries != expected_entries:
+            missing = sorted(expected_entries.difference(actual_entries))
+            unexpected = sorted(actual_entries.difference(expected_entries))
+            details = []
+            if missing:
+                details.append("missing: " + ", ".join(missing))
+            if unexpected:
+                details.append("unexpected: " + ", ".join(unexpected))
+            raise RuntimeError("modpkg path set differs from staging (" + "; ".join(details) + ")")
+        for relative in sorted(expected_runtime):
+            staged = staging.joinpath(*relative.split("/")).read_bytes()
+            if archive.read(relative) != staged:
+                raise RuntimeError(
+                    f"modpkg content differs from staging: {relative}"
+                )
 
 
 def runtime_content_fingerprint(source: Path, files: list[str]) -> dict[str, object]:
@@ -808,6 +841,7 @@ def main() -> int:
                   env=env))
         print(run(python, str(modkit), "pack", "--base", "fixture", "-o",
                   str(modpkg), str(staging), cwd=engine_staging, env=env))
+        verify_modpkg_runtime(modpkg, staging, files)
         deterministic_zip(staging, root_zip, files)
 
         records = []

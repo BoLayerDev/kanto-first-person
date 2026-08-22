@@ -102,7 +102,9 @@ Windows `core.autocrlf`.
 the tracked worktree bytes, sets `source_dirty=true`, and keeps
 `publishable=false`, even when Git reports a clean worktree. The packager
 rejects untracked runtime files, missing tracked files, unsafe or duplicate
-paths, and symlink or junction paths.
+paths, and symlink or junction paths. After Modkit packs the `.modpkg`, the
+packager also requires its runtime path set and every runtime byte to match the
+staging set exactly.
 
 The attestation records `source_content_mode`, `git_status_dirty`, and a framed
 SHA-256 fingerprint of the exact staged runtime path-and-content set. Its

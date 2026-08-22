@@ -576,6 +576,68 @@ class ReleaseGateTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "not a Git blob"):
                 PACKAGE_RELEASE.parse_tree_entries(gitlink)
 
+    def test_relative_paths_reject_all_nonportable_windows_forms(self):
+        PACKAGE_RELEASE.validate_relative_path("src/valid-name.lua")
+        invalid = (
+            "/src/absolute.lua",
+            "C:/src/drive.lua",
+            "src\\backslash.lua",
+            "src/../traversal.lua",
+            "src/CON.lua",
+            "src/trailing.",
+            "src/trailing ",
+            "src/.secret.lua",
+            "src/.hidden/file.lua",
+            "src/__pycache__/file.lua",
+            "src/decomposed-e\u0301.lua",
+            *(f"src/bad{character}name.lua" for character in '<>:"|?*'),
+        )
+        for relative in invalid:
+            with self.subTest(relative=relative):
+                with self.assertRaisesRegex(RuntimeError, "unsafe package path"):
+                    PACKAGE_RELEASE.validate_relative_path(relative)
+
+    def test_modpkg_runtime_must_match_staging_paths_and_bytes(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            staging = root / "staging"
+            staging.mkdir()
+            (staging / "manifest.json").write_bytes(b"manifest\n")
+            (staging / "main.lua").write_bytes(b"return true\n")
+            files = ["manifest.json", "main.lua"]
+
+            matching = root / "matching.modpkg"
+            with zipfile.ZipFile(matching, "w") as archive:
+                for relative in files:
+                    archive.writestr(relative, (staging / relative).read_bytes())
+                archive.writestr(".modkit/pack.json", b"{}\n")
+            PACKAGE_RELEASE.verify_modpkg_runtime(matching, staging, files)
+
+            missing = root / "missing.modpkg"
+            with zipfile.ZipFile(missing, "w") as archive:
+                archive.writestr("manifest.json", b"manifest\n")
+                archive.writestr(".modkit/pack.json", b"{}\n")
+            with self.assertRaisesRegex(RuntimeError, "path set differs"):
+                PACKAGE_RELEASE.verify_modpkg_runtime(missing, staging, files)
+
+            changed = root / "changed.modpkg"
+            with zipfile.ZipFile(changed, "w") as archive:
+                archive.writestr("manifest.json", b"changed\n")
+                archive.writestr("main.lua", b"return true\n")
+                archive.writestr(".modkit/pack.json", b"{}\n")
+            with self.assertRaisesRegex(RuntimeError, "content differs"):
+                PACKAGE_RELEASE.verify_modpkg_runtime(changed, staging, files)
+
+            duplicate = root / "duplicate.modpkg"
+            with zipfile.ZipFile(duplicate, "w") as archive:
+                archive.writestr("manifest.json", b"manifest\n")
+                with self.assertWarns(UserWarning):
+                    archive.writestr("manifest.json", b"manifest\n")
+                archive.writestr("main.lua", b"return true\n")
+                archive.writestr(".modkit/pack.json", b"{}\n")
+            with self.assertRaisesRegex(RuntimeError, "duplicate package paths"):
+                PACKAGE_RELEASE.verify_modpkg_runtime(duplicate, staging, files)
+
     def test_worktree_copy_rejects_untracked_runtime_files(self):
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)

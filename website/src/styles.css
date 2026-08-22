@@ -25,9 +25,15 @@ body,
   overflow: hidden;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 button {
@@ -599,9 +605,14 @@ a {
 
 @media (max-width: 900px) {
   html,
-  body,
+  body {
+    overflow: hidden;
+  }
+
   #root {
-    overflow: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
   }
 
   .app {
@@ -628,11 +639,84 @@ a {
   }
 
   .menu-window {
-    min-height: 520px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    min-height: 0;
+    padding: 0 0.65rem 0.75rem;
+  }
+
+  .menu-window .window-label,
+  .menu-divider,
+  .inline-option,
+  .menu-window > button:nth-of-type(5) {
+    grid-column: 1 / -1;
+  }
+
+  .window-label {
+    font-size: 0.625rem;
+  }
+
+  .menu-window > button {
+    grid-template-columns: 22px minmax(0, 1fr);
+    min-height: 64px;
+    padding: 0.7rem 0.55rem;
+    font-size: clamp(0.6875rem, 1.55vw, 0.78rem);
+    line-height: 1.55;
+  }
+
+  .menu-divider {
+    width: auto;
+    margin: 0.45rem 0.55rem 0.35rem;
+  }
+
+  .inline-option {
+    min-height: 58px;
+    padding: 0.3rem 0.55rem;
+    font-size: 0.625rem;
+  }
+
+  .inline-option button {
+    min-width: 48px;
+    min-height: 48px;
+    font-size: 0.625rem;
+  }
+
+  .inline-option .quality-toggle {
+    min-width: 132px;
+    font-size: 0.625rem;
   }
 
   .detail-window {
-    min-height: 560px;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .detail-copy {
+    height: auto;
+    overflow: visible;
+  }
+
+  .stat-row {
+    grid-template-columns: minmax(88px, 0.35fr) 1fr;
+    font-size: 0.625rem;
+  }
+
+  .alpha-notice,
+  .feature-list b,
+  .feature-list span,
+  .install-steps b,
+  .detail-links a {
+    font-size: 0.625rem;
+  }
+
+  .warning-box b,
+  .launch-button {
+    font-size: 0.6875rem;
+  }
+
+  .detail-links a {
+    min-height: 52px;
   }
 
   .control-strip p {
@@ -653,12 +737,19 @@ a {
   }
 
   .title-strip h1 {
-    font-size: clamp(0.95rem, 5.5vw, 1.35rem);
+    font-size: clamp(1rem, 4.6vw, 1.15rem);
+    line-height: 1.25;
   }
 
-  .title-strip > div:nth-child(2) > span,
+  .title-strip > div:nth-child(2) > span {
+    margin-bottom: 0.35rem;
+    font-size: 0.5rem;
+    line-height: 1.5;
+  }
+
   .alpha-chip {
-    font-size: 0.36rem;
+    padding: 0.55rem 0.5rem;
+    font-size: 0.5rem;
   }
 
   .split-core {
@@ -676,16 +767,19 @@ a {
   }
 
   .menu-window {
-    min-height: 500px;
+    padding-right: 0.5rem;
+    padding-left: 0.5rem;
   }
 
   .menu-window > button {
-    min-height: 54px;
-    font-size: 0.5rem;
+    min-height: 64px;
+    padding-right: 0.4rem;
+    padding-left: 0.4rem;
+    font-size: 0.6875rem;
   }
 
   .detail-window {
-    min-height: 620px;
+    min-height: 0;
   }
 
   .detail-copy {
@@ -707,6 +801,29 @@ a {
 
   .control-strip > div {
     flex: 1 1 42%;
+  }
+
+  .control-strip kbd {
+    font-size: 0.5rem;
+  }
+
+  .control-strip span {
+    font-size: 0.55rem;
+  }
+
+  .control-strip p {
+    font-size: 0.75rem;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 360px) {
+  .menu-window {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-window > button:nth-of-type(5) {
+    grid-column: auto;
   }
 }
 

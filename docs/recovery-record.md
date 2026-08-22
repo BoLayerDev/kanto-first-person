@@ -34,10 +34,19 @@ engine commit `70d7b6383e2c005857013dc897fd096886b08f0b`.
 
 ## Remote status
 
-The first push of this checkpoint was rejected because the active personal
-GitHub OAuth token lacks the `workflow` scope required to create
-`.github/workflows/ci.yml`. The local commit and independent recovery clone are
-safe. A remote-clone recovery test remains pending until the `BoLayerDev`
-personal authentication is renewed with `workflow` scope and the local
-checkpoint commits are pushed. Do not use the separate ROE account for this
-personal repository.
+The complete rewrite is on the private `BoLayerDev/kanto-first-person`
+repository, branch `v2-rewrite`, at
+`a50d38c342adfde34565d0a6150ab37ff78bbad6`.
+
+A fresh single-branch clone from GitHub was created at
+`C:\Users\bolay\Documents\Kanto First Person Evidence\verification\remote-restore-a50d38c`.
+It matched the remote commit and passed:
+
+- 215 ROM-free Lua tests.
+- 77 LuaJIT syntax checks.
+- The repository policy gate.
+- 8 Python release-control tests.
+- The scan that prevents removed-host references from returning.
+
+The personal `BoLayerDev` account performed the publication. The separate ROE
+account was not used.

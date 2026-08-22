@@ -38,21 +38,19 @@ Last updated: 2026-08-21
 - Original baseline remains available at Git commit `94d0151be839f02fea4a35ab1c3df41fbaddc6c1`.
 - Runtime checkpoint `568ef6994fa9cb8daae5fc0853bab6b589b961f2` is
   committed locally and passes an independent-clone restore test.
-- The private remote still has the original `v2-rewrite` baseline. GitHub
-  rejected the checkpoint push because the active `BoLayerDev` OAuth token
-  lacks `workflow` scope. The source commit remains safe locally.
+- The private remote contains the complete rewrite on `v2-rewrite` at
+  `a50d38c342adfde34565d0a6150ab37ff78bbad6`.
+- A fresh clone from the private remote passed the Lua suite, syntax gate,
+  repository policy gate, Python release-control suite, and removed-host scan.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.
 
 ## Next actions
 
-1. Renew the personal GitHub credential with `workflow` scope, push the local
-   checkpoint commits, and repeat the restore test from the private
-   remote.
-2. Run both adapter branches in real Gen1recomp GPU sessions.
-3. Complete corrected 1.60 visual and device evidence.
-4. Obtain host-owner review and released adapter versions.
-5. Resolve asset modification and redistribution rights.
-6. Complete performance, leak, platform, reproducibility, and uninstall gates.
+1. Run both adapter branches in real Gen1recomp GPU sessions.
+2. Complete corrected 1.60 visual and device evidence.
+3. Obtain host-owner review and released adapter versions.
+4. Resolve asset modification and redistribution rights.
+5. Complete performance, leak, platform, reproducibility, and uninstall gates.
 
 ## Completion rule
 

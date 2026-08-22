@@ -59,6 +59,124 @@ return function(T)
     T.equal(#packet.phases.translucent_after_actors[2].items, 1)
   end)
 
+  T.test("batch tail lookup matches legacy mixed-identity rollover semantics", function()
+    local maxBatchItems = 2
+    local events = {}
+    local function add(phase, kind, owner, key, material, sortKey, item)
+      events[#events + 1] = {
+        phase = phase,
+        kind = kind,
+        key = key,
+        template = {
+          owner = owner,
+          material = material,
+          sortKey = sortKey,
+          prototype = { marker = "template:" .. item },
+        },
+        item = { id = item },
+      }
+    end
+
+    add("opaque_after_terrain", "instances", "flora", "canopy",
+      "canopy:a", "flora:canopy", "a1")
+    add("opaque_after_terrain", "billboards", "flora", "canopy",
+      "billboard:a", "flora:canopy", "b1")
+    add("opaque_after_terrain", "instances", "flora", "canopy",
+      "ignored:a", "ignored:a", "a2")
+    add("translucent_after_actors", "instances", "flora", "canopy",
+      "translucent:a", "flora:canopy", "t1")
+    add("opaque_after_terrain", "instances", "weather", "canopy",
+      "weather:a", "flora:canopy", "w1")
+    add("opaque_after_terrain", "instances", "flora", "canopy",
+      "canopy:c", "flora:canopy", "a3")
+    add("opaque_after_terrain", "instances", "flora", "grass",
+      "grass:a", "flora:grass", "g1")
+    add("opaque_after_terrain", "instances", "flora", "canopy",
+      "ignored:c", "ignored:c", "a4")
+    add("opaque_after_terrain", "instances", "flora", "canopy",
+      "canopy:e", "flora:canopy", "a5")
+    add("opaque_after_terrain", "billboards", "flora", "canopy",
+      "ignored:b", "ignored:b", "b2")
+    add("opaque_after_terrain", "billboards", "flora", "canopy",
+      "billboard:c", "flora:canopy", "b3")
+
+    local legacyPhases = {
+      background = {},
+      opaque_after_terrain = {},
+      translucent_after_actors = {},
+      shadow_casters = {},
+      battle_opaque = {},
+    }
+    local legacyBatches = {
+      background = {},
+      opaque_after_terrain = {},
+      translucent_after_actors = {},
+      shadow_casters = {},
+      battle_opaque = {},
+    }
+    local legacySequence = 0
+    local buffer = newBuffer({ maxBatchItems = maxBatchItems })
+    for _, event in ipairs(events) do
+      buffer:addBatchItem(event.phase, event.kind, event.key,
+        event.template, event.item)
+
+      local segment = 1
+      local identity = table.concat({ event.kind, event.template.owner,
+        event.key, tostring(segment) }, "\31")
+      local batch = legacyBatches[event.phase][identity]
+      while batch and #batch.items >= maxBatchItems do
+        segment = segment + 1
+        identity = table.concat({ event.kind, event.template.owner,
+          event.key, tostring(segment) }, "\31")
+        batch = legacyBatches[event.phase][identity]
+      end
+      if not batch then
+        legacySequence = legacySequence + 1
+        batch = {
+          kind = event.kind,
+          key = event.key,
+          owner = event.template.owner,
+          material = event.template.material,
+          sortKey = event.template.sortKey,
+          marker = event.template.prototype.marker,
+          sequence = legacySequence,
+          items = {},
+        }
+        legacyBatches[event.phase][identity] = batch
+        legacyPhases[event.phase][#legacyPhases[event.phase] + 1] = batch
+      end
+      batch.items[#batch.items + 1] = event.item.id
+    end
+
+    local packet = buffer:seal({ key = "mixed-batches", generation = 4 })
+    local function less(a, b)
+      if a.sortKey ~= b.sortKey then return a.sortKey < b.sortKey end
+      return a.sequence < b.sequence
+    end
+    local function summarize(commands)
+      local summary = {}
+      for _, command in ipairs(commands) do
+        local items = {}
+        for _, item in ipairs(command.items) do items[#items + 1] = item.id or item end
+        summary[#summary + 1] = {
+          kind = command.kind,
+          key = command.key,
+          owner = command.owner,
+          material = command.material,
+          sortKey = command.sortKey,
+          marker = command.marker or command.prototype.marker,
+          sequence = command.sequence,
+          items = items,
+        }
+      end
+      return summary
+    end
+    for phase, expected in pairs(legacyPhases) do
+      table.sort(expected, less)
+      T.deepEqual(summarize(packet.phases[phase]), summarize(expected), phase)
+    end
+  end)
+
   T.test("sealed and bounded buffers reject writes", function()
     local buffer = newBuffer({ maxCommands = 1 })
     buffer:add("background", { kind = "mesh" })

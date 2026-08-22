@@ -2,6 +2,11 @@ local Util = {}
 
 local UINT32 = 4294967296
 local HASH_MULTIPLIER = 65599
+local SMALL_HASH_TEXT_BYTES = 64
+local HASH_LENGTH_PREFIXES = {}
+for length = 0, SMALL_HASH_TEXT_BYTES do
+  HASH_LENGTH_PREFIXES[length] = tostring(length) .. ":"
+end
 local CARDINAL_DELTAS = {
   { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 },
 }
@@ -60,7 +65,8 @@ function Util.hash(...)
     local text = tostring(select(index, ...))
     -- Length-prefix every part so, for example, ("a", "bc") cannot collide
     -- with ("ab", "c"). The 255 byte terminates the complete frame.
-    hash = hashText(hash, tostring(#text) .. ":")
+    local length = #text
+    hash = hashText(hash, HASH_LENGTH_PREFIXES[length] or tostring(length) .. ":")
     hash = hashText(hash, text)
     hash = (hash * HASH_MULTIPLIER + 255) % UINT32
   end

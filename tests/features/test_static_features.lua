@@ -61,6 +61,114 @@ return function(T)
     end
   end
 
+  T.test("feature hash framing matches the precomputed-prefix reference", function()
+    local UINT32, MULTIPLIER = 4294967296, 65599
+    local function hashText(hash, text)
+      for index = 1, #text do
+        hash = (hash * MULTIPLIER + text:byte(index)) % UINT32
+      end
+      return hash
+    end
+    local function referenceHash(...)
+      local hash = 2166136261
+      for index = 1, select("#", ...) do
+        local text = tostring(select(index, ...))
+        hash = hashText(hash, tostring(#text) .. ":")
+        hash = hashText(hash, text)
+        hash = (hash * MULTIPLIER + 255) % UINT32
+      end
+      return hash
+    end
+
+    local corpus = {
+      {},
+      { "" },
+      { "a", "bc" },
+      { "ab", "c" },
+      { true, false, 0, -1, 1.25 },
+      { "colon:frame", string.char(0, 255), "end" },
+      { string.rep("x", 64) },
+      { string.rep("y", 65) },
+      { string.rep("z", 1024), "tail" },
+    }
+    for length = 0, 128 do corpus[#corpus + 1] = { string.rep("p", length) } end
+    for index, parts in ipairs(corpus) do
+      T.equal(Util.hash(unpack(parts)), referenceHash(unpack(parts)),
+        "hash corpus item " .. index)
+    end
+  end)
+
+  T.test("flora hoists invariants and preserves rollover template origins", function()
+    local cells, x = {}, 0
+    while #cells < 5 do
+      local seed = Util.hash("FLORA_TEMPLATE_ROLLOVER", x, 0, "flora")
+      if Util.keep(8 / 9, seed, "canopy") then
+        local number = #cells + 1
+        cells[number] = {
+          x = x,
+          z = 0,
+          material = "canopy:" .. number,
+          tags = { forest = true, grass = true },
+        }
+      end
+      x = x + 1
+    end
+    local world = {
+      id = "FLORA_TEMPLATE_ROLLOVER",
+      width = x,
+      height = 1,
+      cellSize = 16,
+      tags = { forest = true, night = true },
+      cells = cells,
+    }
+    local optionCalls, worldTagCalls = {}, {}
+    local countingUtil = setmetatable({}, { __index = Util })
+    function countingUtil.option(config, key, default)
+      optionCalls[key] = (optionCalls[key] or 0) + 1
+      return Util.option(config, key, default)
+    end
+    function countingUtil.hasTag(subject, tag)
+      if subject == world then worldTagCalls[tag] = (worldTagCalls[tag] or 0) + 1 end
+      return Util.hasTag(subject, tag)
+    end
+
+    local buffer = CommandBuffer.new({
+      maxBatchItems = 2,
+      hashCommand = PacketHash.hashCommand,
+    })
+    Flora.new({ util = countingUtil }):compile(context(world, {
+      grass_height = "SUBTLE",
+      wind = "BREEZE",
+      forest_canopy = true,
+      hanging_vines = true,
+      particles = true,
+      sun_shafts = true,
+    }), buffer)
+    local commands = buffer:seal().phases.opaque_after_terrain
+    local canopies = {}
+    for _, command in ipairs(commands) do
+      if command.key == "canopy" then canopies[#canopies + 1] = command end
+    end
+    T.equal(#canopies, 3)
+    for index, command in ipairs(canopies) do
+      T.equal(command.material, "canopy:" .. (index * 2 - 1))
+      T.equal(command.prototype.primitive, "canopy")
+      T.equal(command.prototype.width, 16)
+      T.equal(#command.items, index < 3 and 2 or 1)
+    end
+    T.deepEqual({ canopies[1].items[1].cellX, canopies[1].items[2].cellX,
+      canopies[2].items[1].cellX, canopies[2].items[2].cellX,
+      canopies[3].items[1].cellX },
+      { cells[1].x, cells[2].x, cells[3].x, cells[4].x, cells[5].x })
+    for _, key in ipairs({ "grass_height", "wind", "forest_canopy",
+      "hanging_vines", "particles", "sun_shafts" }) do
+      T.equal(optionCalls[key], 1, key)
+    end
+    for _, tag in ipairs({ "interior", "forest", "night" }) do
+      T.equal(worldTagCalls[tag], 1, tag)
+    end
+  end)
+
   T.test("spatial anchor preprocessing charges bounded build checkpoints", function()
     local cells = {}
     for z = 0, 7 do

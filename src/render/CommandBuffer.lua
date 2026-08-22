@@ -194,15 +194,15 @@ function CommandBuffer.new(options)
   end
 
   local phases = {}
-  local batches = {}
+  local batchTails = {}
   for phase in pairs(PHASES) do
     phases[phase] = {}
-    batches[phase] = {}
+    batchTails[phase] = {}
   end
 
   return setmetatable({
     _phases = phases,
-    _batches = batches,
+    _batchTails = batchTails,
     _maxCommands = maxCommands,
     _maxBatchItems = maxBatchItems,
     _count = 0,
@@ -249,10 +249,6 @@ function CommandBuffer:add(phase, command)
   return self:_append(phase, copy)
 end
 
-local function batchIdentity(kind, owner, key, segment)
-  return table.concat({ kind, owner, key, tostring(segment) }, "\31")
-end
-
 function CommandBuffer:addBatchItem(phase, kind, key, template, item)
   self:_assertOpen()
   if kind ~= "instances" and kind ~= "billboards" then
@@ -264,26 +260,28 @@ function CommandBuffer:addBatchItem(phase, kind, key, template, item)
     error("batch template and item must be tables", 2)
   end
   local owner = text(template.owner or "core", "owner")
-  local phaseBatches = self._batches[phase]
-  if not phaseBatches then error("unknown render phase: " .. tostring(phase), 2) end
+  local phaseTails = self._batchTails[phase]
+  if not phaseTails then error("unknown render phase: " .. tostring(phase), 2) end
 
-  local segment = 1
-  local identity = batchIdentity(kind, owner, key, segment)
-  local batch = phaseBatches[identity]
-  while batch and #batch.items >= self._maxBatchItems do
-    segment = segment + 1
-    identity = batchIdentity(kind, owner, key, segment)
-    batch = phaseBatches[identity]
+  local kindTails = phaseTails[kind]
+  if not kindTails then
+    kindTails = {}
+    phaseTails[kind] = kindTails
   end
-
-  if not batch then
+  local ownerTails = kindTails[owner]
+  if not ownerTails then
+    ownerTails = {}
+    kindTails[owner] = ownerTails
+  end
+  local batch = ownerTails[key]
+  if not batch or #batch.items >= self._maxBatchItems then
     batch = shallowCopy(template)
     batch.kind = kind
     batch.key = key
     batch.items = {}
     batch.owner = owner
     batch.sortKey = tostring(template.sortKey or template.material or key)
-    phaseBatches[identity] = batch
+    ownerTails[key] = batch
     self:_append(phase, batch)
   end
   batch.items[#batch.items + 1] = item

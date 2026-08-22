@@ -91,6 +91,27 @@ python tools/package_release.py \
 Run the build twice into different empty directories and compare the ZIP and
 `.modpkg` byte for byte.
 
+## Source-byte policy
+
+A clean private build reads every runtime file from the exact `HEAD` Git blobs.
+A release build reads the same bytes from the verified signed-tag commit. This
+keeps package bytes independent of checkout line-ending settings such as
+Windows `core.autocrlf`.
+
+`--allow-dirty` is only for private developer tests. It explicitly packages
+the tracked worktree bytes, sets `source_dirty=true`, and keeps
+`publishable=false`, even when Git reports a clean worktree. The packager
+rejects untracked runtime files, missing tracked files, unsafe or duplicate
+paths, and symlink or junction paths.
+
+The attestation records `source_content_mode`, `git_status_dirty`, and a framed
+SHA-256 fingerprint of the exact staged runtime path-and-content set. Its
+`sha256-framed-path-content-v1` input starts with
+`kfp-runtime-content-v1\0`. Each path, in byte-sorted package order, then adds
+an unsigned 8-byte big-endian UTF-8 path length, the path bytes, an unsigned
+8-byte big-endian content length, and the exact content bytes. Use the same
+explicit `--epoch` or `SOURCE_DATE_EPOCH` for each reproducibility run.
+
 ## Artifact set
 
 Every published version has exactly these release assets:

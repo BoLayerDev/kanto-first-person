@@ -13,6 +13,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from typing import NamedTuple
+import unicodedata
 import zipfile
 
 
@@ -111,6 +113,21 @@ UTC_TIMESTAMP = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
 )
 EVIDENCE_KIND = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+OBJECT_ID = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
+WINDOWS_DEVICE_NAMES = {
+    "AUX",
+    "CON",
+    "NUL",
+    "PRN",
+    *(f"COM{number}" for number in range(1, 10)),
+    *(f"LPT{number}" for number in range(1, 10)),
+}
+
+
+class GitEntry(NamedTuple):
+    path: str
+    mode: str
+    object_id: str
 
 
 def run(*args: str, cwd: Path, env: dict[str, str] | None = None) -> str:
@@ -175,6 +192,18 @@ def strict_json_file(path: Path) -> object:
 
 def load_manifest(path: Path) -> dict[str, object]:
     manifest = strict_json_file(path)
+    return validate_manifest(manifest)
+
+
+def load_manifest_bytes(value: bytes, name: str = "manifest.json") -> dict[str, object]:
+    try:
+        manifest = strict_json_bytes(value)
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
+        raise RuntimeError(f"invalid or duplicate JSON in {name}") from error
+    return validate_manifest(manifest)
+
+
+def validate_manifest(manifest: object) -> dict[str, object]:
     if not isinstance(manifest, dict):
         raise RuntimeError("manifest root must be a JSON object")
     for field in ("id", "version"):
@@ -189,105 +218,217 @@ def allowed_runtime_path(relative: str) -> bool:
     return relative.startswith("src/") and relative.endswith(".lua")
 
 
-def listed_runtime_files(source: Path) -> list[str]:
+def validate_relative_path(relative: str) -> None:
+    parts = relative.split("/")
+    if (
+        not relative
+        or relative.startswith("/")
+        or "\\" in relative
+        or unicodedata.normalize("NFC", relative) != relative
+        or any(ord(character) < 32 or ord(character) == 127 for character in relative)
+        or any(part in ("", ".", "..") for part in parts)
+        or any(":" in part or part.endswith((" ", ".")) for part in parts)
+        or any(part.split(".", 1)[0].upper() in WINDOWS_DEVICE_NAMES for part in parts)
+    ):
+        raise RuntimeError(f"unsafe package path: {relative!r}")
+
+
+def validate_runtime_entries(entries: list[GitEntry]) -> list[GitEntry]:
+    seen: set[str] = set()
+    portable_seen: set[str] = set()
+    invalid: list[str] = []
+    for entry in entries:
+        validate_relative_path(entry.path)
+        portable = unicodedata.normalize("NFC", entry.path).casefold()
+        if entry.path in seen or portable in portable_seen:
+            raise RuntimeError(f"duplicate package path: {entry.path}")
+        seen.add(entry.path)
+        portable_seen.add(portable)
+        if entry.mode not in ("100644", "100755"):
+            raise RuntimeError(
+                f"package path is not a regular Git blob: {entry.path} ({entry.mode})"
+            )
+        if OBJECT_ID.fullmatch(entry.object_id) is None:
+            raise RuntimeError(f"package path has an invalid Git object: {entry.path}")
+        if not allowed_runtime_path(entry.path):
+            invalid.append(entry.path)
+    if invalid:
+        raise RuntimeError(
+            "runtime tree contains non-allowlisted files: " + ", ".join(sorted(invalid))
+        )
+
+    required = set(ROOT_FILES + ASSET_FILES)
+    missing = sorted(required.difference(seen))
+    if missing:
+        raise RuntimeError("required package files are missing: " + ", ".join(missing))
+    if not any(path.startswith("src/") for path in seen):
+        raise RuntimeError("required runtime source is missing")
+    return sorted(entries, key=lambda entry: entry.path)
+
+
+def parse_tree_entries(raw: bytes) -> list[GitEntry]:
+    entries: list[GitEntry] = []
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        try:
+            metadata, raw_path = record.split(b"\t", 1)
+            mode, kind, object_id = metadata.decode("ascii").split(" ")
+            relative = raw_path.decode("utf-8")
+        except (UnicodeDecodeError, ValueError) as error:
+            raise RuntimeError("invalid Git tree entry in runtime source") from error
+        if kind != "blob":
+            raise RuntimeError(
+                f"package path is not a Git blob: {relative} ({kind})"
+            )
+        entries.append(GitEntry(relative, mode, object_id))
+    return validate_runtime_entries(entries)
+
+
+def listed_runtime_entries_from_ref(source: Path, ref: str) -> list[GitEntry]:
     raw = run_bytes(
+        "git",
+        "ls-tree",
+        "-rz",
+        "--full-tree",
+        ref,
+        "--",
+        *ROOT_FILES,
+        *RUNTIME_DIRS,
+        cwd=source,
+    )
+    return parse_tree_entries(raw)
+
+
+def parse_index_entries(raw: bytes) -> list[GitEntry]:
+    entries: list[GitEntry] = []
+    for record in raw.split(b"\0"):
+        if not record:
+            continue
+        try:
+            metadata, raw_path = record.split(b"\t", 1)
+            mode, object_id, stage = metadata.decode("ascii").split(" ")
+            relative = raw_path.decode("utf-8")
+        except (UnicodeDecodeError, ValueError) as error:
+            raise RuntimeError("invalid Git index entry in runtime source") from error
+        if stage != "0":
+            raise RuntimeError(f"unmerged runtime path is not packageable: {relative}")
+        entries.append(GitEntry(relative, mode, object_id))
+    return validate_runtime_entries(entries)
+
+
+def listed_runtime_entries_from_worktree(source: Path) -> list[GitEntry]:
+    untracked_raw = run_bytes(
         "git",
         "ls-files",
         "-z",
-        "--cached",
         "--others",
-        "--exclude-standard",
         "--",
         *ROOT_FILES,
         *RUNTIME_DIRS,
         cwd=source,
     )
     try:
-        candidates = [item for item in raw.decode("utf-8").split("\0") if item]
+        untracked = [
+            item for item in untracked_raw.decode("utf-8").split("\0") if item
+        ]
     except UnicodeDecodeError as error:
-        raise RuntimeError("runtime path is not valid UTF-8") from error
-    invalid = sorted(path for path in candidates if not allowed_runtime_path(path))
-    if invalid:
+        raise RuntimeError("untracked runtime path is not valid UTF-8") from error
+    for relative in untracked:
+        validate_relative_path(relative)
+    if untracked:
         raise RuntimeError(
-            "runtime tree contains non-allowlisted files: " + ", ".join(invalid)
+            "untracked runtime files are not packageable: "
+            + ", ".join(sorted(untracked))
         )
-    return sorted(set(candidates))
+
+    raw = run_bytes(
+        "git",
+        "ls-files",
+        "--stage",
+        "-z",
+        "--",
+        *ROOT_FILES,
+        *RUNTIME_DIRS,
+        cwd=source,
+    )
+    return parse_index_entries(raw)
+
+
+def listed_runtime_files(source: Path) -> list[str]:
+    return [entry.path for entry in listed_runtime_entries_from_worktree(source)]
+
+
+def path_has_link(path: Path, root: Path) -> bool:
+    current = root
+    relative = path.relative_to(root)
+    for part in relative.parts:
+        current = current / part
+        if current.is_symlink():
+            return True
+        is_junction = getattr(current, "is_junction", None)
+        if is_junction is not None and is_junction():
+            return True
+    return False
+
+
+def load_worktree_manifest(source: Path) -> dict[str, object]:
+    source = source.resolve()
+    path = source / "manifest.json"
+    if (
+        not path.is_file()
+        or path_has_link(path, source)
+        or not inside(path.resolve(), source)
+    ):
+        raise RuntimeError("required package file is missing: manifest.json")
+    return load_manifest(path)
+
+
+def safe_staging_path(staging: Path, relative: str) -> Path:
+    destination = staging.joinpath(*relative.split("/")).resolve()
+    if not inside(destination, staging.resolve()):
+        raise RuntimeError(f"package path escapes staging: {relative}")
+    return destination
 
 
 def copy_runtime(source: Path, staging: Path) -> list[str]:
-    candidates = listed_runtime_files(source)
-    required = set(ROOT_FILES + ASSET_FILES)
-    missing = sorted(required.difference(candidates))
-    if missing:
-        raise RuntimeError("required package files are missing: " + ", ".join(missing))
-    if not any(path.startswith("src/") for path in candidates):
-        raise RuntimeError("required runtime source is missing")
-
+    source = source.resolve()
+    entries = listed_runtime_entries_from_worktree(source)
     copied: list[str] = []
-    for relative in candidates:
-        src = source / relative
-        if not src.is_file() or src.is_symlink() or not inside(src.resolve(), source):
+    for entry in entries:
+        relative = entry.path
+        src = source.joinpath(*relative.split("/"))
+        if (
+            not src.is_file()
+            or path_has_link(src, source)
+            or not inside(src.resolve(), source)
+        ):
             raise RuntimeError(f"required package file is missing: {relative}")
-        dst = staging / relative
+        dst = safe_staging_path(staging, relative)
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dst)
         copied.append(relative)
     return sorted(copied)
 
 
+def copy_runtime_from_ref(source: Path, ref: str, staging: Path) -> list[str]:
+    entries = listed_runtime_entries_from_ref(source, ref)
+    copied: list[str] = []
+    for entry in entries:
+        destination = safe_staging_path(staging, entry.path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_bytes(
+            run_bytes("git", "cat-file", "blob", entry.object_id, cwd=source)
+        )
+        copied.append(entry.path)
+    return sorted(copied)
+
+
 def copy_runtime_from_tag(
     source: Path, tag: str, staging: Path, temporary: Path
 ) -> list[str]:
-    archive_path = temporary / "signed-source.zip"
-    run(
-        "git",
-        "archive",
-        "--format=zip",
-        f"--output={archive_path}",
-        tag,
-        "--",
-        *ROOT_FILES,
-        *RUNTIME_DIRS,
-        cwd=source,
-    )
-    copied: list[str] = []
-    with zipfile.ZipFile(archive_path, "r") as archive:
-        for entry in sorted(archive.infolist(), key=lambda item: item.filename):
-            if entry.is_dir():
-                continue
-            relative = entry.filename.replace("\\", "/")
-            parts = relative.split("/")
-            mode = (entry.external_attr >> 16) & 0o170000
-            if (
-                not relative
-                or relative.startswith("/")
-                or any(part in ("", ".", "..") for part in parts)
-                or mode == 0o120000
-            ):
-                raise RuntimeError("signed source archive contains an unsafe path")
-            if not allowed_runtime_path(relative):
-                raise RuntimeError(
-                    "signed source contains a non-allowlisted file: " + relative
-                )
-            destination = staging.joinpath(*parts).resolve()
-            if not inside(destination, staging.resolve()):
-                raise RuntimeError("signed source archive escapes staging")
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            destination.write_bytes(archive.read(entry))
-            copied.append(relative)
-
-    required = set(ROOT_FILES + ASSET_FILES)
-    missing = sorted(required.difference(copied))
-    if missing:
-        raise RuntimeError(
-            "signed source archive is missing required files: " + ", ".join(missing)
-        )
-    if (
-        not any(path.startswith("src/") for path in copied)
-        or not any(path.startswith("assets/") for path in copied)
-    ):
-        raise RuntimeError("signed source archive is missing runtime directories")
-    return sorted(copied)
+    del temporary
+    return copy_runtime_from_ref(source, tag, staging)
 
 
 def copy_engine_from_commit(
@@ -296,6 +437,10 @@ def copy_engine_from_commit(
     archive_path = temporary / "engine-source.zip"
     run(
         "git",
+        "-c",
+        "core.autocrlf=false",
+        "-c",
+        "core.eol=lf",
         "archive",
         "--format=zip",
         f"--output={archive_path}",
@@ -336,11 +481,59 @@ def copy_engine_from_commit(
 
 def deterministic_zip(source: Path, output: Path, files: list[str]) -> None:
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
-        for relative in files:
+        for relative in sorted(files):
             info = zipfile.ZipInfo(relative, date_time=(1980, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED
             info.external_attr = 0o644 << 16
             archive.writestr(info, (source / relative).read_bytes(), compresslevel=9)
+
+
+def runtime_content_fingerprint(source: Path, files: list[str]) -> dict[str, object]:
+    digest = hashlib.sha256()
+    digest.update(b"kfp-runtime-content-v1\0")
+    for relative in sorted(files):
+        validate_relative_path(relative)
+        path_bytes = relative.encode("utf-8")
+        content = source.joinpath(*relative.split("/")).read_bytes()
+        digest.update(len(path_bytes).to_bytes(8, "big"))
+        digest.update(path_bytes)
+        digest.update(len(content).to_bytes(8, "big"))
+        digest.update(content)
+    return {
+        "algorithm": "sha256-framed-path-content-v1",
+        "file_count": len(files),
+        "sha256": digest.hexdigest(),
+    }
+
+
+def select_source_mode(
+    *, release: bool, allow_dirty: bool, git_status_dirty: bool
+) -> tuple[str, bool]:
+    if release and allow_dirty:
+        raise RuntimeError("a release build cannot use --allow-dirty")
+    if git_status_dirty and not allow_dirty:
+        raise RuntimeError(
+            "source tree is dirty; use --allow-dirty only for a private test build"
+        )
+    if allow_dirty:
+        return "worktree", True
+    if release:
+        return "signed-tag", False
+    return "git-commit", False
+
+
+def resolve_epoch(value: int | None, environment: dict[str, str]) -> int:
+    if value is None:
+        raw_epoch = environment.get("SOURCE_DATE_EPOCH")
+        if raw_epoch is None:
+            raise RuntimeError("set SOURCE_DATE_EPOCH or pass --epoch")
+        try:
+            value = int(raw_epoch)
+        except ValueError as error:
+            raise RuntimeError("SOURCE_DATE_EPOCH must be an integer") from error
+    if value < 0:
+        raise RuntimeError("epoch must be nonnegative")
+    return value
 
 
 def inside(child: Path, parent: Path) -> bool:
@@ -528,32 +721,43 @@ def main() -> int:
     if engine_commit not in PINNED_ENGINES:
         raise RuntimeError(f"engine commit is not an audited baseline: {engine_commit}")
     source_commit = run("git", "rev-parse", "HEAD", cwd=source)
-    dirty = bool(run("git", "status", "--porcelain", cwd=source))
-    if dirty and not args.allow_dirty:
-        raise RuntimeError("source tree is dirty; use --allow-dirty only for a private test build")
+    git_status_dirty = bool(
+        run_bytes(
+            "git",
+            "status",
+            "--porcelain=v1",
+            "-z",
+            "--untracked-files=all",
+            cwd=source,
+        )
+    )
+    source_mode, attested_dirty = select_source_mode(
+        release=args.release,
+        allow_dirty=args.allow_dirty,
+        git_status_dirty=git_status_dirty,
+    )
+
+    if source_mode == "worktree":
+        manifest_for_build = load_worktree_manifest(source)
+    else:
+        manifest_for_build = load_manifest_bytes(
+            run_bytes(
+                "git", "show", f"{source_commit}:manifest.json", cwd=source
+            )
+        )
 
     release_approval = None
     if args.release:
-        if dirty:
-            raise RuntimeError("a release build cannot use dirty source")
-        manifest_for_gate = load_manifest(source / "manifest.json")
         release_approval = require_release_approval(
             source,
-            manifest_for_gate["version"],
+            manifest_for_build["version"],
             source_commit,
             args.trusted_signing_key,
         )
 
-    epoch = args.epoch
-    if epoch is None:
-        raw_epoch = os.environ.get("SOURCE_DATE_EPOCH")
-        if raw_epoch is None:
-            raise RuntimeError("set SOURCE_DATE_EPOCH or pass --epoch")
-        epoch = int(raw_epoch)
-    if epoch < 0:
-        raise RuntimeError("epoch must be nonnegative")
+    epoch = resolve_epoch(args.epoch, os.environ)
 
-    manifest = load_manifest(source / "manifest.json")
+    manifest = manifest_for_build
     stem = f"{manifest['id']}-{manifest['version']}"
     output_dir.mkdir(parents=True, exist_ok=True)
     modpkg = output_dir / f"{stem}.modpkg"
@@ -571,12 +775,15 @@ def main() -> int:
         copy_engine_from_commit(engine, engine_commit, engine_staging, temporary_path)
         staging = temporary_path / "mod"
         staging.mkdir()
-        if release_approval:
+        if source_mode == "signed-tag":
+            assert release_approval is not None
             files = copy_runtime_from_tag(
-                source, release_approval["tag"], staging, temporary_path
+                source, release_approval["tag_commit"], staging, temporary_path
             )
-        else:
+        elif source_mode == "worktree":
             files = copy_runtime(source, staging)
+        else:
+            files = copy_runtime_from_ref(source, source_commit, staging)
         staged_manifest = load_manifest(staging / "manifest.json")
         if (
             staged_manifest.get("id") != manifest.get("id")
@@ -604,6 +811,7 @@ def main() -> int:
                 "bytes": path.stat().st_size,
                 "sha256": sha256(path),
             })
+        runtime_content = runtime_content_fingerprint(staging, files)
 
     artifact_hashes = {path.name: sha256(path) for path in (modpkg, root_zip)}
     sums.write_text(
@@ -617,11 +825,14 @@ def main() -> int:
             "id": manifest["id"],
             "version": manifest["version"],
             "source_commit": source_commit,
-            "source_dirty": dirty,
+            "source_dirty": attested_dirty,
+            "git_status_dirty": git_status_dirty,
+            "source_content_mode": source_mode,
             "engine_commit": engine_commit,
             "source_date_epoch": epoch,
             "publishable": release_approval is not None,
             "release_approval": release_approval,
+            "runtime_content": runtime_content,
             "artifacts": artifact_hashes,
             "files": records,
         }, indent=2, sort_keys=True) + "\n",

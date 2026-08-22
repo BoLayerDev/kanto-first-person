@@ -1,7 +1,9 @@
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -54,6 +56,53 @@ def approved_records(version="2.0.0", channel="stable"):
         ledger["release_version"] = version
         ledger["tag"] = "v" + version
     return rights, ledger
+
+
+def run_git(repo, *args):
+    return subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        check=True,
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    ).stdout.strip()
+
+
+def create_minimal_runtime_repo(parent):
+    repo = parent / "repo"
+    repo.mkdir()
+    run_git(repo, "init", "--quiet", "--initial-branch=fixture")
+    run_git(repo, "config", "user.name", "Package Test")
+    run_git(repo, "config", "user.email", "package-test@example.invalid")
+    run_git(repo, "config", "core.autocrlf", "false")
+    run_git(repo, "config", "core.eol", "lf")
+    (repo / ".gitattributes").write_bytes(b"* text=auto\n")
+    (repo / ".gitignore").write_bytes(b"src/ignored.lua\n")
+    (repo / "manifest.json").write_bytes(
+        b'{"id":"fixture","version":"1.0.0"}\n'
+    )
+    (repo / "LICENSE").write_bytes(b"line one\nline two\n")
+    (repo / "src").mkdir()
+    (repo / "src" / "Main.lua").write_bytes(b"return true\n")
+    run_git(repo, "add", ".")
+    run_git(
+        repo,
+        "commit",
+        "--quiet",
+        "-m",
+        "test(fixture): create minimal runtime source",
+    )
+    return repo, run_git(repo, "rev-parse", "HEAD")
+
+
+def minimal_runtime_constants():
+    return mock.patch.multiple(
+        PACKAGE_RELEASE,
+        ROOT_FILES=("manifest.json", "LICENSE"),
+        ASSET_FILES=(),
+        RUNTIME_DIRS=("src",),
+    )
 
 
 class ReleaseGateTests(unittest.TestCase):
@@ -383,6 +432,226 @@ class ReleaseGateTests(unittest.TestCase):
             PACKAGE_RELEASE.allowed_runtime_path("assets/roms/local.pem")
         )
         self.assertFalse(PACKAGE_RELEASE.allowed_runtime_path("src/private.env"))
+
+    def test_repository_license_blob_is_exact_lf_content(self):
+        value = PACKAGE_RELEASE.run_bytes(
+            "git", "cat-file", "blob", "HEAD:LICENSE", cwd=ROOT
+        )
+        self.assertEqual(len(value), 1088)
+        self.assertEqual(value.count(b"\n"), 21)
+        self.assertEqual(value.count(b"\r"), 0)
+        self.assertEqual(
+            hashlib.sha256(value).hexdigest(),
+            "8893010ccbca83da9f41be870c95d57fd97ad1e1e01e02c8ad4782125f3cfdf0",
+        )
+
+    def test_clean_commit_copy_ignores_windows_crlf_checkout_conversion(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, commit = create_minimal_runtime_repo(root)
+            run_git(repo, "config", "core.autocrlf", "true")
+            (repo / "LICENSE").unlink()
+            run_git(repo, "checkout", "--", "LICENSE")
+            self.assertEqual(
+                (repo / "LICENSE").read_bytes(), b"line one\r\nline two\r\n"
+            )
+            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            staging = root / "staging"
+            staging.mkdir()
+            with minimal_runtime_constants():
+                files = PACKAGE_RELEASE.copy_runtime_from_ref(
+                    repo, commit, staging
+                )
+            self.assertEqual(
+                files, ["LICENSE", "manifest.json", "src/Main.lua"]
+            )
+            self.assertEqual(
+                (staging / "LICENSE").read_bytes(), b"line one\nline two\n"
+            )
+
+    def test_allow_dirty_copy_preserves_worktree_bytes_and_attests_dirty(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, _ = create_minimal_runtime_repo(root)
+            checkout = b"line one\r\nline two\r\n"
+            run_git(repo, "config", "core.autocrlf", "true")
+            (repo / "LICENSE").unlink()
+            run_git(repo, "checkout", "--", "LICENSE")
+            self.assertEqual((repo / "LICENSE").read_bytes(), checkout)
+            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            staging = root / "staging"
+            staging.mkdir()
+            with minimal_runtime_constants():
+                PACKAGE_RELEASE.copy_runtime(repo, staging)
+            self.assertEqual((staging / "LICENSE").read_bytes(), checkout)
+            self.assertEqual(
+                PACKAGE_RELEASE.select_source_mode(
+                    release=False,
+                    allow_dirty=True,
+                    git_status_dirty=False,
+                ),
+                ("worktree", True),
+            )
+
+    def test_allow_dirty_manifest_rejects_link_or_reparse_path(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "manifest.json").write_bytes(
+                b'{"id":"fixture","version":"1.0.0"}\n'
+            )
+            with mock.patch.object(
+                PACKAGE_RELEASE, "path_has_link", return_value=True
+            ):
+                with self.assertRaisesRegex(
+                    RuntimeError, "required package file is missing"
+                ):
+                    PACKAGE_RELEASE.load_worktree_manifest(root)
+
+    def test_source_mode_fails_closed_and_separates_release_content(self):
+        self.assertEqual(
+            PACKAGE_RELEASE.select_source_mode(
+                release=False, allow_dirty=False, git_status_dirty=False
+            ),
+            ("git-commit", False),
+        )
+        self.assertEqual(
+            PACKAGE_RELEASE.select_source_mode(
+                release=True, allow_dirty=False, git_status_dirty=False
+            ),
+            ("signed-tag", False),
+        )
+        with self.assertRaisesRegex(RuntimeError, "cannot use --allow-dirty"):
+            PACKAGE_RELEASE.select_source_mode(
+                release=True, allow_dirty=True, git_status_dirty=False
+            )
+        with self.assertRaisesRegex(RuntimeError, "source tree is dirty"):
+            PACKAGE_RELEASE.select_source_mode(
+                release=False, allow_dirty=False, git_status_dirty=True
+            )
+
+    def test_tree_parser_rejects_duplicate_unsafe_and_symlink_paths(self):
+        object_id = b"a" * 40
+        with minimal_runtime_constants():
+            duplicate = (
+                b"100644 blob " + object_id + b"\tsrc/A.lua\0"
+                b"100644 blob " + object_id + b"\tsrc/a.lua\0"
+            )
+            with self.assertRaisesRegex(RuntimeError, "duplicate package path"):
+                PACKAGE_RELEASE.parse_tree_entries(duplicate)
+
+            unsafe = b"100644 blob " + object_id + b"\tsrc/../bad.lua\0"
+            with self.assertRaisesRegex(RuntimeError, "unsafe package path"):
+                PACKAGE_RELEASE.parse_tree_entries(unsafe)
+
+            reserved = b"100644 blob " + object_id + b"\tsrc/CON.lua\0"
+            with self.assertRaisesRegex(RuntimeError, "unsafe package path"):
+                PACKAGE_RELEASE.parse_tree_entries(reserved)
+
+            symlink = b"120000 blob " + object_id + b"\tsrc/link.lua\0"
+            with self.assertRaisesRegex(RuntimeError, "not a regular Git blob"):
+                PACKAGE_RELEASE.parse_tree_entries(symlink)
+
+            gitlink = b"160000 commit " + object_id + b"\tsrc/link.lua\0"
+            with self.assertRaisesRegex(RuntimeError, "not a Git blob"):
+                PACKAGE_RELEASE.parse_tree_entries(gitlink)
+
+    def test_worktree_copy_rejects_untracked_runtime_files(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, _ = create_minimal_runtime_repo(root)
+            (repo / "src" / "local.lua").write_bytes(b"return false\n")
+            with minimal_runtime_constants():
+                with self.assertRaisesRegex(
+                    RuntimeError, "untracked runtime files are not packageable"
+                ):
+                    PACKAGE_RELEASE.listed_runtime_entries_from_worktree(repo)
+
+    def test_worktree_copy_rejects_ignored_runtime_files(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, _ = create_minimal_runtime_repo(root)
+            (repo / "src" / "ignored.lua").write_bytes(b"return false\n")
+            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            with minimal_runtime_constants():
+                with self.assertRaisesRegex(
+                    RuntimeError, "untracked runtime files are not packageable"
+                ):
+                    PACKAGE_RELEASE.listed_runtime_entries_from_worktree(repo)
+
+    def test_worktree_copy_rejects_missing_tracked_runtime_file(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, _ = create_minimal_runtime_repo(root)
+            (repo / "LICENSE").unlink()
+            staging = root / "staging"
+            staging.mkdir()
+            with minimal_runtime_constants():
+                with self.assertRaisesRegex(
+                    RuntimeError, "required package file is missing: LICENSE"
+                ):
+                    PACKAGE_RELEASE.copy_runtime(repo, staging)
+
+    def test_runtime_content_fingerprint_is_framed_and_order_independent(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "a.txt").write_bytes(b"alpha\n")
+            (root / "b.txt").write_bytes(b"beta\n")
+            first = PACKAGE_RELEASE.runtime_content_fingerprint(
+                root, ["b.txt", "a.txt"]
+            )
+            second = PACKAGE_RELEASE.runtime_content_fingerprint(
+                root, ["a.txt", "b.txt"]
+            )
+            self.assertEqual(first, second)
+            self.assertEqual(
+                first["algorithm"], "sha256-framed-path-content-v1"
+            )
+            self.assertEqual(first["file_count"], 2)
+            self.assertRegex(first["sha256"], r"^[0-9a-f]{64}$")
+            (root / "a.txt").write_bytes(b"changed\n")
+            self.assertNotEqual(
+                first["sha256"],
+                PACKAGE_RELEASE.runtime_content_fingerprint(
+                    root, ["a.txt", "b.txt"]
+                )["sha256"],
+            )
+
+    def test_deterministic_zip_ignores_mtime_and_input_order(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            (root / "a.txt").write_bytes(b"alpha\n")
+            (root / "b.txt").write_bytes(b"beta\n")
+            first = root / "first.zip"
+            second = root / "second.zip"
+            PACKAGE_RELEASE.deterministic_zip(
+                root, first, ["b.txt", "a.txt"]
+            )
+            os.utime(root / "a.txt", (1_500_000_000, 1_500_000_000))
+            os.utime(root / "b.txt", (1_900_000_000, 1_900_000_000))
+            PACKAGE_RELEASE.deterministic_zip(
+                root, second, ["a.txt", "b.txt"]
+            )
+            self.assertEqual(first.read_bytes(), second.read_bytes())
+
+    def test_epoch_resolution_is_explicit_and_host_independent(self):
+        environment = {
+            "SOURCE_DATE_EPOCH": "1787270400",
+            "TZ": "Pacific/Auckland",
+        }
+        self.assertEqual(
+            PACKAGE_RELEASE.resolve_epoch(None, environment), 1787270400
+        )
+        self.assertEqual(
+            PACKAGE_RELEASE.resolve_epoch(123, environment), 123
+        )
+        with self.assertRaisesRegex(RuntimeError, "set SOURCE_DATE_EPOCH"):
+            PACKAGE_RELEASE.resolve_epoch(None, {})
+        with self.assertRaisesRegex(RuntimeError, "must be an integer"):
+            PACKAGE_RELEASE.resolve_epoch(
+                None, {"SOURCE_DATE_EPOCH": "not-an-epoch"}
+            )
+        with self.assertRaisesRegex(RuntimeError, "nonnegative"):
+            PACKAGE_RELEASE.resolve_epoch(-1, environment)
 
     def test_engine_tools_are_copied_from_the_pinned_commit(self):
         with tempfile.TemporaryDirectory() as raw:

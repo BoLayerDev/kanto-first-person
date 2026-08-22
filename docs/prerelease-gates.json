@@ -9,7 +9,7 @@
         {
           "kind": "rights_grant",
           "locator": "private-evidence://asset-rights/2026-08-21-creator-grant/evidence-manifest.json",
-          "sha256": "167d3d22b06ce7c545363013377a22bafdc58901ad8cc9501b25fcb0b03a419e"
+          "sha256": "cb623be8a207771db84c72561ab47cfe16dec72e9cdf20d4644ed5b8409a16f9"
         }
       ],
       "passed": true

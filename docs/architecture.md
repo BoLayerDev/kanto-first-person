@@ -54,9 +54,11 @@ support stress tests. Oversized input fails before scene compilation.
 
 ## Scene compiler
 
-The compiler uses a generation token. A map, palette, host, view, option, or quality change increments the relevant generation. Stale work stops before commit. Work runs only in update callbacks and stays inside a tier budget.
+The compiler uses a generation token. A map, palette, host, view, option, or quality change increments the relevant generation. Stale work stops before commit. Work runs only in update callbacks and stays inside a tier budget. Packet sorting, declarative content hashing, cache-key assignment, packet validation, cost accounting, and commit are compiler stages. Render callbacks do not do this work. Each compiler step reserves up to 0.025 ms of its tier budget for clock, loop-exit, coroutine, and garbage-collection tail overhead.
 
 The compiler creates a new scene packet away from the active packet. It swaps the new packet only after all critical systems finish. Optional systems can attach later through versioned packet layers. Retired packets release through the resource owner after the frame boundary.
+
+The injected `newBuffer(quality)` factory must return a buffer with `beginSeal(metadata)`. That method returns a job with `step(units) -> done, packet`. These two methods are the incremental sealing surface. The compiler rejects a buffer that does not provide `beginSeal` before it opens an asset scope. It does not call a synchronous `seal` fallback because that can exceed the frame budget. A rejection leaves the current KFP packet active. If no KFP packet exists, the host renderer continues without KFP geometry.
 
 ## Render graph
 

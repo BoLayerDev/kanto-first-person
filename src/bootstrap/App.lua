@@ -274,6 +274,7 @@ function App:_makeRenderer()
         maxCommands = 4096,
         maxBatchItems = 2048,
         hashCommand = self.modules.PacketHash.hashCommand,
+        newHashCommandJob = self.modules.PacketHash.newCommandHashJob,
       })
     end,
     cache = self.sceneCache,

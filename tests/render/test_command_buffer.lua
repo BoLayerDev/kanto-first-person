@@ -102,4 +102,90 @@ return function(T)
         "scene generation")
     end
   end)
+
+  T.test("incremental sealing preserves synchronous packet semantics", function()
+    local function populate(buffer)
+      buffer:add("background", {
+        kind = "mesh", owner = "later", sortKey = "z",
+        geometry = { primitive = "box", width = 2 },
+      })
+      buffer:add("background", {
+        kind = "mesh", owner = "first", sortKey = "a",
+        geometry = { primitive = "box", width = 1 },
+      })
+      for index = 1, 40 do
+        buffer:add("shadow_casters", {
+          kind = "mesh",
+          owner = "shadow:" .. index,
+          sortKey = ("shadow:%02d"):format(41 - index),
+          geometry = { primitive = "box", width = index },
+        })
+      end
+      for index = 1, 5 do
+        buffer:addBatchItem("opaque_after_terrain", "instances", "trees", {
+          owner = "trees", material = "trees", sortKey = "trees",
+        }, { x = index, z = 6 - index })
+      end
+      return buffer
+    end
+
+    local metadata = { key = "red:ROUTE_1", generation = 12 }
+    local expected = populate(newBuffer({ maxBatchItems = 2 })):seal(metadata)
+    local incremental = populate(newBuffer({
+      maxBatchItems = 2,
+      newHashCommandJob = PacketHash.newCommandHashJob,
+    }))
+    local job = incremental:beginSeal(metadata)
+    local done, actual, steps = false, nil, 0
+    while not done do
+      done, actual = job:step(3)
+      steps = steps + 1
+      if steps > 10000 then error("incremental seal did not finish") end
+    end
+    T.truthy(steps > 1)
+    T.deepEqual(actual, expected)
+    T.raises(function() incremental:add("background", { kind = "mesh" }) end,
+      "sealed")
+  end)
+
+  T.test("incremental sealing requires an incremental command hasher", function()
+    T.raises(function()
+      newBuffer({ newHashCommandJob = true })
+    end, "must be a function")
+    local buffer = newBuffer()
+    buffer:add("background", { kind = "mesh" })
+    T.raises(function() buffer:beginSeal() end, "newHashCommandJob")
+  end)
+
+  T.test("incremental sealing rejects malformed command hash jobs once", function()
+    for _, case in ipairs({
+      { name = "nil", make = function() return nil end },
+      { name = "table without step", make = function() return {} end },
+      { name = "non-callable step", make = function() return { step = true } end },
+    }) do
+      local calls = 0
+      local buffer = newBuffer({
+        newHashCommandJob = function()
+          calls = calls + 1
+          return case.make()
+        end,
+      })
+      buffer:add("background", { kind = "mesh", owner = case.name })
+      local job = buffer:beginSeal({ key = "malformed:" .. case.name })
+      T.raises(function()
+        for _ = 1, 32 do job:step(1) end
+      end, "callable step")
+      T.equal(calls, 1)
+    end
+  end)
+
+  T.test("incremental sealing rejects non-finite work units", function()
+    for _, units in ipairs({ math.huge, -math.huge, 0 / 0 }) do
+      local buffer = newBuffer({
+        newHashCommandJob = PacketHash.newCommandHashJob,
+      })
+      local job = buffer:beginSeal({ key = "units" })
+      T.raises(function() job:step(units) end, "positive integer")
+    end
+  end)
 end

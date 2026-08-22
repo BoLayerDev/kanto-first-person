@@ -43,12 +43,20 @@ The public corpus uses synthetic ROM-free maps for indoor, cave, forest, city, r
 7. Run an uncached map-entry test separately.
 8. Run 100 alternating transitions and a 30-minute soak.
 
+`tools/run_benchmarks.lua` is a ROM-free desktop microbenchmark. It issues one
+compiler update per simulated 60 Hz frame. Native 30 Hz Low-tier results are a
+separate device-evidence gate; the desktop microbenchmark does not infer or
+replace them. The desktop microbenchmark applies the 250 ms readiness limit to
+High, Balanced, and Low. The 750 ms allowance applies only to separately
+recorded evidence from the lowest certified native device.
+
 ## Pass conditions
 
 - Desktop High KFP CPU is at most 2.0 ms p95.
 - Lowest certified Low device KFP CPU is at most 3.0 ms p95.
 - Frame-time regression is at most 15% p95 when the host meets its own target.
-- A build slice exceeds its policy by no more than 0.25 ms, excluding recorded driver calls.
+- Every observed build slice stays at or below its policy plus 0.25 ms,
+  excluding recorded driver calls.
 - Complete uncached scene readiness is at most 250 ms on desktop and 750 ms on the lowest certified device.
 - Resource counts stop growing after warmup.
 - Post-collection Lua heap remains within 5% of warm steady state.

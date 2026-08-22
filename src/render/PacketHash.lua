@@ -2,6 +2,10 @@
 
 local PacketHash = {}
 local MOD = 65521
+local FEED_CHUNK_BYTES = 64
+local SMALL_SORT_KEYS = 32
+local COMMAND_DOMAIN_PREFIX = "t2{s6:domain;s14:kfp-command-v1;s5:value;"
+local TABLE_SUFFIX = "};"
 
 local RUNTIME_FIELDS = {
   cacheKey = true,
@@ -25,17 +29,129 @@ local function keyOrder(a, b)
   return tostring(a) < tostring(b)
 end
 
-function PacketHash.hash(value, limits)
+local function boundedUnits(value)
+  value = tonumber(value) or 1
+  if value ~= value or value == math.huge or value == -math.huge
+      or value ~= math.floor(value) or value < 1 then
+    error("hash step units must be a positive integer", 3)
+  end
+  return value
+end
+
+local function feedState(state, text, checkpoint)
+  local a, b = state.a, state.b
+  local first = 1
+  while first <= #text do
+    local last = checkpoint
+      and math.min(#text, first + FEED_CHUNK_BYTES - 1)
+      or #text
+    for index = first, last do
+      a = (a + text:byte(index)) % MOD
+      b = (b + a) % MOD
+    end
+    first = last + 1
+    if checkpoint then checkpoint() end
+  end
+  state.a, state.b = a, b
+end
+
+local function stateDigest(state)
+  return string.format("%08x", state.b * 65536 + state.a)
+end
+
+local function sortedKeys(keys, dense, maxIndex, checkpoint)
+  if not checkpoint then
+    table.sort(keys, keyOrder)
+    return keys
+  end
+
+  local count = #keys
+  if dense and maxIndex == count then
+    -- A dense positive-integer key set is exactly 1..count. Rebuild it in
+    -- deterministic order without an O(n log n) sort.
+    for index = 1, count do
+      keys[index] = index
+      checkpoint()
+    end
+    return keys
+  end
+  if count <= SMALL_SORT_KEYS then
+    table.sort(keys, keyOrder)
+    checkpoint()
+    return keys
+  end
+
+  local source, target = keys, {}
+  local width = 1
+  while width < count do
+    local left = 1
+    while left <= count do
+      local middle = math.min(left + width - 1, count)
+      local right = math.min(left + width * 2 - 1, count)
+      local first, second = left, middle + 1
+      for output = left, right do
+        local takeFirst = second > right
+          or (first <= middle and keyOrder(source[first], source[second]))
+        if takeFirst then
+          target[output] = source[first]
+          first = first + 1
+        else
+          target[output] = source[second]
+          second = second + 1
+        end
+        checkpoint()
+      end
+      left = left + width * 2
+    end
+    source, target = target, source
+    width = width * 2
+  end
+  return source
+end
+
+local function hashValue(value, limits, checkpoint, mirror)
   limits = limits or {}
   local maxDepth = tonumber(limits.maxDepth) or 32
   local maxNodes = tonumber(limits.maxNodes) or 100000
   local a, b, nodes = 1, 0, 0
   local active = {}
+  local keyPools = {}
 
-  local function feed(text)
-    for index = 1, #text do
-      a = (a + text:byte(index)) % MOD
-      b = (b + a) % MOD
+  local feed
+  if mirror then
+    local mirrorA, mirrorB = mirror.a, mirror.b
+    feed = function(text)
+      local first = 1
+      while first <= #text do
+        local last = checkpoint
+          and math.min(#text, first + FEED_CHUNK_BYTES - 1)
+          or #text
+        for index = first, last do
+          local byte = text:byte(index)
+          a = (a + byte) % MOD
+          b = (b + a) % MOD
+          mirrorA = (mirrorA + byte) % MOD
+          mirrorB = (mirrorB + mirrorA) % MOD
+        end
+        first = last + 1
+        if checkpoint then checkpoint() end
+      end
+      mirror.a, mirror.b = mirrorA, mirrorB
+    end
+  else
+    feed = function(text)
+      local first = 1
+      while first <= #text do
+        local last = checkpoint
+          and math.min(#text, first + FEED_CHUNK_BYTES - 1)
+          or #text
+        for index = first, last do
+          a = (a + text:byte(index)) % MOD
+          b = (b + a) % MOD
+        end
+        first = last + 1
+        if checkpoint then checkpoint() end
+      end
     end
   end
 
@@ -47,8 +163,8 @@ function PacketHash.hash(value, limits)
     if kind == "number" then
       if not finite(item) then error("packet hash rejects non-finite numbers", 3) end
       if item == 0 then item = 0 end
-      local text = string.format("%.17g", item)
-      feed("d" .. #text .. ":" .. text .. ";")
+      local number = string.format("%.17g", item)
+      feed("d" .. #number .. ":" .. number .. ";")
       return
     end
     if kind == "string" then feed("s" .. #item .. ":" .. item .. ";"); return end
@@ -57,20 +173,34 @@ function PacketHash.hash(value, limits)
     if depth >= maxDepth then error("packet hash depth limit", 3) end
     if active[item] then error("packet hash rejects cycles", 3) end
     active[item] = true
-    local keys = {}
+    local keys = keyPools[depth]
+    if keys then
+      for index = #keys, 1, -1 do keys[index] = nil end
+    else
+      keys = {}
+      keyPools[depth] = keys
+    end
+    local dense, maxIndex = true, 0
     for key in pairs(item) do
       if type(key) ~= "string" and type(key) ~= "number" then
         active[item] = nil
         error("packet hash rejects non-string and non-number keys", 3)
       end
       keys[#keys + 1] = key
+      if type(key) ~= "number" or not finite(key) or key ~= math.floor(key)
+          or key < 1 then
+        dense = false
+      elseif key > maxIndex then
+        maxIndex = key
+      end
       nodes = nodes + 1
       if nodes > maxNodes then
         active[item] = nil
         error("packet hash node limit", 3)
       end
+      if checkpoint then checkpoint() end
     end
-    table.sort(keys, keyOrder)
+    keys = sortedKeys(keys, dense, maxIndex, checkpoint)
     feed("t" .. #keys .. "{")
     for _, key in ipairs(keys) do
       encode(key, depth + 1)
@@ -84,18 +214,82 @@ function PacketHash.hash(value, limits)
   return string.format("%08x", b * 65536 + a)
 end
 
-function PacketHash.hashCommand(command)
+local function hashDeclarativeCommand(declarative, checkpoint)
+  local second = { a = 1, b = 0 }
+  feedState(second, COMMAND_DOMAIN_PREFIX, checkpoint)
+  local first = hashValue(declarative, {
+    maxDepth = 16,
+    maxNodes = 65536,
+  }, checkpoint, second)
+  feedState(second, TABLE_SUFFIX, checkpoint)
+  return first .. stateDigest(second)
+end
+
+local IncrementalJob = {}
+IncrementalJob.__index = IncrementalJob
+
+local function newIncrementalJob(run)
+  local thread = coroutine.create(function(initialUnits)
+    local allowance = boundedUnits(initialUnits)
+    local function checkpoint()
+      allowance = allowance - 1
+      if allowance <= 0 then
+        allowance = boundedUnits(coroutine.yield())
+      end
+    end
+    return run(checkpoint)
+  end)
+  return setmetatable({
+    thread = thread,
+    done = false,
+    result = nil,
+  }, IncrementalJob)
+end
+
+function IncrementalJob:step(maxUnits)
+  if self.done then return true, self.result end
+  maxUnits = boundedUnits(maxUnits)
+  local ok, value = coroutine.resume(self.thread, maxUnits)
+  if not ok then error(value, 2) end
+  if coroutine.status(self.thread) == "dead" then
+    self.done = true
+    self.result = value
+    self.thread = nil
+  end
+  return self.done, self.result
+end
+
+function PacketHash.newJob(value, limits)
+  return newIncrementalJob(function(checkpoint)
+    return hashValue(value, limits, checkpoint)
+  end)
+end
+
+function PacketHash.hash(value, limits)
+  return hashValue(value, limits, nil)
+end
+
+local function declarativeCommand(command, checkpoint)
   if type(command) ~= "table" then error("command hash needs a table", 2) end
   local declarative = {}
   for key, value in pairs(command) do
     if not RUNTIME_FIELDS[key] then declarative[key] = value end
+    if checkpoint then checkpoint() end
   end
-  local first = PacketHash.hash(declarative, { maxDepth = 16, maxNodes = 65536 })
-  local second = PacketHash.hash({ domain = "kfp-command-v1", value = declarative }, {
-    maxDepth = 17,
-    maxNodes = 65540,
-  })
-  return first .. second
+  return declarative
+end
+
+function PacketHash.newCommandHashJob(command)
+  if type(command) ~= "table" then error("command hash needs a table", 2) end
+  return newIncrementalJob(function(checkpoint)
+    local declarative = declarativeCommand(command, checkpoint)
+    return hashDeclarativeCommand(declarative, checkpoint)
+  end)
+end
+
+function PacketHash.hashCommand(command)
+  local declarative = declarativeCommand(command, nil)
+  return hashDeclarativeCommand(declarative, nil)
 end
 
 return PacketHash

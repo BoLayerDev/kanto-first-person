@@ -217,7 +217,7 @@ return function(T)
     local ok, problem = pcall(function()
       local images, ticks = {}, 0
       love = {
-        timer = { getTime = function() ticks = ticks + 1; return ticks / 1000 end },
+        timer = { getTime = function() ticks = ticks + 1; return ticks / 100000 end },
         graphics = {
           newImage = function(path)
             local image = { path = path, releases = 0, filters = {}, wraps = {} }
@@ -250,9 +250,10 @@ return function(T)
         tags = {}, player = { cellX = 0, cellZ = 0, facing = "down" },
         cells = { { x = 0, z = 0, walkable = true, tags = {} } },
       }
-      local captured
+      local captured, seenMaterials = nil, {}
       local draw = {
         mesh = function(command)
+          seenMaterials[#seenMaterials + 1] = tostring(command.material)
           if command.material == "horizon:valley" then captured = command end
           return true
         end,
@@ -263,15 +264,19 @@ return function(T)
         world = { snapshot = function() return snapshot end },
         quality = { tier = "HIGH", platform = "windows" },
         materials = {}, draw = draw,
-      }))
-      T.truthy(dispatcher:start({ world = snapshot }))
-      for _ = 1, 20 do
+      }), "host attach failed")
+      T.truthy(dispatcher:start({ world = snapshot }), "host start failed")
+      for _ = 1, 2000 do
         dispatcher:dispatch("update", { frame = { dt = 1 / 60 } })
+        if mod.exports.kfp.status().scene.activeKey then break end
       end
+      T.truthy(mod.exports.kfp.status().scene.activeKey,
+        "incremental scene did not become ready")
       dispatcher:dispatch("background", {
         world = {}, camera = {}, frame = {}, materials = {}, draw = draw,
       })
-      T.truthy(captured)
+      T.truthy(captured, "horizon draw was not submitted: "
+        .. table.concat(seenMaterials, ","))
       T.equal(#images, 4)
       T.equal(captured.texture, images[1])
       T.falsy(captured.geometry.asset)
@@ -282,7 +287,7 @@ return function(T)
         T.deepEqual(images[index].wraps, { "repeat", "repeat" })
       end
       for _, image in ipairs(images) do T.equal(image.releases, 0) end
-      T.truthy(dispatcher:dispose({}, "texture_test"))
+      T.truthy(dispatcher:dispose({}, "texture_test"), "host dispose failed")
       for _, image in ipairs(images) do T.equal(image.releases, 1) end
     end)
     love = previousLove

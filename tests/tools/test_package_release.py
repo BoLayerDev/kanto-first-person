@@ -23,16 +23,21 @@ EVIDENCE = {
 }
 
 
-def approved_records():
+def approved_records(version="2.0.0", channel="stable"):
     rights = {
         "schema": 1,
         "approved": True,
         "evidence_sha256": "c" * 64,
         "approval_record": dict(EVIDENCE),
     }
+    required_gates = (
+        PACKAGE_RELEASE.REQUIRED_RELEASE_GATES
+        if channel == "stable"
+        else PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES[channel]
+    )
     gates = {
         name: {"passed": True, "evidence": [dict(EVIDENCE)]}
-        for name in PACKAGE_RELEASE.REQUIRED_RELEASE_GATES
+        for name in required_gates
     }
     ledger = {
         "schema": 1,
@@ -43,6 +48,10 @@ def approved_records():
         "tag": "v2.0.0",
         "gates": gates,
     }
+    if channel != "stable":
+        ledger["channel"] = channel
+        ledger["release_version"] = version
+        ledger["tag"] = "v" + version
     return rights, ledger
 
 
@@ -67,6 +76,39 @@ class ReleaseGateTests(unittest.TestCase):
             set(ledger["gates"]), set(PACKAGE_RELEASE.REQUIRED_RELEASE_GATES)
         )
         self.assertTrue(all(not gate["passed"] for gate in ledger["gates"].values()))
+
+    def test_unapproved_alpha_ledger_covers_every_required_gate(self):
+        ledger = json.loads(
+            (ROOT / "docs" / "prerelease-gates.json").read_text(encoding="utf-8")
+        )
+        self.assertFalse(ledger["approved"])
+        self.assertEqual(ledger["channel"], "alpha")
+        self.assertEqual(ledger["release_version"], "2.0.0-alpha.1")
+        self.assertEqual(
+            set(ledger["gates"]),
+            set(PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES["alpha"]),
+        )
+        self.assertTrue(all(not gate["passed"] for gate in ledger["gates"].values()))
+
+    def test_release_policy_selects_prerelease_and_stable_ledgers(self):
+        self.assertEqual(
+            PACKAGE_RELEASE.release_policy("2.0.0-alpha.1")[:2],
+            ("alpha", "docs/prerelease-gates.json"),
+        )
+        self.assertEqual(
+            PACKAGE_RELEASE.release_policy("2.0.0-beta.2")[:2],
+            ("beta", "docs/prerelease-gates.json"),
+        )
+        self.assertEqual(
+            PACKAGE_RELEASE.release_policy("2.0.0-rc.1")[:2],
+            ("rc", "docs/prerelease-gates.json"),
+        )
+        self.assertEqual(
+            PACKAGE_RELEASE.release_policy("2.0.0")[:2],
+            ("stable", "docs/release-gates.json"),
+        )
+        with self.assertRaisesRegex(RuntimeError, "unsupported prerelease channel"):
+            PACKAGE_RELEASE.release_policy("2.0.0-preview.1")
 
     def test_approval_schema_rejects_weak_hashes_and_evidence(self):
         rights, ledger = approved_records()
@@ -118,6 +160,41 @@ class ReleaseGateTests(unittest.TestCase):
             )
         self.assertEqual(approval["tag_commit"], commit)
         self.assertEqual(approval["signing_key_fingerprint"], FINGERPRINT)
+
+    def test_complete_signed_alpha_uses_tagged_prerelease_ledger(self):
+        version = "2.0.0-alpha.1"
+        rights, ledger = approved_records(version, "alpha")
+        commit = "e" * 40
+
+        def fake_run(*args, cwd, env=None):
+            command = tuple(args[1:])
+            if command == ("describe", "--tags", "--exact-match"):
+                return "v" + version
+            if command == ("cat-file", "-t", "v" + version):
+                return "tag"
+            if command == ("rev-list", "-n", "1", "v" + version):
+                return commit
+            if command == ("verify-tag", "--raw", "v" + version):
+                return "[GNUPG:] VALIDSIG " + FINGERPRINT + " 2026"
+            raise AssertionError(command)
+
+        def fake_run_bytes(*args, cwd):
+            target = args[-1]
+            if target.endswith("rights-approval.json"):
+                return json.dumps(rights, sort_keys=True).encode()
+            if target.endswith("prerelease-gates.json"):
+                return json.dumps(ledger, sort_keys=True).encode()
+            raise AssertionError(target)
+
+        with mock.patch.object(PACKAGE_RELEASE, "run", side_effect=fake_run), \
+                mock.patch.object(
+                    PACKAGE_RELEASE, "run_bytes", side_effect=fake_run_bytes
+                ):
+            approval = PACKAGE_RELEASE.require_release_approval(
+                Path("signed-source"), version, commit, FINGERPRINT
+            )
+        self.assertEqual(approval["channel"], "alpha")
+        self.assertEqual(approval["tag"], "v" + version)
 
     def test_release_needs_an_external_trusted_signer(self):
         with self.assertRaisesRegex(RuntimeError, "trusted signing-key"):

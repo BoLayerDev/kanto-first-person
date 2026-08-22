@@ -17,6 +17,10 @@
   fixture, and local source-tested adapters for Battle Art and Dramaless Shape.
 - Added a fail-closed machine-readable stable-release ledger and signed-tag
   packaging gate.
+- Added separate signed alpha, beta, and release-candidate gate policies without
+  weakening stable-release requirements.
+- Published source pull requests for the Battle Art and Dramaless companion
+  adapters; host-owner review, GPU testing, versioning, and release remain open.
 - Moved legacy art and audio under a separate rights notice.
 
 This alpha is not a stable release. Certified adapters, real rendering,

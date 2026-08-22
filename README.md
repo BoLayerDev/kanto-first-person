@@ -260,6 +260,11 @@ The deterministic package tool accepts only audited engine commits, copies
 only approved Git-visible runtime files, rejects unsafe or private content,
 and writes a ZIP, `.modpkg`, hashes, and attestation.
 
+Public alpha, beta, RC, and stable packages each require a signed tag and a
+channel-specific approved gate ledger. Asset redistribution permission is a
+hard gate for every channel. See the [release process](docs/release-process.md)
+and [creator permission template](docs/asset-permission-request-template.md).
+
 <a id="roadmap"></a>
 
 ## 🏆 Badge quest to 2.0
@@ -305,6 +310,8 @@ One open required gate keeps the project prerelease.
 | Upgrade | [Safe v1-to-v2 route](docs/upgrade-v1-to-v2.md) |
 | Performance | [Benchmark method](docs/benchmark-method.md) |
 | Release | [Machine-readable gates](docs/release-gates.json) |
+| Release process | [Signing, packages, and publication](docs/release-process.md) |
+| Asset permission | [Creator permission request](docs/asset-permission-request-template.md) |
 | Milestones | [Roadmap](ROADMAP.md) |
 | Recovery | [Project status](PROJECT_STATUS.md) |
 

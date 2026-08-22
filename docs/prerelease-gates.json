@@ -2,50 +2,38 @@
   "approved": false,
   "approved_at": null,
   "approved_by": null,
-  "channel": "stable",
+  "channel": "alpha",
   "gates": {
     "asset_rights": {
       "evidence": [],
       "passed": false
     },
-    "community_review": {
+    "automated_tests": {
       "evidence": [],
       "passed": false
     },
-    "companion_hosts": {
+    "companion_contracts": {
       "evidence": [],
       "passed": false
     },
-    "corrected_feature_parity": {
+    "known_limitations": {
       "evidence": [],
       "passed": false
     },
-    "engine_reaudit": {
+    "migration_safety": {
       "evidence": [],
       "passed": false
     },
-    "performance_and_leaks": {
+    "package_reproducibility": {
       "evidence": [],
       "passed": false
     },
-    "platform_evidence": {
-      "evidence": [],
-      "passed": false
-    },
-    "reproducible_packaging": {
-      "evidence": [],
-      "passed": false
-    },
-    "uninstall_integrity": {
-      "evidence": [],
-      "passed": false
-    },
-    "visual_acceptance": {
+    "source_integrity": {
       "evidence": [],
       "passed": false
     }
   },
-  "release_version": "2.0.0",
+  "release_version": "2.0.0-alpha.1",
   "schema": 1,
-  "tag": "v2.0.0"
+  "tag": "v2.0.0-alpha.1"
 }

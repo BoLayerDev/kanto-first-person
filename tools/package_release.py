@@ -34,6 +34,29 @@ REQUIRED_RELEASE_GATES = (
     "engine_reaudit",
     "community_review",
 )
+REQUIRED_PRERELEASE_GATES = {
+    "alpha": (
+        "asset_rights",
+        "automated_tests",
+        "companion_contracts",
+        "migration_safety",
+        "package_reproducibility",
+        "source_integrity",
+        "known_limitations",
+    ),
+    "beta": (
+        "asset_rights",
+        "automated_tests",
+        "companion_contracts",
+        "corrected_feature_parity",
+        "migration_safety",
+        "package_reproducibility",
+        "source_integrity",
+        "visual_acceptance",
+        "known_limitations",
+    ),
+    "rc": REQUIRED_RELEASE_GATES,
+}
 ROOT_FILES = (
     "manifest.json",
     "main.lua",
@@ -327,9 +350,33 @@ def valid_evidence(value: object) -> bool:
     )
 
 
+def release_channel(version: str) -> str:
+    match = re.search(r"-(alpha|beta|rc)\.[0-9]+$", version)
+    if match:
+        return match.group(1)
+    if "-" in version:
+        raise RuntimeError("release blocked: unsupported prerelease channel")
+    return "stable"
+
+
+def release_policy(version: str) -> tuple[str, str, tuple[str, ...]]:
+    channel = release_channel(version)
+    if channel == "stable":
+        return channel, "docs/release-gates.json", REQUIRED_RELEASE_GATES
+    return channel, "docs/prerelease-gates.json", REQUIRED_PRERELEASE_GATES[channel]
+
+
 def validate_release_records(
-    rights_record: object, record: object, version: str, expected_tag: str
+    rights_record: object,
+    record: object,
+    version: str,
+    expected_tag: str,
+    channel: str | None = None,
+    required_gates: tuple[str, ...] | None = None,
 ) -> None:
+    selected_channel, _, selected_gates = release_policy(version)
+    channel = channel or selected_channel
+    required_gates = required_gates or selected_gates
     if not isinstance(rights_record, dict) or rights_record.get("schema") != 1:
         raise RuntimeError("release blocked: rights approval schema is invalid")
     if rights_record.get("approved") is not True:
@@ -348,6 +395,8 @@ def validate_release_records(
         raise RuntimeError("release blocked: release gate ledger is not approved")
     if record.get("release_version") != version:
         raise RuntimeError("release blocked: gate ledger version does not match manifest")
+    if record.get("channel", "stable") != channel:
+        raise RuntimeError("release blocked: gate ledger channel does not match manifest")
     approved_by, approved_at = record.get("approved_by"), record.get("approved_at")
     if not isinstance(approved_by, str) or not (1 <= len(approved_by) <= 128):
         raise RuntimeError("release blocked: gate approval identity is invalid")
@@ -357,10 +406,10 @@ def validate_release_records(
         raise RuntimeError("release blocked: gate ledger tag does not match manifest")
 
     gates = record.get("gates")
-    if not isinstance(gates, dict) or set(gates) != set(REQUIRED_RELEASE_GATES):
+    if not isinstance(gates, dict) or set(gates) != set(required_gates):
         raise RuntimeError("release blocked: gate ledger set is invalid")
     incomplete = []
-    for name in REQUIRED_RELEASE_GATES:
+    for name in required_gates:
         gate = gates[name]
         evidence = gate.get("evidence") if isinstance(gate, dict) else None
         if (
@@ -385,6 +434,7 @@ def require_release_approval(
     trusted_signing_key: str | None,
 ) -> dict[str, str]:
     expected_tag = "v" + version
+    channel, ledger_path, required_gates = release_policy(version)
     trusted = (trusted_signing_key or "").replace(" ", "").upper()
     if FINGERPRINT.fullmatch(trusted) is None:
         raise RuntimeError("release blocked: trusted signing-key fingerprint is absent")
@@ -397,7 +447,7 @@ def require_release_approval(
             "git", "show", f"{expected_tag}:docs/rights-approval.json", cwd=source
         )
         ledger_bytes = run_bytes(
-            "git", "show", f"{expected_tag}:docs/release-gates.json", cwd=source
+            "git", "show", f"{expected_tag}:{ledger_path}", cwd=source
         )
     except subprocess.CalledProcessError as error:
         raise RuntimeError(
@@ -419,10 +469,18 @@ def require_release_approval(
         record = strict_json_bytes(ledger_bytes)
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise RuntimeError("release blocked: tagged approval JSON is invalid") from error
-    validate_release_records(rights_record, record, version, expected_tag)
+    validate_release_records(
+        rights_record,
+        record,
+        version,
+        expected_tag,
+        channel,
+        required_gates,
+    )
 
     return {
         "tag": expected_tag,
+        "channel": channel,
         "tag_commit": tag_commit,
         "signing_key_fingerprint": trusted,
         "rights_sha256": sha256_bytes(rights_bytes),

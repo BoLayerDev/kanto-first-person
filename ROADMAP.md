@@ -14,10 +14,12 @@ Exit: the project is recoverable and no legacy artifact is mistaken for reproduc
 - Freeze the host-neutral API and ownership rules.
 - Add a synthetic reference dispatcher and contract suite.
 - Implement isolated adapters for Battle Art and Dramaless Shape.
+- Submit both adapter branches to their host owners for review and release.
 - Verify callback order, faults, disposal, camera deltas, baseline draw packets,
   and honest optional capability rejection.
 
-Exit: both hosts pass the same conformance suite without runtime source patching.
+Exit: both hosts pass the same conformance suite without runtime source patching
+and their owners publish compatible releases.
 
 ## Goal 2 — Kernel alpha
 

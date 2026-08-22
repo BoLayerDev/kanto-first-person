@@ -8,7 +8,7 @@ const BRANCH = `${REPO}/blob/v2-rewrite`
 const REWRITE_START_COMMIT = '0f453187210d3d388a02196affee413994df1a77'
 const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
-const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'activity', 'github'] as const
+const MENU_SLUGS = ['home', 'features', 'activity', 'guide', 'support', 'rebuild', 'github'] as const
 
 type MenuItem = {
   label: string
@@ -33,6 +33,13 @@ const MENU_ITEMS: MenuItem[] = [
       'Interiors, forests, caves, horizons, weather, camera motion, and ambient sound rebuild the visual shape of Kanto.',
   },
   {
+    label: 'RESEARCH LOG',
+    eyebrow: 'OAK LAB / COMPLETE HISTORY',
+    title: 'Every step. No mystery.',
+    summary:
+      'Every verified commit on the release branch lives here. New work joins the log automatically after the complete CI lab scan passes.',
+  },
+  {
     label: 'TRAINER GUIDE',
     eyebrow: 'MANUAL / SAFE START',
     title: 'Enter prepared.',
@@ -54,13 +61,6 @@ const MENU_ITEMS: MenuItem[] = [
       'This is not a patch update. KFP 2.0 is a clean companion rewrite built for safer hosts, bounded performance, and a much bigger world.',
   },
   {
-    label: 'RESEARCH ARCHIVE',
-    eyebrow: 'OAK LAB / COMPLETE HISTORY',
-    title: 'Every step. No mystery.',
-    summary:
-      'Every verified commit on the release branch lives here. New work joins the archive automatically after the complete CI lab scan passes.',
-  },
-  {
     label: 'OPEN GITHUB',
     eyebrow: 'SOURCE / PUBLIC',
     title: 'See how it works.',
@@ -73,10 +73,10 @@ const EDITIONS: Edition[] = ['red', 'blue', 'yellow']
 const PRIMARY_LINKS = [
   `${BRANCH}/README.md`,
   `${BRANCH}/docs/feature-parity.md`,
+  `${REPO}/commits/v2-rewrite`,
   `${BRANCH}/docs/upgrade-v1-to-v2.md`,
   `${BRANCH}/docs/compatibility.md`,
   `${BRANCH}/docs/architecture.md`,
-  `${REPO}/commits/v2-rewrite`,
   REPO,
 ]
 
@@ -643,6 +643,10 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
   }
 
   if (index === 2) {
+    return <ResearchArchive status={status} />
+  }
+
+  if (index === 3) {
     return (
       <>
         <div className="warning-box">
@@ -663,7 +667,7 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
     )
   }
 
-  if (index === 3) {
+  if (index === 4) {
     return (
       <DetailLinks>
         <a href={`${BRANCH}/docs/compatibility.md`} target="_blank" rel="noreferrer">COMPATIBILITY MATRIX <span>↗</span></a>
@@ -675,12 +679,8 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
     )
   }
 
-  if (index === 4) {
-    return <RewriteDetail />
-  }
-
   if (index === 5) {
-    return <ResearchArchive status={status} />
+    return <RewriteDetail />
   }
 
   return (

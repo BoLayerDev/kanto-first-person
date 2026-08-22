@@ -27,12 +27,12 @@ jobs:
 
       - name: Enable the Windows compiler
         if: runner.os == 'Windows'
-        uses: step-security/msvc-dev-cmd@22c98154b708dbd743e6f27a933cf6ceba3305c4 # v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
 
       - name: Install pinned LuaJIT language version
         uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
         with:
-          luaVersion: luajit-2.1.0-beta3
+          luaVersion: luajit-2.1
 
       - name: Compile all Lua source
         run: lua tools/check_syntax.lua
@@ -74,7 +74,7 @@ jobs:
       - name: Install pinned LuaJIT language version
         uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
         with:
-          luaVersion: luajit-2.1.0-beta3
+          luaVersion: luajit-2.1
 
       - name: Fetch the audited engine tool only
         shell: bash

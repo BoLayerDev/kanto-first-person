@@ -571,8 +571,11 @@ a {
   display: block;
   margin-bottom: 0.25rem;
   color: var(--game-mid);
-  font-size: clamp(0.28rem, 0.35vw, 0.35rem);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.36rem, 0.42vw, 0.42rem);
+  font-weight: 900;
   line-height: 1.35;
+  letter-spacing: 0.03em;
 }
 
 .trainer-clock b,
@@ -674,8 +677,11 @@ a {
 .dev-stats dt {
   margin-bottom: 0.35rem;
   color: var(--game-mid);
-  font-size: clamp(0.28rem, 0.35vw, 0.35rem);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.34rem, 0.4vw, 0.4rem);
+  font-weight: 900;
   line-height: 1.35;
+  letter-spacing: 0.03em;
 }
 
 .dev-stats dd {
@@ -696,7 +702,12 @@ a {
 }
 
 .dev-stats .token-stat dd {
+  overflow: visible;
   color: var(--game-mid);
+  font-size: clamp(0.38rem, 0.46vw, 0.46rem);
+  letter-spacing: 0;
+  text-overflow: clip;
+  white-space: normal;
 }
 
 .quest-log-heading {
@@ -780,7 +791,7 @@ a {
   border-top: 3px solid var(--game-ink);
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.32rem, 0.4vw, 0.4rem);
+  font-size: clamp(0.38rem, 0.45vw, 0.45rem);
   font-weight: 900;
   line-height: 1.45;
 }
@@ -2340,6 +2351,12 @@ a {
 
   .release-status > * {
     padding: 0.5rem;
+  }
+}
+
+@media (min-width: 901px) and (max-width: 1100px) {
+  .dev-stats dl {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

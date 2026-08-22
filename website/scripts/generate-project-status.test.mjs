@@ -91,8 +91,8 @@ test('generates a complete offline GitHub status snapshot', async () => {
       medianPullRequestSeconds: 300,
       aiUsage: {
         state: 'unavailable',
-        label: 'LOCKED',
-        note: 'GitHub does not receive trusted Codex task token totals.',
+        label: 'NOT TRACKED',
+        note: 'Codex task token usage is private and is not exported to this public GitHub site.',
       },
     })
     assert.deepEqual(status.pullRequests[0], {

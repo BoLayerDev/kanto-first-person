@@ -243,8 +243,8 @@ const devStats = {
   medianPullRequestSeconds: median(deliveryTimes),
   aiUsage: {
     state: 'unavailable',
-    label: 'LOCKED',
-    note: 'GitHub does not receive trusted Codex task token totals.',
+    label: 'NOT TRACKED',
+    note: 'Codex task token usage is private and is not exported to this public GitHub site.',
   },
 }
 

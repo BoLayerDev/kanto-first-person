@@ -16,7 +16,8 @@ a waiver for a failed release gate.
 - KFP needs exactly one compatible active voxel host. Zero or two compatible
   hosts leave KFP inactive by design.
 - An old KFP installation can leave modified host files. KFP 2 does not repair
-  them. Reinstall a clean host before testing or upgrading.
+  them. Reinstall a clean host before testing, upgrading, disabling, or
+  removing KFP. Follow the [safe upgrade sequence](upgrade-v1-to-v2.md).
 - Current runtime activity is Windows-only and has no accepted visual or
   performance matrix. All platforms remain experimental until device owners
   complete the native runtime QA matrix.
@@ -69,8 +70,14 @@ a waiver for a failed release gate.
   timing is structural and advisory. Native CPU/GPU frame time, draw calls,
   complete uncached-scene readiness, 100-transition resource stability, and a
   30-minute soak remain open.
-- The v1-to-v2 migration-safety gate remains open. The documented clean-host
-  reinstall route still needs final release-candidate proof.
+- The v1-to-v2 migration-safety gate remains open. ROM-free tests now cover
+  the exact KFP entry and manifest through the real Loader on all five pinned
+  engine commits. They also cover option migration, clean registration,
+  disabled and removed boots, synthetic legacy refusal, fail-closed integrity
+  handling, quit cleanup, and host-source nonmutation. They do not prove the
+  real adapters, installed host hashes, or a live shutdown. Both
+  owner-published hosts still need the final release-candidate procedure in
+  the [upgrade guide](upgrade-v1-to-v2.md).
 - No public alpha package is approved. Existing packages are private,
   non-publishable engineering artifacts.
 - Stable publication also needs Red, Blue, and Yellow acceptance, native

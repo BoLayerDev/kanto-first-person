@@ -117,6 +117,9 @@ jobs:
           git -C "$engine" checkout --detach FETCH_HEAD
           test "$(git -C "$engine" rev-parse HEAD)" = "${{ matrix.commit }}"
 
+      - name: Test migration and removal through the public Loader
+        run: lua tools/test_engine_migration.lua "$RUNNER_TEMP/gen1recomp"
+
       - name: Validate the API 2 manifest and sandbox boundary
         shell: bash
         run: |

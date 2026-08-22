@@ -19,7 +19,7 @@
         {
           "kind": "ci_run",
           "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+          "sha256": "a034ce73473238b1bbeeb41a3d7cd2955ec1e898bfa013127f3bf37f4cdd8f1b"
         }
       ],
       "passed": true
@@ -29,7 +29,7 @@
         {
           "kind": "companion_contracts",
           "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+          "sha256": "a034ce73473238b1bbeeb41a3d7cd2955ec1e898bfa013127f3bf37f4cdd8f1b"
         }
       ],
       "passed": true
@@ -39,7 +39,7 @@
         {
           "kind": "known_limitations",
           "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+          "sha256": "a034ce73473238b1bbeeb41a3d7cd2955ec1e898bfa013127f3bf37f4cdd8f1b"
         }
       ],
       "passed": true
@@ -57,7 +57,7 @@
         {
           "kind": "package_reproduction",
           "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+          "sha256": "a034ce73473238b1bbeeb41a3d7cd2955ec1e898bfa013127f3bf37f4cdd8f1b"
         }
       ],
       "passed": true

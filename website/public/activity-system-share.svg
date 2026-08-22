@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
   <title id="title">Oak Research Log activity system</title>
-  <desc id="desc">A retro game-style diagram showing GitHub commits passing through CI verification into the Kanto First Person homepage log and complete research archive.</desc>
+  <desc id="desc">A retro game-style diagram showing GitHub commits passing through CI verification into the Kanto First Person homepage Research Log.</desc>
   <defs>
     <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
       <path d="M24 0H0V24" fill="none" stroke="#2c382f" stroke-width="2" opacity=".45"/>

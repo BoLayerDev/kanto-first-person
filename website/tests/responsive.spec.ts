@@ -274,7 +274,7 @@ test('shows automatic project time and PR task timing without claiming work hour
   await expect(fullStats.locator('.quest-log > li')).toHaveCount(11)
 })
 
-test('shows the complete verified project history in the research archive', async ({ page }) => {
+test('shows the complete verified project history in the Research Log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)
 

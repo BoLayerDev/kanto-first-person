@@ -99,6 +99,40 @@ async function github(pathname) {
   }
 }
 
+async function githubPages(pathname, collectionKey, maxPages = 10) {
+  const records = []
+  const separator = pathname.includes('?') ? '&' : '?'
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const result = await github(`${pathname}${separator}per_page=100&page=${page}`)
+    const batch = collectionKey ? result?.[collectionKey] : result
+    if (!Array.isArray(batch)) break
+    records.push(...batch)
+    if (batch.length < 100) break
+  }
+
+  return records
+}
+
+function parseJsonArray(value) {
+  if (!value) return null
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function median(values) {
+  if (!values.length) return 0
+  const sorted = [...values].sort((left, right) => left - right)
+  const middle = Math.floor(sorted.length / 2)
+  return sorted.length % 2
+    ? sorted[middle]
+    : Math.round((sorted[middle - 1] + sorted[middle]) / 2)
+}
+
 let ciRunId = clean(process.env.SITE_CI_RUN_ID)
 let ciRunUrl = clean(process.env.SITE_CI_RUN_URL)
 let ciConclusion = clean(process.env.SITE_CI_CONCLUSION)
@@ -106,12 +140,16 @@ let ciHeadSha = clean(process.env.SITE_CI_HEAD_SHA)
 let ciStartedAt = clean(process.env.SITE_CI_STARTED_AT)
 let ciCompletedAt = clean(process.env.SITE_CI_COMPLETED_AT)
 let generatedAt = clean(process.env.SITE_GENERATED_AT, new Date().toISOString())
+const ciRunsOverride = parseJsonArray(clean(process.env.SITE_CI_RUNS_JSON))
+const completedCiRuns = ciRunsOverride ?? (token
+  ? await githubPages(
+    `/actions/workflows/ci.yml/runs?branch=${encodeURIComponent(branch)}&status=completed`,
+    'workflow_runs',
+  )
+  : [])
 
 if (!ciRunId && token) {
-  const runs = await github(
-    `/actions/workflows/ci.yml/runs?branch=${encodeURIComponent(branch)}&status=success&per_page=1`,
-  )
-  const run = runs?.workflow_runs?.[0]
+  const run = completedCiRuns.find((item) => item.conclusion === 'success')
   if (run) {
     ciRunId = String(run.id)
     ciRunUrl = run.html_url
@@ -139,14 +177,10 @@ if (ciRunId && token && (!passed || !total)) {
 
 const ciDurationSeconds = elapsedSeconds(ciStartedAt, ciCompletedAt)
 
-if (token) {
-  const result = await github(
-    `/actions/workflows/ci.yml/runs?branch=${encodeURIComponent(branch)}&status=completed&per_page=100`,
-  )
-  const runs = Array.isArray(result?.workflow_runs) ? result.workflow_runs : []
+if (completedCiRuns.length) {
   const successfulRuns = new Map()
 
-  for (const run of runs) {
+  for (const run of completedCiRuns) {
     if (run.conclusion !== 'success' || !run.head_sha || successfulRuns.has(run.head_sha)) continue
     const durationSeconds = elapsedSeconds(run.run_started_at, run.updated_at)
     if (!durationSeconds) continue
@@ -171,6 +205,47 @@ if (token) {
   activity = activity.map((entry) => entry.sha === commit
     ? { ...entry, ci: { durationSeconds: ciDurationSeconds, runUrl: ciRunUrl } }
     : entry)
+}
+
+const pullsOverride = parseJsonArray(clean(process.env.SITE_PULL_REQUESTS_JSON))
+const pullRecords = pullsOverride ?? (token
+  ? await githubPages(`/pulls?state=closed&base=${encodeURIComponent(branch)}`, '')
+  : [])
+const pullRequests = pullRecords
+  .filter((pull) => pull.merged_at && pull.created_at)
+  .map((pull) => ({
+    number: Number(pull.number),
+    title: clean(pull.title, `Pull request #${pull.number}`),
+    url: clean(pull.html_url, `${repositoryUrl}/pull/${pull.number}`),
+    createdAt: pull.created_at,
+    mergedAt: pull.merged_at,
+    deliverySeconds: elapsedSeconds(pull.created_at, pull.merged_at),
+  }))
+  .filter((pull) => Number.isFinite(pull.number) && pull.deliverySeconds > 0)
+  .sort((left, right) => Date.parse(right.mergedAt) - Date.parse(left.mergedAt))
+
+const rewriteStartSha = '0f453187210d3d388a02196affee413994df1a77'
+const rewriteStartIndex = activity.findIndex((entry) => entry.sha === rewriteStartSha)
+const rewriteActivity = rewriteStartIndex >= 0 ? activity.slice(0, rewriteStartIndex + 1) : activity
+const rewriteStartedAt = rewriteStartIndex >= 0 ? activity[rewriteStartIndex].date : ''
+const successfulCiRuns = completedCiRuns.filter((run) => run.conclusion === 'success')
+const labRuntimeSeconds = successfulCiRuns.reduce(
+  (totalSeconds, run) => totalSeconds + elapsedSeconds(run.run_started_at, run.updated_at),
+  0,
+)
+const deliveryTimes = pullRequests.map((pull) => pull.deliverySeconds)
+const devStats = {
+  rewriteStartedAt,
+  activeDays: new Set(rewriteActivity.map((entry) => entry.date.slice(0, 10))).size,
+  successfulLabRuns: successfulCiRuns.length,
+  labRuntimeSeconds,
+  mergedPullRequests: pullRequests.length,
+  medianPullRequestSeconds: median(deliveryTimes),
+  aiUsage: {
+    state: 'unavailable',
+    label: 'LOCKED',
+    note: 'GitHub does not receive trusted Codex task token totals.',
+  },
 }
 
 if (process.env.SITE_REQUIRE_VERIFIED_CI === 'true') {
@@ -218,6 +293,8 @@ const status = {
   commitUrl: commit ? `${repositoryUrl}/commit/${commit}` : repositoryUrl,
   generatedAt,
   activity,
+  devStats,
+  pullRequests,
   ci: {
     state: ciConclusion === 'success' ? 'success' : 'unknown',
     runId: ciRunId,

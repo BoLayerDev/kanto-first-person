@@ -100,7 +100,7 @@ test.describe('mobile field terminal', () => {
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: /BUILD 11\/11 PASS/ })).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(page.getByRole('link', { name: /SOURCE 79b3851/ })).toBeFocused()
+    await expect(page.getByRole('link', { name: /SOURCE 5e8544f/ })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 
@@ -199,10 +199,10 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   const banner = page.getByRole('region', { name: 'COMING SOON' })
   await expect(banner).toContainText('2.0.0-alpha.1')
   await expect(banner).toContainText('11/11 PASS')
-  await expect(banner).toContainText('79b3851')
+  await expect(banner).toContainText('5e8544f')
   await expect(banner).toContainText('NOT RELEASED')
   await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
-  await expect(banner.getByRole('link', { name: /SOURCE 79b3851/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(banner.getByRole('link', { name: /SOURCE 5e8544f/ })).toHaveAttribute('href', /commit\/5e8544f/)
 
   const routes = ['features', 'guide', 'support', 'rebuild', 'activity', 'github']
   for (const [index, route] of routes.entries()) {
@@ -220,21 +220,21 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(log).toBeVisible()
   await expect(log).toContainText('WORK CONTINUES')
   await expect(log).toContainText('FIELD NOTES')
-  await expect(log).toContainText('HP RESTORED')
-  await expect(log).toContainText('LAB VERIFIED')
-  await expect(log.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(log).toContainText('NEW MOVE')
+  await expect(log).toContainText('RESEARCH UPDATE')
+  await expect(log.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
   await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
 
   const clock = page.getByRole('region', { name: 'Trainer Clock' })
   await expect(clock).toContainText('LAST UPDATE')
   await expect(clock).toContainText('LAB RUN')
-  await expect(clock).toContainText('39S')
+  await expect(clock).toContainText('50S')
   await expect(clock).toContainText('DEPLOYED')
   await expect(clock).toContainText('7-DAY ACTIVITY')
 
   const latest = log.locator('ol > li').first()
   await expect(latest).toContainText('LIVE')
-  await expect(latest).toContainText('CI 39S')
+  await expect(latest).toContainText('CI 50S')
   const timestamp = latest.getByRole('button', { name: /ago|just now/i })
   await expect(timestamp).toHaveAttribute('title', /2026/)
   await timestamp.focus()
@@ -244,6 +244,35 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(latest.getByRole('tooltip')).toHaveCSS('opacity', '1')
 })
 
+test('shows automatic project time and PR task timing without claiming work hours', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const stats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+  await expect(stats).toContainText('PROJECT AGE')
+  await expect(stats).toContainText('ACTIVE DAYS')
+  await expect(stats).toContainText('MERGED TASKS')
+  await expect(stats).toContainText('LAB RUNTIME')
+  await expect(stats).toContainText('26M 51S')
+  await expect(stats).toContainText('MEDIAN PR ROUTE')
+  await expect(stats).toContainText('59S')
+  await expect(stats).toContainText('AI TOKENS')
+  await expect(stats).toContainText('LOCKED')
+  await expect(stats).toContainText('AI TOKENS REQUIRE A TRUSTED EXPORT')
+  await expect(stats).toContainText('NOT CLAIMED AS HANDS-ON HOURS')
+
+  const quests = stats.locator('.quest-log > li')
+  await expect(quests).toHaveCount(3)
+  await expect(quests.first()).toContainText('QUEST #11')
+  await expect(quests.first()).toContainText('PR ROUTE 3M 2S')
+  await expect(quests.first().getByRole('link')).toHaveAttribute('href', /pull\/11$/)
+
+  await page.goto(`${PAGE_PATH}#activity`)
+  const fullStats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+  await expect(fullStats).toContainText('COMPLETE MERGED TASK HISTORY')
+  await expect(fullStats.locator('.quest-log > li')).toHaveCount(11)
+})
+
 test('shows the complete verified project history in the research archive', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)
@@ -251,7 +280,7 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(page.getByRole('button', { name: 'RESEARCH ARCHIVE' })).toHaveAttribute('aria-current', 'page')
   await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
   const vitals = page.locator('[aria-label="Complete development totals"]')
-  await expect(vitals.getByText('82', { exact: true })).toBeVisible()
+  await expect(vitals.getByText('110', { exact: true })).toBeVisible()
   await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
@@ -265,8 +294,8 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(milestones.getByRole('link')).toHaveCount(6)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
-  await expect(ledger.locator('ol > li')).toHaveCount(82)
-  await expect(ledger.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(ledger.locator('ol > li')).toHaveCount(110)
+  await expect(ledger.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
   await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
   await expect(ledger.locator('ol > li').first()).toContainText('LIVE')
   await expect(ledger).toContainText('TODAY')
@@ -302,6 +331,37 @@ test('keeps Trainer Clock and commit timing controls readable at desktop and mob
       return { width: rect.width, height: rect.height }
     })
     expect(box.height).toBeGreaterThanOrEqual(48)
+  }
+})
+
+test('keeps the dev stats save file readable at desktop and mobile widths', async ({ page }, testInfo) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(PAGE_PATH)
+
+    const stats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+    await expect(stats).toBeVisible()
+    const fit = await stats.evaluate((element) => ({
+      clipped: element.scrollWidth > element.clientWidth + 1,
+      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      questLinks: [...element.querySelectorAll<HTMLElement>('.quest-log a')].map((link) => ({
+        height: link.getBoundingClientRect().height,
+        clipped: link.scrollWidth > link.clientWidth + 1,
+      })),
+    }))
+
+    expect(fit.clipped, `dev stats must fit at ${width}px`).toBe(false)
+    expect(fit.pageOverflow, `page must not overflow at ${width}px`).toBe(false)
+    for (const link of fit.questLinks) {
+      expect(link.height).toBeGreaterThanOrEqual(48)
+      expect(link.clipped).toBe(false)
+    }
+
+    if (width === 1440 || width === 390) {
+      await stats.screenshot({
+        path: testInfo.outputPath(`dev-stats-${width}.png`),
+      })
+    }
   }
 })
 

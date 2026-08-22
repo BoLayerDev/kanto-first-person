@@ -23,6 +23,29 @@ export type ProjectStatus = {
       runUrl: string
     }
   }>
+  devStats: {
+    rewriteStartedAt: string
+    activeDays: number
+    successfulLabRuns: number
+    labRuntimeSeconds: number
+    mergedPullRequests: number
+    medianPullRequestSeconds: number
+    aiUsage: {
+      state: 'available' | 'unavailable'
+      label: string
+      note: string
+      totalTokens?: number
+      taskCount?: number
+    }
+  }
+  pullRequests: Array<{
+    number: number
+    title: string
+    url: string
+    createdAt: string
+    mergedAt: string
+    deliverySeconds: number
+  }>
   ci: {
     state: 'success' | 'unknown'
     runId: string
@@ -75,6 +98,37 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
       },
     } : {}),
   })),
+  devStats: {
+    rewriteStartedAt: '2026-08-21T16:42:07-06:00',
+    activeDays: 2,
+    successfulLabRuns: 39,
+    labRuntimeSeconds: 1611,
+    mergedPullRequests: 11,
+    medianPullRequestSeconds: 59,
+    aiUsage: {
+      state: 'unavailable',
+      label: 'LOCKED',
+      note: 'GitHub does not receive trusted Codex task token totals.',
+    },
+  },
+  pullRequests: [
+    {
+      number: 11,
+      title: 'feat(website): add automatic Trainer Clock',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/pull/11',
+      createdAt: '2026-08-22T20:22:56Z',
+      mergedAt: '2026-08-22T20:25:58Z',
+      deliverySeconds: 182,
+    },
+    {
+      number: 10,
+      title: 'fix(website): show verified rewrite start date',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/pull/10',
+      createdAt: '2026-08-22T20:08:09Z',
+      mergedAt: '2026-08-22T20:08:57Z',
+      deliverySeconds: 48,
+    },
+  ],
   ci: {
     state: 'success',
     runId: '32571329500',
@@ -110,6 +164,20 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
       && (entry.ci === undefined
         || (typeof entry.ci.durationSeconds === 'number'
           && typeof entry.ci.runUrl === 'string')))
+    && typeof candidate.devStats?.rewriteStartedAt === 'string'
+    && typeof candidate.devStats?.activeDays === 'number'
+    && typeof candidate.devStats?.successfulLabRuns === 'number'
+    && typeof candidate.devStats?.labRuntimeSeconds === 'number'
+    && typeof candidate.devStats?.mergedPullRequests === 'number'
+    && typeof candidate.devStats?.medianPullRequestSeconds === 'number'
+    && typeof candidate.devStats?.aiUsage?.state === 'string'
+    && Array.isArray(candidate.pullRequests)
+    && candidate.pullRequests.every((pull) => typeof pull.number === 'number'
+      && typeof pull.title === 'string'
+      && typeof pull.url === 'string'
+      && typeof pull.createdAt === 'string'
+      && typeof pull.mergedAt === 'string'
+      && typeof pull.deliverySeconds === 'number')
     && typeof candidate.ci?.runUrl === 'string'
     && typeof candidate.release?.available === 'boolean'
 }

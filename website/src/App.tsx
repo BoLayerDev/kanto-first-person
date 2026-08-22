@@ -154,6 +154,22 @@ function durationLabel(seconds = 0) {
   return minutes ? `${minutes}M ${remainder}S` : `${remainder}S`
 }
 
+function longDurationLabel(seconds = 0) {
+  if (!seconds) return '--'
+  const days = Math.floor(seconds / 86_400)
+  const hours = Math.floor((seconds % 86_400) / 3_600)
+  const minutes = Math.floor((seconds % 3_600) / 60)
+  const remainder = seconds % 60
+  if (days) return `${days}D ${hours}H`
+  if (hours) return `${hours}H ${minutes}M`
+  if (minutes) return `${minutes}M ${remainder}S`
+  return `${remainder}S`
+}
+
+function taskTitle(title: string) {
+  return title.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+}
+
 function Timestamp({ date, now }: { date: string, now: number }) {
   const [open, setOpen] = useState(false)
   const relative = relativeTime(date, now)
@@ -220,6 +236,61 @@ function TrainerClock({ status }: { status: ProjectStatus }) {
         <span><small>DEPLOYED</small><Timestamp date={deployedAt} now={now} /></span>
         <span><small>7-DAY ACTIVITY</small><b>{weeklyActivity}</b></span>
       </div>
+    </section>
+  )
+}
+
+function DevStats({ status, complete = false }: { status: ProjectStatus, complete?: boolean }) {
+  const now = useLiveNow()
+  const rewriteStart = Date.parse(status.devStats.rewriteStartedAt)
+  const projectAgeSeconds = Number.isFinite(rewriteStart)
+    ? Math.max(1, Math.floor((now - rewriteStart) / 1000))
+    : 0
+  const tasks = complete ? status.pullRequests : status.pullRequests.slice(0, 3)
+  const tokenLabel = status.devStats.aiUsage.state === 'available'
+    ? `${status.devStats.aiUsage.totalTokens?.toLocaleString() ?? '--'}`
+    : status.devStats.aiUsage.label
+
+  return (
+    <section className="dev-stats" aria-labelledby={complete ? 'dev-stats-full-title' : 'dev-stats-title'}>
+      <header>
+        <div>
+          <span>OAK LAB // SAVE FILE</span>
+          <b id={complete ? 'dev-stats-full-title' : 'dev-stats-title'}>VERIFIED DEV STATS</b>
+        </div>
+        <span className="dev-stats-signal"><i aria-hidden="true" /> AUTO SYNC</span>
+      </header>
+
+      <dl>
+        <div><dt>PROJECT AGE</dt><dd>{longDurationLabel(projectAgeSeconds)}</dd></div>
+        <div><dt>ACTIVE DAYS</dt><dd>{status.devStats.activeDays}</dd></div>
+        <div><dt>MERGED TASKS</dt><dd>{status.devStats.mergedPullRequests}</dd></div>
+        <div><dt>LAB RUNTIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
+        <div><dt>MEDIAN PR ROUTE</dt><dd>{longDurationLabel(status.devStats.medianPullRequestSeconds)}</dd></div>
+        <div className="token-stat" title={status.devStats.aiUsage.note}>
+          <dt>AI TOKENS</dt><dd>{tokenLabel}</dd>
+        </div>
+      </dl>
+
+      <div className="quest-log-heading">
+        <span>{complete ? 'COMPLETE MERGED TASK HISTORY' : 'LATEST MERGED TASKS'}</span>
+        <b>PR QUEST LOG</b>
+      </div>
+      <ol className="quest-log">
+        {tasks.map((task) => (
+          <li key={task.number}>
+            <a href={task.url} target="_blank" rel="noreferrer">
+              <span>QUEST #{String(task.number).padStart(2, '0')}</span>
+              <b>{taskTitle(task.title)}</b>
+              <small>PR ROUTE <strong>{longDurationLabel(task.deliverySeconds)}</strong></small>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <footer>
+        <span>PR ROUTE = OPEN TO MERGE. LAB RUNTIME = SUCCESSFUL CI WALL TIME. AI TOKENS REQUIRE A TRUSTED EXPORT.</span>
+        <span>NOT CLAIMED AS HANDS-ON HOURS.</span>
+      </footer>
     </section>
   )
 }
@@ -473,6 +544,8 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         </div>
       </div>
 
+      <DevStats status={status} complete />
+
       <section className="milestone-deck" aria-labelledby="milestone-title">
         <div className="milestone-header">
           <div><span>AUTO-SELECTED FROM VERIFIED HISTORY</span><b id="milestone-title">FIELD BADGES</b></div>
@@ -547,6 +620,7 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
           <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
         </div>
         <TrainerClock status={status} />
+        <DevStats status={status} />
         <ActivityLog status={status} />
       </>
     )

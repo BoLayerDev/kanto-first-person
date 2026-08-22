@@ -273,6 +273,11 @@ test('uses standard desktop open and back keys', async ({ page }) => {
   await page.goto(PAGE_PATH)
 
   await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: /BUILD/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: /SOURCE/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
   await page.keyboard.press('ArrowDown')
 
   const enterPopupPromise = page.waitForEvent('popup')

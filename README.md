@@ -1,113 +1,259 @@
-# Kanto First Person 2.0
+<p align="center">
+  <img src="docs/images/readme/kfp-hero.png" alt="An original pixel-art first-person journey from a tiled room, through a bright forest route, into a moonlit voxel cave" width="100%">
+</p>
 
-Kanto First Person (KFP) is a safe visual companion for Gen1recomp voxel
-hosts. It adds first-person world detail without reading, changing, restoring,
-or deleting another mod's files.
+<h1 align="center">Kanto First Person 2.0</h1>
 
-Current state: **`2.0.0-alpha.1` development source**. This is not a stable
-end-user release. The Battle Art and Dramaless adapters pass source-level
-contract tests. Host-owner releases, real GPU tests, visual acceptance, asset
-rights, device evidence, and stable release gates are still open.
+<p align="center">
+  <strong>A clean, sandbox-safe world-detail companion for Gen1recomp voxel hosts.</strong>
+</p>
 
-## What changed in v2
+<p align="center">
+  <img alt="Stage: alpha" src="https://img.shields.io/badge/stage-alpha-f2b134">
+  <img alt="Gen1recomp API 2" src="https://img.shields.io/badge/Gen1recomp-API%202-3d7eff">
+  <img alt="LuaJIT 2.1" src="https://img.shields.io/badge/LuaJIT-2.1-1f6feb">
+  <img alt="Permissions: none" src="https://img.shields.io/badge/permissions-none-2da44e">
+  <a href="https://github.com/BoLayerDev/kanto-first-person/actions/workflows/ci.yml?query=branch%3Av2-rewrite"><img alt="CI status" src="https://github.com/BoLayerDev/kanto-first-person/actions/workflows/ci.yml/badge.svg?branch=v2-rewrite"></a>
+</p>
 
-KFP v1 inserted Lua source into another mod. That design became incompatible
-with Gen1recomp's API 2 sandbox and could leave unsafe edits in a voxel host.
-KFP v2 is a clean companion rewrite:
+> [!IMPORTANT]
+> **This repository contains `2.0.0-alpha.1` development source.** It is not a
+> stable end-user release. Battle Art and Dramaless need released companion
+> adapters before KFP can render in a normal installation.
 
-- It keeps the existing mod ID `ds_fp_ceiling` for settings migration.
-- It requests no permissions.
-- It does not inspect or mutate any host source tree.
-- It does not install backups, ledgers, shadow files, or an unpatcher.
-- It uses a small, versioned public contract: Voxel Companion API v1.
-- The voxel host keeps full ownership of Gen1recomp's one active world
-  pipeline.
-- KFP supplies bounded, declarative scene work through the selected host.
-- Removing KFP cannot alter the host.
+Kanto First Person (KFP) rebuilds the visual ambition of the old Interiors and
+Tweaks mod without its source patcher. The voxel host still owns the world
+renderer. KFP connects through a small public API and supplies bounded scene
+commands for interiors, caves, landscape detail, atmosphere, camera motion,
+and audio.
 
-The proof-of-concept branch informed the isolation model only. None of its
-broken runtime code was copied into v2.
+The rewrite targets **Pokémon Red, Blue, and Yellow**. It ships no ROM data and
+does not read or change another mod's files.
 
-## Supported scope
+<p align="center"><sub>Hero art is original project artwork. It contains no game screenshot, official character, or ROM-derived image.</sub></p>
 
-### Games
+## At a glance
 
-- Pokémon Red
-- Pokémon Blue
-- Pokémon Yellow
+| | Current truth |
+|---|---|
+| **Release stage** | `2.0.0-alpha.1` source-integration candidate |
+| **Games** | Red, Blue, and Yellow |
+| **Engine range** | Gen1recomp `>=0.2.17 <0.3.0` |
+| **Voxel hosts** | Battle Art or Dramaless; exactly one active host |
+| **Runtime permissions** | None |
+| **Host file access** | Never |
+| **Gameplay changes** | Ledge Leap is hidden and forced off in this alpha |
+| **Stable release** | Blocked by host, GPU, parity, rights, device, and soak gates |
 
-Gold and Silver are outside this project.
+**Start here:** [Upgrade safely](#safe-upgrade-from-v1) ·
+[See the architecture](#architecture) ·
+[Read the API contract](docs/voxel-companion-api-v1.md) ·
+[Check feature evidence](docs/feature-parity.md) ·
+[View the roadmap](ROADMAP.md)
 
-### Gen1recomp baseline
+## Why version 2 exists
 
-| Target | Commit | Use |
+The original mod inserted Lua into a voxel host. Gen1recomp's API 2 sandbox
+made that design obsolete. The old cleanup path could also damage host files
+when its backup state was incomplete.
+
+Version 2 is a clean companion rewrite.
+
+| Legacy design | KFP 2.0 design |
+|---|---|
+| Spliced source into a host | Calls a public, versioned companion API |
+| Copied, restored, or deleted host files | Never reads or changes host files |
+| Used patch ledgers and shadow files | Owns only its own resources and storage |
+| Replaced or wrapped callbacks | Registers one isolated extension descriptor |
+| Shared broad mutable engine state | Uses bounded immutable snapshots |
+| Rebuilt large work in render paths | Compiles scenes in budgeted main-thread slices |
+| Hid some recurring errors | Emits one bounded diagnostic and quarantines the failed extension |
+| Used global random state | Uses deterministic local generators |
+| Claimed movement was untouched | Marks gameplay effects honestly and keeps Ledge Leap off |
+
+Deleting KFP 2 cannot edit, repair, restore, or remove a voxel host. There is
+no patch action and no `REMOVE PATCH` option.
+
+## The world KFP is rebuilding
+
+The old README described a richer first-person Kanto: complete rooms, cave
+roofs, distant terrain, weather, forest canopies, ambient sound, and more
+weight in the camera. Version 2 keeps that direction, but it separates source
+intent from verified output.
+
+### 🏠 Interiors
+
+- Synthesized walls and ceilings with Airy, Mid, and Snug headroom.
+- Cutaway and full ceiling intent for supported camera modes.
+- Single and double doors, windows, rails, skirting, and doorway light.
+- General, Center, and Mart poster sheets.
+- Contact shadows and capability-gated fittings or light effects.
+
+### 🪨 Caves
+
+- Uneven cave roofs, stalactites, stalagmites, and rock columns.
+- Pools, sconces, and bat intent with bounded batches.
+- Deterministic placement from normalized map facts.
+
+### 🌲 Routes, forests, and towns
+
+- A terrain apron that closes the world edge without changing map data.
+- Neighbor-aware landscape intent, raised trees, mountains, and grounded props.
+- Forest canopy, hanging vines, light wells, grass, wind, insects, and particles.
+- Shore and water-edge effects without a render-time full-map scan.
+
+### 🌦️ Sky and atmosphere
+
+- Four horizon choices, cloud layers, stars, twinkle, and shooting-star intent.
+- Aircraft, rain, storms, lightning, umbrellas, puddles, splashes, and rainbows.
+- Lavender fog and day-or-night atmosphere.
+- Local deterministic clocks and seeds. KFP never calls `math.randomseed`.
+
+### 🎧 Camera and sound
+
+- Optional head bob, jump feel, doorway step, and bounded field-of-view deltas.
+- Depth-effect intent when the host exposes the needed capability.
+- Ambient beds and one-shot source ownership with fixed pools.
+- Packaged legacy audio stays blocked until redistribution rights are proven.
+
+## Feature evidence, not marketing claims
+
+`Represented` means ROM-free tests can inspect a bounded v2 command or policy.
+It does **not** mean that real-game output has passed visual review.
+
+| Area | Source state | What is still open |
 |---|---|---|
-| `v0.2.17` | `44f4680b24823629489ed5a2adad648d0dceb640` | Minimum supported version |
-| `v0.2.18` | `70d7b6383e2c005857013dc897fd096886b08f0b` | Latest audited stable version |
-| baseline `dev` | `06e06e305bbcefe97c216a31bb25265ffb5e6b18` | Original rewrite baseline |
-| current `dev` | `087a2751895899ad6e79800599ae27a8f40cf1e3` | Current compatibility audit |
+| Interiors and doors | Represented | Host rendering, placement, cutaway, and screenshot corpus |
+| Cave geometry and pools | Represented | Animation, tilesets, lighting, and GPU review |
+| World apron, trees, and mountains | Represented | Connected-map semantics and Red/Blue/Yellow placement |
+| Sky, weather, and forest systems | Represented | Timing, batching, photosensitivity, and visual acceptance |
+| Birds and ground flocks | Open | No public runtime resolver or executable packet yet |
+| Camera and audio intent | Represented | Event routing, rights, host projection, and device review |
+| Battle props and object shadows | Capability-gated | Released host phases and real alpha/GPU evidence |
+| Third-person ceiling, lamplight, debug HUD | Open | No alpha runtime consumer; options stay hidden |
+| Ledge Leap | Unavailable | Needs one safe atomic public movement-attempt API |
 
-Manifest range: `>=0.2.17 <0.3.0`.
+For every feature decision, see the
+[feature parity ledger](docs/feature-parity.md).
+
+## Compatibility
+
+### Engine
+
+| Target | Audited commit | State |
+|---|---|---|
+| Gen1recomp `v0.2.17` | `44f4680` | Minimum supported version; CI passes |
+| Gen1recomp `v0.2.18` | `70d7b6` | Latest audited stable version; CI passes |
+| Rewrite baseline `dev` | `06e06e3` | Pinned compatibility check passes |
+| Current audited `dev` | `087a275` | Pinned compatibility check passes |
 
 ### Voxel hosts
 
 | Host ID | Audited source | Adapter state |
 |---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541676cd7f245fa73df3d01dcbabec37a1fe` | Local adapter passes contract tests; owner review and GPU run open |
-| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b17e85d5d5baedcad63944065e446a4b0b` | Local adapter passes contract tests; owner review and GPU run open |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | Local contract suite passes; owner review and GPU run open |
+| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | Local contract suite passes; owner review and GPU run open |
 
-KFP needs exactly one compatible active host. With zero hosts, KFP remains
-inactive. With multiple compatible hosts, KFP also remains inactive and emits
-one diagnostic. It never chooses an ambiguous renderer.
+KFP requires **exactly one** compatible active host. With zero hosts, it stays
+inactive. With more than one, it also stays inactive and reports the
+ambiguity. It never guesses which renderer should own the frame.
 
-## User safety and upgrade
+### Platforms
 
-Old KFP releases can leave edits inside a voxel host. Use this sequence:
+Public CI covers Windows, Linux, and macOS source gates. Android, iOS, Xbox
+UWP, Nintendo Switch, PortMaster-class hardware, and Anbernic stock OS remain
+experimental until device owners record native evidence.
+
+## Safe upgrade from v1
+
+Old KFP installations can leave source edits inside a voxel host. Use this
+order:
 
 1. Close Gen1recomp.
-2. Reinstall the selected voxel host from a verified clean release.
+2. Reinstall your selected voxel host from a verified clean release.
 3. Replace KFP v1 with KFP v2.
 4. Start Gen1recomp.
-5. Check the KFP compatibility status.
+5. Check the KFP compatibility diagnostic.
 
-Do not delete KFP v1 and then launch an old patched host. KFP v2 does not
-repair, restore, or delete host files. An updated host adapter performs only a
-read-only scan for known legacy splice markers. If it finds a marker, it
-refuses companion registration and tells the user to reinstall that host.
+> [!WARNING]
+> Do not delete KFP v1 and then launch an old patched host. KFP 2 will not
+> delete or repair host files. An updated host adapter only scans for known
+> legacy markers. If it finds one, it refuses registration and asks you to
+> reinstall the host.
 
-See the [complete upgrade guide](docs/upgrade-v1-to-v2.md).
+Read the [complete v1-to-v2 upgrade guide](docs/upgrade-v1-to-v2.md).
 
-## Architecture at a glance
+## Installation status
 
-```text
-Gen1recomp render_pipelines
-          |
-          v
-Selected voxel host owns drawWorld
-          |
-          v
-Voxel Companion API v1 dispatcher
-          |
-          v
-KFP normalized world + immutable config snapshots
-          |
-          v
-Incremental scene compiler + bounded resource caches
-          |
-          v
-Host-native batches in controlled render phases
+There is no supported public alpha package yet. The required host adapters are
+local implementation evidence, not released host versions. End users should
+wait for a tagged prerelease and matching host releases.
+
+Developers can review the `v2-rewrite` branch and run the ROM-free gates below.
+Do not copy the old v1 installation, patch, removal, or “drop in custom art”
+instructions. They do not apply to version 2.
+
+## Architecture
+
+Gen1recomp permits one active world renderer. KFP does not register a competing
+`drawWorld` pipeline. The selected voxel host keeps ownership and calls KFP at
+fixed phases.
+
+```mermaid
+flowchart TD
+    E["Gen1recomp render_pipelines"] --> H["One selected voxel host<br/>owns drawWorld"]
+    H --> A["Voxel Companion API v1<br/>fault-isolated dispatcher"]
+    A --> S["Validated world snapshot<br/>immutable config snapshot"]
+    S --> C["Incremental scene compiler<br/>bounded scheduler and caches"]
+    C --> P["Immutable draw packets<br/>mesh · instances · billboards"]
+    P --> R["Host-native render phases<br/>graphics state restored"]
+
+    classDef engine fill:#3157a4,color:#fff,stroke:#18356f;
+    classDef host fill:#e2493f,color:#fff,stroke:#90231d;
+    classDef kfp fill:#ffd75a,color:#222,stroke:#a77a00;
+    classDef safe fill:#56b870,color:#102d18,stroke:#26753b;
+    class E engine;
+    class H host;
+    class A,S,C,P kfp;
+    class R safe;
 ```
 
-Gen1recomp permits one active `drawWorld` owner. KFP therefore does not
-register a competing world renderer. Battle Art or Dramaless keeps its normal
-official pipeline and calls the KFP extension inside that pipeline.
+If KFP fails, the host continues. If the host fails, Gen1recomp keeps its own
+fallback behavior.
 
-If KFP fails, the host renderer continues. If the host fails, Gen1recomp keeps
-its own existing fallback behavior.
+### Runtime lifecycle
 
-## Voxel Companion API v1
+1. `main.lua` creates a sandbox-safe loader with `mod:read()` and sandboxed
+   `load()`.
+2. The composition root creates diagnostics, config, resource owners,
+   features, the scene compiler, and the companion client.
+3. The client discovers only Battle Art and Dramaless providers.
+4. It selects exactly one provider with every required capability.
+5. The host supplies normalized world, draw, quality, and integrity services.
+6. World or option changes create a new immutable generation.
+7. The compiler builds a replacement scene in bounded slices.
+8. A completed packet replaces the old packet atomically.
+9. Invalidation or shutdown releases each KFP-owned resource once.
 
-Each supported host exports:
+The host keeps drawing its last valid scene while KFP builds a replacement.
+Render callbacks do not read files, decode images, compile shaders, scan the
+whole map, or build a complete scene.
+
+### Portable render phases
+
+| Phase | Intended work |
+|---|---|
+| `background` | Horizon, sky, stars, clouds, distant atmosphere |
+| `opaque_after_terrain` | Interior, cave, terrain-edge, canopy, and solid prop work |
+| `translucent_after_actors` | Weather, particles, fog, vines, and transparent effects |
+
+Shadow, battle, and terrain-patch work is optional. KFP emits it only when the
+provider advertises the exact capability.
+
+<details>
+<summary><strong>Voxel Companion API v1</strong></summary>
+
+Each host exports the same discovery surface:
 
 ```lua
 provider.exports.voxel_companion = {
@@ -126,280 +272,143 @@ provider.exports.voxel_companion = {
 }
 ```
 
-KFP registers one descriptor with identity, priority, required capabilities,
-optional capabilities, lifecycle callbacks, and render callbacks. The core
-callbacks are:
+The extension descriptor can supply `attach`, `worldChanged`, `update`,
+`modifyCamera`, `invalidate`, `dispose`, and negotiated render callbacks.
 
-- `attach(services)`
-- `worldChanged(snapshot)`
-- `update(frame)`
-- `modifyCamera(camera)`
-- `invalidate(reason)`
-- `dispose()`
-
-Portable render phases are:
-
-- `background`
-- `opaque_after_terrain`
-- `translucent_after_actors`
-
-`shadow_casters`, `battle_opaque`, and `terrainPatch` are optional. KFP adds
-them only when the selected provider advertises the matching capability.
-
-### Contract rules
+Core rules:
 
 - API major versions must match.
 - Required capabilities decide compatibility.
-- A missing optional capability disables only its related feature.
-- Host IDs are discovery addresses, not proof of compatibility.
-- Callback contexts and host resources are borrowed and read-only.
+- Missing optional capabilities disable only related work.
+- Host contexts and resources are borrowed and read-only.
 - KFP does not retain live host objects after a callback.
-- Camera callbacks return finite additive deltas in defined units.
-- Terrain callbacks return declarative changes. They do not mutate map data.
-- The host isolates graphics state around each extension callback.
-- The host catches extension faults and disables only the failed extension.
-- Fault cleanup cannot re-enter dispatch, registration, or dispatcher
-  disposal.
-- KFP releases every resource that it creates exactly once.
-- `dispose()` is idempotent.
+- Camera changes are finite additive deltas in documented units.
+- Host graphics state is isolated around every extension call.
+- One extension fault does not stop the host or another extension.
+- Fault cleanup cannot re-enter dispatch, registration, or disposal.
+- Every created resource has one owner and idempotent release.
 
-The normative contract, validation rules, and schemas are in
-[Voxel Companion API v1](docs/voxel-companion-api-v1.md).
+The [normative API document](docs/voxel-companion-api-v1.md) defines callback
+order, leases, schemas, validation, limits, faults, and conformance fixtures.
 
-## Runtime lifecycle
+</details>
 
-1. `main.lua` reads the sandbox-safe module loader with `mod:read()`.
-2. The composition root creates diagnostics, configuration, resources,
-   features, renderer, scene compiler, and companion client.
-3. KFP discovers only the two supported host IDs.
-4. The client selects exactly one provider with all required capabilities.
-5. KFP registers a host-specific descriptor.
-6. The host supplies normalized world, quality, drawing, and integrity
-   services.
-7. World and option changes create new immutable generations.
-8. The compiler builds a new scene in bounded main-thread slices.
-9. A completed packet replaces the old packet atomically.
-10. Invalidation, host removal, or shutdown releases owned resources once.
+<details>
+<summary><strong>World snapshot and draw-packet boundary</strong></summary>
 
-The host continues to draw its last valid scene while KFP builds a replacement.
-No render callback reads a file, decodes an image, compiles a shader, scans a
-full map, or builds a full scene.
+Only host adapter code can inspect broad engine state. It publishes a bounded
+plain-data view with map identity, revisions, bounds, current and neighboring
+terrain, stable tags, player pose, actors, and render mode.
 
-## Source layout
+KFP rejects sparse, cyclic, oversized, or malformed data before scene
+compilation. Functions, metatables, host objects, and borrowed resources cannot
+enter a retained snapshot.
 
-| Path | Responsibility |
-|---|---|
-| `main.lua` | Minimal API 2 sandbox entry and composition root |
-| `companion/` | Host-neutral API v1 reference dispatcher |
-| `src/bootstrap/` | App lifecycle, dependency composition, and engine facade |
-| `src/companion/` | Host selection and normalized world snapshots |
-| `src/config/` | Immutable options and legacy migration |
-| `src/core/` | Diagnostics, loader, RNG, scheduler, LRU, ownership, lifecycle |
-| `src/render/` | Packet schema, hashes, quality, compiler, and submission |
-| `src/features/` | Static world, atmosphere, weather, flora, camera, and audio intent |
-| `src/gameplay/` | Disabled-by-default Ledge Leap policy and input code |
-| `src/assets/` | Packaged texture ownership and derived-asset boundaries |
-| `src/audio/` | Stream and one-shot source ownership |
-| `tests/` | ROM-free unit, property, contract, and integration tests |
-| `tools/` | Test, syntax, policy, benchmark, and package controls |
-| `docs/` | Normative architecture, migration, parity, release, and recovery records |
+Portable draw schema v1 permits `mesh`, `instances`, and `billboards`. Each
+sealed command has a deterministic cache key and canonical content digest. A
+host caches its own compiled resource by copied key and digest. It does not
+retain the KFP command table. Reusing one key with different content fails
+closed.
 
-Modules use constructor injection. Runtime code does not use `_G`, raw `io`,
-raw `love.filesystem`, private engine `require`, `dofile`, `loadfile`, source
-splicing, callback replacement, or `math.randomseed`.
+</details>
 
-## World snapshot boundary
+## Performance model
 
-Only host adapter code can inspect the host's broad engine state. It publishes
-a normalized plain-data view with:
+KFP performs graphics creation and release on the main thread. Scene work is
+incremental, cancellable, bounded by quality tier, and swapped atomically.
 
-- Game and map identity
-- Map, palette, tileset, and atlas revisions
-- Bounds and cell size
-- Current and neighboring terrain data
-- Stable map tags
-- Player pose
-- Actor snapshots
-- Render mode
-
-KFP copies only validated fields. Snapshot capture has aggregate limits for
-cells, nodes, text, metadata, tags, coordinates, and work. It rejects sparse,
-cyclic, oversized, or malformed input before scene compilation. Host objects,
-functions, metatables, and resource handles cannot enter the retained world
-snapshot.
-
-## Scene compiler and draw packets
-
-The compiler runs incrementally on the main thread. It uses cancellation
-generations and never asks for `background` or `compute` permission.
-
-Cache identity includes:
-
-- Companion API version
-- Game and map identity
-- Map revision
-- Palette and atlas revision
-- View mode
-- Relevant option generations
-- Selected host identity and capabilities
-- Quality tier
-
-Commands use draw schema v1. The portable packet kinds are `mesh`,
-`instances`, and `billboards`. Each command has a bounded deterministic cache
-key and canonical content hash. A host caches by copied key and digest, never
-by retaining KFP's command table. Reuse of one key with different content
-fails closed.
-
-KFP batches compatible work by phase, owner, material, texture, primitive,
-blend, and depth state. Dynamic effects use fixed limits. Cutaways use local
-masks instead of full-scene rebuilds.
-
-## Quality and performance model
-
-| Tier | Build budget | KFP cache cap | Effect density | Added draw-call target |
+| Tier | Build budget | Cache cap | Effect density | Added draw-call target |
 |---|---:|---:|---:|---:|
-| High | 2.0 ms/frame | 128 MiB | 100% | 48 or fewer |
-| Balanced | 1.0 ms/frame | 64 MiB | 60% | 32 or fewer |
-| Low | 0.5 ms/frame | 32 MiB | 30% | 20 or fewer |
+| **High** | 2.0 ms/frame | 128 MiB | 100% | 48 or fewer |
+| **Balanced** | 1.0 ms/frame | 64 MiB | 60% | 32 or fewer |
+| **Low** | 0.5 ms/frame | 32 MiB | 30% | 20 or fewer |
 
-`AUTO` follows the host quality tier. The user can select a fixed tier. High
-uses the original panorama size. Balanced and Low are designed for prebuilt
-2048 and 1024 variants when those approved assets are available.
-
-Release performance gates include CPU p95 limits, bounded build slices,
-draw-call limits, scene-ready latency, 30-minute heap stability, and no GPU or
-audio resource growth across 100 alternating map transitions. Source tests do
-not claim those device gates have passed.
-
-## Features and parity
-
-The architecture has isolated systems for:
-
-- Interiors, ceilings, doors, windows, fixtures, and posters
-- Caves, roofs, pools, sconces, and bats
-- World edges, terrain apron, trees, mountains, and object grounding
-- Sky, horizon, stars, clouds, aircraft, weather, fog, and rainbows
-- Flora, canopy, vines, grass, particles, wildlife, and water effects
-- Camera motion, field of view, depth effects, and audio intent
-- Battle props and shadow casters when the host supports those phases
-
-“Represented” in the parity ledger means the source can produce bounded
-declarative intent. It does not mean final visual acceptance. Some alpha
-options remain hidden when no honest runtime implementation exists. See the
-[feature parity ledger](docs/feature-parity.md) for preserved, corrected,
-retired, unavailable, and open behaviors.
+`AUTO` follows the host quality tier. Final release also requires scene-ready
+latency, CPU p95, draw-call, 30-minute heap, and 100-map-transition resource
+evidence. Source design alone does not pass those gates.
 
 ## Options and migration
 
-KFP records a migration version in mod-owned storage and accounts for all 53
-unique release 1.60 option keys.
+KFP keeps the mod ID `ds_fp_ceiling` so stored settings can migrate. The
+migration accounts for all 53 unique keys from the published 1.60 archive.
 
 Important corrections:
 
-- Legacy `shadows` maps only to `contact_shadows`.
-- `object_shadows` gets its corrected v2 default because the duplicated old
-  key could not retain two independent values.
+- Old `shadows` maps only to `contact_shadows`.
+- `object_shadows` receives a separate corrected default.
 - `fastchunks=false` maps to Low quality.
-- `fastchunks=true` or a missing value maps to Auto quality.
-- `REMOVE PATCH` is retired and never runs cleanup.
-- Legacy keyboard and gamepad jump bindings are retained.
-- Ledge Leap is never enabled by migration.
+- `fastchunks=true` or missing maps to Auto quality.
+- `REMOVE PATCH` is retired and can never run file cleanup.
+- Old keyboard and gamepad jump bindings are retained.
+- Migration never enables Ledge Leap.
 - Invalid live values keep the last safe stored value.
 
-See [option migration](docs/options-migration.md) for the complete table.
+See the [complete option migration table](docs/options-migration.md).
 
-## Ledge Leap status
+## Ledge Leap
 
-Ledge Leap is gameplay-changing, so `affects_link` remains true. The v2 policy
-and input modules validate directional, collision, script, warp, actor, and
-state facts and use only a public movement-script queue.
+Ledge Leap changes gameplay, so the manifest keeps `affects_link=true`.
 
-The alpha does not install an input hook or queue movement. The option is
-hidden and forced off because the current companion frame does not provide an
-atomic public movement-attempt operation with fresh collision and script
-facts. KFP will not restore the unsafe old behavior as a shortcut.
+The rewrite contains a corrected pure policy and input-binding tests. The alpha
+does **not** install an input hook, retain movement facts, or queue movement.
+The option is hidden and forced off until Gen1recomp provides one synchronous,
+atomic public movement attempt that owns current collision, scripts, actors,
+warps, ledge direction, and side effects.
 
-## Host adapter requirements
+The old “jump from any side” and “bounce elsewhere” behavior will not return.
 
-A host maintainer must:
+## Development
 
-1. Vendor the frozen API dispatcher and contract document.
-2. Export `voxel_companion` from the existing official voxel pipeline.
-3. Publish honest capability versions only.
-4. Normalize broad engine state into the bounded world schema.
-5. Call the fixed lifecycle and render phases in documented order.
-6. Restore graphics state around every extension call.
-7. Keep extension errors isolated from the host and other extensions.
-8. Cache only host-owned compiled resources by copied key and content digest.
-9. Never retain command tables or callback-borrowed resources.
-10. Release host-owned compiled resources once on eviction or invalidation.
-11. Perform only a read-only legacy-marker scan.
-12. Pass the shared ROM-free packet fixture and companion conformance suite.
-
-Current adapter commits and patches are local evidence only. They are not
-released host versions and must receive host-owner review.
-
-## Failure behavior
-
-| Condition | Result |
-|---|---|
-| No supported host | KFP stays inactive and logs one diagnostic |
-| Both supported hosts active | KFP stays inactive; it does not choose one |
-| API major mismatch | Provider is rejected |
-| Missing required capability | Provider is rejected |
-| Missing optional capability | Only that feature is omitted |
-| Invalid world snapshot | New scene is rejected; valid host scene continues |
-| Feature compile fault | Optional feature is omitted or the active packet is preserved |
-| Render callback fault | Failed extension is quarantined; host continues |
-| Legacy splice marker | Host refuses companion registration and requests reinstall |
-| Resource or cache limit | New work fails closed; capacity does not grow |
-
-Diagnostics are structured, bounded, rate-limited, and available through the
-mod export. KFP does not hide recurring frame faults with silent `pcall` loops.
-
-## Build and verification
-
-Requirements:
-
-- LuaJIT 2.1 or the LuaJIT bundled with LÖVE
-- Python 3
-- A clean checkout of a pinned Gen1recomp target for final validation
-
-Run the public ROM-free gates:
+### Public verification
 
 ```text
-luajit tools/run_tests.lua
 luajit tools/check_syntax.lua
 luajit tools/validate_project.lua
+luajit tools/run_tests.lua
 luajit tools/run_benchmarks.lua
 python -m unittest tests.tools.test_package_release -v
 ```
 
-Run strict engine checks for each pin:
+The current public suite contains **215 ROM-free Lua tests**, **77 Lua syntax
+checks**, and **8 release-control tests**. GitHub Actions runs the source suite
+on Windows, Linux, and macOS and validates all four pinned Gen1recomp targets.
+
+Strict engine checks:
 
 ```text
 python <gen1recomp>/tools/modkit.py validate --strict --base fixture .
 python <gen1recomp>/tools/modkit.py lint .
 ```
 
-Public tests contain no ROM, save, extracted cache, or ROM-derived image. They
-use synthetic maps, fixed seeds, fixed clocks, and the shared packet fixture.
+<details>
+<summary><strong>Repository map</strong></summary>
 
-## Deterministic packaging
+| Path | Responsibility |
+|---|---|
+| `main.lua` | Minimal API 2 entry and composition root |
+| `companion/` | Host-neutral API v1 reference dispatcher |
+| `src/bootstrap/` | App lifecycle, dependencies, and engine facade |
+| `src/companion/` | Provider selection and normalized world snapshots |
+| `src/config/` | Immutable options and legacy migration |
+| `src/core/` | Loader, diagnostics, RNG, scheduler, LRU, ownership, lifecycle |
+| `src/render/` | Command schema, hashing, quality, compiler, submission |
+| `src/features/` | World, atmosphere, weather, flora, camera, and audio intent |
+| `src/gameplay/` | Dormant Ledge Leap policy and input tests |
+| `src/assets/` | Packaged texture ownership and derived-asset limits |
+| `src/audio/` | Stream and one-shot source ownership |
+| `tests/` | ROM-free unit, contract, property, and integration tests |
+| `tools/` | Syntax, policy, benchmark, and package controls |
+| `docs/` | Architecture, compatibility, migration, evidence, and release records |
 
-The package wrapper:
+</details>
 
-- Accepts only audited engine commits.
-- Archives engine tools from the pinned commit into isolated staging.
-- Does not execute a dirty engine working tree.
-- Copies only Git-visible, explicitly allowed runtime source and assets.
-- Rejects duplicate JSON keys, unsafe paths, links, private files, and unknown
-  package content.
-- Runs strict validation, ROM lint, and Gen1recomp pack.
-- Writes a root-level ZIP, `.modpkg`, SHA-256 list, and attestation.
-- Uses `SOURCE_DATE_EPOCH` for reproducible output.
+### Deterministic packaging
 
-Private test build:
+The release wrapper accepts only audited engine commits. It archives the
+engine tool from that commit into isolated staging, copies only approved
+Git-visible runtime files, rejects unsafe paths and private content, runs
+strict validation and ROM lint, and writes a root ZIP, `.modpkg`, hashes, and
+attestation with `SOURCE_DATE_EPOCH`.
 
 ```text
 python tools/package_release.py \
@@ -409,65 +418,79 @@ python tools/package_release.py \
   --allow-dirty
 ```
 
-`--allow-dirty` always marks the artifact as private and not publishable.
-Release mode requires clean tagged source, every machine-readable gate,
-approved rights evidence, and the trusted signer's complete fingerprint. It
-builds from the verified signed tag, not the working tree.
+`--allow-dirty` always creates a private, non-publishable test build. Release
+mode builds from a verified signed tag after every machine-readable gate has
+passed.
 
-## Rights and ROM boundaries
+## Release path
 
-Independently authored v2 source is MIT licensed. Legacy panoramas, posters,
-and audio are outside the MIT grant. Public redistribution remains blocked
-until durable evidence confirms modification and redistribution rights.
+```mermaid
+flowchart LR
+    F["Foundation<br/>complete"] --> A["Companion API<br/>source complete"]
+    A --> K["Kernel alpha<br/>current"]
+    K --> S["Static world<br/>evidence"]
+    S --> D["Dynamic world<br/>evidence"]
+    D --> B["Beta<br/>full corrected parity"]
+    B --> R["Release candidate<br/>devices and soak"]
+    R --> V["2.0.0 stable<br/>signed and reproducible"]
 
-The bird transform contains only a recipe. It derives frames on the player's
-machine from that player's imported cache. KFP does not package the derived
-output or ROM data.
+    classDef done fill:#56b870,color:#102d18,stroke:#26753b;
+    classDef current fill:#ffd75a,color:#222,stroke:#a77a00,stroke-width:3px;
+    classDef future fill:#e9eef8,color:#24324a,stroke:#8ba0c7;
+    class F,A done;
+    class K current;
+    class S,D,B,R,V future;
+```
 
-Never commit or package:
+Stable `2.0.0` still requires:
 
-- Pokémon ROMs
-- Save files
-- Extracted Gen1recomp cache content
-- ROM-derived PNG files
-- Credentials or private permission records
-- Private device or real-game evidence
+- Released and reviewed Battle Art and Dramaless adapters.
+- Real GPU acceptance for Red, Blue, and Yellow.
+- Corrected 1.60 visual parity.
+- Clear modification and redistribution rights for legacy assets.
+- Native evidence for every claimed platform.
+- Performance and resource-leak soak results.
+- Reproducible tagged packages and uninstall-integrity evidence.
+- Community review and a fresh engine audit.
 
-See [third-party notices](THIRD_PARTY_NOTICES.md).
+If one required gate remains open, the project stays prerelease.
 
-## Release status and next gates
+## Rights and ROM boundary
 
-Source-level verification currently passes, but stable `2.0.0` still needs:
+Independently authored v2 source is licensed under MIT. Legacy panoramas,
+posters, and audio are outside that grant. They cannot ship publicly until
+durable evidence proves modification and redistribution rights.
 
-- Battle Art and Dramaless host-owner review, merge, versioning, and release
-- Real GPU acceptance for Red, Blue, and Yellow
-- Corrected full 1.60 visual parity
-- Asset modification and redistribution rights
-- Native evidence for every claimed platform class
-- Performance and resource-leak soak evidence
-- Reproducible tagged release and uninstall-integrity evidence
-- Community review
-- A fresh Gen1recomp audit before the release candidate
+Never commit or package ROMs, saves, imported cache content, ROM-derived PNG
+files, credentials, private permission records, or private device evidence.
+The bird transform is only a recipe. It derives frames on the player's machine
+from that player's own imported cache.
 
-If any gate remains open, the project stays prerelease.
+See [Third-Party Notices](THIRD_PARTY_NOTICES.md) and the
+[security policy](SECURITY.md).
 
-## Project records
+## Project documents
 
-- [Architecture](docs/architecture.md)
-- [Voxel Companion API v1](docs/voxel-companion-api-v1.md)
-- [Compatibility matrix](docs/compatibility.md)
-- [Feature parity ledger](docs/feature-parity.md)
-- [Option migration](docs/options-migration.md)
-- [Upgrade guide](docs/upgrade-v1-to-v2.md)
-- [Benchmark method](docs/benchmark-method.md)
-- [Machine-readable release gates](docs/release-gates.json)
-- [Source registry](docs/project-coordination/source-registry.md)
-- [Risk register](docs/project-coordination/risk-register.md)
-- [Recovery record](docs/recovery-record.md)
-- [Roadmap](ROADMAP.md)
-- [Current status](PROJECT_STATUS.md)
-- [Contribution rules](CONTRIBUTING.md)
-- [Security policy](SECURITY.md)
+| Topic | Document |
+|---|---|
+| Architecture and ownership | [Architecture](docs/architecture.md) |
+| Host contract | [Voxel Companion API v1](docs/voxel-companion-api-v1.md) |
+| Engine, game, host, and platform state | [Compatibility matrix](docs/compatibility.md) |
+| Preserved, corrected, retired, and open behavior | [Feature parity ledger](docs/feature-parity.md) |
+| All legacy option mappings | [Option migration](docs/options-migration.md) |
+| Safe v1 removal and v2 upgrade | [Upgrade guide](docs/upgrade-v1-to-v2.md) |
+| Performance test method | [Benchmark method](docs/benchmark-method.md) |
+| Machine-readable stable blockers | [Release gates](docs/release-gates.json) |
+| Milestones | [Roadmap](ROADMAP.md) |
+| Current recovery truth | [Project status](PROJECT_STATUS.md) |
+| Contribution rules | [Contributing](CONTRIBUTING.md) |
 
-Stable `2.0.0` must not be published until every required gate has recorded
-evidence.
+## Credits
+
+KFP exists because Gen1recomp and its voxel-host community made a first-person
+Gen 1 world possible. Version 2 focuses on a safe boundary between those
+projects: one host-owned renderer, one public contract, and no cross-mod file
+mutation.
+
+This is an independent fan project. It is not affiliated with or endorsed by
+Nintendo, Game Freak, Creatures, or The Pokémon Company.

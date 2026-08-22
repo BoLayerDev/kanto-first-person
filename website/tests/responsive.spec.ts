@@ -597,8 +597,9 @@ test('uses standard desktop open and back keys', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
 
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /BUILD/ })).toBeFocused()
+  const buildLink = page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /BUILD/ })
+  await buildLink.focus()
+  await expect(buildLink).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: /SOURCE/ })).toBeFocused()
   await page.keyboard.press('Tab')

@@ -103,7 +103,7 @@ open · 🔒 unavailable in this alpha
 | `v0.2.17` | `44f4680` | ✅ CI |
 | `v0.2.18` | `70d7b6` | ✅ CI |
 | Rewrite `dev` baseline | `06e06e3` | ✅ CI |
-| Current audited `dev` | `087a275` | ✅ CI |
+| Current audited `dev` | `478e3bf` | ✅ local; CI queued with this checkpoint |
 
 ### Voxel hosts
 
@@ -234,7 +234,7 @@ luajit tools/run_benchmarks.lua
 python -m unittest tests.tools.test_package_release -v
 ```
 
-Current result: **215 Lua tests**, **77 syntax checks**, and **8 release-control
+Current result: **222 Lua tests**, **81 syntax checks**, and **21 Python policy
 tests**. GitHub Actions repeats them across three operating systems and four
 pinned engine targets.
 
@@ -309,6 +309,9 @@ One open required gate keeps the project prerelease.
 | Settings | [Option migration](docs/options-migration.md) |
 | Upgrade | [Safe v1-to-v2 route](docs/upgrade-v1-to-v2.md) |
 | Performance | [Benchmark method](docs/benchmark-method.md) |
+| Runtime QA | [Scene, lifecycle, and soak matrix](docs/qa-matrix.md) |
+| Device evidence | [Device-owner test guide](docs/device-test-guide.md) |
+| Known limits | [Alpha limitations](docs/known-limitations.md) |
 | Release | [Machine-readable gates](docs/release-gates.json) |
 | Release process | [Signing, packages, and publication](docs/release-process.md) |
 | Asset rights | [Redacted approval record](docs/rights-approval.json) |

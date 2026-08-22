@@ -9,9 +9,11 @@ Last updated: 2026-08-21
 - Private remote: `https://github.com/BoLayerDev/kanto-first-person`.
 - Original history: preserved from `mrmushrooms11/kanto-first-person` at `94d0151`.
 - Engine targets: Gen1recomp `v0.2.17` (`44f4680`), `v0.2.18`
-  (`70d7b6`), baseline `dev` (`06e06e3`), and current `dev` (`087a275`).
+  (`70d7b6`), baseline `dev` (`06e06e3`), and current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
+- Current automated gates: 222 Lua tests, 81 Lua syntax checks, 21 Python
+  policy tests, repository policy, and microbenchmarks pass.
 
 ## Active workstreams
 
@@ -33,6 +35,11 @@ Last updated: 2026-08-21
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
+- Two isolated Yellow QA profiles are prepared outside Git for the exact Battle
+  Art and Dramaless PR branches. They must be refreshed to the final KFP commit
+  before launch. Red and Blue imports are not present.
+- Battle Art has two pre-existing strict Modkit `MK301` findings for its own
+  ROM-cache interface files. The companion contract suite still passes.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
 
 ## Recovery point
@@ -48,8 +55,10 @@ Last updated: 2026-08-21
 
 ## Next actions
 
-1. Run both adapter branches in real Gen1recomp GPU sessions.
-2. Complete corrected 1.60 visual and device evidence.
+1. Close the user-owned Gen1recomp session, activate the two isolated Yellow
+   QA identities, and run both adapter branches at verified 1920 x 1080.
+2. Complete the Yellow visual, lifecycle, performance, transition, and soak
+   matrix; import legally owned Red and Blue copies before their private runs.
 3. Obtain host-owner review and released adapter versions from
    `absol89/DramaticShapeVoxelMod#29` and `artyrambles/DRAMALESS_SHAPE#47`.
 4. Keep the private rights inventory hash aligned if any covered legacy asset

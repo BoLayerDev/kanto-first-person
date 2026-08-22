@@ -25,3 +25,14 @@ legacy cloud design. Their generator uses a local deterministic random stream;
 it does not read game data or change Lua's global random state.
 
 No Pokémon ROM, extracted Gen1recomp cache, save file, or ROM-derived image may be distributed with this project.
+
+## Website dependencies
+
+The optional `website/` source uses React, React DOM, Three.js, React Three
+Fiber, React Three Postprocessing, and Zustand under their MIT licenses.
+It uses Postprocessing under the zlib license and the Press Start 2P font under
+the SIL Open Font License 1.1. Exact versions are locked in
+`website/package-lock.json`.
+
+The website does not package the legacy mod audio, panoramas, posters, ROM
+data, screenshots, or private evidence.

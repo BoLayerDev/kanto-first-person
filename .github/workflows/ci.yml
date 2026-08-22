@@ -12,6 +12,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  website:
+    name: Website / production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install the pinned Node.js line
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install locked website dependencies
+        run: npm ci --prefix website
+
+      - name: Type-check and build the GitHub Pages artifact
+        run: npm run build --prefix website
+
   lua:
     name: LuaJIT / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}

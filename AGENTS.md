@@ -37,6 +37,8 @@
 - `tests/`: ROM-free unit, contract, integration, and fixture tests.
 - `tools/`: test, validation, benchmark, and package commands.
 - `docs/`: architecture, compatibility, provenance, migration, parity, and coordination records.
+- `website/`: isolated React Three Fiber showcase, field guides, and support
+  interface. It is not part of the mod package.
 - `C:\Users\bolay\Documents\Kanto First Person Evidence`: private rights,
   legacy-release, runtime, device, and test-artifact evidence outside this mod root.
 
@@ -46,6 +48,8 @@
 - Syntax check: `luajit tools/check_syntax.lua`.
 - Validate repository policy: `luajit tools/validate_project.lua`.
 - Run benchmarks: `luajit tools/run_benchmarks.lua`.
+- Install website dependencies: `npm ci --prefix website`.
+- Type-check and build the website: `npm run build --prefix website`.
 - Run Gen1recomp mod validation: `python <gen1recomp>/tools/modkit.py validate .`.
 - Build a private test package: `python tools/package_release.py --engine <gen1recomp> --output-dir <outside-project-dir> --epoch <unix-time> --allow-dirty`.
 
@@ -63,6 +67,10 @@ If LuaJIT is not on `PATH`, use the pinned runtime recorded in `PROJECT_STATUS.m
 - A feature fault must not stop the voxel host or another KFP feature.
 - Add a test for every fixed defect and every public interface change.
 - Do not approve a golden-image update in the same change that changes the renderer without independent review.
+- Keep the website static and compatible with the `/kanto-first-person/`
+  GitHub Pages base path. Do not copy ROM-derived or private evidence into it.
+- Keep essential website actions in semantic HTML. Provide reduced-motion and
+  non-WebGL fallbacks for the 3D experience.
 
 ## Git and publication
 

@@ -70,3 +70,15 @@ Exit: `2.0.0-rc.1` is reproducible and all support claims have evidence.
 - Publish exact compatibility, migration, recovery, and rollback data.
 
 Exit: both host adapters and every claimed platform are certified.
+
+## Companion track — Public field terminal
+
+- Publish an original React Three Fiber showcase at the repository Pages URL.
+- Use one scroll-owned camera journey through interior, route, and cave scenes.
+- Add accessible scanner targets and Red/Blue/Yellow atmosphere modes.
+- Explain the mod, its Alpha gate, compatibility, safe migration, known limits,
+  testing, security, and support routes without distributing ROM-derived art.
+- Keep the site build isolated from the Lua runtime and deterministic package.
+
+Exit: the production build passes, the Pages route works, the main journey and
+support links pass desktop QA, and mobile behavior passes its separate gate.

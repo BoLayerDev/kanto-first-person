@@ -63,16 +63,22 @@ return function(T)
       end,
     }
     local outdoor = {
-      id = "ROUTE_1", key = "red:ROUTE_1:1", width = 3, height = 2,
+      id = "ROUTE_1", key = "red:ROUTE_1:1", width = 4, height = 2,
       cellSize = 16, mode = "first_person", weather = "clearing",
       tags = { night = true },
       actors = { { id = "npc", pose = { x = 8, y = 0, z = 8 } } },
       cells = {
         { x = 0, z = 0, walkable = true, material = "grass",
           tags = { grass = true, forest = true, vine = true } },
-        { x = 1, z = 0, walkable = false, material = "stone",
-          tags = { mountain = true, object = true, summit = true } },
-        { x = 2, z = 0, walkable = true, material = "shore",
+        { x = 1, z = 0, kind = "wall", solid = true,
+          walkable = false, material = "stone",
+          tags = { mountain = true, mountain_support = true,
+            mountain_seed = true, object = true } },
+        { x = 2, z = 0, kind = "rock", solid = true,
+          walkable = false, material = "stone",
+          tags = { mountain = true, mountain_support = true,
+            object = true } },
+        { x = 3, z = 0, walkable = true, material = "shore",
           tags = { shore = true, chimney = true, sun_shaft = true } },
       },
     }

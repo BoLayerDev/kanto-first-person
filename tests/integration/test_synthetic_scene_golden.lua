@@ -6,6 +6,7 @@ return function(T)
   local PacketHash = load("src/render/PacketHash.lua")
   local Quality = load("src/render/Quality.lua")
   local Util = load("src/features/Util.lua")
+  local WorldSnapshot = load("src/companion/WorldSnapshot.lua")
   local fixture = load("tests/fixtures/synthetic_kfp/cases.lua")
 
   local featurePaths = {
@@ -30,24 +31,24 @@ return function(T)
   local goldenHashes = {
     -- A changed hash requires a deliberate review of the declarative command
     -- diff. These hashes do not represent pixel output.
-    indoor = "31ee13fa",
-    cave = "8df56caa",
-    forest = "a092c93e",
-    city_lavender = "4860b811",
-    route_neighbor_edge = "5d90c273",
-    shore = "fe661013",
-    mountain = "c29907e9",
-    day = "eb1485f0",
-    night = "62c542a2",
-    rain = "71ac6557",
-    storm = "a9f3fab7",
-    battle_supported = "89acb15b",
-    battle_unsupported = "3777fe49",
+    indoor = "f4a72cb4",
+    cave = "56288537",
+    forest = "6f68303c",
+    city_lavender = "53a4bc70",
+    route_neighbor_edge = "fb85dae6",
+    shore = "fb9928b2",
+    mountain = "e2bcb2a0",
+    day = "2825a5bd",
+    night = "7f4231b4",
+    rain = "c2b9fc1b",
+    storm = "48b41755",
+    battle_supported = "3a664439",
+    battle_unsupported = "ccbbe2b2",
   }
   local qualityHashes = {
-    HIGH = "a092c93e",
-    BALANCED = "157da35f",
-    LOW = "60e1271f",
+    HIGH = "6f68303c",
+    BALANCED = "df3f3170",
+    LOW = "593d9419",
   }
 
   local syntheticTexture = { syntheticOwnedResource = true }
@@ -59,6 +60,8 @@ return function(T)
   }
 
   local function compile(case, tier)
+    local world, snapshotError = WorldSnapshot.capture(case.world)
+    T.truthy(world, case.id .. ": " .. tostring(snapshotError))
     local quality = Quality.policy(tier or "HIGH", "AUTO", "windows")
     local buffer = CommandBuffer.new({
       maxCommands = 4096,
@@ -66,7 +69,7 @@ return function(T)
       hashCommand = PacketHash.hashCommand,
     })
     local context = {
-      world = case.world,
+      world = world,
       config = case.config,
       quality = quality,
       services = { capabilities = case.capabilities, assets = assets },
@@ -76,7 +79,7 @@ return function(T)
       load(path).new({ util = Util }):compile(context, buffer)
     end
     local packet = buffer:seal({
-      key = case.world.key .. "|quality=" .. quality.resolved,
+      key = world.key .. "|quality=" .. quality.resolved,
       generation = 1,
     })
     return packet, quality
@@ -86,7 +89,8 @@ return function(T)
     for _, command in ipairs(packet.phases[expected.phase] or {}) do
       if (expected.owner == nil or command.owner == expected.owner)
           and (expected.kind == nil or command.kind == expected.kind)
-          and (expected.material == nil or command.material == expected.material) then
+          and (expected.material == nil or command.material == expected.material)
+          and (expected.key == nil or command.key == expected.key) then
         return true
       end
     end

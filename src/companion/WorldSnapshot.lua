@@ -397,7 +397,7 @@ function WorldSnapshot.capture(source, customLimits)
   local rawCells = type(source.cells) == "table" and source.cells or {}
   local rawCount, countError = denseArrayLength(rawCells, limits.cells, "cell", budget)
   if not rawCount then return nil, countError end
-  local occupied = {}
+  local cellsByCoordinate = {}
   for index, rawCell in ipairs(rawCells) do
     local cell, cellErr = copyCell(rawCell, limits, budget)
     if not cell then return nil, "cell " .. index .. ": " .. cellErr end
@@ -405,9 +405,16 @@ function WorldSnapshot.capture(source, customLimits)
       return nil, "cell " .. index .. " is outside world bounds"
     end
     local coordinateKey = cell.z * width + cell.x
-    if occupied[coordinateKey] then return nil, "duplicate cell coordinate" end
-    occupied[coordinateKey] = true
-    cells[#cells + 1] = cell
+    if cellsByCoordinate[coordinateKey] then return nil, "duplicate cell coordinate" end
+    cellsByCoordinate[coordinateKey] = cell
+  end
+  -- Cells are coordinate-addressed facts. Canonical z-major order makes every
+  -- downstream packet independent of host enumeration order without an
+  -- unbounded comparison sort.
+  for coordinateKey = 0, width * height - 1 do
+    if not work(budget, 1) then return nil, budget.error end
+    local cell = cellsByCoordinate[coordinateKey]
+    if cell then cells[#cells + 1] = cell end
   end
 
   local tags = copyTags(source.tags, limits, budget)

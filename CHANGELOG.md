@@ -16,6 +16,9 @@
   plus portable ceiling beams and roses.
 - Added deterministic KFP-owned binary cloud masks, resolution-independent
   panorama rules, and explicit canopy cell coordinates for safe host cutaways.
+- Added deterministic quality-scaled placement for certified tree, boulder,
+  mountain, grass, and shadow facts, with walkable and isolated supports
+  rejected before rendering.
 - Added ROM-free core, companion, render, feature, config, and gameplay tests.
 - Added whole-snapshot resource and work budgets, a frozen 23-command host
   fixture, and local source-tested adapters for Battle Art and Dramaless Shape.

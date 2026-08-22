@@ -29,6 +29,8 @@ function Flora:compile(context, buffer)
   local U = self.util
   local world, config, quality = context.world, context.config, context.quality
   if U.hasTag(world, "interior") then return end
+  local canopyDensity = math.min(1,
+    math.max(0, (tonumber(quality.density) or 1) * (8 / 9)))
 
   for index, cell in ipairs(world.cells or {}) do
     local x, y, z, size = U.cellPosition(world, cell)
@@ -37,13 +39,22 @@ function Flora:compile(context, buffer)
     if U.option(config, "grass_height", "SUBTLE") ~= "OFF"
         and U.hasTag(cell, "grass") and U.keep(quality.density, seed, "grass") then
       instance(buffer, "grass", "flora:grass",
-        { primitive = "grass_clump", width = size, wind = U.option(config, "wind", "BREEZE") },
+        -- KFP 1.60 used 7-unit crossed blades inside a 16-unit cell. A
+        -- cell-wide card becomes a foreground wall in both current hosts.
+        { primitive = "grass_clump", width = size * (7 / 16),
+          wind = U.option(config, "wind", "BREEZE") },
         { x = x, y = y, z = z, seed = seed })
     end
-    if U.option(config, "forest_canopy", true) and U.hasTag(cell, "forest") then
+    if U.option(config, "forest_canopy", true)
+        and U.hasTag(world, "forest") and U.hasTag(cell, "forest")
+        and U.keep(canopyDensity, seed, "canopy") then
+      -- The preserved canopy varied from 40 through 62 units above a
+      -- 16-unit cell. Keep that overhead range instead of the old v2
+      -- 24-unit foreground slab.
+      local canopyY = y + size * (2.5 + U.unit(seed, "canopy_height") * 1.375)
       instance(buffer, "canopy", U.material(cell, "flora:canopy"),
         { primitive = "canopy", width = size, cutaway = true },
-        { x = x, y = y + size * 1.5, z = z, seed = seed,
+        { x = x, y = canopyY, z = z, seed = seed,
           cellX = cell.x, cellZ = cell.z })
     end
     if U.option(config, "hanging_vines", true) and U.hasTag(cell, "vine")

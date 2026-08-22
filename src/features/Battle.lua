@@ -10,20 +10,46 @@ end
 function Battle:compile(context, buffer)
   local U = self.util
   if not U.capability(context, "battle_pass") then return end
-  local world, config = context.world, context.config
+  local world, config, quality = context.world, context.config, context.quality
   if world.mode ~= "battle" and not U.worldHas(world, "battle") then return end
+  local policy = U.placementPolicy(world, quality)
+  local treeAnchors = U.clusterAnchors(world, policy.tree, "tree_support",
+    function(cell) return U.isSemanticSupport(cell, "tree_support") end,
+    nil, context)
+  local mountainIndex = U.indexCells(world, context)
+  local mountainAnchors = U.clusterAnchors(world, policy.mountain,
+    "mountain_peak", function(cell)
+      return U.isMountainClusterMember(world, mountainIndex, cell)
+    end, function(cell)
+      return U.hasTag(cell, "mountain_seed") and 1 or 0
+    end, context)
+  local boulderAnchors = U.clusterAnchors(world, policy.tree, "boulder_tree",
+    function(cell) return U.isSemanticSupport(cell, "boulder_tree") end,
+    nil, context)
+  local propAnchors = U.clusterAnchors(world, policy.object, "battle_prop",
+    function(cell) return U.hasTag(cell, "battle_prop") end, nil, context)
+  local tallTrees = U.option(config, "tall_trees", true)
+  local mountainPeaks = U.option(config, "mountain_peaks", true)
+  local boulderTrees = U.option(config, "boulder_trees", false)
+  local shadows = U.option(config, "object_shadows", true)
   for index, cell in ipairs(world.cells or {}) do
-    if U.hasTag(cell, "tree") or U.hasTag(cell, "boulder_tree")
-        or U.hasTag(cell, "battle_prop") then
+    local tree = tallTrees and U.isAnchor(treeAnchors, cell)
+    local mountain = mountainPeaks and U.isAnchor(mountainAnchors, cell)
+    local boulder = boulderTrees and U.isAnchor(boulderAnchors, cell)
+    local prop = U.isAnchor(propAnchors, cell)
+    if tree or mountain or boulder or prop then
       local x, y, z = U.cellPosition(world, cell)
-      local primitive = U.hasTag(cell, "boulder_tree") and "hood"
-        or (U.hasTag(cell, "tree") and "canopy" or "box")
+      local primitive = boulder and "hood"
+        or (tree and "canopy" or (mountain and "mountain" or "box"))
       local prototype
       if primitive == "hood" then
         prototype = { primitive = "hood", role = "boulder_tree",
-          shadow = U.option(config, "object_shadows", true) }
+          shadow = shadows }
       elseif primitive == "canopy" then
         prototype = { primitive = "canopy", width = world.cellSize, cutaway = false }
+      elseif primitive == "mountain" then
+        prototype = { primitive = "mountain", role = "mountain",
+          shadow = shadows }
       else
         prototype = { primitive = "box", role = "battle_prop",
           width = world.cellSize * 0.8, height = world.cellSize,
@@ -35,6 +61,7 @@ function Battle:compile(context, buffer)
         prototype = prototype,
         sortKey = "battle:props",
       }, { x = x, y = y, z = z, kind = cell.kind,
+        summit = mountain and U.hasTag(cell, "mountain_seed") or nil,
         seed = U.hash(world.id, cell.x, cell.z, "battle") })
     end
     U.checkpoint(context, index, 48)

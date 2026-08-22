@@ -13,7 +13,8 @@ return function(T)
   end
 
   local world = {
-    id = "LAVENDER", key = "red:LAVENDER:1", width = 4, height = 4, cellSize = 16,
+    id = "LAVENDER_TEST", key = "red:LAVENDER_TEST:1", width = 4, height = 4,
+    cellSize = 16,
     weather = "storm", tags = { lavender = true, forest = true, night = true },
     actors = { { id = "npc", pose = { x = 8, y = 0, z = 8 } } },
     cells = {
@@ -79,8 +80,65 @@ return function(T)
     end
     T.truthy(canopy)
     T.equal(canopy.prototype.cutaway, true)
+    T.equal(canopy.prototype.width, 16)
     T.equal(canopy.items[1].cellX, 0)
     T.equal(canopy.items[1].cellZ, 0)
+    T.truthy(canopy.items[1].y >= 40 and canopy.items[1].y <= 62)
+    local grass
+    for _, command in ipairs(packet.phases.opaque_after_terrain) do
+      if command.key == "grass" then grass = command end
+    end
+    T.truthy(grass)
+    T.equal(grass.prototype.width, 7)
+  end)
+
+  T.test("forest canopy density is deterministic and ordered by quality", function()
+    local cells = {}
+    for z = 0, 11 do
+      for x = 0, 11 do
+        cells[#cells + 1] = {
+          x = x, z = z, walkable = true, tags = { forest = true },
+        }
+      end
+    end
+    local forest = {
+      id = "VIRIDIAN_FOREST", width = 12, height = 12, cellSize = 16,
+      tags = { forest = true, outdoor = true }, cells = cells,
+    }
+
+    local function compileCanopy(tier, density)
+      local buffer = newBuffer()
+      Flora.new({ util = Util }):compile({
+        world = forest,
+        config = { grass_height = "OFF", forest_canopy = true,
+          hanging_vines = false, particles = false, sun_shafts = false },
+        quality = { density = density, resolved = tier, panoramaWidth = 4096 },
+        services = { capabilities = {} }, checkpoint = function() end,
+      }, buffer)
+      return buffer:seal()
+    end
+
+    local counts, hashes = {}, {}
+    for _, row in ipairs({
+      { "HIGH", 1 }, { "BALANCED", 0.6 }, { "LOW", 0.3 },
+    }) do
+      local packet = compileCanopy(row[1], row[2])
+      counts[row[1]] = 0
+      for _, command in ipairs(packet.phases.opaque_after_terrain) do
+        if command.key == "canopy" then
+          counts[row[1]] = counts[row[1]] + #command.items
+          for _, item in ipairs(command.items) do
+            T.truthy(item.y >= 40 and item.y <= 62)
+          end
+        end
+      end
+      hashes[row[1]] = PacketHash.hash(packet)
+      T.equal(PacketHash.hash(compileCanopy(row[1], row[2])), hashes[row[1]])
+    end
+    T.truthy(counts.HIGH > counts.BALANCED)
+    T.truthy(counts.BALANCED > counts.LOW)
+    T.notEqual(hashes.HIGH, hashes.BALANCED)
+    T.notEqual(hashes.BALANCED, hashes.LOW)
   end)
 
   T.test("deterministic emissions do not touch global random state", function()

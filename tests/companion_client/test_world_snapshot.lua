@@ -33,6 +33,26 @@ return function(T)
     T.equal(snapshot.cells[1].kind, "grass")
   end)
 
+  T.test("world snapshot canonicalizes cell order by coordinate", function()
+    local first = valid()
+    first.width, first.height = 3, 2
+    first.cells = {
+      { x = 2, z = 1, kind = "last", tags = { object = true } },
+      { x = 1, z = 0, kind = "middle", tags = { tree_support = true } },
+      { x = 0, z = 0, kind = "first", tags = { mountain_support = true } },
+    }
+    local second = valid()
+    second.width, second.height = first.width, first.height
+    second.cells = { first.cells[3], first.cells[1], first.cells[2] }
+
+    local a = assert(WorldSnapshot.capture(first))
+    local b = assert(WorldSnapshot.capture(second))
+    T.deepEqual(a.cells, b.cells)
+    T.equal(a.cells[1].kind, "first")
+    T.equal(a.cells[2].kind, "middle")
+    T.equal(a.cells[3].kind, "last")
+  end)
+
   T.test("published snapshot limits are defensive and cannot be expanded", function()
     local first = WorldSnapshot.limits()
     T.equal(first.cells, 65536)

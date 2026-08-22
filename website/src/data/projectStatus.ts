@@ -15,6 +15,7 @@ export type ProjectStatus = {
     shortSha: string
     message: string
     date: string
+    author: string
     type: string
     url: string
   }>
@@ -57,6 +58,7 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     shortSha: sha.slice(0, 7),
     message,
     date,
+    author: 'Bo Layer',
     type,
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sha}`,
   })),
@@ -86,6 +88,7 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
     && Array.isArray(candidate.activity)
     && candidate.activity.every((entry) => typeof entry.sha === 'string'
       && typeof entry.message === 'string'
+      && typeof entry.author === 'string'
       && typeof entry.type === 'string'
       && typeof entry.url === 'string')
     && typeof candidate.ci?.runUrl === 'string'

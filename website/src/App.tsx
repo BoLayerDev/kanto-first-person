@@ -6,7 +6,7 @@ import { PALETTES, type Edition } from './world/palettes'
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
-const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'github'] as const
+const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'activity', 'github'] as const
 
 type MenuItem = {
   label: string
@@ -52,6 +52,13 @@ const MENU_ITEMS: MenuItem[] = [
       'This is not a patch update. KFP 2.0 is a clean companion rewrite built for safer hosts, bounded performance, and a much bigger world.',
   },
   {
+    label: 'RESEARCH ARCHIVE',
+    eyebrow: 'OAK LAB / COMPLETE HISTORY',
+    title: 'Every step. No mystery.',
+    summary:
+      'Every verified commit on the release branch lives here. New work joins the archive automatically after the complete CI lab scan passes.',
+  },
+  {
     label: 'OPEN GITHUB',
     eyebrow: 'SOURCE / PUBLIC',
     title: 'See how it works.',
@@ -67,6 +74,7 @@ const PRIMARY_LINKS = [
   `${BRANCH}/docs/upgrade-v1-to-v2.md`,
   `${BRANCH}/docs/compatibility.md`,
   `${BRANCH}/docs/architecture.md`,
+  `${REPO}/commits/v2-rewrite`,
   REPO,
 ]
 
@@ -113,7 +121,7 @@ function ActivityLog({ status }: { status: ProjectStatus }) {
       </ol>
       <div className="activity-footer">
         <span>{status.activity.length} VERIFIED FIELD UPDATES LOADED</span>
-        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">OPEN FULL LOG ↗</a>
+        <a href="#activity">OPEN FULL LOG ▶</a>
       </div>
     </section>
   )
@@ -276,6 +284,71 @@ function RewriteDetail() {
   )
 }
 
+function ResearchArchive({ status }: { status: ProjectStatus }) {
+  const contributors = new Set(status.activity.map((entry) => entry.author)).size
+  const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
+  const firstUpdate = status.activity.at(-1)?.date.slice(0, 10) ?? 'UNKNOWN'
+  const typeCounts = [...status.activity.reduce((counts, entry) => {
+    counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1)
+    return counts
+  }, new Map<string, number>())]
+
+  return (
+    <div className="archive-page">
+      <div className="archive-vitals" aria-label="Complete development totals">
+        <div><b>{status.activity.length}</b><span>VERIFIED COMMITS</span></div>
+        <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
+        <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
+        <div><b>{firstUpdate}</b><span>RESEARCH BEGAN</span></div>
+      </div>
+
+      <figure className="archive-system-map">
+        <img
+          src={`${import.meta.env.BASE_URL}activity-system-share.svg`}
+          alt="Diagram showing commits passing through CI into the homepage log and complete research archive"
+          loading="lazy"
+        />
+        <figcaption>
+          <span>THE PROGRESS PIPELINE // EVERY ENTRY LINKS TO ITS SOURCE</span>
+          <a href={`${import.meta.env.BASE_URL}activity-system-share.png`} download>DOWNLOAD SHARE GRAPHIC ↓</a>
+        </figcaption>
+      </figure>
+
+      <section className="archive-types" aria-labelledby="archive-types-title">
+        <b id="archive-types-title">FIELD WORK INDEX</b>
+        <div>
+          {typeCounts.map(([type, count]) => <span key={type}><i>{count}</i>{type}</span>)}
+        </div>
+      </section>
+
+      <section className="archive-ledger" aria-labelledby="archive-ledger-title">
+        <div className="archive-ledger-header">
+          <div><span>DEFAULT BRANCH / {status.branch.toUpperCase()}</span><b id="archive-ledger-title">COMPLETE VERIFIED HISTORY</b></div>
+          <span>NEWEST FIRST</span>
+        </div>
+        <ol>
+          {status.activity.map((entry, index) => (
+            <li key={entry.sha}>
+              <a href={entry.url} target="_blank" rel="noreferrer">
+                <span className="archive-number">#{String(status.activity.length - index).padStart(3, '0')}</span>
+                <span className="archive-entry-type">{entry.type}</span>
+                <b>{activityTitle(entry.message)}</b>
+                <span className="archive-author">{entry.author}</span>
+                <time dateTime={entry.date}>{entry.date.slice(0, 10)}</time>
+                <code>{entry.shortSha}</code>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <DetailLinks>
+        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">VERIFY THE FULL LOG ON GITHUB <span>↗</span></a>
+      </DetailLinks>
+    </div>
+  )
+}
+
 function MenuDetail({ index, status }: { index: number, status: ProjectStatus }) {
   if (index === 0) {
     return (
@@ -341,6 +414,10 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
 
   if (index === 4) {
     return <RewriteDetail />
+  }
+
+  if (index === 5) {
+    return <ResearchArchive status={status} />
   }
 
   return (

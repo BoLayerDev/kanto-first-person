@@ -70,7 +70,7 @@ test.describe('mobile field terminal', () => {
     expect(layout.summary.bottom).toBeLessThan(844)
     expect(layout.summary.fontSize).toBeGreaterThanOrEqual(14)
 
-    expect(layout.menuButtons).toHaveLength(6)
+    expect(layout.menuButtons).toHaveLength(7)
     for (const button of layout.menuButtons) {
       expect(button.fontSize).toBeGreaterThanOrEqual(11)
       expect(button.height).toBeGreaterThanOrEqual(48)
@@ -175,7 +175,7 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
   await expect(banner.getByRole('link', { name: /SOURCE 79b3851/ })).toHaveAttribute('href', /commit\/79b3851/)
 
-  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'OPEN GITHUB']) {
+  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'RESEARCH ARCHIVE', 'OPEN GITHUB']) {
     await page.getByRole('button', { name: label }).click()
     await expect(banner).toBeVisible()
   }
@@ -192,7 +192,30 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(log).toContainText('HP RESTORED')
   await expect(log).toContainText('LAB VERIFIED')
   await expect(log.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
-  await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', /commits\/v2-rewrite$/)
+  await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
+})
+
+test('shows the complete verified project history in the research archive', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#activity`)
+
+  await expect(page.getByRole('button', { name: 'RESEARCH ARCHIVE' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
+  const vitals = page.locator('[aria-label="Complete development totals"]')
+  await expect(vitals.getByText('82', { exact: true })).toBeVisible()
+  await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
+  await expect(vitals.getByText('2', { exact: true })).toBeVisible()
+  await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
+
+  const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
+  await expect(ledger.locator('ol > li')).toHaveCount(82)
+  await expect(ledger.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
+
+  const systemMap = page.getByRole('img', { name: /Diagram showing commits/ })
+  await expect(systemMap).toBeVisible()
+  await expect.poll(() => systemMap.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
+  await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
 })
 
 test('supports shareable hash routes and browser history', async ({ page }) => {

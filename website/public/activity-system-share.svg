@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Oak Research Log activity system</title>
+  <desc id="desc">A retro game-style diagram showing GitHub commits passing through CI verification into the Kanto First Person homepage log and complete research archive.</desc>
+  <defs>
+    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M24 0H0V24" fill="none" stroke="#2c382f" stroke-width="2" opacity=".45"/>
+    </pattern>
+    <filter id="shadow" x="-20%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="10" dy="10" stdDeviation="0" flood-color="#070a08"/>
+    </filter>
+    <style>
+      text { font-family: "Courier New", monospace; font-weight: 800; }
+      .tiny { font-size: 18px; letter-spacing: 3px; }
+      .small { font-size: 22px; }
+      .card { font-size: 18px; }
+      .body { font-size: 26px; }
+      .label { font-size: 29px; }
+      .title { font-size: 76px; letter-spacing: -4px; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="900" fill="#0d1310"/>
+  <rect width="1600" height="900" fill="url(#grid)"/>
+  <rect x="24" y="24" width="1552" height="852" fill="none" stroke="#ee4c47" stroke-width="12"/>
+  <rect x="42" y="42" width="1516" height="816" fill="none" stroke="#f8f2d8" stroke-width="4"/>
+
+  <g transform="translate(76 68)">
+    <circle cx="62" cy="62" r="54" fill="#f8f2d8" stroke="#070a08" stroke-width="10"/>
+    <path d="M12 62h100" stroke="#070a08" stroke-width="12"/>
+    <path d="M17 56a48 48 0 0 1 90 0" fill="#ee4c47"/>
+    <circle cx="62" cy="62" r="18" fill="#f8f2d8" stroke="#070a08" stroke-width="9"/>
+    <text x="142" y="35" class="tiny" fill="#ffdc5b">KANTO FIRST PERSON // VERIFIED DEVELOPMENT</text>
+    <text x="142" y="103" class="title" fill="#f8f2d8">OAK RESEARCH LOG</text>
+    <text x="144" y="139" class="body" fill="#aab98e">EVERY REAL UPDATE BECOMES A FIELD ENTRY.</text>
+  </g>
+
+  <g transform="translate(82 260)" filter="url(#shadow)">
+    <g>
+      <rect width="294" height="170" fill="#f8f2d8" stroke="#070a08" stroke-width="8"/>
+      <rect x="16" y="16" width="262" height="34" fill="#ee4c47"/>
+      <text x="28" y="41" class="tiny" fill="#f8f2d8">01 / SOURCE</text>
+      <text x="28" y="93" class="label" fill="#172017">GITHUB COMMIT</text>
+      <text x="28" y="128" class="card" fill="#59654d">CODE · DOCS · TESTS</text>
+      <text x="28" y="153" class="card" fill="#59654d">PERFORMANCE · FIXES</text>
+    </g>
+
+    <path d="M310 85h70" stroke="#ffdc5b" stroke-width="12"/>
+    <path d="m370 66 28 19-28 19" fill="#ffdc5b"/>
+
+    <g transform="translate(398)">
+      <rect width="294" height="170" fill="#f8f2d8" stroke="#070a08" stroke-width="8"/>
+      <rect x="16" y="16" width="262" height="34" fill="#2e5ea7"/>
+      <text x="28" y="41" class="tiny" fill="#f8f2d8">02 / LAB SCAN</text>
+      <text x="28" y="93" class="label" fill="#172017">COMPLETE CI</text>
+      <text x="28" y="128" class="card" fill="#59654d">BUILD + TEST MATRIX</text>
+      <text x="28" y="153" class="card" fill="#59654d">FAIL CLOSED</text>
+    </g>
+
+    <path d="M708 85h70" stroke="#ffdc5b" stroke-width="12"/>
+    <path d="m768 66 28 19-28 19" fill="#ffdc5b"/>
+
+    <g transform="translate(796)">
+      <rect width="294" height="170" fill="#f8f2d8" stroke="#070a08" stroke-width="8"/>
+      <rect x="16" y="16" width="262" height="34" fill="#4e8b55"/>
+      <text x="28" y="41" class="tiny" fill="#f8f2d8">03 / PROOF</text>
+      <text x="28" y="93" class="label" fill="#172017">STATUS SNAPSHOT</text>
+      <text x="28" y="128" class="card" fill="#59654d">EXACT COMMIT + RESULT</text>
+      <text x="28" y="153" class="card" fill="#59654d">NO BROWSER API LIMITS</text>
+    </g>
+
+    <path d="M1106 85h70" stroke="#ffdc5b" stroke-width="12"/>
+    <path d="m1166 66 28 19-28 19" fill="#ffdc5b"/>
+
+    <g transform="translate(1194)">
+      <rect width="294" height="170" fill="#f8f2d8" stroke="#070a08" stroke-width="8"/>
+      <rect x="16" y="16" width="262" height="34" fill="#ee4c47"/>
+      <text x="28" y="41" class="tiny" fill="#f8f2d8">04 / PUBLIC</text>
+      <text x="28" y="93" class="label" fill="#172017">SITE UPDATE</text>
+      <text x="28" y="128" class="card" fill="#59654d">LATEST 4 UP FRONT</text>
+      <text x="28" y="153" class="card" fill="#59654d">ALL HISTORY IN ARCHIVE</text>
+    </g>
+  </g>
+
+  <g transform="translate(82 480)">
+    <rect width="1488" height="228" rx="0" fill="#f8f2d8" stroke="#070a08" stroke-width="8" filter="url(#shadow)"/>
+    <rect x="16" y="16" width="1456" height="44" fill="#172017"/>
+    <text x="34" y="48" class="tiny" fill="#ffdc5b">GAME TRANSLATION TABLE // COMMITS BECOME READABLE PROGRESS</text>
+
+    <g transform="translate(28 86)">
+      <g><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FEAT</text><text x="18" y="77" class="label" fill="#ee4c47">NEW MOVE</text></g>
+      <g transform="translate(242)"><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FIX</text><text x="18" y="77" class="label" fill="#ee4c47">HP RESTORED</text></g>
+      <g transform="translate(484)"><rect width="218" height="104" fill="#fff8df" stroke="#2e5ea7" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">PERF</text><text x="18" y="77" class="label" fill="#2e5ea7">SPEED +1</text></g>
+      <g transform="translate(726)"><rect width="218" height="104" fill="#fff8df" stroke="#4e8b55" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">CI / TEST</text><text x="18" y="77" class="label" fill="#4e8b55">LAB VERIFIED</text></g>
+      <g transform="translate(968)"><rect width="218" height="104" fill="#fff8df" stroke="#9a5c3f" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">DOCS</text><text x="18" y="77" class="label" fill="#9a5c3f">FIELD NOTES</text></g>
+      <g transform="translate(1210)"><rect width="218" height="104" fill="#fff8df" stroke="#7254a8" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">REFACTOR</text><text x="18" y="77" class="label" fill="#7254a8">EVOLVED</text></g>
+    </g>
+  </g>
+
+  <g transform="translate(82 760)">
+    <rect width="1488" height="78" fill="#172017" stroke="#ffdc5b" stroke-width="5"/>
+    <circle cx="38" cy="39" r="11" fill="#ee4c47"/>
+    <text x="66" y="48" class="body" fill="#f8f2d8">ALL VERIFIED HISTORY + EVERY FUTURE PASSING COMMIT</text>
+    <text x="1450" y="48" class="small" text-anchor="end" fill="#ffdc5b">SOURCE: v2-rewrite</text>
+  </g>
+</svg>

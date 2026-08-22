@@ -18,6 +18,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
     shortSha: '1234567',
     message: 'feat(world): Open a new route',
     date: '2026-08-22T12:00:00Z',
+    author: 'Test Trainer',
     type: 'NEW MOVE',
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sourceSha}`,
   }]

@@ -58,14 +58,15 @@ if (activityOverride) {
     activity = []
   }
 } else {
-  const records = git('log', '-8', '--format=%H%x1f%cI%x1f%s').split('\n').filter(Boolean)
+  const records = git('log', '--format=%H%x1f%cI%x1f%an%x1f%s', commit || 'HEAD').split('\n').filter(Boolean)
   activity = records.map((record) => {
-    const [sha, date, message] = record.split('\x1f')
+    const [sha, date, author, message] = record.split('\x1f')
     return {
       sha,
       shortSha: sha.slice(0, 7),
       message,
       date,
+      author,
       type: activityType(message),
       url: `${repositoryUrl}/commit/${sha}`,
     }

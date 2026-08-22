@@ -46,8 +46,8 @@ return function(T)
   }
   local qualityHashes = {
     HIGH = "5058d6cd",
-    BALANCED = "b411b126",
-    LOW = "a1af34b0",
+    BALANCED = "66b8b0ee",
+    LOW = "57e034ae",
   }
 
   local syntheticTexture = { syntheticOwnedResource = true }

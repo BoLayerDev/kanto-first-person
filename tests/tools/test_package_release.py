@@ -252,6 +252,21 @@ class ReleaseGateTests(unittest.TestCase):
                 "assets/legacy/horizons/backdrop.png"
             )
         )
+        self.assertTrue(
+            PACKAGE_RELEASE.allowed_runtime_path(
+                "assets/legacy/horizons/backdrop-2048.png"
+            )
+        )
+        self.assertTrue(
+            PACKAGE_RELEASE.allowed_runtime_path(
+                "assets/legacy/horizons/backdrop-1024.png"
+            )
+        )
+        self.assertTrue(
+            PACKAGE_RELEASE.allowed_runtime_path(
+                "docs/legacy-panorama-inventory.json"
+            )
+        )
         self.assertFalse(
             PACKAGE_RELEASE.allowed_runtime_path("assets/roms/local.pem")
         )

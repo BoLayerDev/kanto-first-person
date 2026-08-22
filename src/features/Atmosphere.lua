@@ -2,10 +2,26 @@ local Atmosphere = {}
 Atmosphere.__index = Atmosphere
 
 local HORIZONS = {
-  KANTO = "assets/legacy/horizons/backdrop.png",
-  FUJI = "assets/legacy/horizons/backdrop2.png",
-  VALLEY = "assets/legacy/horizons/backdrop3.png",
-  CITY = "assets/legacy/horizons/backdrop4.png",
+  KANTO = {
+    HIGH = { path = "assets/legacy/horizons/backdrop.png", width = 4096 },
+    BALANCED = { path = "assets/legacy/horizons/backdrop-2048.png", width = 2048 },
+    LOW = { path = "assets/legacy/horizons/backdrop-1024.png", width = 1024 },
+  },
+  FUJI = {
+    HIGH = { path = "assets/legacy/horizons/backdrop2.png", width = 4096 },
+    BALANCED = { path = "assets/legacy/horizons/backdrop2-2048.png", width = 2048 },
+    LOW = { path = "assets/legacy/horizons/backdrop2-1024.png", width = 1024 },
+  },
+  VALLEY = {
+    HIGH = { path = "assets/legacy/horizons/backdrop3.png", width = 4096 },
+    BALANCED = { path = "assets/legacy/horizons/backdrop3-2048.png", width = 2048 },
+    LOW = { path = "assets/legacy/horizons/backdrop3-1024.png", width = 1024 },
+  },
+  CITY = {
+    HIGH = { path = "assets/legacy/horizons/backdrop4.png", width = 4096 },
+    BALANCED = { path = "assets/legacy/horizons/backdrop4-2048.png", width = 2048 },
+    LOW = { path = "assets/legacy/horizons/backdrop4-1024.png", width = 1024 },
+  },
 }
 
 local function packagedImage(context, path)
@@ -31,7 +47,9 @@ function Atmosphere:compile(context, buffer)
   if U.option(config, "horizon", true) then
     local choice = tostring(U.option(config, "horizon_art", "VALLEY")):upper()
     if not HORIZONS[choice] then choice = "VALLEY" end
-    local texture = packagedImage(context, HORIZONS[choice])
+    local qualityName = tostring(quality.resolved or "HIGH"):upper()
+    local variant = HORIZONS[choice][qualityName] or HORIZONS[choice].HIGH
+    local texture = packagedImage(context, variant.path)
     if texture then
       buffer:add("background", {
         kind = "mesh",
@@ -41,8 +59,8 @@ function Atmosphere:compile(context, buffer)
         texture = texture,
         geometry = {
           primitive = "panorama",
-          sourceWidth = 4096,
-          targetWidth = quality.panoramaWidth,
+          sourceWidth = variant.width,
+          targetWidth = variant.width,
           deepSkirt = true,
           distanceHaze = true,
         },

@@ -67,6 +67,7 @@ ROOT_FILES = (
     "THIRD_PARTY_NOTICES.md",
     "README.md",
     "CHANGELOG.md",
+    "docs/legacy-panorama-inventory.json",
 )
 RUNTIME_DIRS = ("src", "assets")
 ASSET_FILES = (
@@ -84,9 +85,17 @@ ASSET_FILES = (
     "assets/legacy/audio/sfx/sfx-shopdoor.mp3",
     "assets/legacy/audio/sfx/sfx-woodstep.mp3",
     "assets/legacy/horizons/backdrop.png",
+    "assets/legacy/horizons/backdrop-2048.png",
+    "assets/legacy/horizons/backdrop-1024.png",
     "assets/legacy/horizons/backdrop2.png",
+    "assets/legacy/horizons/backdrop2-2048.png",
+    "assets/legacy/horizons/backdrop2-1024.png",
     "assets/legacy/horizons/backdrop3.png",
+    "assets/legacy/horizons/backdrop3-2048.png",
+    "assets/legacy/horizons/backdrop3-1024.png",
     "assets/legacy/horizons/backdrop4.png",
+    "assets/legacy/horizons/backdrop4-2048.png",
+    "assets/legacy/horizons/backdrop4-1024.png",
     "assets/legacy/posters/posters-pokecenter.png",
     "assets/legacy/posters/posters-pokemart.png",
     "assets/legacy/posters/posters.png",

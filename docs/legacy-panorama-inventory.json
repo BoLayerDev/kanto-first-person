@@ -1,0 +1,114 @@
+{
+  "files": [
+    {
+      "derived_from": null,
+      "height": 256,
+      "path": "assets/legacy/horizons/backdrop.png",
+      "quality": "HIGH",
+      "sha256": "3617b1bd09d9db3b2649c766ab8f7aadc884bdf2c51d5988f541ba12023d0603",
+      "width": 4096
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop.png",
+      "height": 128,
+      "path": "assets/legacy/horizons/backdrop-2048.png",
+      "quality": "BALANCED",
+      "sha256": "91d8aa07d216b80d5c8006e9cb897b640c139a77e1a478a8ba163daf8ae3098e",
+      "width": 2048
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop.png",
+      "height": 64,
+      "path": "assets/legacy/horizons/backdrop-1024.png",
+      "quality": "LOW",
+      "sha256": "b68e529dc41fa7e2c71cc7c1229170aa4f51dd39129ede0d5f86c5b72173f82e",
+      "width": 1024
+    },
+    {
+      "derived_from": null,
+      "height": 256,
+      "path": "assets/legacy/horizons/backdrop2.png",
+      "quality": "HIGH",
+      "sha256": "238d0416dc42b4f5cd52f19860a79328cdf74673e12f7eb1082805c07db8402e",
+      "width": 4096
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop2.png",
+      "height": 128,
+      "path": "assets/legacy/horizons/backdrop2-2048.png",
+      "quality": "BALANCED",
+      "sha256": "f7370bdf1dc428d72fb0ca0751baabd25b4abd5bd30f7c6231957e7ef716d04d",
+      "width": 2048
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop2.png",
+      "height": 64,
+      "path": "assets/legacy/horizons/backdrop2-1024.png",
+      "quality": "LOW",
+      "sha256": "7d8479c8e86d20be0a0ac7c24298541ff227accbc8d6d51db95dec0e543e0984",
+      "width": 1024
+    },
+    {
+      "derived_from": null,
+      "height": 256,
+      "path": "assets/legacy/horizons/backdrop3.png",
+      "quality": "HIGH",
+      "sha256": "f7a8f8d4d4f78b7bef39d4ec392badf564e6cbea2d43dd6b336a0593dfcd7b4b",
+      "width": 4096
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop3.png",
+      "height": 128,
+      "path": "assets/legacy/horizons/backdrop3-2048.png",
+      "quality": "BALANCED",
+      "sha256": "8f4f3cbad8517e3340f549a962302a9825458cada1a9277b62d8aceecb72da48",
+      "width": 2048
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop3.png",
+      "height": 64,
+      "path": "assets/legacy/horizons/backdrop3-1024.png",
+      "quality": "LOW",
+      "sha256": "5b324c9d21a80141504d8e0e3c5232e9d202eb208b687a0e024108d866898e38",
+      "width": 1024
+    },
+    {
+      "derived_from": null,
+      "height": 256,
+      "path": "assets/legacy/horizons/backdrop4.png",
+      "quality": "HIGH",
+      "sha256": "f276668b609b9828476858951e8a3d1843af025f5f58da79cb2ded29df4b560a",
+      "width": 4096
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop4.png",
+      "height": 128,
+      "path": "assets/legacy/horizons/backdrop4-2048.png",
+      "quality": "BALANCED",
+      "sha256": "bc89136ef43eca8710e9b3e9c3a5d11a105fccbb224c6f6ae7ae3c89420313aa",
+      "width": 2048
+    },
+    {
+      "derived_from": "assets/legacy/horizons/backdrop4.png",
+      "height": 64,
+      "path": "assets/legacy/horizons/backdrop4-1024.png",
+      "quality": "LOW",
+      "sha256": "6a688621923ee2325975824edd27108a02101eb00a3ee06d42e59f5391076733",
+      "width": 1024
+    }
+  ],
+  "generation": {
+    "pillow_version": "12.1.0",
+    "png_compress_level": 9,
+    "png_optimize": false,
+    "resampling": "LANCZOS",
+    "tool": "tools/generate_panorama_variants.py"
+  },
+  "quality_widths": {
+    "BALANCED": 2048,
+    "HIGH": 4096,
+    "LOW": 1024
+  },
+  "schema": 1,
+  "scope": "public legacy panorama inventory"
+}

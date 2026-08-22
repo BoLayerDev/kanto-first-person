@@ -51,7 +51,7 @@ Blue, and Yellow.
 
 | Legacy behavior to preserve | v2 decision | Current evidence still needed |
 | --- | --- | --- |
-| KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Exact name-to-asset map, tiling, and all quality widths |
+| KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Name-to-asset and HIGH/BALANCED/LOW file selection are locked by tests and a public hash inventory; GPU tiling still needs review |
 | Three cloud decks | Represented | Parallax and day/night blending |
 | Stars, nebula, twinkle, and shooting stars | Represented | Night timing and deterministic seed tests |
 | Distant birds and derived local bird frames | Open | Import transform exists, but no public runtime resolver emits them; alpha control is hidden |

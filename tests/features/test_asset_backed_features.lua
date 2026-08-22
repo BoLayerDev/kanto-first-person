@@ -10,11 +10,11 @@ return function(T)
     return CommandBuffer.new({ hashCommand = PacketHash.hashCommand })
   end
 
-  local function context(world, values, assets)
+  local function context(world, values, assets, quality)
     return {
       world = world,
       config = values or {},
-      quality = { density = 1, resolved = "HIGH", panoramaWidth = 4096 },
+      quality = quality or { density = 1, resolved = "HIGH", panoramaWidth = 4096 },
       services = { assets = assets, capabilities = {} },
       checkpoint = function() end,
     }
@@ -53,6 +53,40 @@ return function(T)
     T.equal(requested[1], "assets/legacy/horizons/backdrop4.png")
     T.falsy(horizon.geometry.asset)
     T.falsy(horizon.geometry.path)
+  end)
+
+  T.test("horizon selects one locked packaged texture for each quality", function()
+    local arts = {
+      { choice = "KANTO", name = "kanto", file = "backdrop" },
+      { choice = "FUJI", name = "fuji", file = "backdrop2" },
+      { choice = "VALLEY", name = "valley", file = "backdrop3" },
+      { choice = "CITY", name = "city", file = "backdrop4" },
+    }
+    local tiers = {
+      { name = "HIGH", suffix = "", width = 4096 },
+      { name = "BALANCED", suffix = "-2048", width = 2048 },
+      { name = "LOW", suffix = "-1024", width = 1024 },
+    }
+    for _, art in ipairs(arts) do
+      for _, tier in ipairs(tiers) do
+        local requested
+        local image = {}
+        local assets = { image = function(_, path) requested = path return image end }
+        local buffer = newBuffer()
+        Atmosphere.new({ util = Util }):compile(context(outdoor(), {
+          horizon = true, horizon_art = art.choice, clouds = false, night_sky = false,
+        }, assets, {
+          density = 1, resolved = tier.name, panoramaWidth = tier.width,
+        }), buffer)
+        local horizon = findCommand(
+          buffer:seal().phases.background, "horizon:" .. art.name)
+        T.equal(requested, "assets/legacy/horizons/" .. art.file
+          .. tier.suffix .. ".png")
+        T.equal(horizon.texture, image)
+        T.equal(horizon.geometry.sourceWidth, tier.width)
+        T.equal(horizon.geometry.targetWidth, tier.width)
+      end
+    end
   end)
 
   T.test("horizon falls back to a packaged choice and omits unavailable images", function()

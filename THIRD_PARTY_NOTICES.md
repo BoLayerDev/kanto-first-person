@@ -13,4 +13,10 @@ contains identifying information and is not published. The redacted,
 hash-bound approval record is `docs/rights-approval.json`. No attribution is
 required by that grant.
 
+The public panorama inventory is
+`docs/legacy-panorama-inventory.json`. It records the four preserved 4096-pixel
+source panoramas and their deterministic 2048-pixel and 1024-pixel derived
+variants, with dimensions, source relationships, and SHA-256 values. It does
+not contain the private grant or identifying evidence.
+
 No Pokémon ROM, extracted Gen1recomp cache, save file, or ROM-derived image may be distributed with this project.

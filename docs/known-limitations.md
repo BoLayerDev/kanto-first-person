@@ -18,11 +18,14 @@ a waiver for a failed release gate.
 
 - The public suite is ROM-free and does not prove real-game visual output.
 - Yellow is the only private game import currently available for local review.
-  KFP was disabled for the first Battle Art capture. Dramaless loaded and
-  attached KFP, but the selected Valley horizon was absent from the live scene.
-  ROM-free production tracing accepts the expected outdoor and indoor draw
-  packets, so live diagnostic and GPU review remain open. Red and Blue remain
-  open.
+  A diagnostic restart proved that both host PR branches activate KFP. The live
+  Dramaless scene showed the panorama with incorrect placement and repeated
+  bands. The live Battle Art scene showed oversized translucent cloud and
+  canopy geometry. Before that restart, the Dramaless Mart also lacked visible
+  KFP walls and ceilings. Source fixes now correct the panorama contract,
+  cloud ownership and alpha rules, canopy cutaway coordinates, and interior
+  cutaway behavior. A new live restart and capture must prove those fixes.
+  Red and Blue remain open.
 - Represented effects still need host/GPU review. This includes interiors,
   caves, map edges, weather, skies, camera behavior, audio, battles, shadows,
   quality tiers, and transitions.

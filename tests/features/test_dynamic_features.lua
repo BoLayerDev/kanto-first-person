@@ -69,6 +69,20 @@ return function(T)
     T.truthy(present.insects)
   end)
 
+  T.test("forest canopy packets carry explicit cutaway cell coordinates", function()
+    local buffer = newBuffer()
+    Flora.new({ util = Util }):compile(context, buffer)
+    local packet = buffer:seal()
+    local canopy
+    for _, command in ipairs(packet.phases.opaque_after_terrain) do
+      if command.key == "canopy" then canopy = command end
+    end
+    T.truthy(canopy)
+    T.equal(canopy.prototype.cutaway, true)
+    T.equal(canopy.items[1].cellX, 0)
+    T.equal(canopy.items[1].cellZ, 0)
+  end)
+
   T.test("deterministic emissions do not touch global random state", function()
     math.randomseed(1234)
     local expected = math.random()

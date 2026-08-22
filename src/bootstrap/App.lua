@@ -185,7 +185,26 @@ function App:_makeResources()
       and type(self.mod.assets) == "table"
       and type(self.mod.assets.path) == "function" then
     newImage = function(relative)
-      return love.graphics.newImage(self.mod.assets:path(relative))
+      local image = love.graphics.newImage(self.mod.assets:path(relative))
+      local ok, err = pcall(function()
+        if type(image.setFilter) == "function" then
+          image:setFilter("nearest", "nearest")
+        end
+        if type(image.setWrap) == "function" then
+          if relative:match("^assets/legacy/horizons/") then
+            image:setWrap("repeat", "clamp")
+          elseif relative:match("^assets/legacy/sky/") then
+            image:setWrap("repeat", "repeat")
+          else
+            image:setWrap("clamp", "clamp")
+          end
+        end
+      end)
+      if not ok then
+        if type(image.release) == "function" then pcall(image.release, image) end
+        error("packaged texture configuration failed: " .. tostring(err), 0)
+      end
+      return image
     end
   end
   self.textureCatalog = self.modules.TextureCatalog.new({

@@ -255,6 +255,17 @@ return function(T)
     T.falsy(ok)
     T.truthy(err:match("not in the API v1 baseline"))
 
+    command = plane()
+    command.phase = "background"
+    command.cacheKey = draw_key("background", 1)
+    command.geometry = {
+      primitive = "cloud_layer", layer = 1, parallax = 0.14,
+      density = 1, seed = 11,
+    }
+    ok, err = API.validate_draw_command(command)
+    T.falsy(ok)
+    T.truthy(err:match("texture is required"))
+
     ok, err = API.validate_draw_command({
       schemaVersion = 1,
       cacheKey = draw_key("translucent_after_actors", 1),

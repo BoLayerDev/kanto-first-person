@@ -267,6 +267,12 @@ class ReleaseGateTests(unittest.TestCase):
                 "docs/legacy-panorama-inventory.json"
             )
         )
+        self.assertTrue(
+            PACKAGE_RELEASE.allowed_runtime_path("assets/legacy/sky/clouds-1.png")
+        )
+        self.assertTrue(
+            PACKAGE_RELEASE.allowed_runtime_path("docs/legacy-sky-inventory.json")
+        )
         self.assertFalse(
             PACKAGE_RELEASE.allowed_runtime_path("assets/roms/local.pem")
         )

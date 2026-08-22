@@ -19,4 +19,9 @@ source panoramas and their deterministic 2048-pixel and 1024-pixel derived
 variants, with dimensions, source relationships, and SHA-256 values. It does
 not contain the private grant or identifying evidence.
 
+The public sky inventory is `docs/legacy-sky-inventory.json`. It records three
+deterministic, binary-coverage cloud textures derived from the authorized
+legacy cloud design. Their generator uses a local deterministic random stream;
+it does not read game data or change Lua's global random state.
+
 No Pokémon ROM, extracted Gen1recomp cache, save file, or ROM-derived image may be distributed with this project.

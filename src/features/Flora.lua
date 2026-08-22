@@ -43,7 +43,8 @@ function Flora:compile(context, buffer)
     if U.option(config, "forest_canopy", true) and U.hasTag(cell, "forest") then
       instance(buffer, "canopy", U.material(cell, "flora:canopy"),
         { primitive = "canopy", width = size, cutaway = true },
-        { x = x, y = y + size * 1.5, z = z, seed = seed })
+        { x = x, y = y + size * 1.5, z = z, seed = seed,
+          cellX = cell.x, cellZ = cell.z })
     end
     if U.option(config, "hanging_vines", true) and U.hasTag(cell, "vine")
         and U.keep(quality.density, seed, "vine") then

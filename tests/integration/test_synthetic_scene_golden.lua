@@ -32,22 +32,22 @@ return function(T)
     -- diff. These hashes do not represent pixel output.
     indoor = "31ee13fa",
     cave = "8df56caa",
-    forest = "5058d6cd",
-    city_lavender = "73db7b05",
-    route_neighbor_edge = "ed558606",
-    shore = "0ebedbc6",
-    mountain = "a1d4cc24",
-    day = "9b65491d",
-    night = "34c605c8",
-    rain = "a6cc3119",
-    storm = "dc15c679",
-    battle_supported = "dc51741f",
-    battle_unsupported = "693ec1e5",
+    forest = "a092c93e",
+    city_lavender = "4860b811",
+    route_neighbor_edge = "5d90c273",
+    shore = "fe661013",
+    mountain = "c29907e9",
+    day = "eb1485f0",
+    night = "62c542a2",
+    rain = "71ac6557",
+    storm = "a9f3fab7",
+    battle_supported = "89acb15b",
+    battle_unsupported = "3777fe49",
   }
   local qualityHashes = {
-    HIGH = "5058d6cd",
-    BALANCED = "66b8b0ee",
-    LOW = "57e034ae",
+    HIGH = "a092c93e",
+    BALANCED = "157da35f",
+    LOW = "60e1271f",
   }
 
   local syntheticTexture = { syntheticOwnedResource = true }

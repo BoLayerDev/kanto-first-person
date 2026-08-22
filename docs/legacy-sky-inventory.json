@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "alpha": "binary ordered coverage",
+      "cut": 0.6,
+      "height": 128,
+      "layer": 1,
+      "path": "assets/legacy/sky/clouds-1.png",
+      "seed": 11,
+      "sha256": "f31144d0e9ea68c235637dc5278845796dee6a1c1cf868ae0b45d6bc6fb50492",
+      "width": 128
+    },
+    {
+      "alpha": "binary ordered coverage",
+      "cut": 0.66,
+      "height": 128,
+      "layer": 2,
+      "path": "assets/legacy/sky/clouds-2.png",
+      "seed": 29,
+      "sha256": "653ff5ff753fb0c6615a02d42f2fa16b4eba46a475006b4ae4f18e6ccdef9e58",
+      "width": 128
+    },
+    {
+      "alpha": "binary ordered coverage",
+      "cut": 0.72,
+      "height": 128,
+      "layer": 3,
+      "path": "assets/legacy/sky/clouds-3.png",
+      "seed": 47,
+      "sha256": "e9bce7d4305776ce7b90f1fbe8e716a782a03592603c6fe8919e3fa88d4dc5a2",
+      "width": 128
+    }
+  ],
+  "generation": {
+    "coverage": "4x4 ordered binary alpha",
+    "pillow_version": "12.1.0",
+    "png_compress_level": 9,
+    "png_optimize": false,
+    "random": "Park-Miller 48271",
+    "tool": "tools/generate_cloud_textures.py"
+  },
+  "schema": 1,
+  "scope": "public legacy-derived sky texture inventory"
+}

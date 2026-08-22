@@ -85,7 +85,8 @@ open · 🔒 unavailable in this alpha
 | 🎧 **Camera and sound** | Head bob, jump feel, doorway step, FOV, depth intent, ambient beds | 🟡 🔴 |
 | 🌳 **Battle and shadows** | Battle props and corrected object shadows | 🔵 🔴 |
 | 🐦 **Wildlife** | Birds and ground flocks | 🔒 |
-| 💡 **Open controls** | Third-person ceiling, lamplight, debug HUD | 🔒 |
+| 🏠 **Ceiling controls** | Third-person and diorama NONE, CUTAWAY, and FULL modes; beams and roses | 🟡 🔴 |
+| 💡 **Open controls** | Lamplight and debug HUD | 🔒 |
 | 🦘 **Ledge Leap** | Corrected directional policy | 🔒 |
 
 `Represented` means a ROM-free test can inspect a bounded v2 command. It does
@@ -322,9 +323,9 @@ One open required gate keeps the project prerelease.
 ## 📜 Rights, credits, and Poké Ball fine print
 
 Independently authored v2 source is MIT licensed. Legacy panoramas, posters,
-and audio remain outside MIT and are covered by a separate express creator
-grant. Only its redacted hash-bound approval record is public; the signed
-original stays private.
+audio, and legacy-derived cloud textures remain outside MIT and are covered by
+a separate express creator grant. Only its redacted hash-bound approval record
+is public; the signed original stays private.
 
 Never commit or package ROMs, saves, imported cache content, ROM-derived PNG
 files, credentials, or private evidence. See

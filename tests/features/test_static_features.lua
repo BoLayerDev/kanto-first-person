@@ -187,6 +187,12 @@ return function(T)
     T.truthy(present.tall_tree_trunks)
     T.truthy(present.tall_tree_canopies)
     T.falsy(present.raised_trees)
+    for _, command in ipairs(packet.phases.opaque_after_terrain) do
+      if command.key == "tall_tree_canopies" then
+        T.equal(command.items[1].cellX, 0)
+        T.equal(command.items[1].cellZ, 0)
+      end
+    end
     validatePortable(packet)
   end)
 

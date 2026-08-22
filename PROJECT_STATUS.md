@@ -12,8 +12,9 @@ Last updated: 2026-08-21
   (`70d7b6`), baseline `dev` (`06e06e3`), and current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Current automated gates: 222 Lua tests, 81 Lua syntax checks, 21 Python
-  policy tests, repository policy, and microbenchmarks pass.
+- Current common-source gates pass: 227 Lua tests, 81 Lua syntax checks,
+  28 Python tests, repository policy, deterministic cloud generation, and
+  microbenchmarks.
 
 ## Active workstreams
 
@@ -29,21 +30,20 @@ Last updated: 2026-08-21
 - Both adapters are pushed to `BoLayerDev` forks and submitted upstream. Battle
   Art PR #29 and Dramaless PR #47 await host-owner review, merge, versioning,
   release, and real GPU testing.
-- Current adapter evidence commits are `8f1af4e` (Battle Art) and `8e045ad`
-  (Dramaless). Canonical patches are outside Git
-  under `Kanto First Person Evidence\host-patches`.
+- New Battle Art and Dramaless visual corrections are under final local review.
+  The PR heads and canonical patch hashes will be refreshed only after the
+  common sky contract and both host suites pass together.
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
-- Two isolated Yellow QA profiles were refreshed to KFP `ee5b735` and launched
-  with the exact Battle Art and Dramaless PR branches. Runtime inspection found
-  that KFP was disabled for Battle Art, so that scene is a host-only baseline.
-  Dramaless loaded KFP, registered all 54 option rows, and attached in a
-  production Loader probe, but its live outdoor scene did not show the selected
-  Valley horizon. A ROM-free production-path trace submitted the horizon and
-  indoor geometry without errors, which narrows the open fault to live scene
-  state or GPU presentation. A diagnostic restart and the full matrix remain
-  open. Red and Blue imports are not present.
+- Two isolated Yellow QA profiles run the Battle Art and Dramaless PR branches.
+  A diagnostic restart proved that both attach KFP. Live captures then exposed
+  bad panorama placement and repeated bands in Dramaless, plus oversized
+  translucent cloud and canopy geometry in Battle Art. A pre-restart Dramaless
+  Mart capture also lacked KFP walls and ceilings. The common packet contract
+  and both host renderers now have source-level corrections under review. A
+  controlled restart at the final commits must verify the outdoor and interior
+  results. Red and Blue imports are not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.

@@ -68,6 +68,7 @@ ROOT_FILES = (
     "README.md",
     "CHANGELOG.md",
     "docs/legacy-panorama-inventory.json",
+    "docs/legacy-sky-inventory.json",
 )
 RUNTIME_DIRS = ("src", "assets")
 ASSET_FILES = (
@@ -99,6 +100,9 @@ ASSET_FILES = (
     "assets/legacy/posters/posters-pokecenter.png",
     "assets/legacy/posters/posters-pokemart.png",
     "assets/legacy/posters/posters.png",
+    "assets/legacy/sky/clouds-1.png",
+    "assets/legacy/sky/clouds-2.png",
+    "assets/legacy/sky/clouds-3.png",
 )
 HEX_64 = re.compile(r"^[0-9a-f]{64}$")
 FINGERPRINT = re.compile(r"^[0-9A-F]{40,64}$")

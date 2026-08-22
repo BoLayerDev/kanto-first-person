@@ -51,8 +51,8 @@ Blue, and Yellow.
 
 | Legacy behavior to preserve | v2 decision | Current evidence still needed |
 | --- | --- | --- |
-| KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Name-to-asset and HIGH/BALANCED/LOW file selection are locked by tests and a public hash inventory; GPU tiling still needs review |
-| Three cloud decks | Represented | Parallax and day/night blending |
+| KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Name-to-asset and HIGH/BALANCED/LOW file selection are locked by tests and a public hash inventory; physical scale is quality-independent; GPU placement still needs review |
+| Three cloud decks | Represented | KFP-owned deterministic binary masks, repeat sampling, borrowed-resource ownership, and packet validation are tested; GPU height, parallax, and day/night blending remain open |
 | Stars, nebula, twinkle, and shooting stars | Represented | Night timing and deterministic seed tests |
 | Distant birds and derived local bird frames | Open | Import transform exists, but no public runtime resolver emits them; alpha control is hidden |
 | Ground flocks that reset by map | Open | No executable packet is emitted; alpha control is hidden |
@@ -60,7 +60,7 @@ Blue, and Yellow.
 | Rain, storms, lightning, umbrellas, puddles, splashes, and rainbows | Represented | Weather transitions and photosensitivity review |
 | Lavender fog and the 1.60 veil | Represented | Lavender map tags and post-process cost |
 | Night lamplight | Open | No runtime consumer; alpha control is hidden |
-| Forest canopy, light wells, hanging vines, and sun shafts | Represented | Cutaway, sway, interaction, and mesh-lifetime tests |
+| Forest canopy, light wells, hanging vines, and sun shafts | Represented | Canopy items carry explicit map-cell coordinates for host cutaways; GPU placement, sway, interaction, and mesh-lifetime review remain open |
 | Grass height, wind, insects, leaves, seeds, drips, dust, spray, and smoke | Represented | Fixed-capacity pool and density policy tests |
 
 ## Audio and camera

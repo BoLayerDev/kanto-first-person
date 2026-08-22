@@ -111,13 +111,51 @@ return function(T)
     local assets = { image = function() error("decode failed") end }
     local buffer = newBuffer()
     Atmosphere.new({ util = Util }):compile(context(outdoor(), {
-      horizon = true, clouds = true, night_sky = false,
+      horizon = true, clouds = true, night_sky = true,
     }, assets), buffer)
     local packet = buffer:seal()
-    T.equal(#packet.phases.background, 3)
+    T.equal(#packet.phases.background, 1)
+    T.equal(packet.phases.background[1].material, "sky:stars")
     for _, command in ipairs(packet.phases.background) do
       T.falsy(command.material:match("^horizon:"))
+      T.falsy(command.material:match("^sky:clouds:"))
     end
+  end)
+
+  T.test("cloud decks borrow three packaged binary-coverage textures", function()
+    local requested, images = {}, { {}, {}, {} }
+    local assets = {
+      image = function(_, path)
+        requested[#requested + 1] = path
+        local layer = tonumber(path:match("clouds%-(%d)%.png$"))
+        return layer and images[layer] or nil
+      end,
+    }
+    local buffer = newBuffer()
+    Atmosphere.new({ util = Util }):compile(context(outdoor(), {
+      horizon = false, clouds = true, night_sky = false,
+    }, assets), buffer)
+    local packet = buffer:seal()
+    T.deepEqual(requested, {
+      "assets/legacy/sky/clouds-1.png",
+      "assets/legacy/sky/clouds-2.png",
+      "assets/legacy/sky/clouds-3.png",
+    })
+    T.equal(#packet.phases.background, 3)
+    for layer, command in ipairs(packet.phases.background) do
+      T.equal(command.material, "sky:clouds:" .. layer)
+      T.equal(command.texture, images[layer])
+      T.equal(command.geometry.layer, layer)
+    end
+  end)
+
+  T.test("missing cloud textures omit misleading untextured geometry", function()
+    local assets = { image = function() return nil, "not_available" end }
+    local buffer = newBuffer()
+    Atmosphere.new({ util = Util }):compile(context(outdoor(), {
+      horizon = false, clouds = true, night_sky = false,
+    }, assets), buffer)
+    T.equal(#buffer:seal().phases.background, 0)
   end)
 
   T.test("poster batches use authorized textures and split by texture choice", function()

@@ -24,6 +24,12 @@ local HORIZONS = {
   },
 }
 
+local CLOUD_TEXTURES = {
+  "assets/legacy/sky/clouds-1.png",
+  "assets/legacy/sky/clouds-2.png",
+  "assets/legacy/sky/clouds-3.png",
+}
+
 local function packagedImage(context, path)
   local services = type(context) == "table" and context.services or nil
   local assets = type(services) == "table" and services.assets or nil
@@ -70,19 +76,23 @@ function Atmosphere:compile(context, buffer)
 
   if U.option(config, "clouds", true) then
     for layer = 1, 3 do
-      buffer:add("background", {
-        kind = "mesh",
-        owner = self.id,
-        material = "sky:clouds:" .. layer,
-        sortKey = "10:clouds:" .. layer,
-        geometry = {
-          primitive = "cloud_layer",
-          layer = layer,
-          parallax = 0.08 + layer * 0.06,
-          density = quality.density,
-          seed = U.hash(world.id, "clouds", layer),
-        },
-      })
+      local texture = packagedImage(context, CLOUD_TEXTURES[layer])
+      if texture then
+        buffer:add("background", {
+          kind = "mesh",
+          owner = self.id,
+          material = "sky:clouds:" .. layer,
+          sortKey = "10:clouds:" .. layer,
+          texture = texture,
+          geometry = {
+            primitive = "cloud_layer",
+            layer = layer,
+            parallax = 0.08 + layer * 0.06,
+            density = quality.density,
+            seed = U.hash(world.id, "clouds", layer),
+          },
+        })
+      end
     end
   end
 

@@ -12,6 +12,10 @@
   packets, deterministic batching, bounded diagnostics, LRU, scheduling, and
   exactly-once resource ownership.
 - Added host-neutral feature intent for static and dynamic 1.60 systems.
+- Added visible NONE, CUTAWAY, and FULL third-person/diorama ceiling policies,
+  plus portable ceiling beams and roses.
+- Added deterministic KFP-owned binary cloud masks, resolution-independent
+  panorama rules, and explicit canopy cell coordinates for safe host cutaways.
 - Added ROM-free core, companion, render, feature, config, and gameplay tests.
 - Added whole-snapshot resource and work budgets, a frozen 23-command host
   fixture, and local source-tested adapters for Battle Art and Dramaless Shape.

@@ -220,8 +220,14 @@ return function(T)
         timer = { getTime = function() ticks = ticks + 1; return ticks / 1000 end },
         graphics = {
           newImage = function(path)
-            local image = { path = path, releases = 0 }
+            local image = { path = path, releases = 0, filters = {}, wraps = {} }
             function image:release() self.releases = self.releases + 1 end
+            function image:setFilter(minimum, maximum)
+              self.filters = { minimum, maximum }
+            end
+            function image:setWrap(horizontal, vertical)
+              self.wraps = { horizontal, vertical }
+            end
             images[#images + 1] = image
             return image
           end,
@@ -266,12 +272,18 @@ return function(T)
         world = {}, camera = {}, frame = {}, materials = {}, draw = draw,
       })
       T.truthy(captured)
-      T.equal(#images, 1)
+      T.equal(#images, 4)
       T.equal(captured.texture, images[1])
       T.falsy(captured.geometry.asset)
-      T.equal(images[1].releases, 0)
+      T.deepEqual(images[1].filters, { "nearest", "nearest" })
+      T.deepEqual(images[1].wraps, { "repeat", "clamp" })
+      for index = 2, 4 do
+        T.deepEqual(images[index].filters, { "nearest", "nearest" })
+        T.deepEqual(images[index].wraps, { "repeat", "repeat" })
+      end
+      for _, image in ipairs(images) do T.equal(image.releases, 0) end
       T.truthy(dispatcher:dispose({}, "texture_test"))
-      T.equal(images[1].releases, 1)
+      for _, image in ipairs(images) do T.equal(image.releases, 1) end
     end)
     love = previousLove
     if not ok then error(problem, 0) end

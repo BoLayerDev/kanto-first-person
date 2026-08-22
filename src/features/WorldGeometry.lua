@@ -49,7 +49,8 @@ function WorldGeometry:compile(context, buffer)
       instance(buffer, "opaque_after_terrain", "tall_tree_canopies", self.id,
         U.material(cell, "world:tree"),
         { primitive = "canopy", width = size * 1.25, cutaway = true },
-        { x = x, y = y + size * 1.5, z = z, seed = seed })
+        { x = x, y = y + size * 1.5, z = z, seed = seed,
+          cellX = cell.x, cellZ = cell.z })
     end
     if U.option(config, "mountain_peaks", true)
         and (U.hasTag(cell, "mountain") or U.hasTag(cell, "summit")) then

@@ -486,20 +486,25 @@ a {
 .home-vitals small,
 .home-vitals b {
   display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .home-vitals small {
   margin-bottom: 0.35rem;
+  overflow: visible;
   color: var(--game-mid);
-  font-size: clamp(0.32rem, 0.4vw, 0.4rem);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.48rem, 0.52vw, 0.54rem);
+  font-weight: 900;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
 }
 
 .home-vitals b {
+  overflow: hidden;
   font-size: clamp(0.4rem, 0.52vw, 0.52rem);
   line-height: 1.45;
+  text-overflow: ellipsis;
 }
 
 .activity-log {
@@ -2005,7 +2010,7 @@ a {
   }
 
   .menu-window > button {
-    min-height: 64px;
+    min-height: 48px;
     padding-right: 0.4rem;
     padding-left: 0.4rem;
     font-size: 0.6875rem;

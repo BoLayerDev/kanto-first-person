@@ -107,9 +107,6 @@ test.describe('mobile field terminal', () => {
     await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toBeFocused()
     await expect(page.getByRole('heading', { name: 'The world gets bigger.' })).toBeVisible()
 
-    await page.keyboard.press('Enter')
-    await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toHaveAttribute('aria-current', 'page')
-
     await page.keyboard.press('x')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
@@ -161,4 +158,28 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.position).toBe('fixed')
   expect(layout.canvas.width).toBe(1440)
   expect(layout.canvas.height).toBe(900)
+})
+
+test('uses standard desktop open and back keys', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  await page.keyboard.press('Tab')
+  await page.keyboard.press('ArrowDown')
+
+  const enterPopupPromise = page.waitForEvent('popup')
+  await page.keyboard.press('Enter')
+  const enterPopup = await enterPopupPromise
+  await expect(enterPopup).toHaveURL(/\/docs\/feature-parity\.md$/)
+  await enterPopup.close()
+
+  const spacePopupPromise = page.waitForEvent('popup')
+  await page.keyboard.press('Space')
+  const spacePopup = await spacePopupPromise
+  await expect(spacePopup).toHaveURL(/\/docs\/feature-parity\.md$/)
+  await spacePopup.close()
+
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 })

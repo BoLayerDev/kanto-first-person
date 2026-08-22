@@ -155,6 +155,8 @@ function OptionsMenu() {
       if (event.altKey || event.ctrlKey || event.metaKey) return
       if (event.target instanceof HTMLAnchorElement) return
       const key = event.key.toLowerCase()
+      const isMenuButton = event.target instanceof HTMLButtonElement
+        && menuButtons.current.includes(event.target)
       if (['arrowup', 'w'].includes(key)) {
         event.preventDefault()
         const nextIndex = (menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length
@@ -173,10 +175,12 @@ function OptionsMenu() {
         event.preventDefault()
         const index = EDITIONS.indexOf(edition)
         setEdition(EDITIONS[(index + 1) % EDITIONS.length])
-      } else if (key === 'z') {
+      } else if (['enter', ' ', 'z'].includes(key)) {
+        if (event.target instanceof HTMLButtonElement && !isMenuButton && key !== 'z') return
         event.preventDefault()
         window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
       } else if (['escape', 'x'].includes(key)) {
+        event.preventDefault()
         setMenuIndex(0)
         menuButtons.current[0]?.focus()
       }
@@ -257,8 +261,8 @@ function OptionsMenu() {
       <footer className="control-strip">
         <div><kbd>↑↓</kbd><span>SELECT</span></div>
         <div><kbd>←→</kbd><span>VERSION</span></div>
-        <div><kbd>Z</kbd><span>OPEN</span></div>
-        <div><kbd>X</kbd><span>BACK</span></div>
+        <div><kbd>ENTER</kbd><span>OPEN</span></div>
+        <div><kbd>ESC</kbd><span>BACK</span></div>
         <p>Independent fan project · No ROM data · Not affiliated with Nintendo, Game Freak, Creatures, or The Pokémon Company.</p>
       </footer>
     </main>

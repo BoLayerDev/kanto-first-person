@@ -27,11 +27,12 @@ Last updated: 2026-08-22
 - Companion API lane: `companion/`, API specification, and contract fixtures.
 - Core lane: `src/core/`, core tests, test harness, and CI.
 - Config/gameplay lane: `src/config/`, `src/gameplay/`, option migration, parity, and tests.
-- Website showcase lane: `website/` and the Pages workflow on
-  `feature/kanto-field-terminal`. The scroll-driven 3D journey, scanner,
-  Red/Blue/Yellow atmosphere switch, field guides, and support center are
-  implemented. The local production build passes. Pages publication and
-  browser/mobile QA remain open.
+- Website showcase lane: `website/` and the Pages workflow are merged at
+  `59abbd8`. The scroll-driven 3D journey, scanner, Red/Blue/Yellow atmosphere
+  switch, field guides, and support center are published at
+  `https://bolayerdev.github.io/kanto-first-person/`. The production workflow,
+  HTTPS route, and all built asset requests pass. Desktop interaction,
+  renderer, and mobile QA remain open.
 
 ## Known risks
 
@@ -68,9 +69,9 @@ Last updated: 2026-08-22
   ground flocks stay hidden and emit no packet. The bounded upstream contract
   is in `docs/derived-asset-runtime-api-proposal.md`.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
-- The website has compile evidence only. Its live canvas, desktop interaction,
-  mobile layout, renderer budget, and production Pages route have not passed
-  browser QA.
+- The website production route and static asset delivery pass HTTP checks. Its
+  live canvas, desktop interaction, mobile layout, and renderer budget have not
+  passed browser QA.
 
 ## Recovery point
 
@@ -102,8 +103,8 @@ Last updated: 2026-08-22
 5. Create or import a protected GPG release key, back it up, and record only
    its public fingerprint in repository configuration and release evidence.
 6. Complete performance, leak, platform, reproducibility, and uninstall gates.
-7. Review and merge `feature/kanto-field-terminal`, enable GitHub Pages with
-   GitHub Actions, then run separately approved desktop and mobile website QA.
+7. Run separately approved desktop and mobile website QA, then record canvas
+   diagnostics and repair any visual or interaction findings.
 
 ## Completion rule
 

@@ -32,6 +32,20 @@ external frame-time capture for the host-only comparison and frame regression.
 
 The public corpus uses synthetic ROM-free maps for indoor, cave, forest, city, route, shore, mountain, Lavender, rain, storm, day, night, battle, neighbor-atlas, and high-actor stress cases. The private corpus maps equivalent scenes from user-owned Red, Blue, and Yellow imports.
 
+The full-scene command keeps two public workloads separate:
+
+- The authored structural/readiness corpus is the 13 scenes in
+  `tests/fixtures/synthetic_kfp/cases.lua`: indoor, cave, forest,
+  city/Lavender, route/neighbor edge, shore, mountain, day, night, rain,
+  storm, supported battle, and unsupported battle. It checks deterministic
+  compiler structure and reports readiness. It is not a timing gate and does
+  not prove pixels, a representative map mix, host integration, GPU work, or
+  device behavior.
+- The normalized 64x64 composite is an advisory stress limit. It instantiates
+  all modules plus dense outdoor branches in one intentionally dense world.
+  It is not a representative scene corpus and can never supply visual or
+  device acceptance.
+
 ## Procedure
 
 1. Pin engine, host, platform, resolution, quality, map, camera, seed, and options.
@@ -62,10 +76,42 @@ evidence because shared-runner descheduling can add unbounded wall time that KFP
 did not consume. Deterministic slice and hash-parity tests remain mandatory in
 the normal test suite. Shared-CI mode must never approve a performance gate.
 
-Passing strict mode does not satisfy the complete uncached-scene gate. Record
-that gate separately with the runtime corpus and the injected LÖVE monotonic
-clock. Native 30 Hz Low-tier results are also separate device evidence. The
-750 ms allowance applies only to the lowest certified native device.
+Passing the packet-seal stress command does not satisfy the complete
+uncached-scene gate. Record that gate separately with a defined representative
+runtime corpus and the injected LÖVE monotonic clock. A corpus can gate only
+after its scene mix, size distribution, options, host, platform, and reason for
+representativeness are recorded.
+
+`luajit tools/run_full_scene_benchmark.lua` supplies the two controlled public
+workloads above. Feature module prototypes load once before warmup. Each
+measured attempt still creates new feature instances, compiler, command buffer,
+asset service, and request key, with no cache hit. Measurement starts after
+world capture, which matches the runtime `scene.readiness` start point.
+
+The command reports monotonic wall time for readiness and slice enforcement. It
+also reports process CPU time for setup, request, compile, and packet inspection.
+One extra diagnostic attempt per quality tier attributes compile CPU to each
+feature and to begin-seal, seal/hash, validation, cost, commit, and coordinator
+operations. That instrumented attempt is never part of the five timing samples.
+On Windows, process CPU is kernel plus user time from `GetProcessTimes`. Linux
+and macOS use `clock_gettime(CLOCK_PROCESS_CPUTIME_ID)`. These diagnostic clocks
+exclude idle wait and do not replace the monotonic wall clock used by strict
+readiness and slice checks.
+
+Every workload reports command count, item count, and a deterministic aggregate
+of each sealed command content hash. Benchmark fingerprints exclude `lights`
+and `postprocess`, so this benchmark does not define or freeze those optional
+kinds as expected output. The baseline draw kinds remain API-validated.
+
+The 64x64 advisory stress check defaults to strict timing and uses the same
+five-run, 60 Hz, p50/p95/p99, maximum-slice, and unchanged 250 ms desktop
+rules. It prints the authored corpus and all three stress tiers before applying
+the strict check. A result above 250 ms remains a command failure; the workload
+or limit is not reduced to obtain a pass. A result below 250 ms is advisory
+stress evidence only and is never representative visual, host, GPU, or device
+acceptance. Do not run shared CI as performance evidence. Native 30 Hz Low-tier
+results are separate device evidence. The 750 ms allowance applies only to the
+lowest certified native device.
 
 ## Pass conditions
 

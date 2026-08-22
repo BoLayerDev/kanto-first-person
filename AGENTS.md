@@ -48,6 +48,8 @@
 - Syntax check: `luajit tools/check_syntax.lua`.
 - Validate repository policy: `luajit tools/validate_project.lua`.
 - Run benchmarks: `luajit tools/run_benchmarks.lua`.
+- Run the controlled authored-corpus and full-scene stress benchmark:
+  `luajit tools/run_full_scene_benchmark.lua`.
 - Install website dependencies: `npm ci --prefix website`.
 - Type-check and build the website: `npm run build --prefix website`.
 - Run Gen1recomp mod validation: `python <gen1recomp>/tools/modkit.py validate .`.

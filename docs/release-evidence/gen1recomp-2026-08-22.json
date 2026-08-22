@@ -1,0 +1,79 @@
+{
+  "audited_at": "2026-08-22T06:29:19Z",
+  "compatible": true,
+  "contracts": {
+    "current_dev": {
+      "src/mods/Loader.lua": "64a0b5c7e67d8648b700f958529c95b73555edb60f639e94ec7b67c4a5e9a1c7",
+      "src/mods/Manifest.lua": "8859dbf962ed9b30c4c97616125ca566b3bf978c7304f72b0c7a9922eed89592",
+      "src/mods/Sandbox.lua": "477662648188f87be4aa862e8119210c7e22e5acd76ff55e00465bc8a9b8f64d",
+      "src/mods/Schemas.lua": "1935458e567372c34bd03c3fc76d6edf1cbad7bb33fee4c2943de755299b7869",
+      "src/render/Pipelines.lua": "4d4cd286c003164d8e852f5f3dee26d50d97632bc11bdaaf0159db90629ebfd8",
+      "tools/modkit.py": "2b827ea9307e791cbfd6098b4f18241c6739a779c422b68586f4c2378783688f"
+    },
+    "previous_stable": {
+      "src/mods/Loader.lua": "96347713d9898537c13f7f488072017780b21e688abddc7248e5ccec2327dec7",
+      "src/mods/Manifest.lua": "8859dbf962ed9b30c4c97616125ca566b3bf978c7304f72b0c7a9922eed89592",
+      "src/mods/Sandbox.lua": "477662648188f87be4aa862e8119210c7e22e5acd76ff55e00465bc8a9b8f64d",
+      "src/mods/Schemas.lua": "1935458e567372c34bd03c3fc76d6edf1cbad7bb33fee4c2943de755299b7869",
+      "src/render/Pipelines.lua": "4d4cd286c003164d8e852f5f3dee26d50d97632bc11bdaaf0159db90629ebfd8",
+      "tools/modkit.py": "2b827ea9307e791cbfd6098b4f18241c6739a779c422b68586f4c2378783688f"
+    },
+    "stable": {
+      "src/mods/Loader.lua": "64a0b5c7e67d8648b700f958529c95b73555edb60f639e94ec7b67c4a5e9a1c7",
+      "src/mods/Manifest.lua": "8859dbf962ed9b30c4c97616125ca566b3bf978c7304f72b0c7a9922eed89592",
+      "src/mods/Sandbox.lua": "477662648188f87be4aa862e8119210c7e22e5acd76ff55e00465bc8a9b8f64d",
+      "src/mods/Schemas.lua": "1935458e567372c34bd03c3fc76d6edf1cbad7bb33fee4c2943de755299b7869",
+      "src/render/Pipelines.lua": "4d4cd286c003164d8e852f5f3dee26d50d97632bc11bdaaf0159db90629ebfd8",
+      "tools/modkit.py": "2b827ea9307e791cbfd6098b4f18241c6739a779c422b68586f4c2378783688f"
+    }
+  },
+  "findings": [
+    "The official v0.2.19 tag and release point directly to the audited full commit.",
+    "The v0.2.19 tree contains current dev plus release-only iOS repository metadata.",
+    "Manifest validation, Sandbox, Schemas, Pipelines, and Modkit are byte-identical to v0.2.18.",
+    "Loader adds only a Gen1 denial for Gen2 engine-module imports; KFP uses mod:read and sandboxed load instead.",
+    "The other mod API change is Gold-only; KFP declares Gen1 only.",
+    "No audited target exposes an owner-scoped public runtime resolver for assets_transforms output."
+  ],
+  "kfp": {
+    "contract_audit_source": "f23424b4d5713fa94292465f03684af97fd1625a",
+    "integration_source_base": "d301c779478e524c2e35dbeafa7347ae35103ba5",
+    "manifest_range": ">=0.2.17 <0.3.0"
+  },
+  "package_audit": {
+    "artifacts": {
+      "modpkg": "6d279ef8cc7cb28b0a77c89fcd913f1d388f25910c0541f1f70444224eb9a63d",
+      "root_zip": "7b45154d411c7cc60878fac4001b440a050bf037a87f9d5699d5f42eff10030d"
+    },
+    "publishable": false,
+    "runs_equal": true,
+    "source": "f23424b4d5713fa94292465f03684af97fd1625a"
+  },
+  "release": {
+    "commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
+    "published_at": "2026-08-22T02:57:24Z",
+    "tag": "v0.2.19",
+    "url": "https://github.com/bryanthaboi/gen1recomp/releases/tag/v0.2.19"
+  },
+  "results": {
+    "ci_for_v0_2_19_pin": "not_run",
+    "engine_gen2_mod_api_gate": "943/943 pass",
+    "engine_manifest_v2": "116/116 pass",
+    "engine_rom_free_mod_sdk": "24/24 suites pass",
+    "kfp_benchmarks": "pass",
+    "kfp_lua_syntax": "84/84 pass",
+    "kfp_lua_tests": "252/252 pass",
+    "kfp_project_policy": "pass",
+    "kfp_python_tests": "28/28 pass",
+    "manifest_range": "pass",
+    "stable_lint": "pass",
+    "stable_strict_validate": "pass"
+  },
+  "schema": 1,
+  "targets": {
+    "current_dev": "478e3bf8ebf7646edfda88320c6472cf32db2e67",
+    "previous_stable": "70d7b6383e2c005857013dc897fd096886b08f0b",
+    "stable": "116a6ba450dd65f25c9be150952fc3c27be904c0",
+    "stable_tag": "v0.2.19"
+  }
+}

@@ -65,6 +65,7 @@ class ReleaseGateTests(unittest.TestCase):
                 "06e06e305bbcefe97c216a31bb25265ffb5e6b18",
                 "70d7b6383e2c005857013dc897fd096886b08f0b",
                 "478e3bf8ebf7646edfda88320c6472cf32db2e67",
+                "116a6ba450dd65f25c9be150952fc3c27be904c0",
             },
         )
 

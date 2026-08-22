@@ -4,14 +4,16 @@
 
 - Minimum stable release: `v0.2.17` at
   `44f4680b24823629489ed5a2adad648d0dceb640`.
-- Latest audited stable release: `v0.2.18` at
+- Latest audited stable release: `v0.2.19` at
+  `116a6ba450dd65f25c9be150952fc3c27be904c0`.
+- Retained stable target: `v0.2.18` at
   `70d7b6383e2c005857013dc897fd096886b08f0b`.
 - Baseline audited dev commit:
   `06e06e305bbcefe97c216a31bb25265ffb5e6b18`.
 - Current audited dev commit:
   `478e3bf8ebf7646edfda88320c6472cf32db2e67`.
 - Current engine audit record:
-  `docs/release-evidence/gen1recomp-2026-08-21.json`.
+  `docs/release-evidence/gen1recomp-2026-08-22.json`.
 - Sandbox change: `83682f011df5039c4ea7042141590d38ca7e21d5`.
 - Source: `https://github.com/bryanthaboi/gen1recomp`.
 

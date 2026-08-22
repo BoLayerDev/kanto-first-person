@@ -1,6 +1,6 @@
 # Derived Asset Runtime API Proposal
 
-Audited: 2026-08-21
+Audited: 2026-08-22
 
 ## Decision
 
@@ -19,28 +19,29 @@ correct:
 
 ## Audit scope
 
-The audit used KFP commit
-`3b21b584816ecd2f6a557678eadb83d28df526a0` and these exact public
+The audit was rechecked at KFP commit
+`d301c779478e524c2e35dbeafa7347ae35103ba5` and these exact public
 Gen1recomp commits:
 
 | Target | Commit | Result |
 | --- | --- | --- |
 | v0.2.17 | `44f4680b24823629489ed5a2adad648d0dceb640` | No public derived-image resolver |
 | v0.2.18 | `70d7b6383e2c005857013dc897fd096886b08f0b` | No public derived-image resolver |
+| v0.2.19 | `116a6ba450dd65f25c9be150952fc3c27be904c0` | No public derived-image resolver |
 | Dev baseline | `06e06e305bbcefe97c216a31bb25265ffb5e6b18` | No public derived-image resolver |
 | Dev current | `478e3bf8ebf7646edfda88320c6472cf32db2e67` | No public derived-image resolver |
 
-The relevant engine files are byte-identical on all four targets except for an
-unrelated Gen 2 import guard in the current Dev `Loader.lua`. The common Git
-blob identities are:
+The relevant engine files are byte-identical on all five targets except for an
+unrelated Gen 2 import guard in the current Dev and v0.2.19 `Loader.lua`. The
+common Git blob identities are:
 
 | Engine file | Git blob |
 | --- | --- |
 | `src/mods/AssetTransform.lua` | `f6612b4eed826d8193345541720669b9ba1a5f6d` |
 | `src/mods/Sandbox.lua` | `81e25be72babaaa16aa4203ef98da92d3331eaa7` |
 | `src/render/Assets.lua` | `afcc577b3a8f1882fe1f84eb8ab6b480b48cf500` |
-| Stable and baseline `src/mods/Loader.lua` | `ddfc3f1239bbd7a5c4b2e60494817e3496127705` |
-| Current Dev `src/mods/Loader.lua` | `84b087cd2dfb170ee3cf0320cb400a8dd82414f5` |
+| v0.2.17, v0.2.18, and baseline Dev `src/mods/Loader.lua` | `ddfc3f1239bbd7a5c4b2e60494817e3496127705` |
+| v0.2.19 and current Dev `src/mods/Loader.lua` | `84b087cd2dfb170ee3cf0320cb400a8dd82414f5` |
 
 ## Why the current surfaces do not qualify
 

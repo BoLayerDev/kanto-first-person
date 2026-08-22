@@ -30,8 +30,8 @@
       "evidence": [
         {
           "kind": "engine_audit",
-          "locator": "docs/release-evidence/gen1recomp-2026-08-21.json",
-          "sha256": "608cd6dc5629f1455695c06187f387a586f3534566fa4c87c4f84dd0ad140f8a"
+          "locator": "docs/release-evidence/gen1recomp-2026-08-22.json",
+          "sha256": "336baa750c7518b2041663a7dd7fd465f40516c9c879ed192d89a347a9fddd9a"
         }
       ],
       "passed": true

@@ -1,6 +1,6 @@
 # Project Status
 
-Last updated: 2026-08-21
+Last updated: 2026-08-22
 
 ## Current truth
 
@@ -9,12 +9,13 @@ Last updated: 2026-08-21
 - Public remote: `https://github.com/BoLayerDev/kanto-first-person`.
 - Original history: preserved from `mrmushrooms11/kanto-first-person` at `94d0151`.
 - Engine targets: Gen1recomp `v0.2.17` (`44f4680`), `v0.2.18`
-  (`70d7b6`), baseline `dev` (`06e06e3`), and current `dev` (`478e3bf`).
+  (`70d7b6`), `v0.2.19` (`116a6ba`), baseline `dev` (`06e06e3`), and
+  current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Current common-source gates pass: 227 Lua tests, 81 Lua syntax checks,
+- Current local common-source gates pass: 252 Lua tests, 84 Lua syntax checks,
   28 Python tests, repository policy, deterministic cloud generation, and
-  microbenchmarks.
+  microbenchmarks. CI for the v0.2.19 pin has not run yet.
 
 ## Active workstreams
 
@@ -46,7 +47,7 @@ Last updated: 2026-08-21
   results. Red and Blue imports are not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
-- All four pinned Gen1recomp targets can build KFP's declared bird transform,
+- All five pinned Gen1recomp targets can build KFP's declared bird transform,
   but none exposes an owner-scoped public runtime image resolver. Birds and
   ground flocks stay hidden and emit no packet. The bounded upstream contract
   is in `docs/derived-asset-runtime-api-proposal.md`.

@@ -89,6 +89,7 @@ function App.new(options)
     mod = options.mod,
     loader = options.loader,
     diagnostics = options.diagnostics,
+    clock = options.clock or monotonicClock,
     state = "new",
     world = nil,
     worldIndex = nil,
@@ -112,6 +113,7 @@ function App:_loadModules()
     Quality = L:resolve("src.render.Quality"),
     LRU = L:resolve("src.core.LRU"),
     ResourceOwner = L:resolve("src.core.ResourceOwner"),
+    Metrics = L:resolve("src.core.Metrics"),
     TextureCatalog = L:resolve("src.assets.TextureCatalog"),
     AudioBackend = L:resolve("src.audio.AudioBackend"),
     CommandBuffer = L:resolve("src.render.CommandBuffer"),
@@ -224,6 +226,10 @@ function App:_makeFeatures()
 end
 
 function App:_makeRenderer()
+  self.metrics = self.modules.Metrics.new({
+    clock = self.clock,
+    capacity = 240,
+  })
   self.quality = self.modules.Quality.policy(
     self.config.quality,
     self.hostTier,
@@ -253,7 +259,7 @@ function App:_makeRenderer()
     end,
     cache = self.sceneCache,
     releasePacket = releasePacket,
-    clock = monotonicClock,
+    clock = self.clock,
   })
 end
 
@@ -273,7 +279,9 @@ function App:_requestScene()
   local key = self:_sceneKey()
   self.sceneKey = key
   if not key then return false end
-  self.compiler:request({
+  local active = self.compiler:active()
+  local activeKey = active and active.metadata and active.metadata.key or nil
+  local _, cached = self.compiler:request({
     key = key,
     world = self.world,
     config = self.config,
@@ -283,6 +291,12 @@ function App:_requestScene()
       assets = self.textureCatalog,
     },
   })
+  if cached == true then
+    self.metrics:sceneRequested(key)
+    self.metrics:sceneReady(key, true)
+  elseif activeKey ~= key then
+    self.metrics:sceneRequested(key)
+  end
   return true
 end
 
@@ -360,7 +374,9 @@ function App:_render(phase, context)
   if not packet or not packet.metadata or packet.metadata.key ~= self.sceneKey then
     return
   end
-  self.renderer:renderPhase(packet, phase, context)
+  local started = self.metrics:now()
+  local submitted = self.renderer:renderPhase(packet, phase, context)
+  self.metrics:rendered(self.metrics:now() - started, submitted)
 end
 
 function App:_update(context)
@@ -370,6 +386,7 @@ function App:_update(context)
   if type(tier) == "string" or type(platform) == "string" then
     self:_resolveQuality(tier, platform)
   end
+  local updateStarted = self.metrics:now()
   local updated, updateError = pcall(
     self.featureSet.update,
     self.featureSet,
@@ -377,8 +394,14 @@ function App:_update(context)
     self.world,
     self.config
   )
+  self.metrics:recordSeconds("update", self.metrics:now() - updateStarted)
   if not updated then error(updateError, 0) end
+  local buildStarted = self.metrics:now()
   local completed, packet = self.compiler:step(self.quality.buildBudgetMs)
+  self.metrics:recordSeconds("build", self.metrics:now() - buildStarted)
+  if completed and type(packet) == "table" and packet.metadata then
+    self.metrics:sceneReady(packet.metadata.key, false)
+  end
   if completed and type(packet) == "table"
       and packet.drawCalls > self.quality.drawCallTarget then
     emit(self, "warn", "PERF.DRAW_CALL_TARGET_EXCEEDED",
@@ -603,19 +626,30 @@ end
 
 function App:status()
   local client = self.client and self.client:status() or { state = "not_started" }
+  local scene = self.compiler and self.compiler:status() or nil
+  local audio = self.audioBackend and self.audioBackend:status() or nil
+  local textures = self.textureCatalog and self.textureCatalog:status() or nil
+  local resources = self.resourceOwner and self.resourceOwner:stats() or nil
   return {
     state = self.state,
     host = client,
     worldKey = self.world and self.world.key or nil,
-    scene = self.compiler and self.compiler:status() or nil,
+    scene = scene,
     renderer = self.renderer and self.renderer:status() or nil,
     features = self.featureSet and self.featureSet:status() or nil,
-    audio = self.audioBackend and self.audioBackend:status() or nil,
-    textures = self.textureCatalog and self.textureCatalog:status() or nil,
-    resources = self.resourceOwner and self.resourceOwner:stats() or nil,
+    audio = audio,
+    textures = textures,
+    resources = resources,
     quality = self.quality and self.quality.resolved or nil,
     configGeneration = self.config and self.config.generation or nil,
     gameplay = { ledgeLeap = "unavailable_alpha" },
+    metrics = self.metrics and self.metrics:snapshot({
+      quality = self.quality and self.quality.resolved or nil,
+      cache = scene and scene.cache or nil,
+      resources = resources,
+      textures = textures,
+      audio = audio,
+    }) or nil,
   }
 end
 

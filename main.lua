@@ -32,7 +32,16 @@ return function(mod)
   loader.diagnostics = diagnostics
 
   local App = loader:resolve("src.bootstrap.App")
-  local app = App.new({ mod = mod, loader = loader, diagnostics = diagnostics })
+  local clock
+  if love and love.timer and type(love.timer.getTime) == "function" then
+    clock = love.timer.getTime
+  end
+  local app = App.new({
+    mod = mod,
+    loader = loader,
+    diagnostics = diagnostics,
+    clock = clock,
+  })
   app:start()
 
   -- The closure keeps the app alive without publishing mutable internals.

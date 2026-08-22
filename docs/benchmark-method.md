@@ -4,6 +4,22 @@
 
 Record KFP update CPU time, build CPU time, render submission CPU time, added draw calls, Lua heap after collection, owned GPU/audio resource counts, cache cost, scene readiness, and frame time with and without KFP.
 
+`mod.exports.kfp.status().metrics` is a read-only, schema-versioned (`schema = 1`)
+runtime snapshot. Timing values use milliseconds and retain only the latest 240
+samples. Recording uses fixed-capacity arrays; it does not grow a per-frame log.
+
+- `timing.update` measures dynamic feature updates, excluding scene compilation.
+- `timing.build` measures each incremental compiler slice.
+- `timing.render` measures KFP command submission to the borrowed host draw facade.
+- `scene.readiness` measures request-to-packet readiness, including cache hits.
+- `submissions` separates render callbacks from accepted draw commands.
+- `runtime` reports bounded cache, resource, texture, and audio gauges when those
+  subsystems are available.
+
+These measurements use the injected LÖVE monotonic clock. They include Lua and
+host-facade call time but do not isolate graphics-driver execution. Use an
+external frame-time capture for the host-only comparison and frame regression.
+
 ## Tiers
 
 | Tier | Build slice | Cache cap | Density | Added draw target |

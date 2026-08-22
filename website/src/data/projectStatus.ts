@@ -23,6 +23,42 @@ export type ProjectStatus = {
       runUrl: string
     }
   }>
+  missions: Array<{
+    slot: 'NOW' | 'NEXT' | 'BLOCKED'
+    title: string
+    url: string
+    source: 'issue' | 'github'
+    updatedAt: string
+  }>
+  releaseJourney: Array<{
+    id: 'rewrite' | 'host' | 'device' | 'package' | 'release'
+    label: string
+    state: 'complete' | 'active' | 'blocked' | 'pending'
+    summary: string
+    url: string
+  }>
+  weeklyReport: {
+    startedAt: string
+    endedAt: string
+    total: number
+    counts: {
+      features: number
+      fixes: number
+      performance: number
+      tests: number
+      documentation: number
+      milestones: number
+    }
+  }
+  proof: {
+    kind: string
+    label: string
+    version: string
+    commit: string
+    capturedAt: string
+    environment: string
+    url: string
+  }
   devStats: {
     rewriteStartedAt: string
     activeDays: number
@@ -98,6 +134,51 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
       },
     } : {}),
   })),
+  missions: [
+    {
+      slot: 'NOW',
+      title: 'Continue the verified 2.0 rewrite',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite',
+      source: 'github',
+      updatedAt: '2026-08-22T11:49:22Z',
+    },
+    {
+      slot: 'NEXT',
+      title: 'Complete live device acceptance',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/device-test-guide.md',
+      source: 'github',
+      updatedAt: '2026-08-22T11:49:22Z',
+    },
+    {
+      slot: 'BLOCKED',
+      title: 'Signed package and compatible Voxel Companion API v1 host release',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/known-limitations.md',
+      source: 'github',
+      updatedAt: '2026-08-22T11:49:22Z',
+    },
+  ],
+  releaseJourney: [
+    { id: 'rewrite', label: 'REWRITE', state: 'active', summary: 'Alpha source work is active.', url: 'https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite' },
+    { id: 'host', label: 'HOST READY', state: 'active', summary: 'One released host has static API v1 proof. Live acceptance is open.', url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/compatibility.md' },
+    { id: 'device', label: 'DEVICE TESTED', state: 'pending', summary: 'Live GPU and game acceptance are open.', url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/device-test-guide.md' },
+    { id: 'package', label: 'PACKAGE SIGNED', state: 'pending', summary: 'No signed player package is published.', url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-process.md' },
+    { id: 'release', label: 'RELEASED', state: 'pending', summary: 'KFP 2.0 is not released.', url: 'https://github.com/BoLayerDev/kanto-first-person/releases' },
+  ],
+  weeklyReport: {
+    startedAt: '2026-08-15T11:49:22Z',
+    endedAt: '2026-08-22T11:49:22Z',
+    total: 8,
+    counts: { features: 0, fixes: 2, performance: 3, tests: 1, documentation: 2, milestones: 0 },
+  },
+  proof: {
+    kind: 'CI RUN',
+    label: '11/11 CHECKS PASSED',
+    version: '2.0.0-alpha.1',
+    commit: '79b3851',
+    capturedAt: '2026-08-22T11:50:23Z',
+    environment: 'GITHUB ACTIONS',
+    url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
+  },
   devStats: {
     rewriteStartedAt: '2026-08-21T16:42:07-06:00',
     activeDays: 2,
@@ -164,6 +245,16 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
       && (entry.ci === undefined
         || (typeof entry.ci.durationSeconds === 'number'
           && typeof entry.ci.runUrl === 'string')))
+    && (candidate.missions === undefined || (Array.isArray(candidate.missions)
+      && candidate.missions.every((mission) => typeof mission.title === 'string'
+        && typeof mission.url === 'string'
+        && typeof mission.updatedAt === 'string')))
+    && (candidate.releaseJourney === undefined || (Array.isArray(candidate.releaseJourney)
+      && candidate.releaseJourney.every((gate) => typeof gate.label === 'string'
+        && typeof gate.state === 'string'
+        && typeof gate.url === 'string')))
+    && (candidate.weeklyReport === undefined || typeof candidate.weeklyReport.total === 'number')
+    && (candidate.proof === undefined || typeof candidate.proof.url === 'string')
     && typeof candidate.devStats?.rewriteStartedAt === 'string'
     && typeof candidate.devStats?.activeDays === 'number'
     && typeof candidate.devStats?.successfulLabRuns === 'number'
@@ -196,7 +287,7 @@ export function useProjectStatus() {
         return response.json()
       })
       .then((value: unknown) => {
-        if (isProjectStatus(value)) setStatus(value)
+        if (isProjectStatus(value)) setStatus({ ...FALLBACK_PROJECT_STATUS, ...value })
       })
       .catch(() => undefined)
 

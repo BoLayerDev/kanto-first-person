@@ -1,0 +1,592 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-evidence/device-result.schema.json",
+  "title": "KFP 2.0 public device result",
+  "description": "ROM-safe public metadata for one device, host, and test run. Raw evidence stays private.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "result_id",
+    "recorded_at",
+    "classification",
+    "failure_summary",
+    "tester",
+    "platform",
+    "builds",
+    "test_environment",
+    "checks",
+    "evidence",
+    "deviations",
+    "attestation"
+  ],
+  "properties": {
+    "schema": { "const": 1 },
+    "result_id": { "$ref": "#/$defs/identifier" },
+    "recorded_at": { "$ref": "#/$defs/timestamp" },
+    "classification": { "enum": ["pass", "experimental", "fail"] },
+    "failure_summary": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/public_text" }
+      ]
+    },
+    "tester": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alias"],
+      "properties": {
+        "alias": { "$ref": "#/$defs/alias" }
+      }
+    },
+    "platform": { "$ref": "#/$defs/platform" },
+    "builds": { "$ref": "#/$defs/builds" },
+    "test_environment": { "$ref": "#/$defs/test_environment" },
+    "checks": { "$ref": "#/$defs/checks" },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 24,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence_item" }
+    },
+    "deviations": {
+      "type": "array",
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/public_text" }
+    },
+    "attestation": { "$ref": "#/$defs/attestation" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "classification": { "const": "pass" } },
+        "required": ["classification"]
+      },
+      "then": {
+        "properties": {
+          "failure_summary": { "type": "null" },
+          "deviations": { "maxItems": 0 },
+          "platform": {
+            "properties": { "execution": { "const": "native_hardware" } }
+          },
+          "builds": {
+            "properties": {
+              "kfp": { "properties": { "released": { "const": true } } },
+              "host": { "properties": { "released": { "const": true } } },
+              "gen1recomp": { "properties": { "released": { "const": true } } }
+            }
+          },
+          "test_environment": {
+            "properties": {
+              "game_coverage": {
+                "allOf": [
+                  { "contains": { "const": "red" } },
+                  { "contains": { "const": "blue" } },
+                  { "contains": { "const": "yellow" } }
+                ]
+              }
+            }
+          },
+          "checks": { "$ref": "#/$defs/passing_checks" },
+          "attestation": { "$ref": "#/$defs/passing_attestation" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "classification": { "const": "experimental" } },
+        "required": ["classification"]
+      },
+      "then": {
+        "properties": {
+          "failure_summary": { "type": "null" },
+          "checks": { "$ref": "#/$defs/nonfailing_checks" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "classification": { "const": "fail" } },
+        "required": ["classification"]
+      },
+      "then": {
+        "properties": {
+          "failure_summary": { "$ref": "#/$defs/public_text" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "alias": {
+      "type": "string",
+      "minLength": 2,
+      "maxLength": 32,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 _.-]*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[0-9A-Za-z][0-9A-Za-z.+_-]*$"
+    },
+    "public_text": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 160,
+      "pattern": "^[^\\r\\n/@\\\\:]*$"
+    },
+    "short_label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 64,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._+()'-]*$"
+    },
+    "resolution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 240, "maximum": 16384 },
+        "height": { "type": "integer", "minimum": 160, "maximum": 16384 }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform_class",
+        "execution",
+        "os_name",
+        "os_version",
+        "architecture",
+        "device_class",
+        "gpu",
+        "driver",
+        "memory_mib",
+        "power_mode",
+        "display_scale_percent",
+        "native_resolution",
+        "test_resolution",
+        "resolution_mode"
+      ],
+      "properties": {
+        "platform_class": {
+          "enum": [
+            "windows",
+            "linux_x86_64",
+            "linux_arm64",
+            "macos_x86_64",
+            "macos_arm64",
+            "android",
+            "ios_love12",
+            "xbox_uwp",
+            "nintendo_switch",
+            "portmaster",
+            "anbernic_stock"
+          ]
+        },
+        "execution": {
+          "enum": ["native_hardware", "virtual_machine", "emulator", "compatibility_layer", "remote_render"]
+        },
+        "os_name": { "$ref": "#/$defs/short_label" },
+        "os_version": { "$ref": "#/$defs/version" },
+        "architecture": { "enum": ["x86_64", "arm64", "armv7", "console_native"] },
+        "device_class": { "$ref": "#/$defs/short_label" },
+        "gpu": { "$ref": "#/$defs/short_label" },
+        "driver": { "$ref": "#/$defs/short_label" },
+        "memory_mib": { "type": "integer", "minimum": 128, "maximum": 1048576 },
+        "power_mode": { "enum": ["ac_power", "battery_performance", "battery_balanced", "battery_saver", "console_default"] },
+        "display_scale_percent": { "type": "integer", "minimum": 50, "maximum": 400 },
+        "native_resolution": { "$ref": "#/$defs/resolution" },
+        "test_resolution": { "$ref": "#/$defs/resolution" },
+        "resolution_mode": { "enum": ["reference_1080p", "native"] }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "resolution_mode": { "const": "reference_1080p" } },
+            "required": ["resolution_mode"]
+          },
+          "then": {
+            "properties": {
+              "test_resolution": {
+                "properties": {
+                  "width": { "const": 1920 },
+                  "height": { "const": 1080 }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "build_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "source_commit", "package_sha256", "released"],
+      "properties": {
+        "version": { "$ref": "#/$defs/version" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "package_sha256": { "$ref": "#/$defs/sha256" },
+        "released": { "type": "boolean" }
+      }
+    },
+    "host_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "source_commit", "package_sha256", "released"],
+      "properties": {
+        "id": { "enum": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"] },
+        "version": { "$ref": "#/$defs/version" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "package_sha256": { "$ref": "#/$defs/sha256" },
+        "released": { "type": "boolean" }
+      }
+    },
+    "builds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kfp", "host", "gen1recomp"],
+      "properties": {
+        "kfp": { "$ref": "#/$defs/build_identity" },
+        "host": { "$ref": "#/$defs/host_identity" },
+        "gen1recomp": { "$ref": "#/$defs/build_identity" }
+      }
+    },
+    "test_environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "quality_tier",
+        "fixed_clock",
+        "feature_seed",
+        "options_sha256",
+        "input_modes",
+        "game_coverage",
+        "thermal_state"
+      ],
+      "properties": {
+        "quality_tier": { "enum": ["high", "balanced", "low"] },
+        "fixed_clock": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 5,
+          "pattern": "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        },
+        "feature_seed": { "type": "integer", "minimum": 0, "maximum": 2147483647 },
+        "options_sha256": { "$ref": "#/$defs/sha256" },
+        "input_modes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "enum": ["keyboard", "gamepad", "touch"] }
+        },
+        "game_coverage": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "enum": ["red", "blue", "yellow", "synthetic"] }
+        },
+        "thermal_state": { "enum": ["stable", "throttled", "unknown"] }
+      }
+    },
+    "check_status": { "enum": ["pass", "fail", "not_run"] },
+    "functional_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene_corpus",
+        "camera_modes",
+        "input",
+        "no_host",
+        "one_host",
+        "multiple_hosts",
+        "incompatible_api",
+        "legacy_marker",
+        "callback_faults",
+        "lifecycle"
+      ],
+      "properties": {
+        "scene_corpus": { "$ref": "#/$defs/check_status" },
+        "camera_modes": { "$ref": "#/$defs/check_status" },
+        "input": { "$ref": "#/$defs/check_status" },
+        "no_host": { "$ref": "#/$defs/check_status" },
+        "one_host": { "$ref": "#/$defs/check_status" },
+        "multiple_hosts": { "$ref": "#/$defs/check_status" },
+        "incompatible_api": { "$ref": "#/$defs/check_status" },
+        "legacy_marker": { "$ref": "#/$defs/check_status" },
+        "callback_faults": { "$ref": "#/$defs/check_status" },
+        "lifecycle": { "$ref": "#/$defs/check_status" }
+      }
+    },
+    "visual_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["human_review", "host_regression", "ui_layering", "photosensitivity_review"],
+      "properties": {
+        "human_review": { "$ref": "#/$defs/check_status" },
+        "host_regression": { "$ref": "#/$defs/check_status" },
+        "ui_layering": { "$ref": "#/$defs/check_status" },
+        "photosensitivity_review": { "$ref": "#/$defs/check_status" }
+      }
+    },
+    "performance_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "thresholds_met",
+        "runs_per_variant",
+        "sample_seconds",
+        "kfp_cpu_p95_ms",
+        "host_only_frame_p95_ms",
+        "host_plus_kfp_frame_p95_ms",
+        "frame_regression_percent",
+        "max_build_over_budget_ms",
+        "uncached_scene_ready_ms",
+        "added_draw_calls_max"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/check_status" },
+        "thresholds_met": { "type": ["boolean", "null"] },
+        "runs_per_variant": { "type": "integer", "minimum": 0, "maximum": 20 },
+        "sample_seconds": { "type": "integer", "minimum": 0, "maximum": 600 },
+        "kfp_cpu_p95_ms": { "type": ["number", "null"], "minimum": 0, "maximum": 1000 },
+        "host_only_frame_p95_ms": { "type": ["number", "null"], "minimum": 0, "maximum": 1000 },
+        "host_plus_kfp_frame_p95_ms": { "type": ["number", "null"], "minimum": 0, "maximum": 1000 },
+        "frame_regression_percent": { "type": ["number", "null"], "minimum": -100, "maximum": 1000 },
+        "max_build_over_budget_ms": { "type": ["number", "null"], "minimum": 0, "maximum": 1000 },
+        "uncached_scene_ready_ms": { "type": ["number", "null"], "minimum": 0, "maximum": 60000 },
+        "added_draw_calls_max": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 }
+      }
+    },
+    "leak_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "transitions", "soak_minutes", "lua_heap_drift_percent", "resource_growth"],
+      "properties": {
+        "status": { "$ref": "#/$defs/check_status" },
+        "transitions": { "type": "integer", "minimum": 0, "maximum": 10000 },
+        "soak_minutes": { "type": "integer", "minimum": 0, "maximum": 1440 },
+        "lua_heap_drift_percent": { "type": ["number", "null"], "minimum": -100, "maximum": 1000 },
+        "resource_growth": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["mesh", "image", "canvas", "shader", "audio_source"],
+          "properties": {
+            "mesh": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 },
+            "image": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 },
+            "canvas": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 },
+            "shader": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 },
+            "audio_source": { "type": ["integer", "null"], "minimum": 0, "maximum": 100000 }
+          }
+        }
+      }
+    },
+    "uninstall_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "host_tree_before_sha256",
+        "host_tree_after_sha256",
+        "kfp_tree_before_sha256",
+        "kfp_tree_after_sha256",
+        "automatic_repair_or_delete",
+        "unexpected_changes"
+      ],
+      "properties": {
+        "status": { "$ref": "#/$defs/check_status" },
+        "host_tree_before_sha256": { "$ref": "#/$defs/sha256" },
+        "host_tree_after_sha256": { "$ref": "#/$defs/sha256" },
+        "kfp_tree_before_sha256": { "$ref": "#/$defs/sha256" },
+        "kfp_tree_after_sha256": { "$ref": "#/$defs/sha256" },
+        "automatic_repair_or_delete": { "type": "boolean" },
+        "unexpected_changes": { "type": "integer", "minimum": 0, "maximum": 100000 }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["functional", "visual", "performance", "leak", "uninstall"],
+      "properties": {
+        "functional": { "$ref": "#/$defs/functional_checks" },
+        "visual": { "$ref": "#/$defs/visual_checks" },
+        "performance": { "$ref": "#/$defs/performance_checks" },
+        "leak": { "$ref": "#/$defs/leak_checks" },
+        "uninstall": { "$ref": "#/$defs/uninstall_checks" }
+      }
+    },
+    "evidence_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sha256", "bytes", "media_type", "redacted"],
+      "properties": {
+        "kind": { "enum": ["functional_report", "visual_review", "performance_report", "leak_report", "integrity_report", "device_photo"] },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "media_type": { "enum": ["application/json", "text/plain", "text/csv", "image/png", "image/jpeg"] },
+        "redacted": { "const": true }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["native_device_truthful", "legally_owned_imports", "no_rom_data_public", "privacy_reviewed", "hashes_verified"],
+      "properties": {
+        "native_device_truthful": { "type": "boolean" },
+        "legally_owned_imports": { "type": "boolean" },
+        "no_rom_data_public": { "type": "boolean" },
+        "privacy_reviewed": { "type": "boolean" },
+        "hashes_verified": { "type": "boolean" }
+      }
+    },
+    "passing_checks": {
+      "allOf": [
+        { "$ref": "#/$defs/checks" },
+        {
+          "properties": {
+            "functional": {
+              "properties": {
+                "scene_corpus": { "const": "pass" },
+                "camera_modes": { "const": "pass" },
+                "input": { "const": "pass" },
+                "no_host": { "const": "pass" },
+                "one_host": { "const": "pass" },
+                "multiple_hosts": { "const": "pass" },
+                "incompatible_api": { "const": "pass" },
+                "legacy_marker": { "const": "pass" },
+                "callback_faults": { "const": "pass" },
+                "lifecycle": { "const": "pass" }
+              }
+            },
+            "visual": {
+              "properties": {
+                "human_review": { "const": "pass" },
+                "host_regression": { "const": "pass" },
+                "ui_layering": { "const": "pass" },
+                "photosensitivity_review": { "const": "pass" }
+              }
+            },
+            "performance": {
+              "properties": {
+                "status": { "const": "pass" },
+                "thresholds_met": { "const": true },
+                "runs_per_variant": { "minimum": 5 },
+                "sample_seconds": { "minimum": 60 },
+                "kfp_cpu_p95_ms": { "type": "number" },
+                "host_only_frame_p95_ms": { "type": "number" },
+                "host_plus_kfp_frame_p95_ms": { "type": "number" },
+                "frame_regression_percent": { "type": "number", "maximum": 15 },
+                "max_build_over_budget_ms": { "type": "number", "maximum": 0.25 },
+                "uncached_scene_ready_ms": { "type": "number" },
+                "added_draw_calls_max": { "type": "integer" }
+              }
+            },
+            "leak": {
+              "properties": {
+                "status": { "const": "pass" },
+                "transitions": { "minimum": 100 },
+                "soak_minutes": { "minimum": 30 },
+                "lua_heap_drift_percent": { "type": "number", "maximum": 5 },
+                "resource_growth": {
+                  "properties": {
+                    "mesh": { "const": 0 },
+                    "image": { "const": 0 },
+                    "canvas": { "const": 0 },
+                    "shader": { "const": 0 },
+                    "audio_source": { "const": 0 }
+                  }
+                }
+              }
+            },
+            "uninstall": {
+              "properties": {
+                "status": { "const": "pass" },
+                "automatic_repair_or_delete": { "const": false },
+                "unexpected_changes": { "const": 0 }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "passing_attestation": {
+      "allOf": [
+        { "$ref": "#/$defs/attestation" },
+        {
+          "properties": {
+            "native_device_truthful": { "const": true },
+            "legally_owned_imports": { "const": true },
+            "no_rom_data_public": { "const": true },
+            "privacy_reviewed": { "const": true },
+            "hashes_verified": { "const": true }
+          }
+        }
+      ]
+    },
+    "nonfailing_checks": {
+      "allOf": [
+        { "$ref": "#/$defs/checks" },
+        {
+          "properties": {
+            "functional": {
+              "properties": {
+                "scene_corpus": { "enum": ["pass", "not_run"] },
+                "camera_modes": { "enum": ["pass", "not_run"] },
+                "input": { "enum": ["pass", "not_run"] },
+                "no_host": { "enum": ["pass", "not_run"] },
+                "one_host": { "enum": ["pass", "not_run"] },
+                "multiple_hosts": { "enum": ["pass", "not_run"] },
+                "incompatible_api": { "enum": ["pass", "not_run"] },
+                "legacy_marker": { "enum": ["pass", "not_run"] },
+                "callback_faults": { "enum": ["pass", "not_run"] },
+                "lifecycle": { "enum": ["pass", "not_run"] }
+              }
+            },
+            "visual": {
+              "properties": {
+                "human_review": { "enum": ["pass", "not_run"] },
+                "host_regression": { "enum": ["pass", "not_run"] },
+                "ui_layering": { "enum": ["pass", "not_run"] },
+                "photosensitivity_review": { "enum": ["pass", "not_run"] }
+              }
+            },
+            "performance": { "properties": { "status": { "enum": ["pass", "not_run"] } } },
+            "leak": { "properties": { "status": { "enum": ["pass", "not_run"] } } },
+            "uninstall": { "properties": { "status": { "enum": ["pass", "not_run"] } } }
+          }
+        }
+      ]
+    }
+  }
+}

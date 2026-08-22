@@ -219,8 +219,10 @@ dispatch and passes only an allowed opaque handle for the current draw call.
 
 A mesh command adds `geometry` or one of the opaque `mesh` and `resource`
 handles. It cannot combine declarative `geometry` with either direct handle,
-and it cannot contain both direct handles. An optional opaque `model` handle is
-an adjunct resource. Portable geometry has one of these exact shapes:
+it cannot contain both direct handles, and a direct handle cannot be combined
+with `command.texture`. That combination would require a host to mutate one
+borrowed resource to attach another. An optional opaque `model` handle is an
+adjunct resource. Portable geometry has one of these exact shapes:
 
 | Primitive | Fields after `primitive` |
 | --- | --- |
@@ -275,6 +277,13 @@ non-empty dense `items` array of at most 8,192 entries. A prototype is one of:
 Each item requires finite `x`, `y`, and `z`. It can also contain integer
 `cellX` and `cellZ`; finite `seed` and `lift`; semantic `side`, `facing`, and
 `kind`; Boolean `summit`; and finite-number or semantic `poster`.
+
+`cutaway=true` is producer intent, not a request for the host to infer a new
+camera policy. A `box` with `role="ceiling"` opens a bounded local area around
+the current player whenever the producer emits that intent. A `box` with
+`role="wall"` keeps a useful far-room shell; it must not erase every wall of a
+small room. A `canopy` cutaway opens only near the player in first-person mode.
+Missing player or cell coordinates fail open and keep geometry visible.
 
 ### `billboards`
 

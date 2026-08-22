@@ -780,6 +780,9 @@ local function validate_draw_mesh(command, state)
   if command.geometry == nil and direct_count == 0 then
     return nil, "mesh command needs geometry or one opaque mesh/resource"
   end
+  if direct_count > 0 and command.texture ~= nil then
+    return nil, "mesh command cannot combine an opaque mesh/resource with a texture"
+  end
   local ok, err
   if direct_count > 0 then
     ok, err = validate_opaque_resource(command.mesh or command.resource, "mesh command resource")

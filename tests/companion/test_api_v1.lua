@@ -256,6 +256,20 @@ return function(T)
     T.truthy(err:match("not in the API v1 baseline"))
 
     command = plane()
+    command.geometry = nil
+    command.mesh = { id = "extension-owned-mesh" }
+    command.texture = { id = "extension-owned-texture" }
+    ok, err = API.validate_draw_command(command)
+    T.falsy(ok)
+    T.truthy(err:match("cannot combine an opaque mesh/resource with a texture"))
+
+    command.mesh = nil
+    command.resource = { id = "extension-owned-resource" }
+    ok, err = API.validate_draw_command(command)
+    T.falsy(ok)
+    T.truthy(err:match("cannot combine an opaque mesh/resource with a texture"))
+
+    command = plane()
     command.phase = "background"
     command.cacheKey = draw_key("background", 1)
     command.geometry = {

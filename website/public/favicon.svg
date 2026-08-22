@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Poké Ball field terminal icon">
+  <circle cx="32" cy="32" r="29" fill="#f8f2d8" stroke="#172017" stroke-width="6"/>
+  <path d="M5 30A27 27 0 0 1 59 30Z" fill="#d83a3a"/>
+  <path d="M4 28h56v8H4z" fill="#172017"/>
+  <circle cx="32" cy="32" r="11" fill="#f8f2d8" stroke="#172017" stroke-width="6"/>
+  <circle cx="32" cy="32" r="4" fill="#59654d"/>
+</svg>

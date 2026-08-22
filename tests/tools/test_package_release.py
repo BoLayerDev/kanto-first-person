@@ -217,8 +217,163 @@ class ReleaseGateTests(unittest.TestCase):
             {name for name, gate in ledger["gates"].items() if not gate["passed"]},
             open_gates,
         )
-        for name in open_gates:
-            self.assertEqual(ledger["gates"][name]["evidence"], [])
+        self.assertEqual(ledger["gates"]["migration_safety"]["evidence"], [])
+        host_evidence = ledger["gates"]["released_hosts"]["evidence"]
+        self.assertEqual(
+            host_evidence,
+            [{
+                "kind": "host_release_delta",
+                "locator": (
+                    "docs/release-evidence/"
+                    "host-release-delta-2026-08-22.json"
+                ),
+                "sha256": (
+                    "59356c814b4e7b2bb966acfc485bfbab"
+                    "6aaafd7ccc4246d715ff5d39d8dee4bd"
+                ),
+            }],
+        )
+        self.assertTrue(PACKAGE_RELEASE.valid_evidence(host_evidence[0]))
+        host_delta_path = ROOT / host_evidence[0]["locator"]
+        self.assertEqual(
+            hashlib.sha256(host_delta_path.read_bytes()).hexdigest(),
+            host_evidence[0]["sha256"],
+        )
+        host_delta = json.loads(host_delta_path.read_text(encoding="utf-8"))
+        self.assertEqual(host_delta["observed_at"], "2026-08-22T19:56:35Z")
+        self.assertEqual(
+            host_delta["kfp_base_binding"],
+            {
+                "public_branch": "v2-rewrite",
+                "base_commit": "e4fec6792cd9bfad28270860c44a9ab080aaa4b9",
+                "evidence_parent": "79b385131d3628f405ad264a01973c479991fc43",
+                "source_checkpoint": "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
+            },
+        )
+
+        battle_art = host_delta["battle_art"]
+        self.assertEqual(battle_art["owner_pr"]["state"], "MERGED")
+        self.assertEqual(
+            battle_art["owner_pr"]["head_commit"],
+            "cee25fd117d881aa63ad7ef0bc7905ca0063fb29",
+        )
+        self.assertEqual(
+            battle_art["owner_pr"]["merge_commit"],
+            "5c0051b84fb9bca7d14b0ed9e44f81d662af25bd",
+        )
+        battle_release = battle_art["owner_release"]
+        self.assertEqual(battle_release["tag"], "1.9.8")
+        self.assertFalse(battle_release["draft"])
+        self.assertFalse(battle_release["prerelease"])
+        self.assertEqual(
+            battle_release["tag_commit"],
+            "6586ef5f7a86c1bfefcea931bd6571538c9f8d15",
+        )
+        self.assertEqual(
+            battle_release["asset"],
+            {
+                "name": "BATTLE_ART_VOXEL_FORK-1.9.8.zip",
+                "size_bytes": 123682063,
+                "sha256": (
+                    "c2e440bdacdba07b170f353e7a7d239"
+                    "bda793554332bc66ff93bba76dc42a1db"
+                ),
+            },
+        )
+        battle_audit = battle_art["static_audit"]
+        self.assertTrue(battle_audit["companion_runtime_present"])
+        self.assertEqual(
+            battle_audit["audit"]["sha256"],
+            "08707de5f0bbafb629edd562768f0b088c131aed44df35973c27b085babe34c2",
+        )
+        self.assertEqual(
+            battle_audit["extraction"]["sha256"],
+            "1e092b9cdd4953d0457f120e198b70460aa7c1223331d6d1082a256901129cbb",
+        )
+
+        dramaless = host_delta["dramaless"]
+        dramaless_release = dramaless["owner_release"]
+        self.assertEqual(dramaless_release["tag"], "v2.0.3")
+        self.assertFalse(dramaless_release["draft"])
+        self.assertFalse(dramaless_release["prerelease"])
+        self.assertEqual(
+            dramaless_release["tag_commit"],
+            "23750150ae6f939e09f9ac6ca6d80c382ec9997a",
+        )
+        self.assertFalse(dramaless_release["tag_signature_verified"])
+        self.assertEqual(
+            dramaless_release["asset"],
+            {
+                "name": "DRAMALESS_SHAPE-2.0.3.zip",
+                "size_bytes": 549781,
+                "sha256": (
+                    "89f6fa078c78a6f6e34c98074ea50ff"
+                    "4f971eead992f27684b52eae0f4f5a1a2"
+                ),
+            },
+        )
+        dramaless_pr = dramaless["owner_pr"]
+        self.assertEqual(dramaless_pr["state"], "OPEN")
+        self.assertFalse(dramaless_pr["draft"])
+        self.assertFalse(dramaless_pr["mergeable"])
+        self.assertEqual(dramaless_pr["merge_state"], "DIRTY")
+        self.assertEqual(
+            dramaless_pr["head_commit"],
+            "f7575445d00593b7db1ecd66f93e8c26989f4136",
+        )
+        self.assertEqual(
+            dramaless_pr["conflict_paths"],
+            ["CHANGELOG.md", "lib/VoxelScene.lua", "main.lua"],
+        )
+        dramaless_audit = dramaless["static_audit"]
+        self.assertEqual(
+            dramaless_audit["sha256"],
+            "2030981605f4c8e1c5636326c2ce897e211651852c5ace092fc5ee4a53a4cb74",
+        )
+        self.assertTrue(dramaless_audit["release_asset_matches_github_digest"])
+        self.assertFalse(
+            dramaless_audit["approved_companion_runtime_present_in_tag"]
+        )
+        self.assertFalse(
+            dramaless_audit["approved_companion_runtime_present_in_release_asset"]
+        )
+        self.assertFalse(
+            dramaless_audit["required_voxel_companion_export_present"]
+        )
+        self.assertEqual(
+            dramaless["private_qa_candidate"],
+            {
+                "head_commit": "f7575445d00593b7db1ecd66f93e8c26989f4136",
+                "released": False,
+                "keep_staged": True,
+                "reason": (
+                    "The v2.0.3 owner release does not contain the approved "
+                    "companion runtime."
+                ),
+            },
+        )
+        self.assertEqual(
+            host_delta["decision"],
+            {
+                "battle_art_owner_release_evidence_exists": True,
+                "battle_art_live_behavior_proven": False,
+                "dramaless_owner_release_exists": True,
+                "dramaless_companion_support_released": False,
+                "released_hosts": False,
+                "kfp_release_approved": False,
+                "live_visual_acceptance": False,
+                "migration_safety": False,
+                "native_performance": False,
+                "full_scene_performance": False,
+                "signed_tag": False,
+            },
+        )
+        registry = ROOT / "docs" / "project-coordination" / "source-registry.md"
+        self.assertIn(
+            "[host-release-delta-2026-08-22.json]"
+            "(../release-evidence/host-release-delta-2026-08-22.json)",
+            registry.read_text(encoding="utf-8"),
+        )
 
         expected_kinds = {
             "automated_tests": "ci_run",

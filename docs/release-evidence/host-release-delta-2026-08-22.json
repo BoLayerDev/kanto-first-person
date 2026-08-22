@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "observed_at": "2026-08-22T19:56:35Z",
+  "scope": "Static host-owner release evidence only. It does not prove live behavior, device acceptance, migration safety, performance, signing, or KFP release approval.",
+  "kfp_base_binding": {
+    "public_branch": "v2-rewrite",
+    "base_commit": "e4fec6792cd9bfad28270860c44a9ab080aaa4b9",
+    "evidence_parent": "79b385131d3628f405ad264a01973c479991fc43",
+    "source_checkpoint": "cfc045bec72c2ceecd558b24bcd643c8e0b720dc"
+  },
+  "battle_art": {
+    "owner_pr": {
+      "number": 29,
+      "url": "https://github.com/absol89/DramaticShapeVoxelMod/pull/29",
+      "state": "MERGED",
+      "draft": false,
+      "check_run_count": 0,
+      "head_commit": "cee25fd117d881aa63ad7ef0bc7905ca0063fb29",
+      "merge_commit": "5c0051b84fb9bca7d14b0ed9e44f81d662af25bd",
+      "merged_at": "2026-08-22T12:39:07Z"
+    },
+    "owner_release": {
+      "tag": "1.9.8",
+      "url": "https://github.com/absol89/DramaticShapeVoxelMod/releases/tag/1.9.8",
+      "published_at": "2026-08-22T13:16:31Z",
+      "draft": false,
+      "prerelease": false,
+      "tag_commit": "6586ef5f7a86c1bfefcea931bd6571538c9f8d15",
+      "asset": {
+        "name": "BATTLE_ART_VOXEL_FORK-1.9.8.zip",
+        "size_bytes": 123682063,
+        "sha256": "c2e440bdacdba07b170f353e7a7d239bda793554332bc66ff93bba76dc42a1db"
+      }
+    },
+    "static_audit": {
+      "kind": "static_package_audit",
+      "audit": {
+        "locator": "private-evidence://runtime/kfp-qa-prep-20260821/host-release-audits/battle-art-1.9.8-6586ef5/battle-art-1.9.8-6586ef5-private-audit.json",
+        "sha256": "08707de5f0bbafb629edd562768f0b088c131aed44df35973c27b085babe34c2"
+      },
+      "extraction": {
+        "locator": "private-evidence://runtime/kfp-qa-prep-20260821/host-release-audits/battle-art-1.9.8-6586ef5/battle-art-1.9.8-6586ef5-private-extraction.json",
+        "sha256": "1e092b9cdd4953d0457f120e198b70460aa7c1223331d6d1082a256901129cbb"
+      },
+      "companion_runtime_present": true,
+      "does_not_prove": "Live behavior or live acceptance."
+    }
+  },
+  "dramaless": {
+    "owner_release": {
+      "tag": "v2.0.3",
+      "url": "https://github.com/artyrambles/DRAMALESS_SHAPE/releases/tag/v2.0.3",
+      "published_at": "2026-08-22T19:41:20Z",
+      "draft": false,
+      "prerelease": false,
+      "tag_commit": "23750150ae6f939e09f9ac6ca6d80c382ec9997a",
+      "tag_tree": "45bc3f061c1ac7acd836bcea1351b1ae1a5e041b",
+      "tag_signature_verified": false,
+      "asset": {
+        "name": "DRAMALESS_SHAPE-2.0.3.zip",
+        "size_bytes": 549781,
+        "sha256": "89f6fa078c78a6f6e34c98074ea50ff4f971eead992f27684b52eae0f4f5a1a2"
+      }
+    },
+    "owner_pr": {
+      "number": 47,
+      "url": "https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47",
+      "state": "OPEN",
+      "draft": false,
+      "check_run_count": 0,
+      "mergeable": false,
+      "merge_state": "DIRTY",
+      "head_commit": "f7575445d00593b7db1ecd66f93e8c26989f4136",
+      "conflict_paths": [
+        "CHANGELOG.md",
+        "lib/VoxelScene.lua",
+        "main.lua"
+      ]
+    },
+    "static_audit": {
+      "kind": "static_owner_release_and_kfp_companion_parity",
+      "locator": "private-evidence://runtime/kfp-qa-prep-20260821/host-release-audits/dramaless-v2.0.3-2375015-20260822T204500Z/dramaless-v2.0.3-2375015-private-audit.json",
+      "sha256": "2030981605f4c8e1c5636326c2ce897e211651852c5ace092fc5ee4a53a4cb74",
+      "release_asset_matches_github_digest": true,
+      "approved_companion_runtime_present_in_tag": false,
+      "approved_companion_runtime_present_in_release_asset": false,
+      "required_voxel_companion_export_present": false,
+      "does_not_prove": "Live behavior or device acceptance."
+    },
+    "private_qa_candidate": {
+      "head_commit": "f7575445d00593b7db1ecd66f93e8c26989f4136",
+      "released": false,
+      "keep_staged": true,
+      "reason": "The v2.0.3 owner release does not contain the approved companion runtime."
+    }
+  },
+  "decision": {
+    "battle_art_owner_release_evidence_exists": true,
+    "battle_art_live_behavior_proven": false,
+    "dramaless_owner_release_exists": true,
+    "dramaless_companion_support_released": false,
+    "released_hosts": false,
+    "kfp_release_approved": false,
+    "live_visual_acceptance": false,
+    "migration_safety": false,
+    "native_performance": false,
+    "full_scene_performance": false,
+    "signed_tag": false
+  }
+}

@@ -21,6 +21,9 @@ Last updated: 2026-08-22
 - A fresh clone, source archive, strict 76-file runtime allowlist, and two
   fixed-epoch v0.2.19 private package builds passed with zero mismatches. The
   exact record is in the current alpha-readiness evidence.
+- `README.md` remains byte-bound to source checkpoint `cfc045b`. Its older
+  checkpoint links are historical evidence, not current host status. Do not
+  edit it before a new exact package-integrity audit.
 - The alpha ledger records asset rights, automated tests, companion contracts,
   known limitations, package reproducibility, and source integrity as passed.
   It remains unapproved. Released hosts and migration safety are false. Live
@@ -50,14 +53,18 @@ Last updated: 2026-08-22
 
 - The Git tag named `firstperson1.60.0` contains manifest version 1.57.2. The release archives contain unpublished 1.60 source.
 - The old mod can leave unsafe source edits inside voxel hosts.
-- Both final adapter heads are pushed to `BoLayerDev` forks. [Battle Art PR
-  #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is open and
-  mergeable at `cee25fd117d881aa63ad7ef0bc7905ca0063fb29`; 2,636 host, 11
-  lifecycle, and 54 companion checks pass. [Dramaless PR
-  #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) is open and
-  mergeable at `f7575445d00593b7db1ecd66f93e8c26989f4136`; 89 host checks and
-  59 syntax checks pass. Both still need owner review, merge, versioning,
-  release, and real GPU testing.
+- [Battle Art PR
+  #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) merged from
+  `cee25fd117d881aa63ad7ef0bc7905ca0063fb29`, and owner release `1.9.8` at
+  `6586ef5f7a86c1bfefcea931bd6571538c9f8d15` contains the approved companion
+  runtime. Its 2,636 host, 11 lifecycle, and 54 companion checks pass; live GPU
+  acceptance remains open. [Dramaless PR
+  #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) remains open and
+  dirty at `f7575445d00593b7db1ecd66f93e8c26989f4136`; its 89 host checks and
+  59 syntax checks pass. Owner release `v2.0.3` at
+  `23750150ae6f939e09f9ac6ca6d80c382ec9997a` lacks the approved companion
+  runtime. Dramaless still needs conflict resolution, merge, a replacement
+  owner release, and live GPU testing.
 - Both adapter heads commit Git-identical copies of the frozen KFP API and
   shared fixture. Their canonical source SHA-256 values are
   `6fded9c804298ab064db61b908382be7c9a74ad29d611444c33e1bcc53a33d26`
@@ -66,7 +73,8 @@ Last updated: 2026-08-22
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
-- Two isolated Yellow QA profiles run the Battle Art and Dramaless PR branches.
+- Two isolated Yellow QA profiles use Battle Art `1.9.8` and the unreleased
+  Dramaless `f757544` companion candidate.
   A diagnostic restart proved that both attach KFP. Live captures then exposed
   bad panorama placement and repeated bands in Dramaless, plus oversized
   translucent cloud and canopy geometry in Battle Art. A pre-restart Dramaless
@@ -111,9 +119,9 @@ Last updated: 2026-08-22
    approval before closing or restarting either active host process.
 3. Complete the Yellow visual, lifecycle, performance, transition, and soak
    matrix; import legally owned Red and Blue copies before their private runs.
-4. Obtain host-owner review and released adapter versions from [Battle Art PR
-   #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) and
-   [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47).
+4. Complete live acceptance for Battle Art `1.9.8`. Resolve, merge, and obtain
+   a companion-enabled owner release from [Dramaless PR
+   #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47).
 5. Keep the private rights inventory hash aligned if any covered legacy asset
    changes; never publish the original permission pages.
 6. Request and re-audit an official owner-scoped derived-image API before any

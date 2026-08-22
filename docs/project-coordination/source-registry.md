@@ -99,11 +99,20 @@ They are not host-owner releases:
 - Battle Art delivery fork and upstream review:
   [delivery branch](https://github.com/BoLayerDev/DramaticShapeVoxelMod/tree/kfp-companion-api-v1)
   and [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29),
-  which is open and mergeable at the recorded head.
+  which merged at `5c0051b84fb9bca7d14b0ed9e44f81d662af25bd`. Owner release
+  `1.9.8` is available at `6586ef5f7a86c1bfefcea931bd6571538c9f8d15`.
+  Its static package audit confirms the approved companion runtime is present.
+  It does not prove live behavior or live acceptance.
 - Dramaless delivery fork and upstream review:
   [delivery branch](https://github.com/BoLayerDev/DRAMALESS_SHAPE/tree/kfp-companion-api-v1)
   and [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47),
-  which is open and mergeable at the recorded head.
+  which remains open and is dirty at
+  `f7575445d00593b7db1ecd66f93e8c26989f4136`. Owner release `v2.0.3` is
+  available at `23750150ae6f939e09f9ac6ca6d80c382ec9997a`, but its tag and release
+  asset do not contain the approved companion runtime or
+  `mod.exports.voxel_companion`. Keep the `f757544` private QA candidate.
+- Machine-readable host-release status:
+  [host-release-delta-2026-08-22.json](../release-evidence/host-release-delta-2026-08-22.json).
 
 ## Private evidence
 

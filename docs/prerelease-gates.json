@@ -45,7 +45,13 @@
       "passed": true
     },
     "released_hosts": {
-      "evidence": [],
+      "evidence": [
+        {
+          "kind": "host_release_delta",
+          "locator": "docs/release-evidence/host-release-delta-2026-08-22.json",
+          "sha256": "59356c814b4e7b2bb966acfc485bfbab6aaafd7ccc4246d715ff5d39d8dee4bd"
+        }
+      ],
       "passed": false
     },
     "migration_safety": {

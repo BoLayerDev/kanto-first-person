@@ -48,13 +48,14 @@ The same five pins have no public owner-scoped runtime method for output from
 
 | Host ID | Audited base | PR head | Companion API evidence | Release gate |
 |---|---:|---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | `cee25fd` | 2,636 host, 11 lifecycle, and 54 companion checks pass | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is open and mergeable; owner release and GPU retest are open |
-| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | `f757544` | 89 host and 59 syntax checks pass | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) is open and mergeable; owner release and GPU retest are open |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.8 at `6586ef5` | merged from `cee25fd` | 2,636 host, 11 lifecycle, and 54 companion checks pass; static release audit confirms the companion runtime | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is merged and owner release `1.9.8` exists; live GPU acceptance is open |
+| `DRAMALESS_SHAPE` | 2.0.3 at `2375015` | open and dirty at `f757544` | 89 host and 59 syntax checks pass on the unreleased candidate; owner `v2.0.3` lacks the companion runtime | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) needs conflict resolution, merge, a companion-enabled owner release, and live GPU testing |
 
 Runtime selection requires exactly one active compatible host. Zero or multiple hosts leave KFP inactive.
-The adapter branches are pushed to project forks and submitted in upstream
-pull requests. They are review evidence, not released host versions, and must
-not be described as released until each host owner publishes them.
+Battle Art `1.9.8` is an owner release with the approved companion runtime.
+Dramaless `f757544` remains an unreleased private QA candidate; owner release
+`v2.0.3` does not contain that runtime. Static release evidence does not prove
+live behavior or device acceptance.
 
 Both heads commit Git-identical copies of the companion API and shared fixture.
 Their canonical source hashes are in the [alpha-readiness

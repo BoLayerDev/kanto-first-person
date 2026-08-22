@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 1,
+  "version": "2.0.0-alpha.1",
+  "experimental": true,
+  "branch": "v2-rewrite",
+  "commit": "79b385131d3628f405ad264a01973c479991fc43",
+  "shortSha": "79b3851",
+  "commitMessage": "docs(release): bind alpha evidence to cfc checkpoint",
+  "commitUrl": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43",
+  "generatedAt": "2026-08-22T11:49:22Z",
+  "activity": [
+    {
+      "sha": "79b385131d3628f405ad264a01973c479991fc43",
+      "shortSha": "79b3851",
+      "message": "docs(release): bind alpha evidence to cfc checkpoint",
+      "date": "2026-08-22T05:49:22-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43"
+    },
+    {
+      "sha": "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
+      "shortSha": "cfc045b",
+      "message": "fix(render): canonicalize numeric packet hashes",
+      "date": "2026-08-22T05:20:50-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/cfc045bec72c2ceecd558b24bcd643c8e0b720dc"
+    },
+    {
+      "sha": "6682cc4369a4e9536ec7cd243922fc71dcdbad50",
+      "shortSha": "6682cc4",
+      "message": "ci: pin exact LuaJIT sources",
+      "date": "2026-08-22T05:10:27-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6682cc4369a4e9536ec7cd243922fc71dcdbad50"
+    },
+    {
+      "sha": "136d67c4802450e20fb2d64ae024a7af3194a385",
+      "shortSha": "136d67c",
+      "message": "docs(release): fail closed during evidence refresh",
+      "date": "2026-08-22T04:29:43-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/136d67c4802450e20fb2d64ae024a7af3194a385"
+    },
+    {
+      "sha": "719acbfe9250062fbe97546df03819d82fa824b2",
+      "shortSha": "719acbf",
+      "message": "perf(render): cache packet hash frames and layouts",
+      "date": "2026-08-22T04:24:04-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/719acbfe9250062fbe97546df03819d82fa824b2"
+    },
+    {
+      "sha": "d54933db7efc1854ecdf0aa981932d7725ebca1b",
+      "shortSha": "d54933d",
+      "message": "fix(benchmark): bind production world index",
+      "date": "2026-08-22T04:20:09-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d54933db7efc1854ecdf0aa981932d7725ebca1b"
+    },
+    {
+      "sha": "f1939259b5b9b5bc3af8938ab0f54651d5087303",
+      "shortSha": "f193925",
+      "message": "perf(world): reuse snapshot index for anchors",
+      "date": "2026-08-22T04:11:00-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f1939259b5b9b5bc3af8938ab0f54651d5087303"
+    },
+    {
+      "sha": "c5936f96468830cd560243d1746c511b8820e9cc",
+      "shortSha": "c5936f9",
+      "message": "perf(weather): hoist compile invariants",
+      "date": "2026-08-22T03:59:52-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c5936f96468830cd560243d1746c511b8820e9cc"
+    },
+    {
+      "sha": "71a3b039fb5423a9cf107aa37e4bdfb6703dc8e9",
+      "shortSha": "71a3b03",
+      "message": "perf(benchmark): report full-scene compiler truth",
+      "date": "2026-08-22T03:55:18-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/71a3b039fb5423a9cf107aa37e4bdfb6703dc8e9"
+    },
+    {
+      "sha": "b964789169902b33b34d246e03e699fe1f149f31",
+      "shortSha": "b964789",
+      "message": "perf(render): compose command packet hashes",
+      "date": "2026-08-22T03:47:39-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b964789169902b33b34d246e03e699fe1f149f31"
+    },
+    {
+      "sha": "dce1662613143804d143968a261e37f6f6984c7b",
+      "shortSha": "dce1662",
+      "message": "perf: optimize scene compilation hot path",
+      "date": "2026-08-22T03:38:30-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dce1662613143804d143968a261e37f6f6984c7b"
+    },
+    {
+      "sha": "029259ce10c856b0d3409a3c47512f9490bde6bb",
+      "shortSha": "029259c",
+      "message": "fix(api): preserve host identity after descriptor copy",
+      "date": "2026-08-22T03:30:54-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/029259ce10c856b0d3409a3c47512f9490bde6bb"
+    },
+    {
+      "sha": "017f61145aea066a91738017912efcf9192e6448",
+      "shortSha": "017f611",
+      "message": "fix(api): fail closed on non-v1 render commands",
+      "date": "2026-08-22T03:30:37-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/017f61145aea066a91738017912efcf9192e6448"
+    },
+    {
+      "sha": "e5b43cbded65db5a784de10f9c56349859bf9aae",
+      "shortSha": "e5b43cb",
+      "message": "test: verify reload option invalidation",
+      "date": "2026-08-22T03:21:24-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e5b43cbded65db5a784de10f9c56349859bf9aae"
+    },
+    {
+      "sha": "9179caf32649dbb253529c2a38ae227dce6b5d5b",
+      "shortSha": "9179caf",
+      "message": "fix: survive voxel host replacement",
+      "date": "2026-08-22T03:21:24-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9179caf32649dbb253529c2a38ae227dce6b5d5b"
+    },
+    {
+      "sha": "929011e99439014ab10c67c552cd9921d82e4167",
+      "shortSha": "929011e",
+      "message": "fix(website): align keyboard focus with selection",
+      "date": "2026-08-22T03:02:27-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/929011e99439014ab10c67c552cd9921d82e4167"
+    },
+    {
+      "sha": "575ca114cd6f9804b6ee94b3236c5791cf3fae35",
+      "shortSha": "575ca11",
+      "message": "fix(website): make mobile terminal readable",
+      "date": "2026-08-22T03:02:27-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/575ca114cd6f9804b6ee94b3236c5791cf3fae35"
+    },
+    {
+      "sha": "1d8a51a5189641b59b7a28ec3dd007313df89754",
+      "shortSha": "1d8a51a",
+      "message": "docs: refresh integrated alpha evidence",
+      "date": "2026-08-22T02:38:27-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/1d8a51a5189641b59b7a28ec3dd007313df89754"
+    },
+    {
+      "sha": "0683051a9ade567df8f5a5a73a2693646274e578",
+      "shortSha": "0683051",
+      "message": "test: prove migration and removal safety",
+      "date": "2026-08-22T02:09:22-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0683051a9ade567df8f5a5a73a2693646274e578"
+    },
+    {
+      "sha": "f509a370c13f24a13cef37981ec7b859407a4f4c",
+      "shortSha": "f509a37",
+      "message": "fix(packaging): complete Windows path checks",
+      "date": "2026-08-22T02:09:16-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f509a370c13f24a13cef37981ec7b859407a4f4c"
+    },
+    {
+      "sha": "63b7e1baa3ed5a49c46d8e6c165491de8b2f9a64",
+      "shortSha": "63b7e1b",
+      "message": "fix(packaging): enforce archive path parity",
+      "date": "2026-08-22T02:09:16-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/63b7e1baa3ed5a49c46d8e6c165491de8b2f9a64"
+    },
+    {
+      "sha": "0719894d1d90bf8d05b7c0ed678509022093b4aa",
+      "shortSha": "0719894",
+      "message": "fix(packaging): reject unsafe artifact names",
+      "date": "2026-08-22T02:09:16-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0719894d1d90bf8d05b7c0ed678509022093b4aa"
+    },
+    {
+      "sha": "7bb4b09a845b936ca10541f6a27a1b42bab5eeae",
+      "shortSha": "7bb4b09",
+      "message": "fix(packaging): read clean builds from Git blobs",
+      "date": "2026-08-22T02:09:16-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/7bb4b09a845b936ca10541f6a27a1b42bab5eeae"
+    },
+    {
+      "sha": "3e5a19f15cb8dfdcca7044e236533c5b22d8710f",
+      "shortSha": "3e5a19f",
+      "message": "docs: record options terminal publication",
+      "date": "2026-08-22T01:38:37-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3e5a19f15cb8dfdcca7044e236533c5b22d8710f"
+    },
+    {
+      "sha": "dec53c15fdc32285afae0313c8bbe7e8615b2def",
+      "shortSha": "dec53c1",
+      "message": "Merge pull request #2 from BoLayerDev/feature/gen1-options-terminal",
+      "date": "2026-08-22T01:37:08-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dec53c15fdc32285afae0313c8bbe7e8615b2def"
+    },
+    {
+      "sha": "2f8cea8c513f9dbed68975d3553e1cecabc1bce7",
+      "shortSha": "2f8cea8",
+      "message": "feat: reduce site to Gen 1 options terminal",
+      "date": "2026-08-22T01:35:17-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2f8cea8c513f9dbed68975d3553e1cecabc1bce7"
+    },
+    {
+      "sha": "6e6c78ba9e70fa85d43c954d684a603253422e9d",
+      "shortSha": "6e6c78b",
+      "message": "docs: record Pages publication",
+      "date": "2026-08-22T01:13:43-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6e6c78ba9e70fa85d43c954d684a603253422e9d"
+    },
+    {
+      "sha": "59abbd8b0dbfe7d81cf399a85eceddceb2568fd1",
+      "shortSha": "59abbd8",
+      "message": "Merge pull request #1 from BoLayerDev/feature/kanto-field-terminal",
+      "date": "2026-08-22T01:11:45-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/59abbd8b0dbfe7d81cf399a85eceddceb2568fd1"
+    },
+    {
+      "sha": "dd752d0ea3c5a7ec610b2b030ca71484ecac7788",
+      "shortSha": "dd752d0",
+      "message": "feat: add interactive Kanto field terminal",
+      "date": "2026-08-22T01:10:22-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dd752d0ea3c5a7ec610b2b030ca71484ecac7788"
+    },
+    {
+      "sha": "422b12a36b5b299c2e43f9948e809896a5f0194d",
+      "shortSha": "422b12a",
+      "message": "docs: record final alpha checkpoint evidence",
+      "date": "2026-08-22T01:07:15-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/422b12a36b5b299c2e43f9948e809896a5f0194d"
+    },
+    {
+      "sha": "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+      "shortSha": "af8610c",
+      "message": "test: align scene benchmarks with quality density",
+      "date": "2026-08-22T00:48:25-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/af8610cc2ddd7bb4049c26ca7673c8d0a5319351"
+    },
+    {
+      "sha": "f4973918e31e4bec1dbe860028e7c6d59011b3be",
+      "shortSha": "f497391",
+      "message": "docs: clarify architecture and installation",
+      "date": "2026-08-22T00:31:17-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f4973918e31e4bec1dbe860028e7c6d59011b3be"
+    },
+    {
+      "sha": "ee84d1beb9fe65cc82b075714c0ad472f94e9a7e",
+      "shortSha": "ee84d1b",
+      "message": "build: certify Gen1recomp v0.2.19",
+      "date": "2026-08-22T00:30:43-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ee84d1beb9fe65cc82b075714c0ad472f94e9a7e"
+    },
+    {
+      "sha": "d301c779478e524c2e35dbeafa7347ae35103ba5",
+      "shortSha": "d301c77",
+      "message": "perf: slice scene packet sealing",
+      "date": "2026-08-22T00:21:50-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d301c779478e524c2e35dbeafa7347ae35103ba5"
+    },
+    {
+      "sha": "f23424b4d5713fa94292465f03684af97fd1625a",
+      "shortSha": "f23424b",
+      "message": "fix: bound certified world feature density",
+      "date": "2026-08-22T00:16:28-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f23424b4d5713fa94292465f03684af97fd1625a"
+    },
+    {
+      "sha": "eecffd9adbef3d03b58daaef51c0f76e4dc10445",
+      "shortSha": "eecffd9",
+      "message": "docs: propose safe derived asset runtime API",
+      "date": "2026-08-21T23:08:45-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/eecffd9adbef3d03b58daaef51c0f76e4dc10445"
+    },
+    {
+      "sha": "3b21b584816ecd2f6a557678eadb83d28df526a0",
+      "shortSha": "3b21b58",
+      "message": "fix: forbid unsafe borrowed mesh textures",
+      "date": "2026-08-21T22:37:33-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3b21b584816ecd2f6a557678eadb83d28df526a0"
+    },
+    {
+      "sha": "5581c700c7058c2d5c059773c5e1d38a28834c8e",
+      "shortSha": "5581c70",
+      "message": "docs: refresh private rights inventory hash",
+      "date": "2026-08-21T22:29:44-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5581c700c7058c2d5c059773c5e1d38a28834c8e"
+    },
+    {
+      "sha": "6b45a77695fbf2854afa8e10c660f46e9deb7bc9",
+      "shortSha": "6b45a77",
+      "message": "fix: correct sky composition and canopy cutaways",
+      "date": "2026-08-21T22:23:50-06:00",
+      "author": "Bo Layer",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6b45a77695fbf2854afa8e10c660f46e9deb7bc9"
+    },
+    {
+      "sha": "4acb605b5fc3a07295fa8c8777d733ce69fa466a",
+      "shortSha": "4acb605",
+      "message": "feat: enable camera-mode ceiling policies",
+      "date": "2026-08-21T22:09:07-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/4acb605b5fc3a07295fa8c8777d733ce69fa466a"
+    },
+    {
+      "sha": "06a8b0ec4495fb81f36474b8e8707081e4ae65b9",
+      "shortSha": "06a8b0e",
+      "message": "docs: update Dramaless game identity evidence",
+      "date": "2026-08-21T22:04:14-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/06a8b0ec4495fb81f36474b8e8707081e4ae65b9"
+    },
+    {
+      "sha": "c5d40d9cec38be36759f3b3b6baf109cdc74ccf1",
+      "shortSha": "c5d40d9",
+      "message": "feat: add quality-specific panorama assets",
+      "date": "2026-08-21T22:00:19-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c5d40d9cec38be36759f3b3b6baf109cdc74ccf1"
+    },
+    {
+      "sha": "a5dfdaf6efad44ae577bdd986b0654015b85c40e",
+      "shortSha": "a5dfdaf",
+      "message": "chore: tighten prerelease host gates",
+      "date": "2026-08-21T21:55:19-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a5dfdaf6efad44ae577bdd986b0654015b85c40e"
+    },
+    {
+      "sha": "47e4161e122996b7bf7cc9111a9c7045c72b1a57",
+      "shortSha": "47e4161",
+      "message": "feat: expose bounded live scene diagnostics",
+      "date": "2026-08-21T21:51:07-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/47e4161e122996b7bf7cc9111a9c7045c72b1a57"
+    },
+    {
+      "sha": "3043c0b4b91856e734cd4c640f1a5e45d0e58397",
+      "shortSha": "3043c0b",
+      "message": "docs: record live Dramaless visual fault",
+      "date": "2026-08-21T21:47:18-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3043c0b4b91856e734cd4c640f1a5e45d0e58397"
+    },
+    {
+      "sha": "52a11b9ab6b969fc7f0a0497b083e2962812eaa9",
+      "shortSha": "52a11b9",
+      "message": "docs: distinguish disabled and failed QA starts",
+      "date": "2026-08-21T21:32:54-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/52a11b9ab6b969fc7f0a0497b083e2962812eaa9"
+    },
+    {
+      "sha": "7fbdb7fac82ecf64b502f732481f33d073406bd1",
+      "shortSha": "7fbdb7f",
+      "message": "docs: reject disabled-mod runtime captures",
+      "date": "2026-08-21T21:30:44-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/7fbdb7fac82ecf64b502f732481f33d073406bd1"
+    },
+    {
+      "sha": "aa4be77bf7e066e7560c3b8f80f91848ca9c1046",
+      "shortSha": "aa4be77",
+      "message": "docs: record preliminary Yellow runtime checkpoint",
+      "date": "2026-08-21T21:20:37-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/aa4be77bf7e066e7560c3b8f80f91848ca9c1046"
+    },
+    {
+      "sha": "ee5b735f125dc27d07090e839344121aea6f0407",
+      "shortSha": "ee5b735",
+      "message": "docs: record parallel alpha readiness",
+      "date": "2026-08-21T21:07:04-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ee5b735f125dc27d07090e839344121aea6f0407"
+    },
+    {
+      "sha": "05a0418ba9da8f5639253f53e045d189d61e1e4b",
+      "shortSha": "05a0418",
+      "message": "docs: add ROM-safe device evidence kit",
+      "date": "2026-08-21T21:05:19-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/05a0418ba9da8f5639253f53e045d189d61e1e4b"
+    },
+    {
+      "sha": "218974fd4e1d9dc9e6c2650db98df467ff57adaa",
+      "shortSha": "218974f",
+      "message": "test: add ROM-free synthetic scene goldens",
+      "date": "2026-08-21T21:01:35-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/218974fd4e1d9dc9e6c2650db98df467ff57adaa"
+    },
+    {
+      "sha": "bb8b7df32ea7477536a6c96614c952635e6aa9d5",
+      "shortSha": "bb8b7df",
+      "message": "docs: define runtime QA and alpha limits",
+      "date": "2026-08-21T21:00:00-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/bb8b7df32ea7477536a6c96614c952635e6aa9d5"
+    },
+    {
+      "sha": "b5ca9fa1a194c54b7d8182e8ebed8a7ae1b38468",
+      "shortSha": "b5ca9fa",
+      "message": "build: reaudit current gen1recomp targets",
+      "date": "2026-08-21T20:58:24-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b5ca9fa1a194c54b7d8182e8ebed8a7ae1b38468"
+    },
+    {
+      "sha": "e07416f05fd312fc68b352b34e8088248a070b06",
+      "shortSha": "e07416f",
+      "message": "perf: add bounded runtime metrics",
+      "date": "2026-08-21T20:57:03-06:00",
+      "author": "Bo Layer",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e07416f05fd312fc68b352b34e8088248a070b06"
+    },
+    {
+      "sha": "9630fd430346938abbec516a2296dca25ae63670",
+      "shortSha": "9630fd4",
+      "message": "docs: record redacted legacy asset grant",
+      "date": "2026-08-21T19:28:02-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9630fd430346938abbec516a2296dca25ae63670"
+    },
+    {
+      "sha": "28b45c36cf8668a63ed1ca440051e8997b5863d8",
+      "shortSha": "28b45c3",
+      "message": "docs: refresh Pokemon-themed hero banner",
+      "date": "2026-08-21T19:11:43-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/28b45c36cf8668a63ed1ca440051e8997b5863d8"
+    },
+    {
+      "sha": "9c1a08948658a2518eed67b54d03faf020ba5ab5",
+      "shortSha": "9c1a089",
+      "message": "build: establish guarded prerelease workflow",
+      "date": "2026-08-21T19:06:43-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9c1a08948658a2518eed67b54d03faf020ba5ab5"
+    },
+    {
+      "sha": "ff5b0e82f7af9d326ad9e48a40f7aef907427a96",
+      "shortSha": "ff5b0e8",
+      "message": "docs: condense README into Kanto field guide",
+      "date": "2026-08-21T18:36:54-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ff5b0e82f7af9d326ad9e48a40f7aef907427a96"
+    },
+    {
+      "sha": "a7e7a83deb6e3f91db1e7d18e39402d9d1e6ec16",
+      "shortSha": "a7e7a83",
+      "message": "docs: redesign README with visual architecture guide",
+      "date": "2026-08-21T18:25:24-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a7e7a83deb6e3f91db1e7d18e39402d9d1e6ec16"
+    },
+    {
+      "sha": "2f717ece6801abb24d0cb13d53fdc276351c432c",
+      "shortSha": "2f717ec",
+      "message": "ci: ignore action-managed Lua toolchain",
+      "date": "2026-08-21T18:15:08-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2f717ece6801abb24d0cb13d53fdc276351c432c"
+    },
+    {
+      "sha": "c146fb3324d94370e764b1d2701491986248d7f8",
+      "shortSha": "c146fb3",
+      "message": "merge: preserve remote CI toolchain fix",
+      "date": "2026-08-21T18:13:00-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c146fb3324d94370e764b1d2701491986248d7f8"
+    },
+    {
+      "sha": "876b260aab054fd84159a8fc2189825d7bba07b8",
+      "shortSha": "876b260",
+      "message": "ci: install supported LuaJIT toolchain",
+      "date": "2026-08-21T18:12:50-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/876b260aab054fd84159a8fc2189825d7bba07b8"
+    },
+    {
+      "sha": "d5bf1bb4d2a55fbe7fb180c4f65aaa5aa19b6dff",
+      "shortSha": "d5bf1bb",
+      "message": "ci: install supported LuaJIT toolchain",
+      "date": "2026-08-21T18:12:26-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d5bf1bb4d2a55fbe7fb180c4f65aaa5aa19b6dff"
+    },
+    {
+      "sha": "c71a64aa4becf011ce9342b329d882b72e2b729d",
+      "shortSha": "c71a64a",
+      "message": "docs: record remote recovery verification",
+      "date": "2026-08-21T18:11:21-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c71a64aa4becf011ce9342b329d882b72e2b729d"
+    },
+    {
+      "sha": "a50d38c342adfde34565d0a6150ab37ff78bbad6",
+      "shortSha": "a50d38c",
+      "message": "merge: preserve remote CI workflow commit",
+      "date": "2026-08-21T18:10:21-06:00",
+      "author": "Bo Layer",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a50d38c342adfde34565d0a6150ab37ff78bbad6"
+    },
+    {
+      "sha": "a7d2b8cfe678f83414f91e24e8629aa5348e7006",
+      "shortSha": "a7d2b8c",
+      "message": "ci: add KFP rewrite validation",
+      "date": "2026-08-21T18:10:00-06:00",
+      "author": "Bo Layer",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a7d2b8cfe678f83414f91e24e8629aa5348e7006"
+    },
+    {
+      "sha": "1a1141a755797b0349e775a0c8e30e4f83c5af04",
+      "shortSha": "1a1141a",
+      "message": "docs: expand architecture and maintainer guide",
+      "date": "2026-08-21T17:59:58-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/1a1141a755797b0349e775a0c8e30e4f83c5af04"
+    },
+    {
+      "sha": "828b34e8c240f763c0ea867d302aa6475580b60e",
+      "shortSha": "828b34e",
+      "message": "docs: record two-host recovery checkpoint",
+      "date": "2026-08-21T17:06:40-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/828b34e8c240f763c0ea867d302aa6475580b60e"
+    },
+    {
+      "sha": "568ef6994fa9cb8daae5fc0853bab6b589b961f2",
+      "shortSha": "568ef69",
+      "message": "refactor: support only Battle Art and Dramaless",
+      "date": "2026-08-21T17:05:34-06:00",
+      "author": "Bo Layer",
+      "type": "EVOLVED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/568ef6994fa9cb8daae5fc0853bab6b589b961f2"
+    },
+    {
+      "sha": "eba16dc3739a2191cc1879ea1a3b372cec46ba9c",
+      "shortSha": "eba16dc",
+      "message": "docs: record clean checkpoint recovery",
+      "date": "2026-08-21T16:44:12-06:00",
+      "author": "Bo Layer",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/eba16dc3739a2191cc1879ea1a3b372cec46ba9c"
+    },
+    {
+      "sha": "0f453187210d3d388a02196affee413994df1a77",
+      "shortSha": "0f45318",
+      "message": "feat: rewrite Kanto First Person as clean companion",
+      "date": "2026-08-21T16:42:07-06:00",
+      "author": "Bo Layer",
+      "type": "NEW MOVE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0f453187210d3d388a02196affee413994df1a77"
+    },
+    {
+      "sha": "94d0151be839f02fea4a35ab1c3df41fbaddc6c1",
+      "shortSha": "94d0151",
+      "message": "Add files via upload",
+      "date": "2026-08-08T16:41:54+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/94d0151be839f02fea4a35ab1c3df41fbaddc6c1"
+    },
+    {
+      "sha": "78e6e2a2e3443cad0125b1c753d4c9f2a3cc2cb6",
+      "shortSha": "78e6e2a",
+      "message": "Add files via upload",
+      "date": "2026-08-08T07:02:28+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/78e6e2a2e3443cad0125b1c753d4c9f2a3cc2cb6"
+    },
+    {
+      "sha": "fa1426f06691dacb3df54a1904e0e520260baf89",
+      "shortSha": "fa1426f",
+      "message": "Add files via upload",
+      "date": "2026-08-07T20:06:04+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/fa1426f06691dacb3df54a1904e0e520260baf89"
+    },
+    {
+      "sha": "dc6583d97bfecad4a816f98a49f0f3984e0a8dd9",
+      "shortSha": "dc6583d",
+      "message": "Update README.md",
+      "date": "2026-08-07T19:57:26+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dc6583d97bfecad4a816f98a49f0f3984e0a8dd9"
+    },
+    {
+      "sha": "62012933ac9fd49051d55bb37b78cef1f1c63681",
+      "shortSha": "6201293",
+      "message": "Update README.md",
+      "date": "2026-08-06T12:05:58+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/62012933ac9fd49051d55bb37b78cef1f1c63681"
+    },
+    {
+      "sha": "a77a2744952141fb2dd06ca34cf580cef8b1cc39",
+      "shortSha": "a77a274",
+      "message": "Add files via upload",
+      "date": "2026-08-06T12:04:42+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a77a2744952141fb2dd06ca34cf580cef8b1cc39"
+    },
+    {
+      "sha": "2ca513f64ed7bb408bf23a037ec6f625460a2197",
+      "shortSha": "2ca513f",
+      "message": "Update README.md",
+      "date": "2026-08-05T22:06:18+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2ca513f64ed7bb408bf23a037ec6f625460a2197"
+    },
+    {
+      "sha": "711c4433c483e445226ec14f4b5b3fd192b48950",
+      "shortSha": "711c443",
+      "message": "Add files via upload",
+      "date": "2026-08-05T22:01:38+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/711c4433c483e445226ec14f4b5b3fd192b48950"
+    },
+    {
+      "sha": "898f2aaa875536ac1935049dfa5ea1d391e36528",
+      "shortSha": "898f2aa",
+      "message": "Update README.md",
+      "date": "2026-08-04T12:09:25+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/898f2aaa875536ac1935049dfa5ea1d391e36528"
+    },
+    {
+      "sha": "5638965a1988413647e053c1c459943a13048fed",
+      "shortSha": "5638965",
+      "message": "Update README.md",
+      "date": "2026-08-03T20:59:24+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5638965a1988413647e053c1c459943a13048fed"
+    },
+    {
+      "sha": "140bcc7ce8dfc8398ef94f3fe7f020ddd4c69aee",
+      "shortSha": "140bcc7",
+      "message": "Add files via upload",
+      "date": "2026-08-03T20:52:34+01:00",
+      "author": "mrmushrooms11",
+      "type": "RESEARCH UPDATE",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/140bcc7ce8dfc8398ef94f3fe7f020ddd4c69aee"
+    }
+  ],
+  "ci": {
+    "state": "success",
+    "runId": "32571329500",
+    "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500",
+    "passed": 11,
+    "total": 11
+  },
+  "release": {
+    "available": false,
+    "label": "NOT RELEASED",
+    "tag": "",
+    "url": "https://github.com/BoLayerDev/kanto-first-person/releases"
+  }
+}

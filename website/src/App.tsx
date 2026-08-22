@@ -1,10 +1,12 @@
-import { lazy, Suspense, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
 
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
+const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'activity', 'github'] as const
 
 type MenuItem = {
   label: string
@@ -43,6 +45,20 @@ const MENU_ITEMS: MenuItem[] = [
       'Check compatibility, known limits, device testing, security guidance, and the issue tracker from one place.',
   },
   {
+    label: 'NEXT-GEN REBUILD',
+    eyebrow: 'EVOLUTION FILE / 2.0',
+    title: 'Same Kanto. New foundations.',
+    summary:
+      'This is not a patch update. KFP 2.0 is a clean companion rewrite built for safer hosts, bounded performance, and a much bigger world.',
+  },
+  {
+    label: 'RESEARCH ARCHIVE',
+    eyebrow: 'OAK LAB / COMPLETE HISTORY',
+    title: 'Every step. No mystery.',
+    summary:
+      'Every verified commit on the release branch lives here. New work joins the archive automatically after the complete CI lab scan passes.',
+  },
+  {
     label: 'OPEN GITHUB',
     eyebrow: 'SOURCE / PUBLIC',
     title: 'See how it works.',
@@ -57,25 +73,314 @@ const PRIMARY_LINKS = [
   `${BRANCH}/docs/feature-parity.md`,
   `${BRANCH}/docs/upgrade-v1-to-v2.md`,
   `${BRANCH}/docs/compatibility.md`,
+  `${BRANCH}/docs/architecture.md`,
+  `${REPO}/commits/v2-rewrite`,
   REPO,
+]
+
+const REWRITE_UPGRADES = [
+  ['INTEGRATION', 'SPLICED HOST SOURCE', 'PUBLIC COMPANION API'],
+  ['OWNERSHIP', 'BACKUPS + FILE LEDGERS', 'KFP RESOURCES ONLY'],
+  ['WORLD BUILD', 'LARGE RENDER-PATH WORK', 'BUDGETED COMPILER'],
+  ['STATE', 'BROAD MUTABLE TABLES', 'BOUNDED SNAPSHOTS'],
+  ['RANDOMNESS', 'GLOBAL RANDOM STATE', 'LOCAL DETERMINISM'],
+  ['RELEASE', 'MANUAL ARCHIVES', 'REPRODUCIBLE GATES'],
 ]
 
 function DetailLinks({ children }: { children: ReactNode }) {
   return <div className="detail-links">{children}</div>
 }
 
-function MenuDetail({ index }: { index: number }) {
+function activityTitle(message: string) {
+  return message.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+}
+
+function ActivityLog({ status }: { status: ProjectStatus }) {
+  const updates = status.activity.slice(0, 4)
+
+  return (
+    <section className="activity-log" aria-labelledby="activity-title">
+      <div className="activity-header">
+        <div>
+          <span>LIVE FROM {status.branch.toUpperCase()}</span>
+          <b id="activity-title">OAK RESEARCH LOG</b>
+        </div>
+        <span className="live-signal"><i /> WORK CONTINUES</span>
+      </div>
+      <ol>
+        {updates.map((update, index) => (
+          <li key={update.sha} style={{ '--log-index': index } as CSSProperties}>
+            <a href={update.url} target="_blank" rel="noreferrer">
+              <span className="activity-type">{update.type}</span>
+              <b>{activityTitle(update.message)}</b>
+              <time dateTime={update.date}>{update.date.slice(5, 10).replace('-', '/')}</time>
+              <code>{update.shortSha}</code>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <div className="activity-footer">
+        <span>{status.activity.length} VERIFIED FIELD UPDATES LOADED</span>
+        <a href="#activity">OPEN FULL LOG ▶</a>
+      </div>
+    </section>
+  )
+}
+
+function ReleaseBanner({ status }: { status: ProjectStatus }) {
+  const buildLabel = status.ci.state === 'success' && status.ci.total > 0
+    ? `${status.ci.passed}/${status.ci.total} PASS`
+    : 'CHECK CI'
+  const syncDate = status.generatedAt.slice(0, 10)
+  const packageCard = status.release.available ? (
+    <a href={status.release.url} target="_blank" rel="noreferrer">
+      <span>PACKAGE</span><b>{status.release.label}</b><i aria-hidden="true">↗</i>
+    </a>
+  ) : (
+    <div><span>PACKAGE</span><b>{status.release.label}</b></div>
+  )
+
+  return (
+    <section className="release-banner" aria-labelledby="site-title">
+      <div className="split-core release-core" aria-hidden="true"><span /></div>
+      <div className="release-copy">
+        <span className="release-kicker">KANTO FIRST PERSON // TRAINERS, STAND BY</span>
+        <h1 id="site-title"><span>COMING</span> SOON</h1>
+        <p>{status.version} tracks the verified GitHub branch. Real-game acceptance and the signed public package are still in progress.</p>
+        <span className="github-sync-note">
+          SYNCED {syncDate} · {status.commitMessage}
+        </span>
+      </div>
+      <div className="release-status" aria-label="Current release status">
+        <a href={status.ci.runUrl} target="_blank" rel="noreferrer">
+          <span>BUILD</span><b>{buildLabel}</b><i aria-hidden="true">↗</i>
+        </a>
+        <a href={status.commitUrl} target="_blank" rel="noreferrer">
+          <span>SOURCE</span><b>{status.shortSha}</b><i aria-hidden="true">↗</i>
+        </a>
+        {packageCard}
+      </div>
+    </section>
+  )
+}
+
+function RewriteComparisonGraphic() {
+  return (
+    <figure className="rebuild-comparison">
+      <div className="concept-card is-legacy">
+        <div className="concept-scene legacy-scene" aria-hidden="true">
+          <span className="concept-sun" />
+          <span className="concept-ground" />
+          <span className="concept-route" />
+          <span className="host-block host-block-a" />
+          <span className="host-block host-block-b" />
+          <span className="patch-wire patch-wire-a" />
+          <span className="patch-wire patch-wire-b" />
+          <b>PATCHED HOST</b>
+        </div>
+        <figcaption><span>1.60 LEGACY</span><b>POWERFUL, BUT TIED TO HOST FILES</b></figcaption>
+      </div>
+      <div className="evolution-arrow" aria-hidden="true"><span>EVOLVE</span>▶</div>
+      <div className="concept-card is-rebuild">
+        <div className="concept-scene rebuild-scene" aria-hidden="true">
+          <span className="concept-sun" />
+          <span className="concept-mountain mountain-a" />
+          <span className="concept-mountain mountain-b" />
+          <span className="concept-ground" />
+          <span className="concept-route" />
+          <span className="concept-tree tree-a" />
+          <span className="concept-tree tree-b" />
+          <span className="concept-tree tree-c" />
+          <span className="weather-pixel weather-a" />
+          <span className="weather-pixel weather-b" />
+          <span className="weather-pixel weather-c" />
+          <b>COMPANION API</b>
+        </div>
+        <figcaption><span>2.0 REBUILD</span><b>DEEPER WORLD. CLEAN BOUNDARIES.</b></figcaption>
+      </div>
+    </figure>
+  )
+}
+
+function RewriteDetail() {
+  return (
+    <div className="rewrite-page">
+      <div className="rewrite-callout">
+        <span>FULL SYSTEM REWRITE</span>
+        <b>BUILT AGAIN.<br />BUILT TO LAST.</b>
+        <p>KFP keeps the ambition of the original mod and replaces its old foundation with an isolated, testable Gen1recomp API 2 architecture.</p>
+      </div>
+
+      <RewriteComparisonGraphic />
+
+      <section className="field-media" aria-labelledby="field-media-title">
+        <figure>
+          <div className="media-frame">
+            <img
+              src={`${import.meta.env.BASE_URL}og-kanto-rebuild.png`}
+              alt="Original pixel-art concept of a first-person route leading toward a wide mountain region"
+              loading="lazy"
+            />
+            <span>CONCEPT ART // NOT GAMEPLAY</span>
+          </div>
+          <figcaption><b id="field-media-title">THE 2.0 WORLD VISION</b><span>Original project artwork</span></figcaption>
+        </figure>
+        <div className="capture-lock">
+          <span className="capture-icon" aria-hidden="true">▣</span>
+          <span>DEVICE CAPTURE / SLOT 01</span>
+          <b>REAL FOOTAGE UNLOCKS AFTER ACCEPTANCE</b>
+          <p>No staged gameplay. No ROM data. The first real comparison will appear only after device evidence passes.</p>
+          <a href={`${BRANCH}/docs/device-test-guide.md`} target="_blank" rel="noreferrer">VIEW THE CAPTURE GATE ↗</a>
+        </div>
+      </section>
+
+      <div className="rebuild-vitals" aria-label="Rewrite highlights">
+        <div><b>53</b><span>LEGACY SETTINGS MAPPED</span></div>
+        <div><b>5</b><span>ENGINE TARGETS IN CI</span></div>
+        <div><b>3</b><span>GEN 1 GAMES TARGETED</span></div>
+      </div>
+
+      <section className="upgrade-grid" aria-labelledby="upgrade-grid-title">
+        <div className="upgrade-grid-title" id="upgrade-grid-title">
+          <span>THEN</span><b>THE 2.0 EVOLUTION</b><span>NOW</span>
+        </div>
+        {REWRITE_UPGRADES.map(([area, before, after]) => (
+          <div className="upgrade-row" key={area}>
+            <span>{before}</span><b>{area}</b><span>{after}</span>
+          </div>
+        ))}
+      </section>
+
+      <section className="world-upgrades" aria-labelledby="world-upgrades-title">
+        <div>
+          <span>WORLD / 01</span><b id="world-upgrades-title">ROOMS BECOME PLACES</b>
+          <p>Walls, ceilings, doors, windows, light fittings, cave roofs, pools, rails, and battle props add depth to familiar spaces.</p>
+        </div>
+        <div>
+          <span>HORIZON / 02</span><b>ROUTES KEEP GOING</b>
+          <p>Terrain aprons, trees, mountains, forest structures, clouds, stars, and distant activity push Kanto beyond the map edge.</p>
+        </div>
+        <div>
+          <span>ATMOSPHERE / 03</span><b>THE WORLD HAS WEATHER</b>
+          <p>Rain, storms, fog, canopy, particles, camera motion, and ambient sound are represented as bounded feature systems.</p>
+        </div>
+        <div>
+          <span>SAFETY / 04</span><b>THE HOST STAYS IN CONTROL</b>
+          <p>One host owns the renderer. KFP submits validated packets, isolates faults, and never patches, restores, or deletes host files.</p>
+        </div>
+      </section>
+
+      <div className="rebuild-promise">
+        <span>NEXT OBJECTIVE</span>
+        <b>A BIGGER FIRST-PERSON KANTO—WITH A FOUNDATION THE COMMUNITY CAN TRUST.</b>
+      </div>
+
+      <DetailLinks>
+        <a href={`${BRANCH}/docs/architecture.md`} target="_blank" rel="noreferrer">EXPLORE THE ARCHITECTURE <span>↗</span></a>
+        <a href={`${BRANCH}/docs/feature-parity.md`} target="_blank" rel="noreferrer">VIEW THE FEATURE LEDGER <span>↗</span></a>
+        <a href={`${BRANCH}/docs/upgrade-v1-to-v2.md`} target="_blank" rel="noreferrer">READ THE SAFE UPGRADE PATH <span>↗</span></a>
+      </DetailLinks>
+    </div>
+  )
+}
+
+function ResearchArchive({ status }: { status: ProjectStatus }) {
+  const contributors = new Set(status.activity.map((entry) => entry.author)).size
+  const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
+  const firstUpdate = status.activity.at(-1)?.date.slice(0, 10) ?? 'UNKNOWN'
+  const typeCounts = [...status.activity.reduce((counts, entry) => {
+    counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1)
+    return counts
+  }, new Map<string, number>())]
+  const automaticMilestones = status.activity.filter((entry) => (
+    ['NEW MOVE', 'EVOLVED', 'LAB VERIFIED'].includes(entry.type)
+    || /^[a-z]+\((release|device|compat|architecture)\):/i.test(entry.message)
+    || /^release:/i.test(entry.message)
+  )).slice(0, 6)
+
+  return (
+    <div className="archive-page">
+      <div className="archive-vitals" aria-label="Complete development totals">
+        <div><b>{status.activity.length}</b><span>VERIFIED COMMITS</span></div>
+        <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
+        <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
+        <div><b>{firstUpdate}</b><span>RESEARCH BEGAN</span></div>
+      </div>
+
+      <section className="milestone-deck" aria-labelledby="milestone-title">
+        <div className="milestone-header">
+          <div><span>AUTO-SELECTED FROM VERIFIED HISTORY</span><b id="milestone-title">FIELD BADGES</b></div>
+          <span>NO MANUAL LOGGING REQUIRED</span>
+        </div>
+        <div>
+          {automaticMilestones.map((entry, index) => (
+            <a href={entry.url} target="_blank" rel="noreferrer" key={entry.sha}>
+              <i aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>
+              <span>{entry.type}</span>
+              <b>{activityTitle(entry.message)}</b>
+              <small>{entry.date.slice(0, 10)} · {entry.shortSha}</small>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      <figure className="archive-system-map">
+        <img
+          src={`${import.meta.env.BASE_URL}activity-system-share.svg`}
+          alt="Diagram showing commits passing through CI into the homepage log and complete research archive"
+          loading="lazy"
+        />
+        <figcaption>
+          <span>THE PROGRESS PIPELINE // EVERY ENTRY LINKS TO ITS SOURCE</span>
+          <a href={`${import.meta.env.BASE_URL}activity-system-share.png`} download>DOWNLOAD SHARE GRAPHIC ↓</a>
+        </figcaption>
+      </figure>
+
+      <section className="archive-types" aria-labelledby="archive-types-title">
+        <b id="archive-types-title">FIELD WORK INDEX</b>
+        <div>
+          {typeCounts.map(([type, count]) => <span key={type}><i>{count}</i>{type}</span>)}
+        </div>
+      </section>
+
+      <section className="archive-ledger" aria-labelledby="archive-ledger-title">
+        <div className="archive-ledger-header">
+          <div><span>DEFAULT BRANCH / {status.branch.toUpperCase()}</span><b id="archive-ledger-title">COMPLETE VERIFIED HISTORY</b></div>
+          <span>NEWEST FIRST</span>
+        </div>
+        <ol>
+          {status.activity.map((entry, index) => (
+            <li key={entry.sha}>
+              <a href={entry.url} target="_blank" rel="noreferrer">
+                <span className="archive-number">#{String(status.activity.length - index).padStart(3, '0')}</span>
+                <span className="archive-entry-type">{entry.type}</span>
+                <b>{activityTitle(entry.message)}</b>
+                <span className="archive-author">{entry.author}</span>
+                <time dateTime={entry.date}>{entry.date.slice(0, 10)}</time>
+                <code>{entry.shortSha}</code>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <DetailLinks>
+        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">VERIFY THE FULL LOG ON GITHUB <span>↗</span></a>
+      </DetailLinks>
+    </div>
+  )
+}
+
+function MenuDetail({ index, status }: { index: number, status: ProjectStatus }) {
   if (index === 0) {
     return (
       <>
-        <div className="stat-row"><span>TYPE</span><b>GRAPHICS OVERHAUL</b></div>
-        <div className="stat-row"><span>GAMES</span><b>RED · BLUE · YELLOW</b></div>
-        <div className="stat-row"><span>ENGINE</span><b>GEN1RECOMP API 2</b></div>
-        <div className="alpha-notice"><i /> 2.0.0-ALPHA.1 SOURCE CANDIDATE</div>
-        <DetailLinks>
-          <a href={`${BRANCH}/README.md`} target="_blank" rel="noreferrer">PROJECT OVERVIEW <span>↗</span></a>
-          <a href={`${BRANCH}/ROADMAP.md`} target="_blank" rel="noreferrer">ROADMAP <span>↗</span></a>
-        </DetailLinks>
+        <div className="home-vitals">
+          <span><small>VERSION</small><b>{status.version.toUpperCase()}</b></span>
+          <span><small>LAB SCAN</small><b>{status.ci.passed}/{status.ci.total} PASS</b></span>
+          <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
+        </div>
+        <ActivityLog status={status} />
       </>
     )
   }
@@ -129,6 +434,14 @@ function MenuDetail({ index }: { index: number }) {
     )
   }
 
+  if (index === 4) {
+    return <RewriteDetail />
+  }
+
+  if (index === 5) {
+    return <ResearchArchive status={status} />
+  }
+
   return (
     <div className="github-launch">
       <div className="repo-mark" aria-hidden="true">&lt;/&gt;</div>
@@ -140,7 +453,7 @@ function MenuDetail({ index }: { index: number }) {
   )
 }
 
-function OptionsMenu() {
+function OptionsMenu({ status }: { status: ProjectStatus }) {
   const menuIndex = useJourneyStore((state) => state.menuIndex)
   const edition = useJourneyStore((state) => state.edition)
   const quality = useJourneyStore((state) => state.quality)
@@ -150,20 +463,28 @@ function OptionsMenu() {
   const menuButtons = useRef<Array<HTMLButtonElement | null>>([])
   const item = MENU_ITEMS[menuIndex]
 
+  const navigateToMenu = (index: number) => {
+    setMenuIndex(index)
+    const nextHash = `#${MENU_SLUGS[index]}`
+    if (window.location.hash !== nextHash) window.history.pushState({}, '', nextHash)
+  }
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return
-      if (event.target instanceof HTMLAnchorElement) return
       const key = event.key.toLowerCase()
+      const isAnchor = event.target instanceof HTMLAnchorElement
+      const isMenuButton = event.target instanceof HTMLButtonElement
+        && menuButtons.current.includes(event.target)
       if (['arrowup', 'w'].includes(key)) {
         event.preventDefault()
         const nextIndex = (menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length
-        setMenuIndex(nextIndex)
+        navigateToMenu(nextIndex)
         menuButtons.current[nextIndex]?.focus()
       } else if (['arrowdown', 's'].includes(key)) {
         event.preventDefault()
         const nextIndex = (menuIndex + 1) % MENU_ITEMS.length
-        setMenuIndex(nextIndex)
+        navigateToMenu(nextIndex)
         menuButtons.current[nextIndex]?.focus()
       } else if (['arrowleft', 'a'].includes(key)) {
         event.preventDefault()
@@ -173,11 +494,13 @@ function OptionsMenu() {
         event.preventDefault()
         const index = EDITIONS.indexOf(edition)
         setEdition(EDITIONS[(index + 1) % EDITIONS.length])
-      } else if (key === 'z') {
+      } else if (['enter', ' ', 'z'].includes(key)) {
+        if (isAnchor || (event.target instanceof HTMLButtonElement && !isMenuButton && key !== 'z')) return
         event.preventDefault()
         window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
       } else if (['escape', 'x'].includes(key)) {
-        setMenuIndex(0)
+        event.preventDefault()
+        navigateToMenu(0)
         menuButtons.current[0]?.focus()
       }
     }
@@ -187,14 +510,7 @@ function OptionsMenu() {
 
   return (
     <main className="terminal-shell">
-      <section className="title-strip" aria-labelledby="site-title">
-        <div className="split-core" aria-hidden="true"><span /></div>
-        <div>
-          <span>KFP // FIELD OPTIONS</span>
-          <h1 id="site-title">KANTO FIRST PERSON</h1>
-        </div>
-        <div className="alpha-chip"><i /> ALPHA</div>
-      </section>
+      <ReleaseBanner status={status} />
 
       <div className="terminal-grid">
         <nav className="menu-window pixel-window" aria-label="Main options">
@@ -206,8 +522,7 @@ function OptionsMenu() {
               aria-current={index === menuIndex ? 'page' : undefined}
               key={menuItem.label}
               ref={(button) => { menuButtons.current[index] = button }}
-              onClick={() => setMenuIndex(index)}
-              onPointerEnter={() => setMenuIndex(index)}
+              onClick={() => navigateToMenu(index)}
             >
               <span className="menu-cursor" aria-hidden="true">▶</span>
               <span>{menuItem.label}</span>
@@ -249,7 +564,7 @@ function OptionsMenu() {
           <div className="detail-copy">
             <h2 id="detail-title">{item.title}</h2>
             <p className="detail-summary">{item.summary}</p>
-            <MenuDetail index={menuIndex} />
+            <MenuDetail index={menuIndex} status={status} />
           </div>
         </section>
       </div>
@@ -257,8 +572,8 @@ function OptionsMenu() {
       <footer className="control-strip">
         <div><kbd>↑↓</kbd><span>SELECT</span></div>
         <div><kbd>←→</kbd><span>VERSION</span></div>
-        <div><kbd>Z</kbd><span>OPEN</span></div>
-        <div><kbd>X</kbd><span>BACK</span></div>
+        <div><kbd>ENTER</kbd><span>OPEN</span></div>
+        <div><kbd>ESC</kbd><span>BACK</span></div>
         <p>Independent fan project · No ROM data · Not affiliated with Nintendo, Game Freak, Creatures, or The Pokémon Company.</p>
       </footer>
     </main>
@@ -266,7 +581,9 @@ function OptionsMenu() {
 }
 
 export function App() {
+  const status = useProjectStatus()
   const edition = useJourneyStore((state) => state.edition)
+  const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setQuality = useJourneyStore((state) => state.setQuality)
   const palette = PALETTES[edition]
 
@@ -275,6 +592,36 @@ export function App() {
     const limitedDevice = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4
     if (reducedMotion.matches || limitedDevice) setQuality('low')
   }, [setQuality])
+
+  useEffect(() => {
+    const syncMenuToLocation = () => {
+      const slug = window.location.hash.slice(1).toLowerCase()
+      const index = MENU_SLUGS.indexOf(slug as (typeof MENU_SLUGS)[number])
+      setMenuIndex(index >= 0 ? index : 0)
+    }
+    syncMenuToLocation()
+    window.addEventListener('popstate', syncMenuToLocation)
+    window.addEventListener('hashchange', syncMenuToLocation)
+    return () => {
+      window.removeEventListener('popstate', syncMenuToLocation)
+      window.removeEventListener('hashchange', syncMenuToLocation)
+    }
+  }, [setMenuIndex])
+
+  const [worldReady, setWorldReady] = useState(false)
+
+  useEffect(() => {
+    const windowWithIdle = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+      cancelIdleCallback?: (handle: number) => void
+    }
+    if (windowWithIdle.requestIdleCallback) {
+      const handle = windowWithIdle.requestIdleCallback(() => setWorldReady(true), { timeout: 900 })
+      return () => windowWithIdle.cancelIdleCallback?.(handle)
+    }
+    const handle = window.setTimeout(() => setWorldReady(true), 250)
+    return () => window.clearTimeout(handle)
+  }, [])
 
   const themeStyle = {
     '--accent': palette.accent,
@@ -286,11 +633,13 @@ export function App() {
 
   return (
     <div className={`app edition-${edition}`} style={themeStyle}>
-      <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
-        <WorldCanvas />
-      </Suspense>
+      {worldReady ? (
+        <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
+          <WorldCanvas />
+        </Suspense>
+      ) : <div className="world-canvas world-loading">WORLD DATA STANDBY...</div>}
       <div className="screen-treatment" aria-hidden="true" />
-      <OptionsMenu />
+      <OptionsMenu status={status} />
     </div>
   )
 }

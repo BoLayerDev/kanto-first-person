@@ -8,13 +8,12 @@
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "test:status": "node --test scripts/generate-project-status.test.mjs",
     "test:responsive": "playwright test"
   },
   "dependencies": {
     "@fontsource/press-start-2p": "5.3.0",
     "@react-three/fiber": "9.7.0",
-    "@react-three/postprocessing": "3.0.5",
-    "postprocessing": "6.39.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "three": "0.185.1",

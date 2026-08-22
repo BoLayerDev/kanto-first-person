@@ -70,7 +70,7 @@ test.describe('mobile field terminal', () => {
     expect(layout.summary.bottom).toBeLessThan(844)
     expect(layout.summary.fontSize).toBeGreaterThanOrEqual(14)
 
-    expect(layout.menuButtons).toHaveLength(5)
+    expect(layout.menuButtons).toHaveLength(7)
     for (const button of layout.menuButtons) {
       expect(button.fontSize).toBeGreaterThanOrEqual(11)
       expect(button.height).toBeGreaterThanOrEqual(48)
@@ -100,15 +100,16 @@ test.describe('mobile field terminal', () => {
     await page.goto(PAGE_PATH)
 
     await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: /BUILD 11\/11 PASS/ })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: /SOURCE 79b3851/ })).toBeFocused()
+    await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 
     await page.keyboard.press('ArrowDown')
     await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toHaveAttribute('aria-current', 'page')
     await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toBeFocused()
     await expect(page.getByRole('heading', { name: 'The world gets bigger.' })).toBeVisible()
-
-    await page.keyboard.press('Enter')
-    await expect(page.getByRole('button', { name: 'FIELD FEATURES' })).toHaveAttribute('aria-current', 'page')
 
     await page.keyboard.press('x')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toHaveAttribute('aria-current', 'page')
@@ -139,9 +140,11 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
     })
     const menu = document.querySelector<HTMLElement>('.menu-window')!
     const detail = document.querySelector<HTMLElement>('.detail-window')!
+    const banner = document.querySelector<HTMLElement>('.release-banner')!
     const canvas = document.querySelector<HTMLElement>('.world-canvas')!
     const root = document.querySelector<HTMLElement>('#root')!
     return {
+      banner: box(banner.getBoundingClientRect()),
       menu: box(menu.getBoundingClientRect()),
       detail: box(detail.getBoundingClientRect()),
       menuDisplay: getComputedStyle(menu).display,
@@ -154,6 +157,7 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   })
 
   expect(layout.menuDisplay).toBe('flex')
+  expect(layout.banner.bottom).toBeLessThan(layout.menu.top)
   expect(layout.menu.right).toBeLessThan(layout.detail.left)
   expect(Math.abs(layout.menu.top - layout.detail.top)).toBeLessThan(1)
   expect(Math.abs(layout.menu.height - layout.detail.height)).toBeLessThan(1)
@@ -161,4 +165,134 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.position).toBe('fixed')
   expect(layout.canvas.width).toBe(1440)
   expect(layout.canvas.height).toBe(900)
+})
+
+test('keeps the verified coming-soon status above every menu page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const banner = page.getByRole('region', { name: 'COMING SOON' })
+  await expect(banner).toContainText('2.0.0-alpha.1')
+  await expect(banner).toContainText('11/11 PASS')
+  await expect(banner).toContainText('79b3851')
+  await expect(banner).toContainText('NOT RELEASED')
+  await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
+  await expect(banner.getByRole('link', { name: /SOURCE 79b3851/ })).toHaveAttribute('href', /commit\/79b3851/)
+
+  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'RESEARCH ARCHIVE', 'OPEN GITHUB']) {
+    await page.getByRole('button', { name: label }).click()
+    await expect(banner).toBeVisible()
+  }
+})
+
+test('shows verified work as a game-style research log on the homepage', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
+  await expect(log).toBeVisible()
+  await expect(log).toContainText('WORK CONTINUES')
+  await expect(log).toContainText('FIELD NOTES')
+  await expect(log).toContainText('HP RESTORED')
+  await expect(log).toContainText('LAB VERIFIED')
+  await expect(log.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
+})
+
+test('shows the complete verified project history in the research archive', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#activity`)
+
+  await expect(page.getByRole('button', { name: 'RESEARCH ARCHIVE' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
+  const vitals = page.locator('[aria-label="Complete development totals"]')
+  await expect(vitals.getByText('82', { exact: true })).toBeVisible()
+  await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
+  await expect(vitals.getByText('2', { exact: true })).toBeVisible()
+  await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
+
+  const milestones = page.getByRole('region', { name: 'FIELD BADGES' })
+  await expect(milestones).toContainText('NO MANUAL LOGGING REQUIRED')
+  await expect(milestones.getByRole('link')).toHaveCount(6)
+
+  const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
+  await expect(ledger.locator('ol > li')).toHaveCount(82)
+  await expect(ledger.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
+
+  const systemMap = page.getByRole('img', { name: /Diagram showing commits/ })
+  await expect(systemMap).toBeVisible()
+  await expect.poll(() => systemMap.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
+  await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
+})
+
+test('supports shareable hash routes and browser history', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#rebuild`)
+
+  await expect(page.getByRole('button', { name: 'NEXT-GEN REBUILD' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'SUPPORT CENTER' }).click()
+  await expect(page).toHaveURL(/#support$/)
+  await expect(page.getByRole('heading', { name: 'Evidence before guesses.' })).toBeVisible()
+
+  await page.goBack()
+  await expect(page).toHaveURL(/#rebuild$/)
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+})
+
+test('publishes social preview metadata and labels concept media honestly', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#rebuild`)
+
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-kanto-rebuild\.png$/)
+  const concept = page.getByRole('img', { name: /Original pixel-art concept/ })
+  await expect(concept).toBeVisible()
+  await expect(page.getByText('CONCEPT ART // NOT GAMEPLAY')).toBeVisible()
+  await expect(page.getByText('REAL FOOTAGE UNLOCKS AFTER ACCEPTANCE')).toBeVisible()
+  await expect.poll(() => concept.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
+})
+
+test('explains the rewrite with conceptual comparison graphics and verified upgrades', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+  await page.getByRole('button', { name: 'NEXT-GEN REBUILD' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+  await expect(page.getByText('1.60 LEGACY')).toBeVisible()
+  await expect(page.getByText('2.0 REBUILD')).toBeVisible()
+  await expect(page.getByText('PUBLIC COMPANION API')).toBeVisible()
+  await expect(page.getByText('BUDGETED COMPILER')).toBeVisible()
+  await expect(page.getByText('53')).toBeVisible()
+  await expect(page.getByRole('link', { name: /EXPLORE THE ARCHITECTURE/ })).toHaveAttribute('href', /docs\/architecture\.md$/)
+})
+
+test('uses standard desktop open and back keys', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: /BUILD/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('link', { name: /SOURCE/ })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
+  await page.keyboard.press('ArrowDown')
+
+  const enterPopupPromise = page.waitForEvent('popup')
+  await page.keyboard.press('Enter')
+  const enterPopup = await enterPopupPromise
+  await expect(enterPopup).toHaveURL(/\/docs\/feature-parity\.md$/)
+  await enterPopup.close()
+
+  const spacePopupPromise = page.waitForEvent('popup')
+  await page.keyboard.press('Space')
+  const spacePopup = await spacePopupPromise
+  await expect(spacePopup).toHaveURL(/\/docs\/feature-parity\.md$/)
+  await spacePopup.close()
+
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 })

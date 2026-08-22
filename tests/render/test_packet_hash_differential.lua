@@ -108,6 +108,10 @@ return function(T)
       .. referenceAdler(COMMAND_DOMAIN_PREFIX .. payload .. TABLE_SUFFIX)
   end
 
+  local function referenceHash(value, limits)
+    return referenceAdler(referenceBytes(value, limits))
+  end
+
   local function finish(job, units)
     local done, result, steps = false, nil, 0
     while not done do
@@ -117,6 +121,163 @@ return function(T)
     end
     return result, steps
   end
+
+  local function assertPacketMatchesReference(value, limits)
+    local expected = referenceHash(value, limits)
+    T.equal(PacketHash.hash(value, limits), expected)
+    for _, units in ipairs({ 1, 11, 101 }) do
+      local actual = finish(PacketHash.newJob(value, limits), units)
+      T.equal(actual, expected)
+    end
+    return expected
+  end
+
+  local function assertCommandMatchesReference(command)
+    local expected = referenceCommandHash(command)
+    T.equal(PacketHash.hashCommand(command), expected)
+    for _, units in ipairs({ 1, 11, 101 }) do
+      local actual = finish(PacketHash.newCommandHashJob(command), units)
+      T.equal(actual, expected)
+    end
+    return expected
+  end
+
+  local function newRandom(seed)
+    return function(limit)
+      seed = seed * 48271 % 2147483647
+      return seed % limit + 1
+    end
+  end
+
+  local function shuffledCopy(source, random)
+    local result = {}
+    for index = 1, #source do result[index] = source[index] end
+    for index = #result, 2, -1 do
+      local other = random(index)
+      result[index], result[other] = result[other], result[index]
+    end
+    return result
+  end
+
+  T.test("packet hashing matches the legacy reference for mixed random shapes", function()
+    local random = newRandom(99173)
+    local shapes = {
+      { "x", "y", "z", "kind" },
+      { "alpha", "blue", "green", "red", "visible" },
+      { "depth", "height", "material", "primitive", "width" },
+      { "count", "phase", "radius", "seed", "speed", "strength" },
+    }
+    local records = {}
+    for recordIndex = 1, 320 do
+      local shape = shapes[random(#shapes)]
+      local record = {}
+      for _, key in ipairs(shuffledCopy(shape, random)) do
+        local choice = random(5)
+        if choice == 1 then
+          record[key] = recordIndex % 2 == 0
+        elseif choice == 2 then
+          record[key] = (random(2001) - 1001) / 17
+        elseif choice == 3 then
+          record[key] = "value:" .. tostring(random(23))
+        elseif choice == 4 then
+          record[key] = { random(9), false, "nested:" .. tostring(random(7)) }
+        else
+          record[key] = { left = random(31), right = random(31) }
+        end
+      end
+      records[recordIndex] = record
+    end
+
+    local value = {
+      records = records,
+      dense = { true, false, 0, -0, 1 / 3, "", "nul\0tail" },
+      mixed = {
+        [-9] = "negative",
+        [0.25] = "fraction",
+        [2] = "number",
+        ["2"] = "string",
+      },
+      stringBoundaries = {
+        string.rep("a", 63), string.rep("b", 64), string.rep("c", 65),
+      },
+    }
+    assertPacketMatchesReference(value)
+  end)
+
+  T.test("verified layout reuse rejects absent extra and adversarial keys", function()
+    local records = {}
+    for index = 1, 192 do
+      local record = { stable = index, enabled = index % 2 == 0 }
+      for keyIndex = 1, 6 do
+        record[("shape_%03d_%d"):format(index, keyIndex)] = keyIndex
+      end
+      records[#records + 1] = record
+    end
+    for index = 1, 128 do
+      records[#records + 1] = index % 3 == 0
+        and { alpha = index, beta = false, delta = "replacement" }
+        or index % 3 == 1
+        and { alpha = index, beta = false, gamma = "expected" }
+        or { alpha = index, beta = false, gamma = "expected", extra = true }
+    end
+
+    local value = { records = records }
+    local expected = assertPacketMatchesReference(value)
+    records[#records].extra = false
+    T.notEqual(assertPacketMatchesReference(value), expected)
+  end)
+
+  T.test("hash jobs release source tables after completion", function()
+    local weak = setmetatable({}, { __mode = "k" })
+    local value = { rows = {} }
+    for index = 1, 256 do
+      value.rows[index] = { kind = "row", x = index, enabled = index % 2 == 0 }
+    end
+    weak[value] = true
+    local job = PacketHash.newJob(value)
+    value = nil
+    finish(job, 11)
+    T.equal(job.thread, nil)
+    collectgarbage("collect")
+    collectgarbage("collect")
+    T.equal(next(weak), nil)
+  end)
+
+  T.test("raw traversal does not invoke hostile table callbacks", function()
+    local callbackCount = 0
+    local hostile = setmetatable({ width = 16 }, {
+      __index = function()
+        callbackCount = callbackCount + 1
+        error("hostile index callback ran")
+      end,
+      __pairs = function()
+        callbackCount = callbackCount + 1
+        error("hostile pairs callback ran")
+      end,
+      __metatable = "locked",
+    })
+    T.raises(function()
+      PacketHash.hash({ geometry = hostile })
+    end, "metatables")
+    T.equal(callbackCount, 0)
+
+    local hostileKey = setmetatable({}, {
+      __tostring = function()
+        callbackCount = callbackCount + 1
+        error("hostile tostring callback ran")
+      end,
+    })
+    T.raises(function()
+      PacketHash.hash({ [hostileKey] = true })
+    end, "non%-string and non%-number keys")
+    T.equal(callbackCount, 0)
+  end)
+
+  T.test("two MiB strings preserve sync and incremental reference hashes", function()
+    local payload = string.rep("0123456789abcdef", 131072)
+    T.equal(#payload, 2 * 1024 * 1024)
+    assertPacketMatchesReference({ kind = "payload", value = payload })
+  end)
 
   T.test("command hash composition matches the byte-fed reference", function()
     local longText = string.rep("payload:", 40) .. "\0tail"
@@ -169,6 +330,39 @@ return function(T)
     end
   end)
 
+  T.test("all runtime-only command fields remain excluded", function()
+    local first = {
+      kind = "instances",
+      owner = "runtime-exclusions",
+      phase = "opaque_after_terrain",
+      items = { { x = 1, y = 2, z = 3 } },
+      cacheKey = "first",
+      schemaVersion = 1,
+      sequence = 2,
+      texture = function() end,
+      mesh = setmetatable({}, {}),
+      resource = coroutine.create(function() end),
+      model = function() end,
+    }
+    local second = {
+      kind = first.kind,
+      owner = first.owner,
+      phase = first.phase,
+      items = first.items,
+      cacheKey = "second",
+      schemaVersion = 999,
+      sequence = 777,
+      texture = {},
+      mesh = function() end,
+      resource = {},
+      model = setmetatable({}, {}),
+    }
+    local expected = assertCommandMatchesReference(first)
+    T.equal(assertCommandMatchesReference(second), expected)
+    second.items = { { x = 2, y = 2, z = 3 } }
+    T.notEqual(assertCommandMatchesReference(second), expected)
+  end)
+
   T.test("command hash composition preserves reference rejection limits", function()
     local tooDeep = { kind = "mesh" }
     local cursor = tooDeep
@@ -188,6 +382,26 @@ return function(T)
     T.raises(function() PacketHash.hashCommand(tooWide) end, "node limit")
     T.raises(function()
       finish(PacketHash.newCommandHashJob(tooWide), 101)
+    end, "node limit")
+
+    local packetDepth = {}
+    local packetCursor = packetDepth
+    for _ = 1, 33 do
+      packetCursor.child = {}
+      packetCursor = packetCursor.child
+    end
+    T.raises(function() PacketHash.hash(packetDepth) end, "depth limit")
+    T.raises(function()
+      finish(PacketHash.newJob(packetDepth), 1)
+    end, "depth limit")
+
+    local packetWidth = {}
+    for index = 1, 64 do packetWidth[index] = true end
+    T.raises(function()
+      PacketHash.hash(packetWidth, { maxNodes = 63 })
+    end, "node limit")
+    T.raises(function()
+      finish(PacketHash.newJob(packetWidth, { maxNodes = 63 }), 1)
     end, "node limit")
   end)
 

@@ -89,11 +89,9 @@ test.describe('mobile field terminal', () => {
     const root = page.locator('#root')
     await root.evaluate((element) => element.scrollTo({ top: 320 }))
     await expect.poll(() => root.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
-    const scrolledCanvas = await page.locator('.world-canvas').evaluate((element) => ({
-      position: getComputedStyle(element).position,
-      top: element.getBoundingClientRect().top,
-    }))
-    expect(scrolledCanvas).toEqual({ position: 'fixed', top: 0 })
+    const scrolledCanvas = page.locator('.world-canvas')
+    await expect(scrolledCanvas).toHaveCSS('position', 'fixed')
+    await expect.poll(() => scrolledCanvas.evaluate((element) => element.getBoundingClientRect().top)).toBe(0)
   })
 
   test('keeps semantic keyboard and touch selection in sync', async ({ page }) => {
@@ -283,14 +281,18 @@ test('publishes social preview metadata and labels concept media honestly', asyn
   await expect.poll(() => concept.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
 })
 
-test('explains the rewrite with conceptual comparison graphics and verified upgrades', async ({ page }) => {
+test('explains the rewrite with an architecture evolution scan and verified upgrades', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
   await page.getByRole('button', { name: 'NEXT-GEN REBUILD' }).click()
 
   await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
-  await expect(page.getByText('1.60 LEGACY')).toBeVisible()
-  await expect(page.getByText('2.0 REBUILD')).toBeVisible()
+  await expect(page.getByText('REWRITE EVOLUTION SCAN')).toBeVisible()
+  await expect(page.getByText('OLD: MOD MUTATES HOST')).toBeVisible()
+  await expect(page.getByText('NEW: HOST VALIDATES PACKETS')).toBeVisible()
+  await expect(page.locator('.concept-scene')).toHaveCount(0)
+  await expect(page.getByText('V1.60')).toBeVisible()
+  await expect(page.getByText('V2.0')).toBeVisible()
   await expect(page.getByText('PUBLIC COMPANION API')).toBeVisible()
   await expect(page.getByText('BUDGETED COMPILER')).toBeVisible()
   await expect(page.getByText('53')).toBeVisible()

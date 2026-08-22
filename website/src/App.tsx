@@ -166,38 +166,60 @@ function ReleaseBanner({ status }: { status: ProjectStatus }) {
 
 function RewriteComparisonGraphic() {
   return (
-    <figure className="rebuild-comparison">
-      <div className="concept-card is-legacy">
-        <div className="concept-scene legacy-scene" aria-hidden="true">
-          <span className="concept-sun" />
-          <span className="concept-ground" />
-          <span className="concept-route" />
-          <span className="host-block host-block-a" />
-          <span className="host-block host-block-b" />
-          <span className="patch-wire patch-wire-a" />
-          <span className="patch-wire patch-wire-b" />
-          <b>PATCHED HOST</b>
+    <figure className="evolution-scan" aria-labelledby="evolution-scan-title">
+      <header className="evolution-scan-header">
+        <div>
+          <span>OAK LAB // SYSTEM RECORD 002</span>
+          <b id="evolution-scan-title">REWRITE EVOLUTION SCAN</b>
         </div>
-        <figcaption><span>1.60 LEGACY</span><b>POWERFUL, BUT TIED TO HOST FILES</b></figcaption>
-      </div>
-      <div className="evolution-arrow" aria-hidden="true"><span>EVOLVE</span>▶</div>
-      <div className="concept-card is-rebuild">
-        <div className="concept-scene rebuild-scene" aria-hidden="true">
-          <span className="concept-sun" />
-          <span className="concept-mountain mountain-a" />
-          <span className="concept-mountain mountain-b" />
-          <span className="concept-ground" />
-          <span className="concept-route" />
-          <span className="concept-tree tree-a" />
-          <span className="concept-tree tree-b" />
-          <span className="concept-tree tree-c" />
-          <span className="weather-pixel weather-a" />
-          <span className="weather-pixel weather-b" />
-          <span className="weather-pixel weather-c" />
-          <b>COMPANION API</b>
+        <span className="scan-signal"><i aria-hidden="true" /> ARCHITECTURE MAPPED</span>
+      </header>
+
+      <div className="evolution-forms">
+        <section className="system-form is-legacy" aria-label="Legacy host-patching architecture">
+          <header><span>FORM 01</span><b>HOST PATCH</b><em>V1.60</em></header>
+          <div className="architecture-path is-legacy-path">
+            <div className="system-node"><span>MOD</span><b>KFP</b></div>
+            <span className="system-link"><i>WRITES</i></span>
+            <div className="system-node is-risk"><span>PATCH</span><b>HOST FILES</b></div>
+            <span className="system-link"><i>LOADS</i></span>
+            <div className="system-node"><span>RUNTIME</span><b>GEN1RECOMP</b></div>
+          </div>
+          <div className="system-readout">
+            <span><small>BOUNDARY</small><b>SHARED</b></span>
+            <span><small>ROLLBACK</small><b>MANUAL</b></span>
+            <span><small>FAILURE</small><b>WIDE</b></span>
+          </div>
+        </section>
+
+        <div className="evolution-pulse" aria-hidden="true">
+          <span>FULL</span>
+          <i><b>→</b></i>
+          <span>REWRITE</span>
         </div>
-        <figcaption><span>2.0 REBUILD</span><b>DEEPER WORLD. CLEAN BOUNDARIES.</b></figcaption>
+
+        <section className="system-form is-rebuild" aria-label="Rebuilt companion API architecture">
+          <header><span>FORM 02</span><b>COMPANION API</b><em>V2.0</em></header>
+          <div className="architecture-path is-rebuild-path">
+            <div className="system-node"><span>MOD</span><b>KFP</b></div>
+            <span className="system-link"><i>SUBMITS</i></span>
+            <div className="system-node is-api"><span>PUBLIC</span><b>API 2</b></div>
+            <span className="system-link"><i>VALIDATES</i></span>
+            <div className="system-node"><span>OWNER</span><b>HOST</b></div>
+          </div>
+          <div className="system-readout">
+            <span><small>BOUNDARY</small><b>ISOLATED</b></span>
+            <span><small>BUILDS</small><b>REPEATABLE</b></span>
+            <span><small>FAILURE</small><b>BOUNDED</b></span>
+          </div>
+        </section>
       </div>
+
+      <figcaption>
+        <span><i aria-hidden="true">×</i> OLD: MOD MUTATES HOST</span>
+        <b aria-hidden="true">EVOLVE</b>
+        <span><i aria-hidden="true">✓</i> NEW: HOST VALIDATES PACKETS</span>
+      </figcaption>
     </figure>
   )
 }

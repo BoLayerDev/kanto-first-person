@@ -109,34 +109,31 @@ local function sortedKeys(keys, dense, maxIndex, checkpoint)
   return source
 end
 
-local function hashValue(value, limits, checkpoint, mirror)
+local function hashValue(value, limits, checkpoint, captureState)
   limits = limits or {}
   local maxDepth = tonumber(limits.maxDepth) or 32
   local maxNodes = tonumber(limits.maxNodes) or 100000
   local a, b, nodes = 1, 0, 0
+  local byteCount = 0
   local active = {}
   local keyPools = {}
 
   local feed
-  if mirror then
-    local mirrorA, mirrorB = mirror.a, mirror.b
+  if captureState then
     feed = function(text)
+      byteCount = (byteCount + #text) % MOD
       local first = 1
       while first <= #text do
         local last = checkpoint
           and math.min(#text, first + FEED_CHUNK_BYTES - 1)
           or #text
         for index = first, last do
-          local byte = text:byte(index)
-          a = (a + byte) % MOD
+          a = (a + text:byte(index)) % MOD
           b = (b + a) % MOD
-          mirrorA = (mirrorA + byte) % MOD
-          mirrorB = (mirrorB + mirrorA) % MOD
         end
         first = last + 1
         if checkpoint then checkpoint() end
       end
-      mirror.a, mirror.b = mirrorA, mirrorB
     end
   else
     feed = function(text)
@@ -211,16 +208,31 @@ local function hashValue(value, limits, checkpoint, mirror)
   end
 
   encode(value, 0)
-  return string.format("%08x", b * 65536 + a)
+  local digest = string.format("%08x", b * 65536 + a)
+  if captureState then return digest, a, b, byteCount end
+  return digest
+end
+
+local function appendPrimaryState(state, primaryA, primaryB, byteCount)
+  -- Adler composition for the same payload hashed from two initial states:
+  -- A2 = A0 + (A1 - 1)
+  -- B2 = B0 + B1 + length * (A0 - 1), all modulo 65521.
+  -- byteCount is already reduced modulo MOD, which also keeps multiplication
+  -- exactly representable under LuaJIT's number semantics.
+  local initialA = state.a
+  state.a = (initialA + primaryA - 1) % MOD
+  state.b = (state.b + primaryB
+    + byteCount * ((initialA - 1) % MOD)) % MOD
 end
 
 local function hashDeclarativeCommand(declarative, checkpoint)
   local second = { a = 1, b = 0 }
   feedState(second, COMMAND_DOMAIN_PREFIX, checkpoint)
-  local first = hashValue(declarative, {
+  local first, primaryA, primaryB, byteCount = hashValue(declarative, {
     maxDepth = 16,
     maxNodes = 65536,
-  }, checkpoint, second)
+  }, checkpoint, true)
+  appendPrimaryState(second, primaryA, primaryB, byteCount)
   feedState(second, TABLE_SUFFIX, checkpoint)
   return first .. stateDigest(second)
 end

@@ -230,10 +230,10 @@ test('shows verified work as a game-style research log on the homepage', async (
 
   const clock = page.getByRole('region', { name: 'Trainer Clock' })
   await expect(clock).toContainText('LAST UPDATE')
-  await expect(clock).toContainText('LAB RUN')
+  await expect(clock).toContainText('LATEST CI TIME')
   await expect(clock).toContainText('50S')
   await expect(clock).toContainText('DEPLOYED')
-  await expect(clock).toContainText('7-DAY ACTIVITY')
+  await expect(clock).toContainText('7-DAY COMMITS')
 
   const latest = log.locator('ol > li').first()
   await expect(latest).toContainText('LIVE')
@@ -255,14 +255,14 @@ test('shows automatic project time and PR task timing without claiming work hour
   await expect(stats).toContainText('PROJECT AGE')
   await expect(stats).toContainText('ACTIVE DAYS')
   await expect(stats).toContainText('MERGED TASKS')
-  await expect(stats).toContainText('LAB RUNTIME')
+  await expect(stats).toContainText('TOTAL CI TIME')
   await expect(stats).toContainText('26M 51S')
-  await expect(stats).toContainText('MEDIAN PR ROUTE')
+  await expect(stats).toContainText('MEDIAN PR TIME')
   await expect(stats).toContainText('59S')
   await expect(stats).toContainText('AI TOKENS')
-  await expect(stats).toContainText('LOCKED')
-  await expect(stats).toContainText('AI TOKENS REQUIRE A TRUSTED EXPORT')
-  await expect(stats).toContainText('NOT CLAIMED AS HANDS-ON HOURS')
+  await expect(stats).toContainText('NOT TRACKED')
+  await expect(stats).toContainText('AI TOKENS ARE PRIVATE AND NOT EXPORTED')
+  await expect(stats).toContainText('NOT HANDS-ON HOURS')
 
   const quests = stats.locator('.quest-log > li')
   await expect(quests).toHaveCount(3)
@@ -350,6 +350,10 @@ test('keeps the dev stats save file readable at desktop and mobile widths', asyn
     const fit = await stats.evaluate((element) => ({
       clipped: element.scrollWidth > element.clientWidth + 1,
       pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      statText: [...element.querySelectorAll<HTMLElement>('dt, dd')].map((item) => ({
+        text: item.textContent?.trim(),
+        clipped: item.scrollWidth > item.clientWidth + 1,
+      })),
       questLinks: [...element.querySelectorAll<HTMLElement>('.quest-log a')].map((link) => ({
         height: link.getBoundingClientRect().height,
         clipped: link.scrollWidth > link.clientWidth + 1,
@@ -358,6 +362,9 @@ test('keeps the dev stats save file readable at desktop and mobile widths', asyn
 
     expect(fit.clipped, `dev stats must fit at ${width}px`).toBe(false)
     expect(fit.pageOverflow, `page must not overflow at ${width}px`).toBe(false)
+    for (const item of fit.statText) {
+      expect(item.clipped, `${item.text} must fit at ${width}px`).toBe(false)
+    }
     for (const link of fit.questLinks) {
       expect(link.height).toBeGreaterThanOrEqual(48)
       expect(link.clipped).toBe(false)

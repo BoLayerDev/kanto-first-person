@@ -230,11 +230,18 @@ function TrainerClock({ status }: { status: ProjectStatus }) {
       <span className="trainer-clock-label">TRAINER CLOCK</span>
       <div>
         <span><small>LAST UPDATE</small><Timestamp date={lastUpdate} now={now} /></span>
-        <a href={status.ci.runUrl} target="_blank" rel="noreferrer">
-          <small>LAB RUN</small><b>{durationLabel(status.ci.durationSeconds)}</b>
+        <a
+          href={status.ci.runUrl}
+          target="_blank"
+          rel="noreferrer"
+          title="Run time of the latest successful GitHub Actions check"
+        >
+          <small>LATEST CI TIME</small><b>{durationLabel(status.ci.durationSeconds)}</b>
         </a>
         <span><small>DEPLOYED</small><Timestamp date={deployedAt} now={now} /></span>
-        <span><small>7-DAY ACTIVITY</small><b>{weeklyActivity}</b></span>
+        <span title="Commits on v2-rewrite during the last seven days">
+          <small>7-DAY COMMITS</small><b>{weeklyActivity}</b>
+        </span>
       </div>
     </section>
   )
@@ -265,9 +272,13 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         <div><dt>PROJECT AGE</dt><dd>{longDurationLabel(projectAgeSeconds)}</dd></div>
         <div><dt>ACTIVE DAYS</dt><dd>{status.devStats.activeDays}</dd></div>
         <div><dt>MERGED TASKS</dt><dd>{status.devStats.mergedPullRequests}</dd></div>
-        <div><dt>LAB RUNTIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
-        <div><dt>MEDIAN PR ROUTE</dt><dd>{longDurationLabel(status.devStats.medianPullRequestSeconds)}</dd></div>
-        <div className="token-stat" title={status.devStats.aiUsage.note}>
+        <div><dt>TOTAL CI TIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
+        <div><dt>MEDIAN PR TIME</dt><dd>{longDurationLabel(status.devStats.medianPullRequestSeconds)}</dd></div>
+        <div
+          className="token-stat"
+          title={status.devStats.aiUsage.note}
+          aria-label={`AI tokens: ${tokenLabel}. ${status.devStats.aiUsage.note}`}
+        >
           <dt>AI TOKENS</dt><dd>{tokenLabel}</dd>
         </div>
       </dl>
@@ -288,8 +299,8 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         ))}
       </ol>
       <footer>
-        <span>PR ROUTE = OPEN TO MERGE. LAB RUNTIME = SUCCESSFUL CI WALL TIME. AI TOKENS REQUIRE A TRUSTED EXPORT.</span>
-        <span>NOT CLAIMED AS HANDS-ON HOURS.</span>
+        <span>CI TIME = GITHUB ACTIONS WALL TIME. PR TIME = OPEN TO MERGE. AI TOKENS ARE PRIVATE AND NOT EXPORTED.</span>
+        <span>NOT HANDS-ON HOURS.</span>
       </footer>
     </section>
   )

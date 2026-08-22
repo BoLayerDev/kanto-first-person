@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -224,6 +224,41 @@ const pullRequests = pullRecords
   .filter((pull) => Number.isFinite(pull.number) && pull.deliverySeconds > 0)
   .sort((left, right) => Date.parse(right.mergedAt) - Date.parse(left.mergedAt))
 
+const issuesOverride = parseJsonArray(clean(process.env.SITE_ISSUES_JSON))
+const issueRecords = issuesOverride ?? (token
+  ? await githubPages('/issues?state=open', '')
+  : [])
+const openIssues = issueRecords.filter((issue) => !issue.pull_request)
+
+function issueLabels(issue) {
+  return (Array.isArray(issue.labels) ? issue.labels : [])
+    .map((label) => clean(typeof label === 'string' ? label : label?.name).toLowerCase())
+}
+
+function issueForSlot(slot) {
+  const expected = `status:${slot.toLowerCase()}`
+  return openIssues
+    .filter((issue) => issueLabels(issue).some((label) => label.replace(/\s+/g, '') === expected))
+    .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at))[0]
+}
+
+function mission(slot, fallbackTitle, fallbackUrl) {
+  const issue = issueForSlot(slot)
+  return issue ? {
+    slot,
+    title: clean(issue.title, `GitHub issue #${issue.number}`),
+    url: clean(issue.html_url, `${repositoryUrl}/issues/${issue.number}`),
+    source: 'issue',
+    updatedAt: clean(issue.updated_at, generatedAt),
+  } : {
+    slot,
+    title: fallbackTitle,
+    url: fallbackUrl,
+    source: 'github',
+    updatedAt: generatedAt,
+  }
+}
+
 const rewriteStartSha = '0f453187210d3d388a02196affee413994df1a77'
 const rewriteStartIndex = activity.findIndex((entry) => entry.sha === rewriteStartSha)
 const rewriteActivity = rewriteStartIndex >= 0 ? activity.slice(0, rewriteStartIndex + 1) : activity
@@ -282,6 +317,146 @@ if (token) {
   }
 }
 
+let hostEvidence = {}
+let hostEvidenceName = ''
+try {
+  const evidenceDirectory = path.join(repositoryRoot, 'docs', 'release-evidence')
+  const evidenceNames = (await readdir(evidenceDirectory))
+    .filter((name) => /^host-release-delta-\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\.json$/i.test(name))
+  const evidenceRecords = await Promise.all(evidenceNames.map(async (name) => {
+    try {
+      return { name, value: JSON.parse(await readFile(path.join(evidenceDirectory, name), 'utf8')) }
+    } catch {
+      return null
+    }
+  }))
+  const newestEvidence = evidenceRecords
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(right.value.observed_at || '') - Date.parse(left.value.observed_at || ''))[0]
+  hostEvidence = newestEvidence?.value ?? {}
+  hostEvidenceName = newestEvidence?.name ?? ''
+} catch {
+  hostEvidence = {}
+}
+
+const hostDecision = hostEvidence?.decision ?? {}
+const hostEvidenceUrl = hostEvidenceName
+  ? `${repositoryUrl}/blob/${branch}/docs/release-evidence/${hostEvidenceName}`
+  : `${repositoryUrl}/blob/${branch}/docs/compatibility.md`
+const deviceEvidenceUrl = `${repositoryUrl}/blob/${branch}/docs/device-test-guide.md`
+const releaseProcessUrl = `${repositoryUrl}/blob/${branch}/docs/release-process.md`
+const compatibleHostReady = hostDecision.released_hosts === true
+const compatibleHostProgress = hostDecision.battle_art_owner_release_evidence_exists === true
+const deviceTested = hostDecision.live_visual_acceptance === true
+const packageSigned = hostDecision.signed_tag === true
+
+const missions = [
+  mission(
+    'NOW',
+    activity[0] ? `Verify: ${activity[0].message}` : 'Continue the verified 2.0 rewrite',
+    activity[0]?.url || `${repositoryUrl}/commits/${branch}`,
+  ),
+  mission(
+    'NEXT',
+    deviceTested ? 'Prepare the signed KFP player package' : 'Complete live device acceptance',
+    deviceTested ? releaseProcessUrl : deviceEvidenceUrl,
+  ),
+  mission(
+    'BLOCKED',
+    release.available
+      ? 'No verified release blocker is recorded'
+      : 'Live acceptance and a signed KFP package are still required',
+    release.available ? release.url : `${repositoryUrl}/blob/${branch}/docs/known-limitations.md`,
+  ),
+]
+
+const releaseJourney = [
+  {
+    id: 'rewrite',
+    label: 'REWRITE',
+    state: release.available ? 'complete' : 'active',
+    summary: release.available ? 'The 2.0 rewrite is released.' : 'The 2.0 alpha source rewrite is active.',
+    url: `${repositoryUrl}/commits/${branch}`,
+  },
+  {
+    id: 'host',
+    label: 'HOST READY',
+    state: compatibleHostReady ? 'complete' : (compatibleHostProgress ? 'active' : 'blocked'),
+    summary: compatibleHostReady
+      ? 'A compatible released host is verified.'
+      : (compatibleHostProgress
+        ? 'Battle Art release proof exists. Live acceptance is still open.'
+        : 'A compatible released Voxel Companion API v1 host is required.'),
+    url: hostEvidenceUrl,
+  },
+  {
+    id: 'device',
+    label: 'DEVICE TESTED',
+    state: deviceTested ? 'complete' : 'pending',
+    summary: deviceTested ? 'Live device acceptance is verified.' : 'Live GPU and in-game acceptance are open.',
+    url: deviceEvidenceUrl,
+  },
+  {
+    id: 'package',
+    label: 'PACKAGE SIGNED',
+    state: packageSigned ? 'complete' : 'pending',
+    summary: packageSigned ? 'The release tag is signed.' : 'No signed player package is published.',
+    url: releaseProcessUrl,
+  },
+  {
+    id: 'release',
+    label: 'RELEASED',
+    state: release.available ? 'complete' : 'pending',
+    summary: release.available ? `${release.label} is available.` : 'KFP 2.0 is not released.',
+    url: release.url,
+  },
+]
+
+function activityCategory(entry) {
+  if (entry.type === 'NEW MOVE') return 'features'
+  if (entry.type === 'HP RESTORED') return 'fixes'
+  if (entry.type === 'SPEED +1') return 'performance'
+  if (entry.type === 'LAB VERIFIED') return 'tests'
+  if (entry.type === 'EVOLVED'
+    || /^[a-z]+\((release|device|compat|architecture)\):/i.test(entry.message)
+    || /^release:/i.test(entry.message)) return 'milestones'
+  if (entry.type === 'FIELD NOTES') return 'documentation'
+  return ''
+}
+
+const reportEnd = Date.parse(generatedAt)
+const reportStart = Number.isFinite(reportEnd) ? reportEnd - (7 * 24 * 60 * 60 * 1000) : 0
+const weeklyActivity = activity.filter((entry) => Date.parse(entry.date) >= reportStart)
+const weeklyCounts = {
+  features: 0,
+  fixes: 0,
+  performance: 0,
+  tests: 0,
+  documentation: 0,
+  milestones: 0,
+}
+for (const entry of weeklyActivity) {
+  const category = activityCategory(entry)
+  if (category) weeklyCounts[category] += 1
+}
+
+const weeklyReport = {
+  startedAt: new Date(reportStart).toISOString(),
+  endedAt: generatedAt,
+  total: weeklyActivity.length,
+  counts: weeklyCounts,
+}
+
+const proof = {
+  kind: 'CI RUN',
+  label: ciConclusion === 'success' && total > 0 ? `${passed}/${total} CHECKS PASSED` : 'CHECK CI EVIDENCE',
+  version: clean(manifest.version, 'UNKNOWN'),
+  commit: shortSha,
+  capturedAt: clean(ciCompletedAt, generatedAt),
+  environment: 'GITHUB ACTIONS',
+  url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
+}
+
 const status = {
   schemaVersion: 1,
   version: clean(manifest.version, 'UNKNOWN'),
@@ -293,6 +468,10 @@ const status = {
   commitUrl: commit ? `${repositoryUrl}/commit/${commit}` : repositoryUrl,
   generatedAt,
   activity,
+  missions,
+  releaseJourney,
+  weeklyReport,
+  proof,
   devStats,
   pullRequests,
   ci: {

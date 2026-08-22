@@ -592,6 +592,223 @@ a {
   color: var(--paper);
 }
 
+.mission-board,
+.release-journey,
+.weekly-report,
+.proof-drop {
+  border: 4px solid var(--game-ink);
+  color: var(--game-ink);
+  background: var(--paper-dark);
+  box-shadow: 6px 6px 0 color-mix(in srgb, var(--game-mid) 55%, transparent);
+}
+
+.mission-board > header,
+.release-journey > header,
+.weekly-report > header,
+.proof-drop > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.8rem;
+  color: var(--paper);
+  background: var(--game-ink);
+}
+
+.mission-board > header div span,
+.mission-board > header div b,
+.release-journey > header div span,
+.release-journey > header div b,
+.weekly-report > header span,
+.weekly-report > header b,
+.proof-drop > header span,
+.proof-drop > header b {
+  display: block;
+}
+
+.mission-board > header div span,
+.release-journey > header div span,
+.weekly-report > header span,
+.proof-drop > header span,
+.release-journey > header > span {
+  margin-bottom: 0.25rem;
+  color: var(--game-pale);
+  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  line-height: 1.4;
+}
+
+.mission-board > header div b,
+.release-journey > header div b,
+.weekly-report > header b,
+.proof-drop > header b {
+  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+  line-height: 1.4;
+}
+
+.mission-board > header > span {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--accent-soft);
+  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  white-space: nowrap;
+}
+
+.mission-board > header > span i {
+  width: 0.55rem;
+  aspect-ratio: 1;
+  background: #66a85f;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 12px #66a85f;
+  animation: status-pulse 1.1s steps(2, end) infinite;
+}
+
+.mission-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  background: var(--game-ink);
+}
+
+.mission-card {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-width: 0;
+  min-height: 116px;
+  gap: 0.6rem;
+  padding: 0.8rem;
+  color: var(--game-ink);
+  background: var(--paper);
+  text-decoration: none;
+}
+
+.mission-card:hover,
+.mission-card:focus-visible {
+  color: var(--paper);
+  background: var(--accent);
+}
+
+.mission-card > span,
+.mission-card small {
+  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  line-height: 1.45;
+}
+
+.mission-card > span { color: var(--accent); }
+.mission-card.is-blocked > span { color: #9d3a35; }
+.mission-card b {
+  overflow-wrap: anywhere;
+  font-size: clamp(0.43rem, 0.56vw, 0.56rem);
+  line-height: 1.55;
+}
+.mission-card small {
+  color: var(--game-mid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 900;
+}
+.mission-card:hover > span,
+.mission-card:hover small,
+.mission-card:focus-visible > span,
+.mission-card:focus-visible small { color: var(--paper); }
+
+.release-journey ol {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin: 0;
+  padding: 3px;
+  gap: 3px;
+  background: var(--game-ink);
+  list-style: none;
+}
+
+.release-journey li { min-width: 0; }
+.release-journey a {
+  display: grid;
+  min-height: 104px;
+  place-items: center;
+  align-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.4rem;
+  color: var(--game-mid);
+  background: var(--paper);
+  text-align: center;
+  text-decoration: none;
+}
+.release-journey a:hover,
+.release-journey a:focus-visible { color: var(--paper); background: var(--accent); }
+.release-journey i {
+  display: grid;
+  width: 2rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  font-size: 0.42rem;
+  font-style: normal;
+}
+.release-journey b { font-size: clamp(0.34rem, 0.45vw, 0.45rem); line-height: 1.4; }
+.release-journey a > span { font-size: clamp(0.3rem, 0.38vw, 0.38rem); }
+.release-journey .is-complete a { color: #347345; background: #e5edc9; }
+.release-journey .is-active a { color: var(--accent); }
+.release-journey .is-blocked a { color: #9d3a35; background: #eee0cd; }
+.release-journey .is-active i { animation: badge-scan 1.5s steps(4, end) infinite; }
+
+.progress-proof-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.weekly-report-total {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.75rem 0.8rem 0.35rem;
+}
+.weekly-report-total b { color: var(--accent); font-size: 1.15rem; }
+.weekly-report-total span { color: var(--game-mid); font-size: 0.4rem; }
+.weekly-report dl,
+.proof-drop dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: 0.4rem 0.8rem 0.8rem;
+}
+.weekly-report dl > div,
+.proof-drop dl > div { min-width: 0; padding: 0.45rem; background: var(--paper); }
+.weekly-report dt,
+.weekly-report dd,
+.proof-drop dt,
+.proof-drop dd { margin: 0; }
+.weekly-report dt,
+.proof-drop dt { color: var(--game-mid); font-size: clamp(0.3rem, 0.38vw, 0.38rem); line-height: 1.4; }
+.weekly-report dd { margin-top: 0.3rem; color: var(--accent); font-size: 0.65rem; }
+.proof-drop > a { display: grid; gap: 0.55rem; padding: 0.75rem; color: var(--game-ink); text-decoration: none; }
+.proof-drop > a:hover,
+.proof-drop > a:focus-visible { color: var(--paper); background: var(--accent); }
+.proof-kind { color: var(--accent); font-size: 0.4rem; }
+.proof-drop > a > b { font-size: clamp(0.55rem, 0.8vw, 0.8rem); line-height: 1.45; }
+.proof-drop dl { padding: 0; }
+.proof-drop dd {
+  overflow: hidden;
+  margin-top: 0.3rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.43rem, 0.52vw, 0.52rem);
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.proof-drop small { color: var(--game-mid); font-size: 0.38rem; }
+.proof-drop > a:hover .proof-kind,
+.proof-drop > a:hover small,
+.proof-drop > a:focus-visible .proof-kind,
+.proof-drop > a:focus-visible small { color: var(--paper); }
+
+@keyframes badge-scan {
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent); }
+}
+
 .dev-stats {
   border: 4px solid var(--game-ink);
   color: var(--game-ink);
@@ -1310,6 +1527,45 @@ a {
   font-style: normal;
 }
 
+.archive-filters {
+  border: 4px solid var(--game-ink);
+  background: var(--paper-dark);
+}
+
+.archive-filters > b {
+  display: block;
+  padding: 0.7rem 0.8rem;
+  color: var(--paper);
+  background: var(--game-ink);
+  font-size: clamp(0.42rem, 0.56vw, 0.56rem);
+}
+
+.archive-filters > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.7rem;
+}
+
+.archive-filters button {
+  min-height: 44px;
+  padding: 0.45rem 0.65rem;
+  border: 2px solid var(--game-mid);
+  color: var(--game-mid);
+  background: var(--paper);
+  font: inherit;
+  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  cursor: pointer;
+}
+
+.archive-filters button:hover,
+.archive-filters button:focus-visible,
+.archive-filters button.is-active {
+  border-color: var(--accent);
+  color: var(--paper);
+  background: var(--accent);
+}
+
 .archive-ledger {
   border: 4px solid var(--game-ink);
   background: color-mix(in srgb, var(--paper) 94%, var(--accent-soft));
@@ -1457,6 +1713,7 @@ a {
 }
 
 .feature-list > * {
+  min-width: 0;
   min-height: 52px;
   padding: 1rem 0.55rem;
   border-bottom: 2px solid var(--game-pale);
@@ -1468,10 +1725,14 @@ a {
 }
 
 .feature-list b {
+  overflow-wrap: anywhere;
   font-size: clamp(0.5rem, 0.72vw, 0.64rem);
 }
 
 .feature-list small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.78rem, 1vw, 0.95rem);
@@ -2937,6 +3198,86 @@ a {
 @media (max-width: 360px) {
   .menu-window {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .mission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mission-card {
+    min-height: 104px;
+  }
+
+  .release-journey ol {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .progress-proof-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .mission-board > header,
+  .release-journey > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .mission-board > header div span,
+  .mission-board > header > span,
+  .release-journey > header div span,
+  .release-journey > header > span,
+  .weekly-report > header span,
+  .proof-drop > header span,
+  .mission-card > span,
+  .mission-card small,
+  .release-journey a > span,
+  .release-journey b,
+  .archive-filters button {
+    font-size: 0.5rem;
+  }
+
+  .mission-board > header div b,
+  .release-journey > header div b,
+  .weekly-report > header b,
+  .proof-drop > header b {
+    font-size: 0.65rem;
+  }
+
+  .mission-card b {
+    font-size: 0.55rem;
+  }
+
+  .release-journey a {
+    min-height: 112px;
+  }
+
+  .release-journey li:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .weekly-report dt,
+  .proof-drop dt,
+  .proof-drop small,
+  .weekly-report-total span {
+    font-size: 0.5rem;
+  }
+
+  .proof-drop dd {
+    font-size: 0.55rem;
+  }
+
+  .feature-list {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .feature-list > * {
+    max-width: 100%;
   }
 }
 

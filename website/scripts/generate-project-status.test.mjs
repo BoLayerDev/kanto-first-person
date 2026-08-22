@@ -37,6 +37,15 @@ test('generates a complete offline GitHub status snapshot', async () => {
     created_at: '2026-08-22T11:55:00Z',
     merged_at: '2026-08-22T12:00:00Z',
   }]
+  const issues = [
+    {
+      number: 31,
+      title: 'Capture live route evidence',
+      html_url: 'https://github.com/BoLayerDev/kanto-first-person/issues/31',
+      updated_at: '2026-08-22T11:59:00Z',
+      labels: [{ name: 'status:now' }],
+    },
+  ]
 
   try {
     const result = spawnSync(process.execPath, [generator], {
@@ -54,6 +63,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
         SITE_CI_TOTAL: '11',
         SITE_COMMIT_MESSAGE: 'Test source state',
         SITE_GENERATED_AT: '2026-08-22T12:00:00Z',
+        SITE_ISSUES_JSON: JSON.stringify(issues),
         SITE_REPOSITORY: 'BoLayerDev/kanto-first-person',
         SITE_REQUIRE_VERIFIED_CI: 'true',
         SITE_ACTIVITY_JSON: JSON.stringify(activity),
@@ -81,6 +91,35 @@ test('generates a complete offline GitHub status snapshot', async () => {
       runUrl: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
     })
     assert.equal(status.release.available, false)
+    assert.deepEqual(status.missions[0], {
+      slot: 'NOW',
+      title: 'Capture live route evidence',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/issues/31',
+      source: 'issue',
+      updatedAt: '2026-08-22T11:59:00Z',
+    })
+    assert.equal(status.missions[1].slot, 'NEXT')
+    assert.equal(status.missions[1].source, 'github')
+    assert.equal(status.releaseJourney.length, 5)
+    assert.equal(status.releaseJourney[0].state, 'active')
+    assert.deepEqual(status.weeklyReport.counts, {
+      features: 1,
+      fixes: 0,
+      performance: 0,
+      tests: 0,
+      documentation: 0,
+      milestones: 0,
+    })
+    assert.equal(status.weeklyReport.total, 1)
+    assert.deepEqual(status.proof, {
+      kind: 'CI RUN',
+      label: '11/11 CHECKS PASSED',
+      version: '2.0.0-alpha.1',
+      commit: '1234567',
+      capturedAt: '2026-08-22T12:00:00Z',
+      environment: 'GITHUB ACTIONS',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
+    })
     assert.deepEqual(status.activity[0], { ...activity[0], ci: status.activity[0].ci })
     assert.deepEqual(status.devStats, {
       rewriteStartedAt: '',

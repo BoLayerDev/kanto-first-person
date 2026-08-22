@@ -44,7 +44,7 @@ const MENU_ITEMS: MenuItem[] = [
     eyebrow: 'MANUAL / SAFE START',
     title: 'Enter prepared.',
     summary:
-      'KFP is an Alpha source candidate. A signed package and released API v1 host adapter are required before player installation.',
+      'A signed KFP package and a compatible Battle Art or Dramaless release with Voxel Companion API v1 support are required before installation.',
   },
   {
     label: 'SUPPORT CENTER',
@@ -247,6 +247,95 @@ function TrainerClock({ status }: { status: ProjectStatus }) {
   )
 }
 
+function MissionBoard({ status }: { status: ProjectStatus }) {
+  return (
+    <section className="mission-board" aria-labelledby="mission-board-title">
+      <header>
+        <div><span>LIVE OBJECTIVES FROM GITHUB</span><b id="mission-board-title">TRAINER MISSION BOARD</b></div>
+        <span><i aria-hidden="true" /> AUTO SYNC</span>
+      </header>
+      <div className="mission-grid">
+        {status.missions.map((mission) => (
+          <a
+            className={`mission-card is-${mission.slot.toLowerCase()}`}
+            href={mission.url}
+            target="_blank"
+            rel="noreferrer"
+            key={mission.slot}
+          >
+            <span>{mission.slot}</span>
+            <b>{activityTitle(mission.title)}</b>
+            <small>{mission.source === 'issue' ? 'LABELED GITHUB ISSUE' : 'VERIFIED GITHUB FALLBACK'} ↗</small>
+          </a>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function ReleaseJourney({ status }: { status: ProjectStatus }) {
+  return (
+    <section className="release-journey" aria-labelledby="release-journey-title">
+      <header>
+        <div><span>EVIDENCE-LOCKED RELEASE PATH</span><b id="release-journey-title">THE KANTO LEAGUE ROAD</b></div>
+        <span>OPEN A BADGE FOR PROOF</span>
+      </header>
+      <ol>
+        {status.releaseJourney.map((gate, index) => (
+          <li className={`is-${gate.state}`} key={gate.id}>
+            <a href={gate.url} target="_blank" rel="noreferrer" title={gate.summary}>
+              <i aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>
+              <b>{gate.label}</b>
+              <span>{gate.state.toUpperCase()}</span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+function WeeklyOakReport({ status }: { status: ProjectStatus }) {
+  const counts = status.weeklyReport.counts
+  const entries = [
+    ['NEW MOVES', counts.features],
+    ['BUGS FIXED', counts.fixes],
+    ['SPEED UPS', counts.performance],
+    ['LAB CHECKS', counts.tests],
+    ['FIELD NOTES', counts.documentation],
+    ['MILESTONES', counts.milestones],
+  ] as const
+
+  return (
+    <section className="weekly-report" aria-labelledby="weekly-report-title">
+      <header><span>LAST SEVEN DAYS</span><b id="weekly-report-title">PROFESSOR OAK REPORT</b></header>
+      <div className="weekly-report-total"><b>{status.weeklyReport.total}</b><span>VERIFIED COMMITS</span></div>
+      <dl>
+        {entries.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+      </dl>
+    </section>
+  )
+}
+
+function ProofDrop({ status }: { status: ProjectStatus }) {
+  return (
+    <section className="proof-drop" aria-labelledby="proof-drop-title">
+      <header><span>LATEST VERIFIED EVIDENCE</span><b id="proof-drop-title">PROOF DROP</b></header>
+      <a href={status.proof.url} target="_blank" rel="noreferrer">
+        <span className="proof-kind">{status.proof.kind}</span>
+        <b>{status.proof.label}</b>
+        <dl>
+          <div><dt>BUILD</dt><dd>{status.proof.version}</dd></div>
+          <div><dt>COMMIT</dt><dd>{status.proof.commit}</dd></div>
+          <div><dt>CAPTURED</dt><dd>{status.proof.capturedAt.slice(0, 10)}</dd></div>
+          <div><dt>TEST RIG</dt><dd>{status.proof.environment}</dd></div>
+        </dl>
+        <small>OPEN VERIFIED EVIDENCE ↗</small>
+      </a>
+    </section>
+  )
+}
+
 function DevStats({ status, complete = false }: { status: ProjectStatus, complete?: boolean }) {
   const now = useLiveNow()
   const rewriteStart = Date.parse(status.devStats.rewriteStartedAt)
@@ -412,12 +501,12 @@ function RewriteComparisonGraphic() {
           <span>REWRITE</span>
         </div>
 
-        <section className="system-form is-rebuild" aria-label="Rebuilt companion API architecture">
-          <header><span>FORM 02</span><b>COMPANION API</b><em>V2.0</em></header>
+        <section className="system-form is-rebuild" aria-label="Rebuilt Voxel Companion API v1 architecture">
+          <header><span>FORM 02</span><b>KFP REBUILD</b><em>V2.0</em></header>
           <div className="architecture-path is-rebuild-path">
             <div className="system-node"><span>MOD</span><b>KFP</b></div>
             <span className="system-link"><i>SUBMITS</i></span>
-            <div className="system-node is-api"><span>PUBLIC</span><b>API 2</b></div>
+            <div className="system-node is-api"><span>VOXEL COMPANION</span><b>API v1</b></div>
             <span className="system-link"><i>VALIDATES</i></span>
             <div className="system-node"><span>OWNER</span><b>HOST</b></div>
           </div>
@@ -522,6 +611,7 @@ function RewriteDetail() {
 
 function ResearchArchive({ status }: { status: ProjectStatus }) {
   const now = useLiveNow()
+  const [activityFilter, setActivityFilter] = useState('all')
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
   const rewriteStart = status.activity.find((entry) => entry.sha === REWRITE_START_COMMIT)
@@ -539,6 +629,29 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
     || /^[a-z]+\((release|device|compat|architecture)\):/i.test(entry.message)
     || /^release:/i.test(entry.message)
   )).slice(0, 6)
+  const filterOptions = [
+    ['all', 'ALL'],
+    ['features', 'FEATURES'],
+    ['fixes', 'FIXES'],
+    ['performance', 'PERFORMANCE'],
+    ['tests', 'TESTS'],
+    ['documentation', 'DOCUMENTATION'],
+    ['milestones', 'MILESTONES'],
+  ] as const
+  const activityCategory = (entry: ActivityEntry) => {
+    if (entry.type === 'NEW MOVE') return 'features'
+    if (entry.type === 'HP RESTORED') return 'fixes'
+    if (entry.type === 'SPEED +1') return 'performance'
+    if (entry.type === 'LAB VERIFIED') return 'tests'
+    if (entry.type === 'EVOLVED'
+      || /^[a-z]+\((release|device|compat|architecture)\):/i.test(entry.message)
+      || /^release:/i.test(entry.message)) return 'milestones'
+    if (entry.type === 'FIELD NOTES') return 'documentation'
+    return 'other'
+  }
+  const filteredActivity = activityFilter === 'all'
+    ? status.activity
+    : status.activity.filter((entry) => activityCategory(entry) === activityFilter)
 
   return (
     <div className="archive-page">
@@ -595,16 +708,33 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         </div>
       </section>
 
+      <section className="archive-filters" aria-labelledby="archive-filters-title">
+        <b id="archive-filters-title">FILTER THE RESEARCH LOG</b>
+        <div role="group" aria-label="Research Log filters">
+          {filterOptions.map(([value, label]) => (
+            <button
+              type="button"
+              className={activityFilter === value ? 'is-active' : ''}
+              aria-pressed={activityFilter === value}
+              onClick={() => setActivityFilter(value)}
+              key={value}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </section>
+
       <section className="archive-ledger" aria-labelledby="archive-ledger-title">
         <div className="archive-ledger-header">
           <div><span>DEFAULT BRANCH / {status.branch.toUpperCase()}</span><b id="archive-ledger-title">COMPLETE VERIFIED HISTORY</b></div>
-          <span>NEWEST FIRST</span>
+          <span>{filteredActivity.length} SHOWN · NEWEST FIRST</span>
         </div>
         <ol>
-          {status.activity.map((entry, index) => (
+          {filteredActivity.map((entry, index) => (
             <li key={entry.sha}>
               <a className="archive-entry-main" href={entry.url} target="_blank" rel="noreferrer">
-                <span className="archive-number">#{String(status.activity.length - index).padStart(3, '0')}</span>
+                <span className="archive-number">#{String(status.activity.length - status.activity.indexOf(entry)).padStart(3, '0')}</span>
                 <span className="archive-entry-type">{entry.type}</span>
                 <b>{activityTitle(entry.message)}</b>
                 <span className="archive-author">{entry.author}</span>
@@ -633,6 +763,12 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
           <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
         </div>
         <TrainerClock status={status} />
+        <MissionBoard status={status} />
+        <ReleaseJourney status={status} />
+        <div className="progress-proof-grid">
+          <WeeklyOakReport status={status} />
+          <ProofDrop status={status} />
+        </div>
         <DevStats status={status} />
         <ActivityLog status={status} />
       </>

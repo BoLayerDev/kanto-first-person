@@ -255,6 +255,33 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(latest.getByRole('tooltip')).toHaveCSS('opacity', '1')
 })
 
+test('shows the automatic progress command center on the homepage', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const missions = page.getByRole('region', { name: 'TRAINER MISSION BOARD' })
+  await expect(missions).toBeVisible()
+  await expect(missions.locator('.mission-card')).toHaveCount(3)
+  await expect(missions).toContainText('NOW')
+  await expect(missions).toContainText('NEXT')
+  await expect(missions).toContainText('BLOCKED')
+
+  const journey = page.getByRole('region', { name: 'THE KANTO LEAGUE ROAD' })
+  await expect(journey.getByRole('link')).toHaveCount(5)
+  await expect(journey).toContainText('REWRITE')
+  await expect(journey).toContainText('HOST READY')
+  await expect(journey).toContainText('DEVICE TESTED')
+  await expect(journey).toContainText('PACKAGE SIGNED')
+  await expect(journey).toContainText('RELEASED')
+
+  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('VERIFIED COMMITS')
+  const proof = page.getByRole('region', { name: 'PROOF DROP' })
+  await expect(proof).toContainText('BUILD')
+  await expect(proof).toContainText('COMMIT')
+  await expect(proof).toContainText('CAPTURED')
+  await expect(proof).toContainText('TEST RIG')
+})
+
 test('shows automatic project time and PR task timing without claiming work hours', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
@@ -319,6 +346,47 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(systemMap).toBeVisible()
   await expect.poll(() => systemMap.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
   await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
+})
+
+test('filters the Research Log by verified work type', async ({ page }) => {
+  await page.goto(`${PAGE_PATH}#activity`)
+
+  const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
+  await expect.poll(() => ledger.locator('ol > li').count()).toBeGreaterThan(20)
+  const allCount = await ledger.locator('ol > li').count()
+  expect(allCount).toBeGreaterThan(0)
+
+  await page.getByRole('button', { name: 'FEATURES', exact: true }).click()
+  const featureCount = await ledger.locator('ol > li').count()
+  expect(featureCount).toBeGreaterThan(0)
+  expect(featureCount).toBeLessThan(allCount)
+  await expect(page.getByRole('button', { name: 'FEATURES', exact: true })).toHaveAttribute('aria-pressed', 'true')
+
+  await page.getByRole('button', { name: 'ALL', exact: true }).click()
+  await expect(ledger.locator('ol > li')).toHaveCount(allCount)
+})
+
+test('keeps Field Features text inside the panel at narrow widths', async ({ page }) => {
+  for (const width of [901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`${PAGE_PATH}#features`)
+
+    const list = page.locator('.feature-list')
+    const fit = await list.evaluate((element) => ({
+      clipped: element.scrollWidth > element.clientWidth + 1,
+      rows: [...element.querySelectorAll<HTMLElement>('b, small')].map((item) => ({
+        text: item.textContent,
+        clipped: item.scrollWidth > item.clientWidth + 1,
+        wraps: getComputedStyle(item).whiteSpace !== 'nowrap',
+      })),
+    }))
+
+    expect(fit.clipped, `feature list must fit at ${width}px`).toBe(false)
+    for (const row of fit.rows) {
+      expect(row.clipped, `${row.text} must fit at ${width}px`).toBe(false)
+      expect(row.wraps, `${row.text} must wrap at ${width}px`).toBe(true)
+    }
+  }
 })
 
 test('keeps Trainer Clock and commit timing controls readable at desktop and mobile widths', async ({ page }) => {
@@ -509,18 +577,29 @@ test('explains the rewrite with an architecture evolution scan and verified upgr
   await expect(page.locator('.concept-scene')).toHaveCount(0)
   await expect(page.getByText('V1.60')).toBeVisible()
   await expect(page.getByText('V2.0')).toBeVisible()
+  await expect(page.locator('.system-node.is-api')).toContainText('VOXEL COMPANION')
+  await expect(page.locator('.system-node.is-api')).toContainText('API v1')
+  await expect(page.locator('.system-node.is-api')).not.toContainText('API 2')
   await expect(page.getByText('PUBLIC COMPANION API')).toBeVisible()
   await expect(page.getByText('BUDGETED COMPILER')).toBeVisible()
   await expect(page.getByText('53')).toBeVisible()
   await expect(page.getByRole('link', { name: /EXPLORE THE ARCHITECTURE/ })).toHaveAttribute('href', /docs\/architecture\.md$/)
 })
 
+test('uses clear installation requirements in the Trainer Guide', async ({ page }) => {
+  await page.goto(`${PAGE_PATH}#guide`)
+  await expect(page.getByText(
+    'A signed KFP package and a compatible Battle Art or Dramaless release with Voxel Companion API v1 support are required before installation.',
+  )).toBeVisible()
+})
+
 test('uses standard desktop open and back keys', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
 
-  await page.keyboard.press('Tab')
-  await expect(page.getByRole('link', { name: /BUILD/ })).toBeFocused()
+  const buildLink = page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /BUILD/ })
+  await buildLink.focus()
+  await expect(buildLink).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: /SOURCE/ })).toBeFocused()
   await page.keyboard.press('Tab')

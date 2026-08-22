@@ -48,6 +48,13 @@ return function(T)
     "battle_unsupported",
   }
 
+  local function featureProfile(result, id)
+    for _, feature in ipairs(result.profile and result.profile.features or {}) do
+      if feature.id == id then return feature end
+    end
+    error("missing full-scene feature profile: " .. tostring(id), 2)
+  end
+
   T.test("platform process CPU clock excludes idle wall wait", function()
     local wallClock = Clocks.monotonicWallClock()
     local cpuClock, info = Clocks.processCpuClock()
@@ -100,7 +107,7 @@ return function(T)
     T.truthy(result.key:find("attempt=test", 1, true))
   end)
 
-  T.test("64x64 stress output has exact per-tier fingerprints", function()
+  T.test("64x64 stress uses the exact snapshot index and fixed work fingerprints", function()
     local expected = {
       LOW = { commands = 26, items = 4367, content = "64f9db93" },
       BALANCED = { commands = 28, items = 7782, content = "252c129b" },
@@ -110,9 +117,13 @@ return function(T)
       local result = FullScene.run({
         clock = os.clock,
         cpuClock = testCpuClock,
+        profile = true,
         tier = tier,
         run = "fingerprint-" .. tier,
       })
+      T.truthy(result.profile.worldIndexBindingObserved, tier)
+      T.truthy(result.profile.worldIndexBindingExact, tier)
+      T.equal(featureProfile(result, "world_geometry").checkpoints, 512, tier)
       T.equal(result.commands, expected[tier].commands, tier)
       T.equal(result.items, expected[tier].items, tier)
       T.equal(result.contentFingerprint, expected[tier].content, tier)
@@ -135,6 +146,9 @@ return function(T)
     T.truthy(result.profile.featureCpuMs >= 0)
     T.truthy(result.profile.operationCpuMs >= 0)
     T.truthy(result.profile.coordinatorCpuMs >= 0)
+    T.truthy(result.profile.worldIndexBindingObserved)
+    T.truthy(result.profile.worldIndexBindingExact)
+    T.equal(featureProfile(result, "world_geometry").checkpoints, 32)
     T.equal(result.profile.operations.begin_seal.calls, 1)
     T.truthy(result.profile.operations.seal.calls > 0)
     T.truthy(result.profile.operations.validate.calls > 0)

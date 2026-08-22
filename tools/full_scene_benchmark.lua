@@ -1,6 +1,8 @@
 -- ROM-free compiler workloads for the controlled reference benchmark.
--- Feature module prototypes are loaded once. Every attempt creates fresh
--- feature instances, compiler, command buffer, asset service, and request key.
+-- Feature module prototypes are loaded once. Every attempt creates a fresh
+-- normalized snapshot index, feature instances, compiler, command buffer,
+-- asset service, and request key. Snapshot capture and index construction
+-- happen before the request timing, as they do in App.
 
 local Bootstrap = assert(loadfile("tools/test_bootstrap.lua"))()
 
@@ -222,11 +224,24 @@ local function findAuthoredCase(id)
   error("unknown authored benchmark case: " .. tostring(id), 3)
 end
 
-local function newProfiler(cpuClock)
+local function bindWorldIndex(world)
+  return {
+    world = world,
+    cells = WorldSnapshot.index(world),
+    width = world.width,
+    height = world.height,
+    cellCount = #(world.cells or {}),
+  }
+end
+
+local function newProfiler(cpuClock, expectedWorldIndex)
   local profiler = {
     clock = cpuClock,
+    expectedWorldIndex = expectedWorldIndex,
     features = {},
     operations = {},
+    worldIndexBindingObserved = false,
+    worldIndexBindingExact = false,
   }
   for _, operation in ipairs(PROFILE_OPERATIONS) do
     profiler.operations[operation.name] = { calls = 0, cpuMs = 0 }
@@ -243,6 +258,15 @@ local function newProfiledFeature(source, profiler)
     critical = source.critical,
     compile = function(_, context, buffer)
       record.compiles = record.compiles + 1
+      if source.id == "world_geometry" then
+        local services = type(context.services) == "table"
+          and context.services or nil
+        local binding = services and services.worldIndex or nil
+        profiler.worldIndexBindingObserved = binding ~= nil
+        profiler.worldIndexBindingExact = rawequal(
+          binding, profiler.expectedWorldIndex
+        ) and rawequal(rawget(binding, "world"), context.world)
+      end
       local profiledContext = {}
       for key, value in pairs(context) do profiledContext[key] = value end
       local segmentStarted = profiler.clock()
@@ -351,6 +375,8 @@ local function profileSummary(profiler, compileCpuMs)
   return {
     features = profiler.features,
     operations = profiler.operations,
+    worldIndexBindingObserved = profiler.worldIndexBindingObserved,
+    worldIndexBindingExact = profiler.worldIndexBindingExact,
     featureCpuMs = featureCpuMs,
     operationCpuMs = operationCpuMs,
     coordinatorCpuMs = math.max(0, compileCpuMs - featureCpuMs - operationCpuMs),
@@ -364,7 +390,8 @@ local function runCompiled(options)
   if type(cpuClock) ~= "function" then error("full scene needs a CPU clock", 3) end
 
   local quality = Quality.policy(options.tier or "HIGH", "AUTO", "windows")
-  local profiler = options.profile and newProfiler(cpuClock) or nil
+  local profiler = options.profile
+    and newProfiler(cpuClock, options.worldIndex) or nil
   local setupStarted = cpuClock()
   local bufferCount = 0
   local compiler = SceneCompiler.new({
@@ -399,6 +426,7 @@ local function runCompiled(options)
     services = {
       capabilities = options.capabilities or {},
       assets = newAssets(),
+      worldIndex = options.worldIndex,
     },
   })
   local requestCpuMs = milliseconds(cpuClock, requestCpuStarted)
@@ -453,6 +481,7 @@ end
 function FullScene.run(options)
   options = options or {}
   local world = options.world or FullScene.buildWorld(options.size)
+  local worldIndex = bindWorldIndex(world)
   return runCompiled({
     clock = options.clock,
     cpuClock = options.cpuClock,
@@ -461,6 +490,7 @@ function FullScene.run(options)
     run = options.run,
     workloadId = ("dense-outdoor-%dx%d"):format(world.width, world.height),
     world = world,
+    worldIndex = worldIndex,
     config = options.config or FullScene.defaultConfig(),
     capabilities = { shadow_pass = 1 },
   })
@@ -473,6 +503,7 @@ function FullScene.runAuthoredCase(options)
   if not world then
     error("authored benchmark case is invalid: " .. tostring(err), 2)
   end
+  local worldIndex = bindWorldIndex(world)
   local result = runCompiled({
     clock = options.clock,
     cpuClock = options.cpuClock,
@@ -481,6 +512,7 @@ function FullScene.runAuthoredCase(options)
     run = options.run,
     workloadId = "authored-" .. case.id,
     world = world,
+    worldIndex = worldIndex,
     config = case.config,
     capabilities = case.capabilities,
   })

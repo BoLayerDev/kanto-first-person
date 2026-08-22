@@ -86,7 +86,11 @@ representativeness are recorded.
 workloads above. Feature module prototypes load once before warmup. Each
 measured attempt still creates new feature instances, compiler, command buffer,
 asset service, and request key, with no cache hit. Measurement starts after
-world capture, which matches the runtime `scene.readiness` start point.
+world capture and creation of one `WorldSnapshot` index. The compiler request
+receives that index through the same exact snapshot-bound `services.worldIndex`
+shape as `App:_requestScene`. App creates the index before `_requestScene`, so
+capture and index cost are outside request, readiness, and reported process-CPU
+timing here as well.
 
 The command reports monotonic wall time for readiness and slice enforcement. It
 also reports process CPU time for setup, request, compile, and packet inspection.

@@ -85,10 +85,15 @@ end
 
 local function printProfile(tier, result)
   local profile = assert(result.profile, "profile attempt did not report stages")
+  if not profile.worldIndexBindingObserved
+      or not profile.worldIndexBindingExact then
+    error(tier .. " profile did not receive its exact snapshot index", 2)
+  end
   local operation = profile.operations
   io.write(("%-28s process CPU ms setup/request/features/begin-seal/seal/validate/cost/commit/coordinator/inspect"
     .. " %.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f/%.3f"
-    .. " | operation calls %d/%d/%d/%d/%d\n"):format(
+    .. " | operation calls %d/%d/%d/%d/%d"
+    .. " | exact snapshot index binding yes\n"):format(
     "full_scene_profile_" .. tier:lower(),
     result.setupCpuMs, result.requestCpuMs, profile.featureCpuMs,
     operation.begin_seal.cpuMs, operation.seal.cpuMs,

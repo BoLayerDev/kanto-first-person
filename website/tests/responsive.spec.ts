@@ -253,6 +253,26 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
 })
 
+test('keeps every activity translation label inside its graphic card', async ({ page }) => {
+  await page.goto(`${PAGE_PATH}activity-system-share.svg`)
+
+  const cards = page.locator('.translation-card')
+  await expect(cards).toHaveCount(6)
+  const fit = await cards.evaluateAll((items) => items.map((card) => {
+    const rect = card.querySelector('rect') as SVGGraphicsElement
+    const label = card.querySelector('.translation-label') as SVGGraphicsElement
+    const cardBox = rect.getBBox()
+    const labelBox = label.getBBox()
+    return {
+      text: label.textContent,
+      fitsLeft: labelBox.x >= cardBox.x + 12,
+      fitsRight: labelBox.x + labelBox.width <= cardBox.x + cardBox.width - 12,
+    }
+  }))
+
+  expect(fit).toEqual(fit.map((entry) => ({ ...entry, fitsLeft: true, fitsRight: true })))
+})
+
 test('supports shareable hash routes and browser history', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#rebuild`)

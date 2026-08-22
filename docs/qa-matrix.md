@@ -89,6 +89,7 @@ evidence uses this same matrix.
 
 The exact KFP `ee5b735` files and both submitted host adapters were placed in
 isolated Windows identities with Yellow. The first runtime inspection found
-KFP disabled in both active option profiles. Those captures are host-only
-baselines, not KFP runtime evidence. No scene-class, visual-acceptance,
-performance, lifecycle, transition, or soak row is complete yet.
+KFP disabled for Battle Art. Dramaless had its Yellow enable flag set, but KFP
+did not register its option schema and did not initialize. Those captures are
+not KFP runtime evidence. No scene-class, visual-acceptance, performance,
+lifecycle, transition, or soak row is complete yet.

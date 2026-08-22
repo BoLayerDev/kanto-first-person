@@ -31,12 +31,13 @@ engine-module imports; KFP does not use those imports. See the hash-bound
 
 | Host ID | Audited version | Audited commit | Companion API | Stable gate |
 |---|---:|---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 | `fcbe541` | Local adapter `0185b44` passes contract tests | Host review and GPU run open |
-| `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | Local adapter `bc24063` passes contract tests | Host review and GPU run open |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.7 | `fcbe541` | PR adapter `8f1af4e` passes contract and cutaway tests | Host review and GPU run open |
+| `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | PR adapter `0af5555` passes contract and cutaway tests | Host review and GPU run open |
 
 Runtime selection requires exactly one active compatible host. Zero or multiple hosts leave KFP inactive.
-Local adapter commits are unpushed implementation evidence. They do not change
-the certified host versions above and must not be described as released.
+The adapter branches are pushed to project forks and submitted in upstream
+pull requests. They are review evidence, not released host versions, and must
+not be described as released until each host owner publishes them.
 
 ## Platforms
 

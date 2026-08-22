@@ -12,9 +12,10 @@ required for every public package.
 | Release candidate | `2.0.0-rc.1` | `docs/prerelease-gates.json` | Prerelease |
 | Stable | `2.0.0` | `docs/release-gates.json` | Release |
 
-All channels require approved asset rights. Alpha also requires automated
-tests, companion contract evidence, migration safety, reproducible packaging,
-source integrity, and a complete known-limitations record. Later channels add
+All channels require approved asset rights and compatible owner-published host
+releases. Alpha also requires automated tests, companion contract evidence,
+migration safety, reproducible packaging, source integrity, and a complete
+known-limitations record. Later channels add
 visual, parity, platform, performance, leak, uninstall, engine, and community
 evidence. A prerelease ledger cannot approve a stable package.
 
@@ -55,7 +56,7 @@ luajit tools/check_syntax.lua
 luajit tools/validate_project.lua
 luajit tools/run_tests.lua
 luajit tools/run_benchmarks.lua
-python -m unittest tests.tools.test_package_release -v
+python -m unittest discover -s tests/tools -p "test_*.py" -v
 ```
 
 Record the exact engine and host commits. Re-audit the latest Gen1recomp release.

@@ -220,7 +220,7 @@ class DeviceEvidenceSchemaTests(unittest.TestCase):
     def test_passing_record_is_valid(self):
         validate(passing_record())
 
-    def test_platform_classes_are_complete_and_dramatic_shape_is_absent(self):
+    def test_platform_classes_are_complete_and_removed_host_is_absent(self):
         allowed = set(resolve_ref("#/$defs/platform")["properties"]["platform_class"]["enum"])
         self.assertEqual(allowed, {
             "windows", "linux_x86_64", "linux_arm64", "macos_x86_64",

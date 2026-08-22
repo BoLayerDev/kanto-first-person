@@ -43,8 +43,11 @@ jobs:
       - name: Run ROM-free tests
         run: lua tools/run_tests.lua
 
-      - name: Test release controls
-        run: python -m unittest tests.tools.test_package_release
+      - name: Run bounded microbenchmarks
+        run: lua tools/run_benchmarks.lua
+
+      - name: Test release and device-evidence controls
+        run: python -m unittest discover -s tests/tools -p "test_*.py"
 
   gen1recomp:
     name: Gen1recomp / ${{ matrix.target }}

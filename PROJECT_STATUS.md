@@ -6,7 +6,7 @@ Last updated: 2026-08-21
 
 - State: implementation in progress.
 - Active branch: `v2-rewrite`.
-- Private remote: `https://github.com/BoLayerDev/kanto-first-person`.
+- Public remote: `https://github.com/BoLayerDev/kanto-first-person`.
 - Original history: preserved from `mrmushrooms11/kanto-first-person` at `94d0151`.
 - Engine targets: Gen1recomp `v0.2.17` (`44f4680`), `v0.2.18`
   (`70d7b6`), baseline `dev` (`06e06e3`), and current `dev` (`478e3bf`).
@@ -29,7 +29,7 @@ Last updated: 2026-08-21
 - Both adapters are pushed to `BoLayerDev` forks and submitted upstream. Battle
   Art PR #29 and Dramaless PR #47 await host-owner review, merge, versioning,
   release, and real GPU testing.
-- Frozen adapter evidence commits are `0185b44` (Battle Art) and `bc24063`
+- Current adapter evidence commits are `8f1af4e` (Battle Art) and `0af5555`
   (Dramaless). Canonical patches are outside Git
   under `Kanto First Person Evidence\host-patches`.
 - Legacy audio and art remain outside MIT but now have a private creator-signed
@@ -53,9 +53,9 @@ Last updated: 2026-08-21
 - Original baseline remains available at Git commit `94d0151be839f02fea4a35ab1c3df41fbaddc6c1`.
 - Runtime checkpoint `568ef6994fa9cb8daae5fc0853bab6b589b961f2` is
   committed locally and passes an independent-clone restore test.
-- The private remote tracks the maintained rewrite on `v2-rewrite`. Use
+- The public remote tracks the maintained rewrite on `v2-rewrite`. Use
   `git ls-remote origin refs/heads/v2-rewrite` for the current immutable SHA.
-- A fresh clone from the private remote passed the Lua suite, syntax gate,
+- A fresh clone from the public remote passed the Lua suite, syntax gate,
   repository policy gate, Python release-control suite, and removed-host scan.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.
 

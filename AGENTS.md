@@ -3,9 +3,10 @@
 ## Identity
 
 - Canonical local path: `C:\Users\bolay\Documents\Kanto First Person`.
-- Canonical private remote: `BoLayerDev/kanto-first-person`.
+- Canonical public remote: `BoLayerDev/kanto-first-person`.
 - Active development branch: `v2-rewrite`.
-- Mission: implement a sandbox-safe Kanto First Person companion for current Gen1recomp and three voxel hosts.
+- Mission: implement a sandbox-safe Kanto First Person rewrite for current
+  Gen1recomp with Battle Art and Dramaless host support.
 - Initial game scope: Red, Blue, and Yellow only.
 
 ## Non-negotiable boundaries

@@ -26,6 +26,10 @@
       "evidence": [],
       "passed": false
     },
+    "released_hosts": {
+      "evidence": [],
+      "passed": false
+    },
     "migration_safety": {
       "evidence": [],
       "passed": false

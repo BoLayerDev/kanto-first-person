@@ -37,17 +37,17 @@
 - Battle Art: `BATTLE_ART_VOXEL_FORK` 1.9.7, commit `fcbe541676cd7f245fa73df3d01dcbabec37a1fe`.
 - Dramaless Shape: `DRAMALESS_SHAPE` 2.0.3, commit `f14795b17e85d5d5baedcad63944065e446a4b0b`.
 
-Local adapter commits and binary patches are implementation evidence only.
+Fork adapter commits and binary patches are implementation evidence only.
 They are not host-owner releases:
 
 - Frozen companion dispatcher SHA-256:
   `864da19493f773a52fb2111efc02d79e9882b87c5a762af5b124326a74a32b33`.
-- Battle Art adapter: `0185b442f7944c1e907a3415433cae1b8c93b524`;
+- Battle Art adapter: `8f1af4e28d46e205739bc133a26a065a7d592025`;
   patch SHA-256
-  `adf14a3980cdc1e01f088552ba66d9f8cae22d25930d6f0954146fb52d8debef`.
-- Dramaless adapter: `bc24063c489ed09c8eed832e0840ad3d9b78ea0d`;
+  `446d4bb9e91617caa60a0f64d4dfa4a4bb6c86b56ff70e71ad915433e9eed4b9`.
+- Dramaless adapter: `0af55550edf53d4cf006cca03c9386edeb12b46a`;
   patch SHA-256
-  `9bdc3475f55cc06488a9bc9e9082bea4a978d067b80c7224c26e94923c1c2ae4`.
+  `5ba586e3ee3c39decfa6380b6a6958d01e403c445b5db65c27985a16c55e0230`.
 - Battle Art delivery fork and upstream review:
   `https://github.com/BoLayerDev/DramaticShapeVoxelMod/tree/kfp-companion-api-v1`
   and `https://github.com/absol89/DramaticShapeVoxelMod/pull/29`.

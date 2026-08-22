@@ -117,6 +117,8 @@ class ReleaseGateTests(unittest.TestCase):
             set(PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES["alpha"]),
         )
         self.assertTrue(ledger["gates"]["asset_rights"]["passed"])
+        self.assertIn("released_hosts", ledger["gates"])
+        self.assertFalse(ledger["gates"]["released_hosts"]["passed"])
         self.assertEqual(
             ledger["gates"]["asset_rights"]["evidence"],
             [rights["approval_record"]],

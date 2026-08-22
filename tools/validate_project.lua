@@ -85,6 +85,8 @@ local secretPatterns = {
 local textExtensions = {
   lua = true, md = true, json = true, yml = true, yaml = true,
   py = true, ps1 = true, txt = true, toml = true, env = true,
+  html = true, css = true, js = true, jsx = true, ts = true, tsx = true,
+  svg = true,
   pem = true, key = true, cfg = true, ini = true,
 }
 local projectFiles = assert(io.popen("git -C \"" .. root:gsub('"', '""')

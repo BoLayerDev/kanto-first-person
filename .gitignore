@@ -2,6 +2,8 @@
 *.modpkg
 *.zip
 dist/
+node_modules/
+*.tsbuildinfo
 build/
 coverage/
 test-results/

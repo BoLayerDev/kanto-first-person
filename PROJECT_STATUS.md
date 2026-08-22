@@ -35,11 +35,12 @@ Last updated: 2026-08-21
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
-- Two isolated Yellow QA profiles were refreshed to KFP `ee5b735`, activated,
-  and launched with the exact Battle Art and Dramaless PR branches. Both passed
-  a preliminary 1920 x 1080 interior load. The full scene, lifecycle,
-  performance, and soak matrix is still open. Red and Blue imports are not
-  present.
+- Two isolated Yellow QA profiles were refreshed to KFP `ee5b735` and launched
+  with the exact Battle Art and Dramaless PR branches. Runtime inspection found
+  that KFP was disabled in both active option profiles, so the captured scenes
+  are host-only baselines and do not count as KFP runtime evidence. A corrected
+  KFP-enabled restart and the full matrix remain open. Red and Blue imports are
+  not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.

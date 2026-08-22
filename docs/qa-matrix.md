@@ -87,8 +87,8 @@ evidence uses this same matrix.
 
 ## Current runtime checkpoint
 
-The exact KFP `ee5b735` checkpoint and both submitted host adapters launched
-in isolated Windows identities with Yellow. Each host rendered the same
-interior and remained responsive at a verified 1920 x 1080 client size. This
-is preliminary load evidence only. No scene-class, visual-acceptance,
+The exact KFP `ee5b735` files and both submitted host adapters were placed in
+isolated Windows identities with Yellow. The first runtime inspection found
+KFP disabled in both active option profiles. Those captures are host-only
+baselines, not KFP runtime evidence. No scene-class, visual-acceptance,
 performance, lifecycle, transition, or soak row is complete yet.

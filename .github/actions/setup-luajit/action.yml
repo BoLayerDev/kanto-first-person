@@ -1,0 +1,121 @@
+name: Set up exact LuaJIT
+description: Build or restore one verified LuaJIT commit
+
+inputs:
+  commit:
+    description: Full LuaJIT source commit
+    required: true
+  runtime-version:
+    description: Exact jit.version value for the source commit
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Restore the exact LuaJIT build
+      id: runtime_cache
+      uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+      with:
+        path: ${{ github.workspace }}/.lua
+        key: kfp-luajit-v1-${{ runner.os }}-${{ runner.arch }}-${{ inputs.commit }}
+
+    - name: Build the exact LuaJIT source on Unix
+      if: steps.runtime_cache.outputs.cache-hit != 'true' && runner.os != 'Windows'
+      shell: bash
+      env:
+        LUAJIT_COMMIT: ${{ inputs.commit }}
+      run: |
+        set -euo pipefail
+        source="$RUNNER_TEMP/kfp-luajit-$LUAJIT_COMMIT"
+        install="$GITHUB_WORKSPACE/.lua"
+        if [ -e "$source" ] || [ -e "$install" ]; then
+          echo "Refusing to reuse an unverified LuaJIT path" >&2
+          exit 1
+        fi
+
+        git init "$source"
+        git -C "$source" remote add origin https://github.com/LuaJIT/LuaJIT.git
+        git -C "$source" fetch --depth 1 origin "$LUAJIT_COMMIT"
+        git -C "$source" checkout --detach FETCH_HEAD
+        test "$(git -C "$source" rev-parse HEAD)" = "$LUAJIT_COMMIT"
+
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          make -C "$source" -j2 MACOSX_DEPLOYMENT_TARGET=10.15
+        else
+          make -C "$source" -j2
+        fi
+        make -C "$source" install PREFIX="$install"
+        ln -sf luajit "$install/bin/lua"
+        printf '%s\n' "$LUAJIT_COMMIT" > "$install/KFP_LUAJIT_COMMIT"
+
+    - name: Build the exact LuaJIT source on Windows
+      if: steps.runtime_cache.outputs.cache-hit != 'true' && runner.os == 'Windows'
+      shell: pwsh
+      env:
+        LUAJIT_COMMIT: ${{ inputs.commit }}
+      run: |
+        $ErrorActionPreference = "Stop"
+        $source = Join-Path $env:RUNNER_TEMP "kfp-luajit-$env:LUAJIT_COMMIT"
+        $install = Join-Path $env:GITHUB_WORKSPACE ".lua"
+        if ((Test-Path -LiteralPath $source) -or (Test-Path -LiteralPath $install)) {
+          throw "Refusing to reuse an unverified LuaJIT path"
+        }
+
+        git init "$source"
+        if ($LASTEXITCODE -ne 0) { throw "LuaJIT git init failed" }
+        git -C "$source" remote add origin https://github.com/LuaJIT/LuaJIT.git
+        if ($LASTEXITCODE -ne 0) { throw "LuaJIT remote setup failed" }
+        git -C "$source" fetch --depth 1 origin "$env:LUAJIT_COMMIT"
+        if ($LASTEXITCODE -ne 0) { throw "LuaJIT fetch failed" }
+        git -C "$source" checkout --detach FETCH_HEAD
+        if ($LASTEXITCODE -ne 0) { throw "LuaJIT checkout failed" }
+        $actualCommit = git -C "$source" rev-parse HEAD
+        if ($LASTEXITCODE -ne 0 -or $actualCommit.Trim() -ne $env:LUAJIT_COMMIT) {
+          throw "LuaJIT source identity does not match"
+        }
+
+        Push-Location (Join-Path $source "src")
+        try {
+          cmd /d /s /c msvcbuild.bat
+          if ($LASTEXITCODE -ne 0) { throw "LuaJIT MSVC build failed" }
+        } finally {
+          Pop-Location
+        }
+
+        $bin = New-Item -ItemType Directory -Path (Join-Path $install "bin")
+        $lib = New-Item -ItemType Directory -Path (Join-Path $install "lib")
+        $include = New-Item -ItemType Directory -Path (Join-Path $install "include\luajit-2.1")
+        $jit = New-Item -ItemType Directory -Path (Join-Path $install "share\luajit-2.1\jit")
+        Copy-Item (Join-Path $source "src\luajit.exe") (Join-Path $bin "luajit.exe")
+        Copy-Item (Join-Path $source "src\luajit.exe") (Join-Path $bin "lua.exe")
+        Copy-Item (Join-Path $source "src\lua51.dll") (Join-Path $bin "lua51.dll")
+        Copy-Item (Join-Path $source "src\lua51.dll") (Join-Path $lib "lua51.dll")
+        Copy-Item (Join-Path $source "src\lua51.lib") (Join-Path $lib "lua51.lib")
+        foreach ($header in @("lua.h", "lauxlib.h", "lualib.h", "luaconf.h", "luajit.h")) {
+          Copy-Item (Join-Path $source "src\$header") (Join-Path $include $header)
+        }
+        Copy-Item (Join-Path $source "src\jit\*.lua") $jit
+        Set-Content -LiteralPath (Join-Path $install "KFP_LUAJIT_COMMIT") `
+          -Value $env:LUAJIT_COMMIT -NoNewline -Encoding ascii
+
+    - name: Add the exact LuaJIT runtime to PATH
+      shell: bash
+      run: echo "$GITHUB_WORKSPACE/.lua/bin" >> "$GITHUB_PATH"
+
+    - name: Verify the cache and LuaJIT identities
+      shell: bash
+      env:
+        LUAJIT_COMMIT: ${{ inputs.commit }}
+        LUAJIT_RUNTIME_VERSION: ${{ inputs.runtime-version }}
+      run: |
+        set -euo pipefail
+        provenance="$GITHUB_WORKSPACE/.lua/KFP_LUAJIT_COMMIT"
+        test -f "$provenance"
+        actual_commit="$(tr -d '\r\n' < "$provenance")"
+        test "$actual_commit" = "$LUAJIT_COMMIT"
+        actual_version="$(lua -e 'assert(type(jit.version) == "string"); io.write(jit.version)')"
+        test "$actual_version" = "$LUAJIT_RUNTIME_VERSION"
+        lua -e 'assert(jit.version_num == 20199, "unexpected LuaJIT version number")'
+        echo "Cache key: kfp-luajit-v1-$RUNNER_OS-$RUNNER_ARCH-$LUAJIT_COMMIT"
+        echo "LuaJIT source: $actual_commit"
+        echo "LuaJIT runtime: $actual_version"

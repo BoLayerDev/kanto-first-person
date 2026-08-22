@@ -7,6 +7,10 @@ on:
 permissions:
   contents: read
 
+env:
+  LUAJIT_CURRENT_COMMIT: 1ee778a4e37122d8ca7d5733c590a47dafd6b15c
+  LUAJIT_CURRENT_VERSION: LuaJIT 2.1.1787165859
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -54,10 +58,11 @@ jobs:
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756 # v1
 
-      - name: Install pinned LuaJIT language version
-        uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
+      - name: Install the exact current LuaJIT source
+        uses: ./.github/actions/setup-luajit
         with:
-          luaVersion: luajit-2.1
+          commit: ${{ env.LUAJIT_CURRENT_COMMIT }}
+          runtime-version: ${{ env.LUAJIT_CURRENT_VERSION }}
 
       - name: Compile all Lua source
         run: lua tools/check_syntax.lua
@@ -75,6 +80,36 @@ jobs:
 
       - name: Test release and device-evidence controls
         run: python -m unittest discover -s tests/tools -p "test_*.py"
+
+  luajit-hash-compatibility:
+    name: LuaJIT hash compatibility / ${{ matrix.runtime }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runtime: gen1recomp-embedded
+            commit: 43d0a19158ceabaa51b0462c1ebc97612b420a2e
+            runtime_version: LuaJIT 2.1.1700008891
+          - runtime: current-ci
+            commit: 1ee778a4e37122d8ca7d5733c590a47dafd6b15c
+            runtime_version: LuaJIT 2.1.1787165859
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install the exact compatibility LuaJIT source
+        uses: ./.github/actions/setup-luajit
+        with:
+          commit: ${{ matrix.commit }}
+          runtime-version: ${{ matrix.runtime_version }}
+
+      - name: Run the bounded hash and scene-vector corpus
+        run: >-
+          lua tools/run_tests.lua packet_hash full_scene_benchmark
+          synthetic_scene_golden
 
   gen1recomp:
     name: Gen1recomp / ${{ matrix.target }}
@@ -104,10 +139,11 @@ jobs:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Install pinned LuaJIT language version
-        uses: leafo/gh-actions-lua@6919171ccf181b826f44b9bca76307b577217377 # v13
+      - name: Install the exact current LuaJIT source
+        uses: ./.github/actions/setup-luajit
         with:
-          luaVersion: luajit-2.1
+          commit: ${{ env.LUAJIT_CURRENT_COMMIT }}
+          runtime-version: ${{ env.LUAJIT_CURRENT_VERSION }}
 
       - name: Fetch the audited engine tool only
         shell: bash

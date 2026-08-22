@@ -17,65 +17,95 @@ end
 function Weather:compile(context, buffer)
   local U = self.util
   local world, config, quality = context.world, context.config, context.quality
-  if U.hasTag(world, "interior") or U.hasTag(world, "cave") then return end
-  local raining = rainEnabled(U.option(config, "rain", "SOMETIMES"), world.weather)
+  local hasTag, option = U.hasTag, U.option
+  if hasTag(world, "interior") or hasTag(world, "cave") then return end
+
+  local add, addBatchItem = buffer.add, buffer.addBatchItem
+  local cellPosition = U.cellPosition
+  local checkpoint, hash, keep, unit = U.checkpoint, U.hash, U.keep, U.unit
+  local worldId, cellSize = world.id, world.cellSize
+  local weather = world.weather
+  local density = quality.density
+  local owner = self.id
+  local raining = rainEnabled(option(config, "rain", "SOMETIMES"), weather)
 
   if raining then
-    local count = math.max(24, math.floor(130 * quality.density))
+    local count = math.max(24, math.floor(130 * density))
+    local rainTemplate = {
+      owner = owner,
+      material = "weather:rain",
+      sortKey = "weather:rain",
+      animated = true,
+    }
+    local worldWidth, worldHeight = world.width, world.height
     for index = 1, count do
-      local unitX = U.unit(world.id, "rain", index, "x")
-      local unitZ = U.unit(world.id, "rain", index, "z")
-      buffer:addBatchItem("translucent_after_actors", "billboards", "rain", {
-        owner = self.id,
-        material = "weather:rain",
-        sortKey = "weather:rain",
-        animated = true,
-      }, {
-        x = unitX * world.width * world.cellSize,
-        y = world.cellSize * (2 + U.unit(world.id, "rain", index, "y") * 4),
-        z = unitZ * world.height * world.cellSize,
-        seed = U.hash(world.id, "rain", index),
+      local unitX = unit(worldId, "rain", index, "x")
+      local unitZ = unit(worldId, "rain", index, "z")
+      addBatchItem(buffer, "translucent_after_actors", "billboards", "rain",
+        rainTemplate, {
+        x = unitX * worldWidth * cellSize,
+        y = cellSize * (2 + unit(worldId, "rain", index, "y") * 4),
+        z = unitZ * worldHeight * cellSize,
+        seed = hash(worldId, "rain", index),
       })
-      U.checkpoint(context, index, 48)
+      checkpoint(context, index, 48)
     end
   end
 
-  for index, cell in ipairs(world.cells or {}) do
-    local x, y, z, size = U.cellPosition(world, cell)
-    local seed = U.hash(world.id, cell.x, cell.z, "weather")
-    if raining and U.option(config, "puddles", true) and cell.walkable
-        and U.keep(quality.density * 0.25, seed, "puddle") then
-      buffer:addBatchItem("translucent_after_actors", "instances", "puddles", {
-        owner = self.id,
-        material = "weather:puddle",
-        prototype = { primitive = "plane", width = size * 0.6, depth = size * 0.4 },
-        sortKey = "weather:puddles",
-      }, { x = x, y = y + 0.04, z = z, seed = seed })
+  local puddles = raining and option(config, "puddles", true)
+  local puddleDensity = puddles and density * 0.25 or nil
+  local puddleTemplate
+  local cells = world.cells or {}
+  for index, cell in ipairs(cells) do
+    if puddles and cell.walkable then
+      local x, y, z, size = cellPosition(world, cell)
+      local seed = hash(worldId, cell.x, cell.z, "weather")
+      if keep(puddleDensity, seed, "puddle") then
+        if not puddleTemplate then
+          puddleTemplate = {
+            owner = owner,
+            material = "weather:puddle",
+            prototype = {
+              primitive = "plane",
+              width = size * 0.6,
+              depth = size * 0.4,
+            },
+            sortKey = "weather:puddles",
+          }
+        end
+        addBatchItem(buffer, "translucent_after_actors", "instances", "puddles",
+          puddleTemplate, { x = x, y = y + 0.04, z = z, seed = seed })
+      end
     end
-    U.checkpoint(context, index, 64)
+    checkpoint(context, index, 64)
   end
 
-  if raining and U.option(config, "npc_umbrellas", true) then
-    for index, actor in ipairs(world.actors or {}) do
+  if raining and option(config, "npc_umbrellas", true) then
+    local umbrellaTemplate = {
+      owner = owner,
+      material = "weather:umbrella",
+      prototype = { primitive = "umbrella" },
+      sortKey = "weather:umbrellas",
+    }
+    local actors = world.actors or {}
+    for index, actor in ipairs(actors) do
       local pose = actor.pose
-      buffer:addBatchItem("translucent_after_actors", "instances", "umbrellas", {
-        owner = self.id,
-        material = "weather:umbrella",
-        prototype = { primitive = "umbrella" },
-        sortKey = "weather:umbrellas",
-      }, { x = pose.x, y = pose.y + world.cellSize, z = pose.z,
-        seed = U.hash(world.id, actor.id, "umbrella") })
-      U.checkpoint(context, index, 32)
+      addBatchItem(buffer, "translucent_after_actors", "instances", "umbrellas",
+        umbrellaTemplate, {
+        x = pose.x, y = pose.y + cellSize, z = pose.z,
+        seed = hash(worldId, actor.id, "umbrella"),
+      })
+      checkpoint(context, index, 32)
     end
   end
 
-  if U.option(config, "rainbows", true) and world.weather == "clearing" then
-    buffer:add("background", {
+  if option(config, "rainbows", true) and weather == "clearing" then
+    add(buffer, "background", {
       kind = "mesh",
-      owner = self.id,
+      owner = owner,
       material = "weather:rainbow",
       sortKey = "weather:rainbow",
-      geometry = { primitive = "rainbow", seed = U.hash(world.id, "rainbow") },
+      geometry = { primitive = "rainbow", seed = hash(worldId, "rainbow") },
     })
   end
 end

@@ -10,6 +10,7 @@ const CAMERA_VIEWS = [
   { position: new THREE.Vector3(4.4, 3.3, -5), target: new THREE.Vector3(0, 1.5, -15) },
   { position: new THREE.Vector3(-3.5, 3.1, -11), target: new THREE.Vector3(0, 1.6, -22) },
   { position: new THREE.Vector3(3.2, 2.7, -27), target: new THREE.Vector3(0, 1.5, -36) },
+  { position: new THREE.Vector3(-5.4, 4.8, -15), target: new THREE.Vector3(0, 1.6, -25) },
   { position: new THREE.Vector3(5.2, 4.4, -17), target: new THREE.Vector3(0, 1.3, -27) },
 ]
 
@@ -44,7 +45,7 @@ function MenuCamera() {
     camera.lookAt(lookTarget)
 
     const perspective = camera as THREE.PerspectiveCamera
-    perspective.fov = damp(perspective.fov, menuIndex === 4 ? 58 : 52, 4, delta)
+    perspective.fov = damp(perspective.fov, menuIndex === 5 ? 58 : 52, 4, delta)
     perspective.updateProjectionMatrix()
   })
 

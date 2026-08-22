@@ -70,7 +70,7 @@ test.describe('mobile field terminal', () => {
     expect(layout.summary.bottom).toBeLessThan(844)
     expect(layout.summary.fontSize).toBeGreaterThanOrEqual(14)
 
-    expect(layout.menuButtons).toHaveLength(5)
+    expect(layout.menuButtons).toHaveLength(6)
     for (const button of layout.menuButtons) {
       expect(button.fontSize).toBeGreaterThanOrEqual(11)
       expect(button.height).toBeGreaterThanOrEqual(48)
@@ -173,10 +173,24 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner).toContainText('cfc045b')
   await expect(banner).toContainText('NOT RELEASED')
 
-  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'OPEN GITHUB']) {
+  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'OPEN GITHUB']) {
     await page.getByRole('button', { name: label }).click()
     await expect(banner).toBeVisible()
   }
+})
+
+test('explains the rewrite with conceptual comparison graphics and verified upgrades', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+  await page.getByRole('button', { name: 'NEXT-GEN REBUILD' }).click()
+
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+  await expect(page.getByText('1.60 LEGACY')).toBeVisible()
+  await expect(page.getByText('2.0 REBUILD')).toBeVisible()
+  await expect(page.getByText('PUBLIC COMPANION API')).toBeVisible()
+  await expect(page.getByText('BUDGETED COMPILER')).toBeVisible()
+  await expect(page.getByText('53')).toBeVisible()
+  await expect(page.getByRole('link', { name: /EXPLORE THE ARCHITECTURE/ })).toHaveAttribute('href', /docs\/architecture\.md$/)
 })
 
 test('uses standard desktop open and back keys', async ({ page }) => {

@@ -47,6 +47,13 @@ const MENU_ITEMS: MenuItem[] = [
       'Check compatibility, known limits, device testing, security guidance, and the issue tracker from one place.',
   },
   {
+    label: 'NEXT-GEN REBUILD',
+    eyebrow: 'EVOLUTION FILE / 2.0',
+    title: 'Same Kanto. New foundations.',
+    summary:
+      'This is not a patch update. KFP 2.0 is a clean companion rewrite built for safer hosts, bounded performance, and a much bigger world.',
+  },
+  {
     label: 'OPEN GITHUB',
     eyebrow: 'SOURCE / PUBLIC',
     title: 'See how it works.',
@@ -61,7 +68,17 @@ const PRIMARY_LINKS = [
   `${BRANCH}/docs/feature-parity.md`,
   `${BRANCH}/docs/upgrade-v1-to-v2.md`,
   `${BRANCH}/docs/compatibility.md`,
+  `${BRANCH}/docs/architecture.md`,
   REPO,
+]
+
+const REWRITE_UPGRADES = [
+  ['INTEGRATION', 'SPLICED HOST SOURCE', 'PUBLIC COMPANION API'],
+  ['OWNERSHIP', 'BACKUPS + FILE LEDGERS', 'KFP RESOURCES ONLY'],
+  ['WORLD BUILD', 'LARGE RENDER-PATH WORK', 'BUDGETED COMPILER'],
+  ['STATE', 'BROAD MUTABLE TABLES', 'BOUNDED SNAPSHOTS'],
+  ['RANDOMNESS', 'GLOBAL RANDOM STATE', 'LOCAL DETERMINISM'],
+  ['RELEASE', 'MANUAL ARCHIVES', 'REPRODUCIBLE GATES'],
 ]
 
 function DetailLinks({ children }: { children: ReactNode }) {
@@ -87,6 +104,105 @@ function ReleaseBanner() {
         <div><span>PACKAGE</span><b>NOT RELEASED</b></div>
       </div>
     </section>
+  )
+}
+
+function RewriteComparisonGraphic() {
+  return (
+    <figure className="rebuild-comparison">
+      <div className="concept-card is-legacy">
+        <div className="concept-scene legacy-scene" aria-hidden="true">
+          <span className="concept-sun" />
+          <span className="concept-ground" />
+          <span className="concept-route" />
+          <span className="host-block host-block-a" />
+          <span className="host-block host-block-b" />
+          <span className="patch-wire patch-wire-a" />
+          <span className="patch-wire patch-wire-b" />
+          <b>PATCHED HOST</b>
+        </div>
+        <figcaption><span>1.60 LEGACY</span><b>POWERFUL, BUT TIED TO HOST FILES</b></figcaption>
+      </div>
+      <div className="evolution-arrow" aria-hidden="true"><span>EVOLVE</span>▶</div>
+      <div className="concept-card is-rebuild">
+        <div className="concept-scene rebuild-scene" aria-hidden="true">
+          <span className="concept-sun" />
+          <span className="concept-mountain mountain-a" />
+          <span className="concept-mountain mountain-b" />
+          <span className="concept-ground" />
+          <span className="concept-route" />
+          <span className="concept-tree tree-a" />
+          <span className="concept-tree tree-b" />
+          <span className="concept-tree tree-c" />
+          <span className="weather-pixel weather-a" />
+          <span className="weather-pixel weather-b" />
+          <span className="weather-pixel weather-c" />
+          <b>COMPANION API</b>
+        </div>
+        <figcaption><span>2.0 REBUILD</span><b>DEEPER WORLD. CLEAN BOUNDARIES.</b></figcaption>
+      </div>
+    </figure>
+  )
+}
+
+function RewriteDetail() {
+  return (
+    <div className="rewrite-page">
+      <div className="rewrite-callout">
+        <span>FULL SYSTEM REWRITE</span>
+        <b>BUILT AGAIN.<br />BUILT TO LAST.</b>
+        <p>KFP keeps the ambition of the original mod and replaces its old foundation with an isolated, testable Gen1recomp API 2 architecture.</p>
+      </div>
+
+      <RewriteComparisonGraphic />
+
+      <div className="rebuild-vitals" aria-label="Rewrite highlights">
+        <div><b>53</b><span>LEGACY SETTINGS MAPPED</span></div>
+        <div><b>5</b><span>ENGINE TARGETS IN CI</span></div>
+        <div><b>3</b><span>GEN 1 GAMES TARGETED</span></div>
+      </div>
+
+      <section className="upgrade-grid" aria-labelledby="upgrade-grid-title">
+        <div className="upgrade-grid-title" id="upgrade-grid-title">
+          <span>THEN</span><b>THE 2.0 EVOLUTION</b><span>NOW</span>
+        </div>
+        {REWRITE_UPGRADES.map(([area, before, after]) => (
+          <div className="upgrade-row" key={area}>
+            <span>{before}</span><b>{area}</b><span>{after}</span>
+          </div>
+        ))}
+      </section>
+
+      <section className="world-upgrades" aria-labelledby="world-upgrades-title">
+        <div>
+          <span>WORLD / 01</span><b id="world-upgrades-title">ROOMS BECOME PLACES</b>
+          <p>Walls, ceilings, doors, windows, light fittings, cave roofs, pools, rails, and battle props add depth to familiar spaces.</p>
+        </div>
+        <div>
+          <span>HORIZON / 02</span><b>ROUTES KEEP GOING</b>
+          <p>Terrain aprons, trees, mountains, forest structures, clouds, stars, and distant activity push Kanto beyond the map edge.</p>
+        </div>
+        <div>
+          <span>ATMOSPHERE / 03</span><b>THE WORLD HAS WEATHER</b>
+          <p>Rain, storms, fog, canopy, particles, camera motion, and ambient sound are represented as bounded feature systems.</p>
+        </div>
+        <div>
+          <span>SAFETY / 04</span><b>THE HOST STAYS IN CONTROL</b>
+          <p>One host owns the renderer. KFP submits validated packets, isolates faults, and never patches, restores, or deletes host files.</p>
+        </div>
+      </section>
+
+      <div className="rebuild-promise">
+        <span>NEXT OBJECTIVE</span>
+        <b>A BIGGER FIRST-PERSON KANTO—WITH A FOUNDATION THE COMMUNITY CAN TRUST.</b>
+      </div>
+
+      <DetailLinks>
+        <a href={`${BRANCH}/docs/architecture.md`} target="_blank" rel="noreferrer">EXPLORE THE ARCHITECTURE <span>↗</span></a>
+        <a href={`${BRANCH}/docs/feature-parity.md`} target="_blank" rel="noreferrer">VIEW THE FEATURE LEDGER <span>↗</span></a>
+        <a href={`${BRANCH}/docs/upgrade-v1-to-v2.md`} target="_blank" rel="noreferrer">READ THE SAFE UPGRADE PATH <span>↗</span></a>
+      </DetailLinks>
+    </div>
   )
 }
 
@@ -153,6 +269,10 @@ function MenuDetail({ index }: { index: number }) {
         <a href={`${REPO}/issues/new/choose`} target="_blank" rel="noreferrer">REPORT AN ISSUE <span>↗</span></a>
       </DetailLinks>
     )
+  }
+
+  if (index === 4) {
+    return <RewriteDetail />
   }
 
   return (

@@ -618,6 +618,402 @@ a {
   line-height: 1.6;
 }
 
+.rewrite-page {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.rewrite-callout {
+  position: relative;
+  padding: 1.2rem 1.35rem;
+  border: 4px solid var(--game-ink);
+  color: var(--paper);
+  background:
+    linear-gradient(115deg, var(--game-ink) 0 72%, var(--accent) 72.3%),
+    var(--game-ink);
+  box-shadow: 7px 7px 0 var(--accent);
+  overflow: hidden;
+}
+
+.rewrite-callout::after {
+  position: absolute;
+  right: 1rem;
+  bottom: -1.4rem;
+  width: 5rem;
+  height: 5rem;
+  border: 0.65rem solid color-mix(in srgb, var(--paper) 25%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.rewrite-callout > span,
+.world-upgrades span,
+.rebuild-promise span {
+  display: block;
+  margin-bottom: 0.65rem;
+  color: var(--accent-soft);
+  font-size: clamp(0.4rem, 0.52vw, 0.5rem);
+  letter-spacing: 0.08em;
+}
+
+.rewrite-callout > b {
+  display: block;
+  max-width: 18ch;
+  font-size: clamp(1rem, 1.8vw, 1.65rem);
+  line-height: 1.28;
+}
+
+.rewrite-callout p {
+  max-width: 64ch;
+  margin: 0.85rem 0 0;
+  color: rgba(248, 242, 216, 0.8);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.55;
+}
+
+.rebuild-comparison {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+}
+
+.concept-card {
+  min-width: 0;
+  border: 4px solid var(--game-ink);
+  background: var(--paper-dark);
+  box-shadow: 6px 6px 0 var(--game-ink);
+}
+
+.concept-scene {
+  position: relative;
+  height: clamp(145px, 18vw, 190px);
+  border-bottom: 4px solid var(--game-ink);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.concept-scene > span {
+  position: absolute;
+  display: block;
+}
+
+.concept-scene > b {
+  position: absolute;
+  z-index: 8;
+  top: 0.6rem;
+  left: 0.6rem;
+  padding: 0.45rem 0.5rem;
+  color: var(--paper);
+  background: var(--game-ink);
+  font-size: clamp(0.34rem, 0.45vw, 0.43rem);
+  line-height: 1.4;
+}
+
+.legacy-scene {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 17px, rgba(23, 32, 23, 0.1) 17px 19px),
+    linear-gradient(#b8c0a6 0 58%, #8e9c74 58%);
+  filter: saturate(0.55);
+}
+
+.rebuild-scene {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.18), transparent 50%),
+    linear-gradient(#70a9d6 0 50%, #b9d084 50%);
+}
+
+.concept-sun {
+  z-index: 1;
+  top: 16%;
+  right: 11%;
+  width: 2.4rem;
+  aspect-ratio: 1;
+  border: 4px solid var(--game-ink);
+  border-radius: 50%;
+  background: #ffd64a;
+  box-shadow: 0 0 0 5px rgba(255, 214, 74, 0.2);
+}
+
+.concept-ground {
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 46%;
+  border-top: 4px solid var(--game-ink);
+  background:
+    repeating-linear-gradient(90deg, rgba(23, 32, 23, 0.14) 0 3px, transparent 3px 24px),
+    #769458;
+}
+
+.legacy-scene .concept-ground {
+  height: 39%;
+  background: #7e8d64;
+}
+
+.concept-route {
+  z-index: 3;
+  bottom: 0;
+  left: 50%;
+  width: 52%;
+  height: 68%;
+  background:
+    repeating-linear-gradient(0deg, rgba(23, 32, 23, 0.12) 0 3px, transparent 3px 22px),
+    #e4d19d;
+  clip-path: polygon(44% 0, 56% 0, 100% 100%, 0 100%);
+  transform: translateX(-50%);
+}
+
+.legacy-scene .concept-route {
+  width: 34%;
+  height: 39%;
+  clip-path: none;
+}
+
+.host-block {
+  z-index: 4;
+  bottom: 27%;
+  width: 31%;
+  height: 32%;
+  border: 4px solid var(--game-ink);
+  background:
+    linear-gradient(90deg, transparent 46%, var(--game-ink) 46% 54%, transparent 54%),
+    #d6ccb0;
+}
+
+.host-block-a { left: 7%; }
+.host-block-b { right: 8%; height: 42%; }
+
+.patch-wire {
+  z-index: 7;
+  width: 46%;
+  height: 5px;
+  border: 1px solid var(--game-ink);
+  background: #d34a42;
+  transform-origin: left center;
+}
+
+.patch-wire-a { top: 48%; left: 28%; transform: rotate(-18deg); }
+.patch-wire-b { top: 61%; left: 27%; transform: rotate(14deg); }
+
+.concept-mountain {
+  z-index: 1;
+  bottom: 43%;
+  background: #506d64;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.mountain-a { left: -5%; width: 55%; height: 49%; }
+.mountain-b { right: -4%; width: 68%; height: 60%; background: #3d5f59; }
+
+.concept-tree {
+  z-index: 5;
+  bottom: 34%;
+  width: 18px;
+  height: 44px;
+  border: 3px solid var(--game-ink);
+  background: #3f744c;
+  box-shadow: inset 0 -12px #735638;
+}
+
+.concept-tree::before {
+  position: absolute;
+  top: -18px;
+  left: -10px;
+  width: 32px;
+  height: 28px;
+  border: 3px solid var(--game-ink);
+  background: #4f9557;
+  content: "";
+  transform: rotate(45deg);
+}
+
+.tree-a { left: 12%; }
+.tree-b { right: 11%; height: 52px; }
+.tree-c { right: 28%; width: 14px; height: 34px; transform: scale(0.78); }
+
+.weather-pixel {
+  z-index: 6;
+  width: 4px;
+  height: 15px;
+  background: #dcecff;
+  transform: rotate(18deg);
+  animation: weather-fall 1.4s steps(4, end) infinite;
+}
+
+.weather-a { top: 18%; left: 26%; }
+.weather-b { top: 31%; right: 22%; animation-delay: -0.45s; }
+.weather-c { top: 12%; right: 45%; animation-delay: -0.9s; }
+
+.concept-card figcaption {
+  display: grid;
+  gap: 0.45rem;
+  min-height: 74px;
+  padding: 0.8rem;
+}
+
+.concept-card figcaption span {
+  color: var(--accent);
+  font-size: 0.45rem;
+}
+
+.concept-card figcaption b {
+  font-size: clamp(0.42rem, 0.55vw, 0.54rem);
+  line-height: 1.5;
+}
+
+.is-legacy figcaption span { color: #a3403c; }
+
+.evolution-arrow {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  color: var(--accent);
+  font-size: 1.25rem;
+  filter: drop-shadow(2px 2px 0 var(--game-ink));
+}
+
+.evolution-arrow span {
+  color: var(--game-mid);
+  font-size: 0.34rem;
+  writing-mode: vertical-rl;
+}
+
+.rebuild-vitals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 4px solid var(--game-ink);
+  background: var(--game-ink);
+  gap: 4px;
+}
+
+.rebuild-vitals > div {
+  display: grid;
+  align-content: center;
+  min-height: 88px;
+  padding: 0.8rem;
+  color: var(--game-ink);
+  background: var(--paper);
+}
+
+.rebuild-vitals b {
+  color: var(--accent);
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  line-height: 1;
+}
+
+.rebuild-vitals span {
+  margin-top: 0.55rem;
+  color: var(--game-mid);
+  font-size: clamp(0.36rem, 0.48vw, 0.46rem);
+  line-height: 1.5;
+}
+
+.upgrade-grid {
+  border: 4px solid var(--game-ink);
+}
+
+.upgrade-grid-title,
+.upgrade-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(100px, 0.55fr) minmax(0, 1fr);
+  align-items: center;
+  text-align: center;
+}
+
+.upgrade-grid-title {
+  min-height: 54px;
+  color: var(--paper);
+  background: var(--game-ink);
+  font-size: clamp(0.38rem, 0.5vw, 0.48rem);
+}
+
+.upgrade-grid-title span:first-child { color: #e9897f; }
+.upgrade-grid-title span:last-child { color: var(--accent-soft); }
+
+.upgrade-row {
+  min-height: 58px;
+  border-top: 2px dotted var(--game-pale);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.63rem, 0.78vw, 0.76rem);
+  font-weight: 800;
+  line-height: 1.4;
+}
+
+.upgrade-row > * {
+  height: 100%;
+  padding: 0.8rem 0.55rem;
+}
+
+.upgrade-row > span:first-child {
+  color: #7c4c47;
+  background: #eee0cd;
+}
+
+.upgrade-row > b {
+  display: grid;
+  place-items: center;
+  border-right: 2px solid var(--game-pale);
+  border-left: 2px solid var(--game-pale);
+  color: var(--game-mid);
+  font-family: "Press Start 2P", monospace;
+  font-size: clamp(0.34rem, 0.46vw, 0.44rem);
+}
+
+.upgrade-row > span:last-child {
+  color: #315c3f;
+  background: #e5edc9;
+}
+
+.world-upgrades {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 4px solid var(--game-ink);
+  border-left: 4px solid var(--game-ink);
+}
+
+.world-upgrades > div {
+  min-height: 180px;
+  padding: 1rem;
+  border-right: 4px solid var(--game-ink);
+  border-bottom: 4px solid var(--game-ink);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.42), transparent 60%),
+    var(--paper-dark);
+}
+
+.world-upgrades b {
+  display: block;
+  font-size: clamp(0.52rem, 0.72vw, 0.68rem);
+  line-height: 1.55;
+}
+
+.world-upgrades p {
+  margin: 0.75rem 0 0;
+  color: var(--game-mid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.rebuild-promise {
+  padding: 1.1rem;
+  border: 4px solid var(--game-ink);
+  color: var(--paper);
+  background: var(--accent);
+  box-shadow: 7px 7px 0 var(--game-ink);
+}
+
+.rebuild-promise b {
+  font-size: clamp(0.58rem, 0.86vw, 0.82rem);
+  line-height: 1.65;
+}
+
 .launch-button {
   display: flex;
   justify-content: space-between;
@@ -698,6 +1094,10 @@ a {
 
 @keyframes status-pulse {
   50% { opacity: 0.36; }
+}
+
+@keyframes weather-fall {
+  to { transform: translate(7px, 28px) rotate(18deg); }
 }
 
 @media (min-width: 901px) and (max-height: 960px) {
@@ -789,8 +1189,7 @@ a {
 
   .menu-window .window-label,
   .menu-divider,
-  .inline-option,
-  .menu-window > button:nth-of-type(5) {
+  .inline-option {
     grid-column: 1 / -1;
   }
 
@@ -858,6 +1257,20 @@ a {
 
   .detail-links a {
     min-height: 52px;
+  }
+
+  .rebuild-comparison {
+    grid-template-columns: 1fr;
+  }
+
+  .evolution-arrow {
+    grid-template-columns: auto auto;
+    justify-content: center;
+    transform: rotate(90deg);
+  }
+
+  .evolution-arrow span {
+    writing-mode: initial;
   }
 
   .control-strip p {
@@ -962,6 +1375,30 @@ a {
     padding-top: 0;
   }
 
+  .rebuild-vitals,
+  .world-upgrades {
+    grid-template-columns: 1fr;
+  }
+
+  .upgrade-grid-title,
+  .upgrade-row {
+    grid-template-columns: 1fr;
+  }
+
+  .upgrade-grid-title {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .upgrade-row > b {
+    order: -1;
+    border: 0;
+    border-bottom: 2px solid var(--game-pale);
+  }
+
+  .world-upgrades > div {
+    min-height: 0;
+  }
+
   .control-strip > div {
     flex: 1 1 42%;
   }
@@ -983,10 +1420,6 @@ a {
 @media (max-width: 360px) {
   .menu-window {
     grid-template-columns: 1fr;
-  }
-
-  .menu-window > button:nth-of-type(5) {
-    grid-column: auto;
   }
 }
 

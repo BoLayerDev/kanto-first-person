@@ -31,6 +31,18 @@ return function(T)
     T.equal(packet.metadata.key, "map:1")
     T.equal(packet.phases.background[1].owner, "first")
     T.equal(packet.phases.background[2].owner, "second")
+    local status = compiler:status()
+    T.equal(status.activeGeneration, packet.metadata.generation)
+    T.equal(status.activeDrawCalls, 2)
+    T.deepEqual(status.activeCommands, {
+      commands = 2,
+      batchItems = 0,
+      phases = { background = 2 },
+      kinds = { mesh = 2 },
+      owners = { first = 1, second = 1 },
+    })
+    status.activeCommands.owners.first = 99
+    T.equal(compiler:status().activeCommands.owners.first, 1)
   end)
 
   T.test("critical compilation failure preserves the active packet", function()

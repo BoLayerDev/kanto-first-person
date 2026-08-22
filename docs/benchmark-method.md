@@ -54,3 +54,13 @@ The public corpus uses synthetic ROM-free maps for indoor, cave, forest, city, r
 - Post-collection Lua heap remains within 5% of warm steady state.
 
 Do not compare results from different engine, host, driver, thermal, power, or resolution states as if they are equivalent.
+
+For live scene diagnosis, `mod.exports.kfp.status().scene` also reports the
+active packet without exposing graphics resources:
+
+- `activeKey`, `activeGeneration`, and `activeDrawCalls` identify the packet.
+- `activeCommands.commands` and `batchItems` report bounded totals.
+- `activeCommands.phases`, `kinds`, and `owners` report count-only maps.
+
+These values are defensive copies. They contain no textures, meshes, host
+objects, asset paths, or borrowed callback data.

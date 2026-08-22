@@ -297,8 +297,34 @@ function SceneCompiler:active()
   return self._active
 end
 
+local function summarizeCommands(packet)
+  if type(packet) ~= "table" or type(packet.phases) ~= "table" then return nil end
+  local summary = { commands = 0, batchItems = 0, phases = {}, kinds = {}, owners = {} }
+  for phase, commands in pairs(packet.phases) do
+    if type(phase) == "string" and type(commands) == "table" then
+      for _, command in ipairs(commands) do
+        if type(command) == "table" then
+          summary.commands = summary.commands + 1
+          summary.phases[phase] = (summary.phases[phase] or 0) + 1
+          if type(command.kind) == "string" then
+            summary.kinds[command.kind] = (summary.kinds[command.kind] or 0) + 1
+          end
+          if type(command.owner) == "string" then
+            summary.owners[command.owner] = (summary.owners[command.owner] or 0) + 1
+          end
+          if type(command.items) == "table" then
+            summary.batchItems = summary.batchItems + #command.items
+          end
+        end
+      end
+    end
+  end
+  return summary
+end
+
 function SceneCompiler:status()
   local build = self._building
+  local activeMetadata = self._active and self._active.metadata or nil
   local cache
   if self._cache and type(self._cache.stats) == "function" then
     local ok, value = pcall(self._cache.stats, self._cache)
@@ -306,7 +332,10 @@ function SceneCompiler:status()
   end
   return {
     generation = self._generation,
-    activeKey = self._active and self._active.metadata and self._active.metadata.key or nil,
+    activeKey = activeMetadata and activeMetadata.key or nil,
+    activeGeneration = activeMetadata and activeMetadata.generation or nil,
+    activeDrawCalls = self._active and self._active.drawCalls or nil,
+    activeCommands = summarizeCommands(self._active),
     buildingKey = build and build.key or nil,
     buildingFeature = build and build.tasks[build.index]
       and build.tasks[build.index].feature.id or nil,

@@ -12,17 +12,20 @@ Last updated: 2026-08-22
   (`70d7b6`), `v0.2.19` (`116a6ba`), baseline `dev` (`06e06e3`), and
   current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
-- Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Historical public source checkpoint
-  `0683051a9ade567df8f5a5a73a2693646274e578` passed
-  [CI run 32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
-  on Windows, Linux, macOS, and all five pinned engine commits. That evidence
-  applies only to the recorded commit. It does not approve the current
-  integration candidate.
-- The alpha ledger fails closed during source integration. Only asset rights
-  are passed. Automated tests, companion contracts, known limitations,
-  package reproducibility, source integrity, released hosts, and migration
-  safety are pending fresh evidence for the exact pushed source head.
+- Current milestone: `2.0.0-alpha.1` source-evidenced candidate.
+- Exact public source checkpoint
+  `cfc045bec72c2ceecd558b24bcd643c8e0b720dc` passed
+  [CI run 32570167507](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507)
+  in all 11 jobs: Windows, Linux, macOS, both pinned LuaJIT hash runtimes, all
+  five pinned engine commits, and the website build.
+- A fresh clone, source archive, strict 76-file runtime allowlist, and two
+  fixed-epoch v0.2.19 private package builds passed with zero mismatches. The
+  exact record is in the current alpha-readiness evidence.
+- The alpha ledger records asset rights, automated tests, companion contracts,
+  known limitations, package reproducibility, and source integrity as passed.
+  It remains unapproved. Released hosts and migration safety are false. Live
+  visual acceptance, native and complete uncached-scene performance, signing,
+  transition, and soak evidence remain open.
 - Shared-CI packet-seal timing is structural and advisory. Native CPU/GPU,
   complete uncached-scene, transition, and soak performance remain open.
 
@@ -95,17 +98,17 @@ Last updated: 2026-08-22
 - Historical public checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
   passed CI run 32561890609 across three hosted operating systems and five
   pinned engine commits. Its fresh-clone, source-integrity, and package
-  evidence remain preserved as history and are not referenced by the pending
+  evidence remain preserved as history and are not referenced by the current
   alpha ledger.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.
 
 ## Next actions
 
-1. Push the integrated source and fail-closed pending ledger together. Wait
-   for green CI on that exact public head.
-2. Audit a fresh clone of the exact pushed head and reproduce its private
-   package. Commit the new hash-bound evidence and ledger update separately.
-   Do not carry forward evidence from an older source commit.
+1. Push the evidence-only commit and wait for green CI. Verify that all 76
+   package-allowlisted files remain byte-identical to source checkpoint
+   `cfc045bec72c2ceecd558b24bcd643c8e0b720dc`.
+2. Stage the exact private package for controlled Yellow QA. Ask for fresh
+   approval before closing or restarting either active host process.
 3. Complete the Yellow visual, lifecycle, performance, transition, and soak
    matrix; import legally owned Red and Blue copies before their private runs.
 4. Obtain host-owner review and released adapter versions from [Battle Art PR

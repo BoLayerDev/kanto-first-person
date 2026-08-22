@@ -65,15 +65,17 @@ a waiver for a failed release gate.
 ## Performance and release state
 
 - [CI run
-  32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
-  passed public source gates on Windows, Linux, macOS, and all five engine pins.
-  Its v0.2.19 job reproduced a private package byte for byte. This checkpoint
-  does not approve a public package, a signed tag, live visual output, or native
-  performance.
-- Packet-seal correctness and deterministic work gates pass. Shared-CI wall
-  timing is structural and advisory. Native CPU/GPU frame time, draw calls,
-  complete uncached-scene readiness, 100-transition resource stability, and a
-  30-minute soak remain open.
+  32570167507](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507)
+  passed 11 public jobs at exact KFP commit
+  `cfc045bec72c2ceecd558b24bcd643c8e0b720dc`. The run covers Windows,
+  Linux, macOS, both pinned LuaJIT hash runtimes, all five engine pins, and the
+  website build. Its v0.2.19 job reproduced a private package byte for byte.
+  This checkpoint does not approve a public package, a signed tag, live visual
+  output, or native performance.
+- Packet-seal, numeric-hash, and fixed scene-vector correctness pass on both
+  exact LuaJIT pins. Shared-CI wall timing is structural and advisory. Native
+  CPU/GPU frame time, draw calls, complete uncached-scene readiness,
+  100-transition resource stability, and a 30-minute soak remain open.
 - The v1-to-v2 migration-safety gate remains open. ROM-free tests now cover
   the exact KFP entry and manifest through the real Loader on all five pinned
   engine commits. They also cover option migration, clean registration,

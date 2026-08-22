@@ -92,7 +92,7 @@ Battle Art `8f1af4e`, and Dramaless `0af5555`. It is diagnostic evidence only.
 The user confirmed that the old Dramaless Mart view lacked the expected KFP
 walls and roof, and outdoor inspection did not prove the selected horizon.
 
-The current KFP source checkpoint `0683051`, Battle Art head `cee25fd`, and
+The current KFP source checkpoint `cfc045b`, Battle Art head `cee25fd`, and
 Dramaless head `f757544` have not completed a controlled restart and capture.
 No scene-class, visual-acceptance, native-performance, lifecycle, transition,
 or soak row is complete yet.

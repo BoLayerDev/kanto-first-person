@@ -12,9 +12,15 @@
 
 Release range: `>=0.2.17 <0.3.0`. Development builds report `0.0.0-dev`, so CI pins their commit separately.
 
-All five exact pins passed [CI run
-32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
-at KFP source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`.
+All five exact engine pins passed [CI run
+32570167507](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507)
+at KFP source checkpoint `cfc045bec72c2ceecd558b24bcd643c8e0b720dc`.
+The same run passed the bounded hash and scene-vector corpus on the
+Gen1recomp-embedded LuaJIT commit
+`43d0a19158ceabaa51b0462c1ebc97612b420a2e` and current CI commit
+`1ee778a4e37122d8ca7d5733c590a47dafd6b15c`. This proves deterministic
+fingerprints across those exact runtimes. It does not approve native or
+complete uncached-scene performance.
 
 The v0.2.19 release contains the current audited dev commit plus release-only
 iOS repository metadata. From v0.2.18, the manifest validator, sandbox, render

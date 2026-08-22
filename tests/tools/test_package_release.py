@@ -152,7 +152,7 @@ class ReleaseGateTests(unittest.TestCase):
             if name not in {"asset_rights", "engine_reaudit"}
         ))
 
-    def test_unapproved_alpha_ledger_fails_closed_until_exact_head_evidence(self):
+    def test_unapproved_alpha_ledger_records_exact_checkpoint_gates(self):
         ledger = json.loads(
             (ROOT / "docs" / "prerelease-gates.json").read_text(encoding="utf-8")
         )
@@ -200,20 +200,212 @@ class ReleaseGateTests(unittest.TestCase):
             [rights["approval_record"]],
         )
 
-        pending = (
-            set(PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES["alpha"])
-            - {"asset_rights"}
+        passed = {
+            "asset_rights",
+            "automated_tests",
+            "companion_contracts",
+            "known_limitations",
+            "package_reproducibility",
+            "source_integrity",
+        }
+        open_gates = {"released_hosts", "migration_safety"}
+        self.assertEqual(
+            {name for name, gate in ledger["gates"].items() if gate["passed"]},
+            passed,
         )
         self.assertEqual(
-            {
-                name
-                for name, gate in ledger["gates"].items()
-                if not gate["passed"]
-            },
-            pending,
+            {name for name, gate in ledger["gates"].items() if not gate["passed"]},
+            open_gates,
         )
-        for name in pending:
+        for name in open_gates:
             self.assertEqual(ledger["gates"][name]["evidence"], [])
+
+        expected_kinds = {
+            "automated_tests": "ci_run",
+            "companion_contracts": "companion_contracts",
+            "known_limitations": "known_limitations",
+            "package_reproducibility": "package_reproduction",
+        }
+        evidence_paths = set()
+        for name, kind in expected_kinds.items():
+            items = ledger["gates"][name]["evidence"]
+            self.assertEqual(len(items), 1)
+            self.assertEqual(items[0]["kind"], kind)
+            self.assertTrue(PACKAGE_RELEASE.valid_evidence(items[0]))
+            report = ROOT / items[0]["locator"]
+            self.assertEqual(
+                hashlib.sha256(report.read_bytes()).hexdigest(),
+                items[0]["sha256"],
+            )
+            evidence_paths.add(report)
+        self.assertEqual(len(evidence_paths), 1)
+
+        checkpoint = json.loads(evidence_paths.pop().read_text(encoding="utf-8"))
+        for name in passed:
+            self.assertTrue(checkpoint["prerelease_gates"][name])
+        for name in (
+            "approved",
+            "released_hosts",
+            "migration_safety",
+            "live_visual_acceptance",
+            "native_performance",
+            "full_scene_performance",
+            "signed_tag",
+        ):
+            self.assertFalse(checkpoint["prerelease_gates"][name])
+        self.assertTrue(all(checkpoint["open_evidence"].values()))
+
+        ci = checkpoint["kfp"]["ci"]
+        self.assertEqual(
+            checkpoint["kfp"]["commit"],
+            "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
+        )
+        self.assertEqual(
+            checkpoint["kfp"]["git_tree"],
+            "7ef75f14ec471ed8e78dae68e438dda4063b0efd",
+        )
+        self.assertEqual(ci["run_id"], 32570167507)
+        self.assertEqual(ci["conclusion"], "success")
+        self.assertEqual(ci["job_count"], 11)
+        self.assertEqual(
+            ci["head_commit"],
+            "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
+        )
+        self.assertEqual(
+            {item["commit"] for item in ci["engine_pins"]},
+            PACKAGE_RELEASE.PINNED_ENGINES,
+        )
+        self.assertEqual(ci["source_checks"]["lua_syntax"]["compiled"], 94)
+        self.assertEqual(ci["source_checks"]["lua_tests"]["passed"], 301)
+        self.assertEqual(ci["source_checks"]["python_tests"]["passed"], 46)
+        self.assertEqual(ci["website"]["job_id"], 97024413545)
+        self.assertEqual(ci["website"]["responsive_tests"]["passed"], 3)
+        self.assertEqual(ci["package_reproduction"]["job_id"], 97024413501)
+        self.assertEqual(
+            ci["package_reproduction"]["result"], "byte-for-byte-pass"
+        )
+        self.assertFalse(ci["package_reproduction"]["publishable"])
+        self.assertEqual(
+            ci["packet_seal_stress"]["timing_claim"], "advisory-only"
+        )
+        compatibility = ci["luajit_hash_compatibility"]
+        self.assertEqual(compatibility["result"], "pass")
+        self.assertEqual(compatibility["selected_tests_per_runtime"], 26)
+        self.assertFalse(compatibility["performance_claim"])
+        self.assertEqual(
+            {
+                (
+                    item["target"],
+                    item["commit"],
+                    item["jit_version"],
+                    item["job_id"],
+                )
+                for item in compatibility["runtimes"]
+            },
+            {
+                (
+                    "gen1recomp-embedded",
+                    "43d0a19158ceabaa51b0462c1ebc97612b420a2e",
+                    "LuaJIT 2.1.1700008891",
+                    97024413529,
+                ),
+                (
+                    "current-ci",
+                    "1ee778a4e37122d8ca7d5733c590a47dafd6b15c",
+                    "LuaJIT 2.1.1787165859",
+                    97024413561,
+                ),
+            },
+        )
+
+        for field in ("companion_api", "shared_fixture", "synthetic_scene_test"):
+            item = checkpoint["kfp"][field]
+            self.assertEqual(
+                hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest(),
+                item["sha256"],
+            )
+        limitations = checkpoint["known_limitations"]
+        self.assertEqual(
+            hashlib.sha256((ROOT / limitations["path"]).read_bytes()).hexdigest(),
+            limitations["sha256"],
+        )
+
+        source = checkpoint["source_integrity"]
+        self.assertTrue(source["passed"])
+        self.assertTrue(source["fresh_clone_clean"])
+        self.assertTrue(source["remote_commit_exact"])
+        self.assertEqual(source["tracked_file_count"], 197)
+        self.assertEqual(
+            source["tracked_path_list_sha256"],
+            "ec59c52e054063908a0aaf61c240f1d1f582616bf2e5b536687d424a779fa09b",
+        )
+        self.assertEqual(source["unsafe_path_count"], 0)
+        self.assertEqual(source["secret_finding_count"], 0)
+        self.assertEqual(
+            source["git_archive_sha256"],
+            "9793a9aa5dab78ae79f44ea320e85f0430aa14efd8a2d07b3eed7da3e53b849a",
+        )
+        self.assertEqual(
+            source["record"],
+            {
+                "kind": "source_integrity",
+                "locator": (
+                    "private-evidence://source-integrity/"
+                    "2026-08-22-cfc045b/source-integrity.json"
+                ),
+                "sha256": (
+                    "152fef45e4201951d95b1bbc9c6bdc08"
+                    "d2f6be8f56355f8a4680dedbf016b95e"
+                ),
+            },
+        )
+        package = source["private_package_reproduction"]
+        self.assertTrue(package["two_builds_byte_identical"])
+        self.assertFalse(package["publishable"])
+        self.assertEqual(package["runtime_file_count"], 76)
+        self.assertEqual(
+            package["runtime_content_sha256"],
+            "534a6aa7af6d97985d34781031dc8bb27031bc3c93014482c8e4e49be21cb756",
+        )
+        self.assertEqual(
+            package["zip_sha256"],
+            "84b62b890a1eb6a86d2a1426b4f5b4afc0e150d8d71deaa0f3664c65696b81a4",
+        )
+        self.assertEqual(
+            package["modpkg_sha256"],
+            "dbe52f2d023a3a3fcd2fd4f0d553119e318af79966e0a74a9a1c590415d4b4c2",
+        )
+        self.assertEqual(
+            ledger["gates"]["source_integrity"]["evidence"],
+            [source["record"]],
+        )
+
+        hosts = {item["host"]: item for item in checkpoint["voxel_hosts"]}
+        self.assertEqual(
+            hosts["Battle Art"]["pr"]["head_commit"],
+            "cee25fd117d881aa63ad7ef0bc7905ca0063fb29",
+        )
+        self.assertEqual(
+            hosts["Dramaless"]["pr"]["head_commit"],
+            "f7575445d00593b7db1ecd66f93e8c26989f4136",
+        )
+        self.assertTrue(all(item["released"] is False for item in hosts.values()))
+
+        historical = (
+            ROOT
+            / "docs"
+            / "release-evidence"
+            / "alpha-readiness-2026-08-22-0683051.json"
+        )
+        self.assertEqual(
+            hashlib.sha256(historical.read_bytes()).hexdigest(),
+            "688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b",
+        )
+        historical_record = json.loads(historical.read_text(encoding="utf-8"))
+        self.assertEqual(
+            historical_record["kfp"]["commit"],
+            "0683051a9ade567df8f5a5a73a2693646274e578",
+        )
 
 
     def test_release_policy_selects_prerelease_and_stable_ledgers(self):

@@ -20,23 +20,44 @@
 ## KFP alpha checkpoint
 
 - Public source commit:
-  `0683051a9ade567df8f5a5a73a2693646274e578`.
+  `cfc045bec72c2ceecd558b24bcd643c8e0b720dc`.
 - [CI run
-  32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609):
-  success on Windows, Linux, macOS, and all five pinned Gen1recomp targets.
+  32570167507](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507):
+  all 11 jobs passed on Windows, Linux, macOS, both pinned LuaJIT hash
+  runtimes, all five pinned Gen1recomp targets, and the website build.
 - The v0.2.19 job reproduced the private test package byte for byte.
 - `README.md` is part of the audited package. Its `af8610c` CI link is an
   intentional historical checkpoint in those exact bytes, not the current
   alpha ledger. Change it only before a new exact package-integrity audit.
 - A fresh public clone matched commit
-  `0683051a9ade567df8f5a5a73a2693646274e578`, Git tree
-  `ec5b1f234ef5b79e1044a8ed66c190ca41b13710`, and all 186 tracked files.
+  `cfc045bec72c2ceecd558b24bcd643c8e0b720dc`, Git tree
+  `7ef75f14ec471ed8e78dae68e438dda4063b0efd`, and all 197 tracked files.
   Source-integrity record SHA-256:
-  `e17cd7141f9b6d884108912c6fdc11fee1dcf55c94094e47ec23fb8274721260`.
+  `152fef45e4201951d95b1bbc9c6bdc08d2f6be8f56355f8a4680dedbf016b95e`.
+- The 76-file runtime fingerprint is
+  `534a6aa7af6d97985d34781031dc8bb27031bc3c93014482c8e4e49be21cb756`.
+  Two fixed-epoch builds produced ZIP SHA-256
+  `84b62b890a1eb6a86d2a1426b4f5b4afc0e150d8d71deaa0f3664c65696b81a4`
+  and MODPKG SHA-256
+  `dbe52f2d023a3a3fcd2fd4f0d553119e318af79966e0a74a9a1c590415d4b4c2`.
 - Shared-CI timing is structural and advisory. It is not native or full-scene
   performance evidence.
 - Machine-readable evidence:
   `docs/release-evidence/alpha-readiness-2026-08-22.json`.
+
+## Preserved KFP historical checkpoint
+
+- Public source commit
+  `0683051a9ade567df8f5a5a73a2693646274e578` passed CI run
+  `32561890609` on Windows, Linux, macOS, and all five pinned engine commits.
+- Its source-integrity record remains at
+  `private-evidence://source-integrity/2026-08-22-0683051/source-integrity.json`
+  with SHA-256
+  `e17cd7141f9b6d884108912c6fdc11fee1dcf55c94094e47ec23fb8274721260`.
+- Its byte-preserved public readiness record is
+  `docs/release-evidence/alpha-readiness-2026-08-22-0683051.json` with
+  SHA-256
+  `688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b`.
 
 ## Kanto First Person legacy
 

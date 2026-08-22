@@ -199,6 +199,9 @@ test.describe('desktop motion system', () => {
     const discovery = page.getByRole('status').filter({ hasText: 'NEW RESEARCH DISCOVERED' })
     await expect(discovery).toBeAttached()
     await expect(page.locator('.activity-footer .is-counting')).toBeAttached()
+    await expect.poll(() => page.locator('.activity-log').evaluate(
+      (element) => element.scrollWidth <= element.clientWidth + 1,
+    )).toBe(true)
 
     await page.getByRole('button', { name: 'RESEARCH LOG' }).click()
     const unlockingBadge = page.locator('.milestone-deck a.is-unlocking')

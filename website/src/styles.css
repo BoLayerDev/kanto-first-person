@@ -2877,9 +2877,9 @@ a {
 }
 
 @keyframes discovery-banner {
-  0% { opacity: 0; transform: translateX(18px); }
-  10%, 78% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(10px); }
+  0% { opacity: 0; transform: translateY(-6px); }
+  10%, 78% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
 }
 
 @keyframes badge-unlock {

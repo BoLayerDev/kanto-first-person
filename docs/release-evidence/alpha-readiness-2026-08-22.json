@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "recorded_at": "2026-08-22T06:57:44Z",
+  "recorded_at": "2026-08-22T08:27:59Z",
   "scope": "2.0.0-alpha.1 source-integration checkpoint",
   "kfp": {
-    "commit": "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
-    "git_tree": "c9e9ee391e76abb4ed2c63308305f8467f6c1d1f",
+    "commit": "0683051a9ade567df8f5a5a73a2693646274e578",
+    "git_tree": "ec5b1f234ef5b79e1044a8ed66c190ca41b13710",
     "ci": {
-      "run_id": 32558047311,
-      "url": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311",
-      "completed_at": "2026-08-22T06:52:08Z",
+      "run_id": 32561890609,
+      "url": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609",
+      "completed_at": "2026-08-22T08:18:06Z",
       "conclusion": "success",
-      "head_commit": "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+      "head_commit": "0683051a9ade567df8f5a5a73a2693646274e578",
       "operating_systems": [
         "ubuntu-latest",
         "windows-latest",
@@ -40,16 +40,16 @@
       ],
       "source_checks": {
         "lua_syntax": {
-          "compiled": 84,
+          "compiled": 87,
           "failed": 0
         },
         "lua_tests": {
-          "passed": 256,
+          "passed": 260,
           "failed": 0,
-          "files": 34
+          "files": 35
         },
         "python_tests": {
-          "passed": 28,
+          "passed": 43,
           "failed": 0
         },
         "repository_policy": "pass"
@@ -60,7 +60,7 @@
         "timing_claim": "advisory-only"
       },
       "package_reproduction": {
-        "job_id": 96995257227,
+        "job_id": 97004635580,
         "engine_target": "v0.2.19",
         "engine_commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
         "result": "byte-for-byte-pass",
@@ -84,22 +84,22 @@
     "passed": true,
     "record": {
       "kind": "source_integrity",
-      "locator": "private-evidence://source-integrity/2026-08-22-af8610c/source-integrity.json",
-      "sha256": "d73871c05f91e93c9eafd3ba7d2d9a73508c2ee19ad9928d5cad3ffb2118fce1"
+      "locator": "private-evidence://source-integrity/2026-08-22-0683051/source-integrity.json",
+      "sha256": "e17cd7141f9b6d884108912c6fdc11fee1dcf55c94094e47ec23fb8274721260"
     },
     "remote_commit_exact": true,
     "fresh_clone_clean": true,
-    "tracked_file_count": 166,
-    "tracked_path_list_sha256": "585e3cce8d53a2417807ba12a4c2c97511fd77d106c35c85d5c1a00f611f3d2d",
+    "tracked_file_count": 186,
+    "tracked_path_list_sha256": "0c0bad53f8a11b82c49657d7cee67b6f49793ef7ac92c31bebb204f2a749b865",
     "unsafe_path_count": 0,
     "secret_finding_count": 0,
-    "git_archive_sha256": "d73a041f4f5420fa296fd00d026698b7f1426184ff1c7b88337cf17fcbc64dd7",
+    "git_archive_sha256": "69c2f18910b4c8390690e70cbd42ef6297aac09d65dcda9a619b679bf00bb0d9",
     "private_package_reproduction": {
       "engine_commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
       "publishable": false,
       "two_builds_byte_identical": true,
-      "zip_sha256": "7c433fa7028d05d46a786d53c0c082f23fbd66d45a43c14a69f590b8beb91210",
-      "modpkg_sha256": "fc687639d9c93b383efcb41a9231451453fbb0bbe597c7fa75d3098dadb0cd46"
+      "zip_sha256": "01e018fa09db90f80a38d0e6a99b8ad2d6e2d7f53736314b2108e2f7fab930d7",
+      "modpkg_sha256": "6871038684301e2f03ffbd17b833fd80d1cf534d2d637c60f4f16f184ccf1306"
     }
   },
   "voxel_hosts": [
@@ -172,7 +172,7 @@
   ],
   "known_limitations": {
     "path": "docs/known-limitations.md",
-    "sha256": "7a722835b2e02fc5fc7b56579647b5d33e96a51f2b485cd0d686cc49088bf931"
+    "sha256": "67b24031cdbe1b862f353645521618a24fbeb5aa2055812311bc74cd25d2a643"
   },
   "open_evidence": {
     "released_hosts": true,

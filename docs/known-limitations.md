@@ -61,7 +61,7 @@ a waiver for a failed release gate.
 ## Performance and release state
 
 - [CI run
-  32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+  32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
   passed public source gates on Windows, Linux, macOS, and all five engine pins.
   Its v0.2.19 job reproduced a private package byte for byte. This checkpoint
   does not approve a public package, a signed tag, live visual output, or native

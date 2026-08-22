@@ -20,16 +20,19 @@
 ## KFP alpha checkpoint
 
 - Public source commit:
-  `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`.
+  `0683051a9ade567df8f5a5a73a2693646274e578`.
 - [CI run
-  32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311):
+  32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609):
   success on Windows, Linux, macOS, and all five pinned Gen1recomp targets.
 - The v0.2.19 job reproduced the private test package byte for byte.
+- `README.md` is part of the audited package. Its `af8610c` CI link is an
+  intentional historical checkpoint in those exact bytes, not the current
+  alpha ledger. Change it only before a new exact package-integrity audit.
 - A fresh public clone matched commit
-  `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`, Git tree
-  `c9e9ee391e76abb4ed2c63308305f8467f6c1d1f`, and all 166 tracked files.
+  `0683051a9ade567df8f5a5a73a2693646274e578`, Git tree
+  `ec5b1f234ef5b79e1044a8ed66c190ca41b13710`, and all 186 tracked files.
   Source-integrity record SHA-256:
-  `d73871c05f91e93c9eafd3ba7d2d9a73508c2ee19ad9928d5cad3ffb2118fce1`.
+  `e17cd7141f9b6d884108912c6fdc11fee1dcf55c94094e47ec23fb8274721260`.
 - Shared-CI timing is structural and advisory. It is not native or full-scene
   performance evidence.
 - Machine-readable evidence:

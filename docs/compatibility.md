@@ -13,8 +13,8 @@
 Release range: `>=0.2.17 <0.3.0`. Development builds report `0.0.0-dev`, so CI pins their commit separately.
 
 All five exact pins passed [CI run
-32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
-at KFP source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`.
+32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
+at KFP source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`.
 
 The v0.2.19 release contains the current audited dev commit plus release-only
 iOS repository metadata. From v0.2.18, the manifest validator, sandbox, render

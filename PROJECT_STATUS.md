@@ -13,10 +13,10 @@ Last updated: 2026-08-22
   current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Public source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`
-  passed [CI run 32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+- Public source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
+  passed [CI run 32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
   on Windows, Linux, macOS, and all five pinned engine commits. The run includes
-  256 ROM-free Lua tests, 84 Lua syntax checks, 28 Python tests, repository
+  260 ROM-free Lua tests, 87 Lua syntax checks, 43 Python tests, repository
   policy, and byte-for-byte private package reproduction on v0.2.19.
 - Shared-CI packet-seal timing is structural and advisory. Native CPU/GPU,
   complete uncached-scene, transition, and soak performance remain open.
@@ -84,11 +84,11 @@ Last updated: 2026-08-22
   committed locally and passes an independent-clone restore test.
 - The public remote tracks the maintained rewrite on `v2-rewrite`. Use
   `git ls-remote origin refs/heads/v2-rewrite` for the current immutable SHA.
-- Public source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`
-  passed CI run 32558047311 across three hosted operating systems and five
+- Public source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
+  passed CI run 32561890609 across three hosted operating systems and five
   pinned engine commits.
-- A fresh clone of exact public commit `af8610c` matched its Git tree, index,
-  checkout, 166-file archive, and strict package allowlist. Git object, unsafe
+- A fresh clone of exact public commit `0683051` matched its Git tree, index,
+  checkout, 186-file archive, and strict package allowlist. Git object, unsafe
   path, link, and secret checks passed. The hash-bound source-integrity record
   is referenced from the alpha evidence ledger.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.

@@ -214,18 +214,40 @@ class ReleaseGateTests(unittest.TestCase):
         self.assertFalse(checkpoint["prerelease_gates"]["native_performance"])
         self.assertFalse(checkpoint["prerelease_gates"]["signed_tag"])
 
-        self.assertEqual(checkpoint["kfp"]["ci"]["run_id"], 32558047311)
-        self.assertEqual(checkpoint["kfp"]["ci"]["conclusion"], "success")
+        kfp = checkpoint["kfp"]
         self.assertEqual(
-            checkpoint["kfp"]["ci"]["head_commit"],
-            "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+            kfp["commit"],
+            "0683051a9ade567df8f5a5a73a2693646274e578",
         )
         self.assertEqual(
-            {item["commit"] for item in checkpoint["kfp"]["ci"]["engine_pins"]},
+            kfp["git_tree"],
+            "ec5b1f234ef5b79e1044a8ed66c190ca41b13710",
+        )
+        self.assertEqual(kfp["ci"]["run_id"], 32561890609)
+        self.assertEqual(kfp["ci"]["conclusion"], "success")
+        self.assertEqual(
+            kfp["ci"]["head_commit"],
+            "0683051a9ade567df8f5a5a73a2693646274e578",
+        )
+        self.assertEqual(
+            {item["commit"] for item in kfp["ci"]["engine_pins"]},
             PACKAGE_RELEASE.PINNED_ENGINES,
         )
         self.assertEqual(
-            checkpoint["kfp"]["ci"]["packet_seal_stress"]["timing_claim"],
+            kfp["ci"]["source_checks"],
+            {
+                "lua_syntax": {"compiled": 87, "failed": 0},
+                "lua_tests": {"passed": 260, "failed": 0, "files": 35},
+                "python_tests": {"passed": 43, "failed": 0},
+                "repository_policy": "pass",
+            },
+        )
+        self.assertEqual(
+            kfp["ci"]["package_reproduction"]["job_id"],
+            97004635580,
+        )
+        self.assertEqual(
+            kfp["ci"]["packet_seal_stress"]["timing_claim"],
             "advisory-only",
         )
         for field in ("companion_api", "shared_fixture", "synthetic_scene_test"):
@@ -251,6 +273,14 @@ class ReleaseGateTests(unittest.TestCase):
         )
         self.assertFalse(
             source["private_package_reproduction"]["publishable"]
+        )
+        self.assertEqual(
+            source["private_package_reproduction"]["zip_sha256"],
+            "01e018fa09db90f80a38d0e6a99b8ad2d6e2d7f53736314b2108e2f7fab930d7",
+        )
+        self.assertEqual(
+            source["private_package_reproduction"]["modpkg_sha256"],
+            "6871038684301e2f03ffbd17b833fd80d1cf534d2d637c60f4f16f184ccf1306",
         )
         self.assertEqual(
             ledger["gates"]["source_integrity"]["evidence"],

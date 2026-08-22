@@ -1,21 +1,22 @@
 import { useFrame, useThree } from '@react-three/fiber'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { useJourneyStore } from '../state/journey'
-import { PALETTES } from '../world/palettes'
 
-const CAMERA_VIEWS = [
-  { position: new THREE.Vector3(3.8, 3.15, 8.2), target: new THREE.Vector3(0, 1.35, -1.5) },
-  { position: new THREE.Vector3(4.4, 3.3, -5), target: new THREE.Vector3(0, 1.5, -15) },
-  { position: new THREE.Vector3(5.2, 4.4, -17), target: new THREE.Vector3(0, 1.3, -27) },
-  { position: new THREE.Vector3(-3.5, 3.1, -11), target: new THREE.Vector3(0, 1.6, -22) },
-  { position: new THREE.Vector3(3.2, 2.7, -27), target: new THREE.Vector3(0, 1.5, -36) },
-  { position: new THREE.Vector3(-5.4, 4.8, -15), target: new THREE.Vector3(0, 1.6, -25) },
-  { position: new THREE.Vector3(0, 5.6, -22), target: new THREE.Vector3(0, 1.1, -34) },
-]
+const BALL_SEED = 0x151
+const HIGH_QUALITY_BALLS = 18
+const LOW_QUALITY_BALLS = 10
+const POKEBALL_RED = '#e43b3f'
+const POKEBALL_WHITE = '#f5f1df'
+const POKEBALL_BLACK = '#141719'
 
-function damp(current: number, target: number, lambda: number, delta: number) {
-  return THREE.MathUtils.lerp(current, target, 1 - Math.exp(-lambda * delta))
+type BallTransform = {
+  position: [number, number, number]
+  rotation: [number, number, number]
+  scale: number
+  phase: number
+  speed: number
+  direction: number
 }
 
 function mulberry32(seed: number) {
@@ -27,99 +28,84 @@ function mulberry32(seed: number) {
   }
 }
 
-function MenuCamera() {
-  const menuIndex = useJourneyStore((state) => state.menuIndex)
-  const quality = useJourneyStore((state) => state.quality)
-  const cameraTarget = useMemo(() => CAMERA_VIEWS[0].position.clone(), [])
-  const lookTarget = useMemo(() => CAMERA_VIEWS[0].target.clone(), [])
+function createBallLayout(count: number, aspect: number): BallTransform[] {
+  const random = mulberry32(BALL_SEED)
+  const halfFov = THREE.MathUtils.degToRad(25)
 
-  useFrame(({ camera, pointer }, delta) => {
-    const view = CAMERA_VIEWS[menuIndex] ?? CAMERA_VIEWS[0]
-    cameraTarget.copy(view.position)
-    const pointerAmount = quality === 'high' ? 0.22 : 0.04
-    cameraTarget.x += pointer.x * pointerAmount
-    cameraTarget.y += pointer.y * pointerAmount * 0.4
-
-    camera.position.lerp(cameraTarget, 1 - Math.exp(-3.8 * delta))
-    lookTarget.lerp(view.target, 1 - Math.exp(-4.2 * delta))
-    camera.lookAt(lookTarget)
-
-    const perspective = camera as THREE.PerspectiveCamera
-    perspective.fov = damp(perspective.fov, menuIndex === 6 ? 58 : 52, 4, delta)
-    perspective.updateProjectionMatrix()
+  return Array.from({ length: count }, (_, index) => {
+    const side = index % 2 === 0 ? -1 : 1
+    const distance = 13 + random() * 25
+    const halfHeight = Math.tan(halfFov) * distance
+    return {
+      position: [
+        side * halfHeight * aspect * (0.86 + random() * 0.1),
+        (random() - 0.5) * halfHeight * 1.65,
+        11 - distance,
+      ],
+      rotation: [
+        (random() - 0.5) * 0.65,
+        (random() - 0.5) * 0.9,
+        (random() - 0.5) * 0.48,
+      ],
+      scale: halfHeight * (0.075 + random() * 0.065),
+      phase: random() * Math.PI * 2,
+      speed: 0.045 + random() * 0.075,
+      direction: random() > 0.5 ? 1 : -1,
+    }
   })
+}
+
+function usePrefersReducedMotion() {
+  const [reducedMotion, setReducedMotion] = useState(false)
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
+    const update = () => setReducedMotion(query.matches)
+    update()
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  return reducedMotion
+}
+
+function StaticCamera() {
+  const { camera } = useThree()
+
+  useLayoutEffect(() => {
+    camera.position.set(0, 0.4, 11)
+    camera.lookAt(0, 0, -10)
+    const perspective = camera as THREE.PerspectiveCamera
+    perspective.fov = 50
+    perspective.updateProjectionMatrix()
+  }, [camera])
 
   return null
 }
 
-function AtmosphereRig() {
-  const edition = useJourneyStore((state) => state.edition)
-  const palette = PALETTES[edition]
+function Atmosphere() {
   const { scene } = useThree()
-  const targetBackground = useMemo(() => new THREE.Color(), [])
-  const targetFog = useMemo(() => new THREE.Color(), [])
 
   useLayoutEffect(() => {
-    scene.background = new THREE.Color(palette.skyTop)
-    scene.fog = new THREE.Fog(palette.fog, 8, 48)
+    scene.background = new THREE.Color('#050a12')
+    scene.fog = new THREE.Fog('#050a12', 12, 44)
     return () => {
       scene.background = null
       scene.fog = null
     }
   }, [scene])
 
-  useFrame((_, delta) => {
-    targetBackground.set(palette.skyTop)
-    targetFog.set(palette.fog)
-    if (scene.background instanceof THREE.Color) {
-      scene.background.lerp(targetBackground, 1 - Math.exp(-1.7 * delta))
-    }
-    if (scene.fog instanceof THREE.Fog) {
-      scene.fog.color.lerp(targetFog, 1 - Math.exp(-1.7 * delta))
-      scene.fog.near = damp(scene.fog.near, edition === 'blue' ? 6 : 9, 2, delta)
-      scene.fog.far = damp(scene.fog.far, edition === 'blue' ? 38 : 52, 2, delta)
-    }
-  })
-
-  return null
-}
-
-function GradientSky() {
-  const edition = useJourneyStore((state) => state.edition)
-  const material = useRef<THREE.ShaderMaterial>(null)
-  const uniforms = useMemo(
-    () => ({
-      uTop: { value: new THREE.Color(PALETTES.red.skyTop) },
-      uHorizon: { value: new THREE.Color(PALETTES.red.skyHorizon) },
-      uSignal: { value: new THREE.Color(PALETTES.red.signal) },
-    }),
-    [],
-  )
-  const targets = useMemo(
-    () => ({ top: new THREE.Color(), horizon: new THREE.Color(), signal: new THREE.Color() }),
-    [],
-  )
-
-  useFrame((_, delta) => {
-    const palette = PALETTES[edition]
-    targets.top.set(palette.skyTop)
-    targets.horizon.set(palette.skyHorizon)
-    targets.signal.set(palette.signal)
-    const rate = 1 - Math.exp(-1.8 * delta)
-    uniforms.uTop.value.lerp(targets.top, rate)
-    uniforms.uHorizon.value.lerp(targets.horizon, rate)
-    uniforms.uSignal.value.lerp(targets.signal, rate)
-  })
-
   return (
     <mesh frustumCulled={false} scale={80}>
-      <sphereGeometry args={[1, 32, 18]} />
+      <sphereGeometry args={[1, 24, 14]} />
       <shaderMaterial
-        ref={material}
         side={THREE.BackSide}
         depthWrite={false}
         toneMapped={false}
-        uniforms={uniforms}
+        uniforms={{
+          uTop: { value: new THREE.Color('#050a12') },
+          uHorizon: { value: new THREE.Color('#26364a') },
+        }}
         vertexShader={`
           varying vec3 vDirection;
           void main() {
@@ -131,14 +117,9 @@ function GradientSky() {
           varying vec3 vDirection;
           uniform vec3 uTop;
           uniform vec3 uHorizon;
-          uniform vec3 uSignal;
           void main() {
-            float heightMix = pow(clamp(vDirection.y * 0.5 + 0.5, 0.0, 1.0), 0.62);
-            vec3 color = mix(uHorizon, uTop, heightMix);
-            vec3 sunDirection = normalize(vec3(-0.22, 0.10, -0.97));
-            float sun = max(dot(normalize(vDirection), sunDirection), 0.0);
-            color += uSignal * (pow(sun, 420.0) + pow(sun, 8.0) * 0.18);
-            gl_FragColor = vec4(color, 1.0);
+            float heightMix = pow(clamp(vDirection.y * 0.5 + 0.5, 0.0, 1.0), 0.7);
+            gl_FragColor = vec4(mix(uHorizon, uTop, heightMix), 1.0);
           }
         `}
       />
@@ -146,249 +127,142 @@ function GradientSky() {
   )
 }
 
-type BlockFieldProps = {
-  positions: Array<[number, number, number]>
-  size: [number, number, number]
-  color: string
-  roughness?: number
-  emissive?: string
-  emissiveIntensity?: number
-}
+const RING_LOCAL = new THREE.Matrix4().makeRotationX(Math.PI / 2)
+const BUTTON_OUTER_LOCAL = new THREE.Matrix4().compose(
+  new THREE.Vector3(0, 0, 1.035),
+  new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
+  new THREE.Vector3(1, 1, 1),
+)
+const BUTTON_INNER_LOCAL = new THREE.Matrix4().compose(
+  new THREE.Vector3(0, 0, 1.13),
+  new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
+  new THREE.Vector3(1, 1, 1),
+)
 
-function BlockField({
-  positions,
-  size,
-  color,
-  roughness = 0.82,
-  emissive = '#000000',
-  emissiveIntensity = 0,
-}: BlockFieldProps) {
-  const mesh = useRef<THREE.InstancedMesh>(null)
+function PokeballField() {
+  const quality = useJourneyStore((state) => state.quality)
+  const reducedMotion = usePrefersReducedMotion()
+  const { size } = useThree()
+  const count = quality === 'high' ? HIGH_QUALITY_BALLS : LOW_QUALITY_BALLS
+  const aspect = size.width / Math.max(size.height, 1)
+  const layout = useMemo(() => createBallLayout(count, aspect), [aspect, count])
+  const top = useRef<THREE.InstancedMesh>(null)
+  const bottom = useRef<THREE.InstancedMesh>(null)
+  const band = useRef<THREE.InstancedMesh>(null)
+  const buttonOuter = useRef<THREE.InstancedMesh>(null)
+  const buttonInner = useRef<THREE.InstancedMesh>(null)
+  const scratch = useMemo(
+    () => ({
+      position: new THREE.Vector3(),
+      rotation: new THREE.Euler(),
+      quaternion: new THREE.Quaternion(),
+      scale: new THREE.Vector3(),
+      root: new THREE.Matrix4(),
+      world: new THREE.Matrix4(),
+    }),
+    [],
+  )
+
+  const writeMatrices = (time: number) => {
+    const meshes = [top.current, bottom.current, band.current, buttonOuter.current, buttonInner.current]
+    if (meshes.some((mesh) => !mesh)) return
+
+    layout.forEach((ball, index) => {
+      const drift = quality === 'high' && !reducedMotion ? Math.sin(time * 0.42 + ball.phase) * 0.18 : 0
+      const spin = quality === 'high' && !reducedMotion ? time * ball.speed * ball.direction : 0
+      scratch.position.set(ball.position[0], ball.position[1] + drift, ball.position[2])
+      scratch.rotation.set(
+        ball.rotation[0] + spin * 0.34,
+        ball.rotation[1] + spin,
+        ball.rotation[2] + spin * 0.18,
+      )
+      scratch.quaternion.setFromEuler(scratch.rotation)
+      scratch.scale.setScalar(ball.scale)
+      scratch.root.compose(scratch.position, scratch.quaternion, scratch.scale)
+
+      top.current?.setMatrixAt(index, scratch.root)
+      bottom.current?.setMatrixAt(index, scratch.root)
+      scratch.world.multiplyMatrices(scratch.root, RING_LOCAL)
+      band.current?.setMatrixAt(index, scratch.world)
+      scratch.world.multiplyMatrices(scratch.root, BUTTON_OUTER_LOCAL)
+      buttonOuter.current?.setMatrixAt(index, scratch.world)
+      scratch.world.multiplyMatrices(scratch.root, BUTTON_INNER_LOCAL)
+      buttonInner.current?.setMatrixAt(index, scratch.world)
+    })
+
+    meshes.forEach((mesh) => {
+      if (mesh) mesh.instanceMatrix.needsUpdate = true
+    })
+  }
 
   useLayoutEffect(() => {
-    const matrix = new THREE.Matrix4()
-    positions.forEach(([x, y, z], index) => {
-      matrix.makeTranslation(x, y, z)
-      mesh.current?.setMatrixAt(index, matrix)
-    })
-    if (mesh.current) {
-      mesh.current.instanceMatrix.needsUpdate = true
-      mesh.current.computeBoundingSphere()
-    }
-  }, [positions])
+    writeMatrices(0)
+    ;[top.current, bottom.current, band.current, buttonOuter.current, buttonInner.current].forEach(
+      (mesh) => mesh?.computeBoundingSphere(),
+    )
+  }, [layout, quality, reducedMotion])
 
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, positions.length]} castShadow receiveShadow>
-      <boxGeometry args={size} />
-      <meshStandardMaterial
-        color={color}
-        roughness={roughness}
-        emissive={emissive}
-        emissiveIntensity={emissiveIntensity}
-      />
-    </instancedMesh>
-  )
-}
-
-const ROOM_FLOOR = Array.from({ length: 80 }, (_, index) => {
-  const x = (index % 8) - 3.5
-  const z = 8 - Math.floor(index / 8)
-  return [x, -0.05, z] as [number, number, number]
-})
-
-const ROUTE_TILES = Array.from({ length: 34 }, (_, index) => [0, 0, -3.4 - index * 0.92] as [
-  number,
-  number,
-  number,
-])
-
-const TREE_POSITIONS = Array.from({ length: 28 }, (_, index) => {
-  const random = mulberry32(180 + index)
-  const side = index % 2 === 0 ? -1 : 1
-  return [side * (2.4 + random() * 2.9), 1.05, -5.5 - index * 0.82] as [
-    number,
-    number,
-    number,
-  ]
-})
-
-const TREE_CROWNS = TREE_POSITIONS.map(([x, , z], index) => [
-  x,
-  2.65 + (index % 3) * 0.12,
-  z,
-] as [number, number, number])
-
-const CAVE_COLUMNS = Array.from({ length: 26 }, (_, index) => {
-  const side = index % 2 === 0 ? -1 : 1
-  const row = Math.floor(index / 2)
-  return [side * (3.25 + (row % 3) * 0.23), 1.65, -29 - row * 1.2] as [
-    number,
-    number,
-    number,
-  ]
-})
-
-function StartingRoom() {
-  const palette = PALETTES[useJourneyStore((state) => state.edition)]
-
-  return (
-    <group>
-      <BlockField positions={ROOM_FLOOR} size={[0.98, 0.1, 0.98]} color={palette.ground} />
-      <mesh position={[-4.3, 2.35, 3.5]} receiveShadow>
-        <boxGeometry args={[0.25, 4.8, 9]} />
-        <meshStandardMaterial color={palette.panel} roughness={0.75} />
-      </mesh>
-      <mesh position={[4.3, 2.35, 3.5]} receiveShadow>
-        <boxGeometry args={[0.25, 4.8, 9]} />
-        <meshStandardMaterial color={palette.panel} roughness={0.75} />
-      </mesh>
-      <mesh position={[0, 4.72, 3.5]} receiveShadow>
-        <boxGeometry args={[8.8, 0.18, 9]} />
-        <meshStandardMaterial color={palette.ink} roughness={0.9} />
-      </mesh>
-      <mesh position={[2.7, 1.05, 1.1]} castShadow>
-        <boxGeometry args={[1.75, 2.1, 0.35]} />
-        <meshStandardMaterial color={palette.accent} roughness={0.55} />
-      </mesh>
-      <mesh position={[2.7, 1.2, 0.9]}>
-        <circleGeometry args={[0.42, 32]} />
-        <meshStandardMaterial color={palette.signal} emissive={palette.signal} emissiveIntensity={1.4} />
-      </mesh>
-      <pointLight position={[0, 3.7, 3]} color={palette.signal} intensity={13} distance={11} />
-    </group>
-  )
-}
-
-function ForestRoute() {
-  const palette = PALETTES[useJourneyStore((state) => state.edition)]
-
-  return (
-    <group>
-      <BlockField positions={ROUTE_TILES} size={[1.8, 0.18, 0.86]} color={palette.ground} />
-      <BlockField positions={TREE_POSITIONS} size={[0.48, 2.1, 0.48]} color="#59422d" />
-      <BlockField positions={TREE_CROWNS} size={[1.72, 1.7, 1.72]} color={palette.grass} />
-      <mesh position={[-7.5, 2.1, -22]} rotation={[0, 0.2, -0.12]}>
-        <coneGeometry args={[6.2, 6.8, 5]} />
-        <meshStandardMaterial color={palette.stone} roughness={1} />
-      </mesh>
-      <mesh position={[7.8, 2.5, -25]} rotation={[0, -0.3, 0.1]}>
-        <coneGeometry args={[7, 7.5, 5]} />
-        <meshStandardMaterial color={palette.stone} roughness={1} />
-      </mesh>
-    </group>
-  )
-}
-
-function CrystalCave() {
-  const palette = PALETTES[useJourneyStore((state) => state.edition)]
-  const ceiling = CAVE_COLUMNS.map(([x, , z]) => [x * 0.45, 5.2, z] as [number, number, number])
-  const crystals: Array<[number, number, number]> = [
-    [-2.55, 0.75, -32],
-    [2.4, 0.8, -35.8],
-    [-2.2, 0.65, -39.5],
-    [1.7, 0.9, -42],
-  ]
-
-  return (
-    <group>
-      <BlockField positions={CAVE_COLUMNS} size={[1.6, 3.3, 1.1]} color={palette.stone} />
-      <BlockField positions={ceiling} size={[4.4, 1.0, 1.15]} color={palette.stone} />
-      {crystals.map((position, index) => (
-        <group key={position.join('-')} position={position} rotation={[0, index * 0.65, 0.16]}>
-          <mesh castShadow>
-            <octahedronGeometry args={[0.62 + index * 0.05, 0]} />
-            <meshStandardMaterial
-              color={palette.accentSoft}
-              emissive={palette.signal}
-              emissiveIntensity={2.8}
-              roughness={0.22}
-            />
-          </mesh>
-          <pointLight color={palette.signal} intensity={8} distance={6} />
-        </group>
-      ))}
-    </group>
-  )
-}
-
-function WeatherParticles() {
-  const edition = useJourneyStore((state) => state.edition)
-  const quality = useJourneyStore((state) => state.quality)
-  const points = useRef<THREE.Points>(null)
-  const count = quality === 'high' ? 420 : 150
-  const positions = useMemo(() => {
-    const random = mulberry32(151)
-    const values = new Float32Array(count * 3)
-    for (let index = 0; index < count; index += 1) {
-      values[index * 3] = (random() - 0.5) * 24
-      values[index * 3 + 1] = random() * 11
-      values[index * 3 + 2] = -2 - random() * 43
-    }
-    return values
-  }, [count])
-
-  useFrame(({ clock }, delta) => {
-    if (!points.current) return
-    const speed = edition === 'blue' ? 0.48 : edition === 'yellow' ? 0.12 : 0.035
-    points.current.position.y -= delta * speed
-    points.current.rotation.y = Math.sin(clock.elapsedTime * 0.08) * 0.04
-    if (points.current.position.y < -1.5) points.current.position.y = 1.5
+  useFrame(({ clock }) => {
+    if (quality === 'high' && !reducedMotion) writeMatrices(clock.elapsedTime)
   })
 
-  const palette = PALETTES[edition]
   return (
-    <points ref={points}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-      </bufferGeometry>
-      <pointsMaterial
-        color={palette.signal}
-        size={edition === 'blue' ? 0.055 : 0.08}
-        transparent
-        opacity={edition === 'red' ? 0.46 : 0.72}
-        depthWrite={false}
-        sizeAttenuation
-      />
-    </points>
+    <group name="pokeball-field">
+      <instancedMesh ref={top} args={[undefined, undefined, count]}>
+        <sphereGeometry args={[1, quality === 'high' ? 28 : 18, quality === 'high' ? 16 : 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color={POKEBALL_RED} roughness={0.31} metalness={0.03} />
+      </instancedMesh>
+      <instancedMesh ref={bottom} args={[undefined, undefined, count]}>
+        <sphereGeometry args={[1, quality === 'high' ? 28 : 18, quality === 'high' ? 16 : 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
+        <meshStandardMaterial color={POKEBALL_WHITE} roughness={0.38} metalness={0.02} />
+      </instancedMesh>
+      <instancedMesh ref={band} args={[undefined, undefined, count]}>
+        <torusGeometry args={[1.005, 0.075, 8, quality === 'high' ? 28 : 18]} />
+        <meshStandardMaterial color={POKEBALL_BLACK} roughness={0.5} />
+      </instancedMesh>
+      <instancedMesh ref={buttonOuter} args={[undefined, undefined, count]}>
+        <cylinderGeometry args={[0.29, 0.29, 0.16, quality === 'high' ? 24 : 16]} />
+        <meshStandardMaterial color={POKEBALL_BLACK} roughness={0.45} />
+      </instancedMesh>
+      <instancedMesh ref={buttonInner} args={[undefined, undefined, count]}>
+        <cylinderGeometry args={[0.18, 0.18, 0.17, quality === 'high' ? 24 : 16]} />
+        <meshStandardMaterial color={POKEBALL_WHITE} roughness={0.24} />
+      </instancedMesh>
+    </group>
   )
+}
+
+function RenderDiagnostics() {
+  const { gl, scene } = useThree()
+  const frame = useRef(0)
+
+  useFrame(() => {
+    frame.current += 1
+    if (frame.current % 30 !== 0) return
+    const host = gl.domElement.closest<HTMLElement>('.world-canvas')
+    if (!host) return
+    const materials = new Set<THREE.Material>()
+    scene.traverse((object) => {
+      if (!(object instanceof THREE.Mesh)) return
+      const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
+      objectMaterials.forEach((material) => materials.add(material))
+    })
+    host.dataset.drawCalls = String(gl.info.render.calls)
+    host.dataset.triangles = String(gl.info.render.triangles)
+    host.dataset.geometries = String(gl.info.memory.geometries)
+    host.dataset.textures = String(gl.info.memory.textures)
+    host.dataset.materials = String(materials.size)
+  })
+
+  return null
 }
 
 function LightingRig() {
-  const edition = useJourneyStore((state) => state.edition)
-  const quality = useJourneyStore((state) => state.quality)
-  const key = useRef<THREE.DirectionalLight>(null)
-  const pulse = useRef<THREE.PointLight>(null)
-  const palette = PALETTES[edition]
-
-  useFrame(({ clock }, delta) => {
-    if (key.current) {
-      key.current.color.lerp(new THREE.Color(palette.accentSoft), 1 - Math.exp(-2 * delta))
-      key.current.intensity = damp(key.current.intensity, edition === 'blue' ? 2.4 : 3.6, 2, delta)
-    }
-    if (pulse.current) {
-      const lightning = edition === 'blue' && Math.sin(clock.elapsedTime * 0.73) > 0.985
-      const electric = edition === 'yellow' ? 3 + Math.sin(clock.elapsedTime * 4) * 1.2 : 0
-      pulse.current.intensity = lightning ? 55 : Math.max(0, electric)
-      pulse.current.color.set(palette.signal)
-    }
-  })
-
   return (
     <>
-      <hemisphereLight args={[palette.skyHorizon, '#191824', 2.5]} />
-      <directionalLight
-        ref={key}
-        position={[-7, 11, 5]}
-        color={palette.accentSoft}
-        intensity={3.6}
-        castShadow={quality === 'high'}
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-      />
-      <pointLight ref={pulse} position={[0, 7, -18]} color={palette.signal} distance={50} />
+      <hemisphereLight args={['#fff7e6', '#05070b', 2.1]} />
+      <directionalLight position={[-7, 10, 8]} color="#fff4dc" intensity={4.2} />
+      <directionalLight position={[8, -2, 6]} color="#d9e8ff" intensity={1.15} />
     </>
   )
 }
@@ -396,14 +270,11 @@ function LightingRig() {
 export function KantoWorld() {
   return (
     <>
-      <AtmosphereRig />
-      <GradientSky />
-      <MenuCamera />
+      <Atmosphere />
+      <StaticCamera />
       <LightingRig />
-      <StartingRoom />
-      <ForestRoute />
-      <CrystalCave />
-      <WeatherParticles />
+      <PokeballField />
+      <RenderDiagnostics />
     </>
   )
 }

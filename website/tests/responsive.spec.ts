@@ -164,6 +164,8 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.position).toBe('fixed')
   expect(layout.canvas.width).toBe(1440)
   expect(layout.canvas.height).toBe(900)
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-scene-mode', 'pokeballs-only')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-menu-reactive', 'false')
 })
 
 test('keeps the home vital labels fully visible', async ({ page }) => {

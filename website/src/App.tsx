@@ -97,8 +97,136 @@ function activityTitle(message: string) {
   return message.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
 }
 
+type ActivityEntry = ProjectStatus['activity'][number]
+
+function useLiveNow() {
+  const [now, setNow] = useState(() => Date.now())
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000)
+    return () => window.clearInterval(timer)
+  }, [])
+
+  return now
+}
+
+function useDeploymentTime(fallback: string) {
+  const [deployedAt, setDeployedAt] = useState(fallback)
+
+  useEffect(() => {
+    const parsed = Date.parse(document.lastModified)
+    if (Number.isFinite(parsed)) setDeployedAt(new Date(parsed).toISOString())
+  }, [fallback])
+
+  return deployedAt
+}
+
+function relativeTime(date: string, now: number) {
+  const parsed = Date.parse(date)
+  if (!Number.isFinite(parsed)) return 'TIME UNKNOWN'
+  const seconds = Math.max(0, Math.floor((now - parsed) / 1000))
+  if (seconds < 60) return 'JUST NOW'
+  if (seconds < 3_600) return `${Math.floor(seconds / 60)}M AGO`
+  if (seconds < 86_400) return `${Math.floor(seconds / 3_600)}H AGO`
+  if (seconds < 604_800) return `${Math.floor(seconds / 86_400)}D AGO`
+  if (seconds < 2_592_000) return `${Math.floor(seconds / 604_800)}W AGO`
+  if (seconds < 31_536_000) return `${Math.floor(seconds / 2_592_000)}MO AGO`
+  return `${Math.floor(seconds / 31_536_000)}Y AGO`
+}
+
+function exactTime(date: string) {
+  const parsed = Date.parse(date)
+  if (!Number.isFinite(parsed)) return 'Exact time unavailable'
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(parsed)
+}
+
+function durationLabel(seconds = 0) {
+  if (!seconds) return '--'
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  return minutes ? `${minutes}M ${remainder}S` : `${remainder}S`
+}
+
+function Timestamp({ date, now }: { date: string, now: number }) {
+  const [open, setOpen] = useState(false)
+  const relative = relativeTime(date, now)
+  const exact = exactTime(date)
+
+  return (
+    <span className={`timestamp-wrap${open ? ' is-open' : ''}`}>
+      <button
+        type="button"
+        className="timestamp-trigger"
+        title={exact}
+        aria-label={`${relative}. ${exact}`}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <time dateTime={date}>{relative}</time>
+      </button>
+      <span className="timestamp-tooltip" role="tooltip">{exact}</span>
+    </span>
+  )
+}
+
+function activityState(entry: ActivityEntry, index: number, now: number) {
+  if (index === 0) return 'LIVE'
+  const entryDate = new Date(entry.date)
+  const today = new Date(now)
+  if (entryDate.getFullYear() === today.getFullYear()
+    && entryDate.getMonth() === today.getMonth()
+    && entryDate.getDate() === today.getDate()) return 'TODAY'
+  return 'ARCHIVED'
+}
+
+function ActivityMeta({ entry, index, now }: { entry: ActivityEntry, index: number, now: number }) {
+  const state = activityState(entry, index, now)
+
+  return (
+    <div className="activity-meta">
+      <span className={`activity-state is-${state.toLowerCase()}`}>{state}</span>
+      <Timestamp date={entry.date} now={now} />
+      {entry.ci ? (
+        <a className="activity-ci" href={entry.ci.runUrl} target="_blank" rel="noreferrer">
+          CI {durationLabel(entry.ci.durationSeconds)} ↗
+        </a>
+      ) : null}
+    </div>
+  )
+}
+
+function TrainerClock({ status }: { status: ProjectStatus }) {
+  const now = useLiveNow()
+  const lastUpdate = status.activity[0]?.date ?? status.generatedAt
+  const deployedAt = useDeploymentTime(status.generatedAt)
+  const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000)
+  const weeklyActivity = status.activity.filter((entry) => Date.parse(entry.date) >= sevenDaysAgo).length
+
+  return (
+    <section className="trainer-clock" aria-label="Trainer Clock">
+      <span className="trainer-clock-label">TRAINER CLOCK</span>
+      <div>
+        <span><small>LAST UPDATE</small><Timestamp date={lastUpdate} now={now} /></span>
+        <a href={status.ci.runUrl} target="_blank" rel="noreferrer">
+          <small>LAB RUN</small><b>{durationLabel(status.ci.durationSeconds)}</b>
+        </a>
+        <span><small>DEPLOYED</small><Timestamp date={deployedAt} now={now} /></span>
+        <span><small>7-DAY ACTIVITY</small><b>{weeklyActivity}</b></span>
+      </div>
+    </section>
+  )
+}
+
 function ActivityLog({ status }: { status: ProjectStatus }) {
   const updates = status.activity.slice(0, 4)
+  const now = useLiveNow()
 
   return (
     <section className="activity-log" aria-labelledby="activity-title">
@@ -112,12 +240,12 @@ function ActivityLog({ status }: { status: ProjectStatus }) {
       <ol>
         {updates.map((update, index) => (
           <li key={update.sha} style={{ '--log-index': index } as CSSProperties}>
-            <a href={update.url} target="_blank" rel="noreferrer">
+            <a className="activity-entry-main" href={update.url} target="_blank" rel="noreferrer">
               <span className="activity-type">{update.type}</span>
               <b>{activityTitle(update.message)}</b>
-              <time dateTime={update.date}>{update.date.slice(5, 10).replace('-', '/')}</time>
               <code>{update.shortSha}</code>
             </a>
+            <ActivityMeta entry={update} index={index} now={now} />
           </li>
         ))}
       </ol>
@@ -309,6 +437,7 @@ function RewriteDetail() {
 }
 
 function ResearchArchive({ status }: { status: ProjectStatus }) {
+  const now = useLiveNow()
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
   const rewriteStart = status.activity.find((entry) => entry.sha === REWRITE_START_COMMIT)
@@ -329,6 +458,7 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
 
   return (
     <div className="archive-page">
+      <TrainerClock status={status} />
       <div className="archive-vitals" aria-label="Complete development totals">
         <div><b>{status.activity.length}</b><span>VERIFIED COMMITS</span></div>
         <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
@@ -387,14 +517,14 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         <ol>
           {status.activity.map((entry, index) => (
             <li key={entry.sha}>
-              <a href={entry.url} target="_blank" rel="noreferrer">
+              <a className="archive-entry-main" href={entry.url} target="_blank" rel="noreferrer">
                 <span className="archive-number">#{String(status.activity.length - index).padStart(3, '0')}</span>
                 <span className="archive-entry-type">{entry.type}</span>
                 <b>{activityTitle(entry.message)}</b>
                 <span className="archive-author">{entry.author}</span>
-                <time dateTime={entry.date}>{entry.date.slice(0, 10)}</time>
                 <code>{entry.shortSha}</code>
               </a>
+              <ActivityMeta entry={entry} index={index} now={now} />
             </li>
           ))}
         </ol>
@@ -416,6 +546,7 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
           <span><small>LAB SCAN</small><b>{status.ci.passed}/{status.ci.total} PASS</b></span>
           <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
         </div>
+        <TrainerClock status={status} />
         <ActivityLog status={status} />
       </>
     )

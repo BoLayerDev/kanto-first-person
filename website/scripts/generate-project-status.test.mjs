@@ -31,6 +31,8 @@ test('generates a complete offline GitHub status snapshot', async () => {
         GITHUB_TOKEN: '',
         SITE_CI_CONCLUSION: 'success',
         SITE_CI_HEAD_SHA: sourceSha,
+        SITE_CI_STARTED_AT: '2026-08-22T11:58:15Z',
+        SITE_CI_COMPLETED_AT: '2026-08-22T12:00:00Z',
         SITE_CI_PASSED: '11',
         SITE_CI_RUN_ID: '42',
         SITE_CI_RUN_URL: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
@@ -55,8 +57,14 @@ test('generates a complete offline GitHub status snapshot', async () => {
     assert.equal(status.shortSha, '1234567')
     assert.equal(status.ci.state, 'success')
     assert.deepEqual([status.ci.passed, status.ci.total], [11, 11])
+    assert.equal(status.ci.durationSeconds, 105)
+    assert.equal(status.ci.startedAt, '2026-08-22T11:58:15Z')
+    assert.deepEqual(status.activity[0].ci, {
+      durationSeconds: 105,
+      runUrl: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
+    })
     assert.equal(status.release.available, false)
-    assert.deepEqual(status.activity, activity)
+    assert.deepEqual(status.activity[0], { ...activity[0], ci: status.activity[0].ci })
     assert.match(status.commitUrl, new RegExp(sourceSha))
 
     const rejected = spawnSync(process.execPath, [generator], {

@@ -45,9 +45,9 @@ They are not host-owner releases:
 - Battle Art adapter: `8f1af4e28d46e205739bc133a26a065a7d592025`;
   patch SHA-256
   `446d4bb9e91617caa60a0f64d4dfa4a4bb6c86b56ff70e71ad915433e9eed4b9`.
-- Dramaless adapter: `0af55550edf53d4cf006cca03c9386edeb12b46a`;
+- Dramaless adapter: `8e045ad657f72ba1c74d326f4957976a7e154fc4`;
   patch SHA-256
-  `5ba586e3ee3c39decfa6380b6a6958d01e403c445b5db65c27985a16c55e0230`.
+  `83f4b89dff6ec863d54cf81630bce7441e68a367281185e0a0d9173d1a82137f`.
 - Battle Art delivery fork and upstream review:
   `https://github.com/BoLayerDev/DramaticShapeVoxelMod/tree/kfp-companion-api-v1`
   and `https://github.com/absol89/DramaticShapeVoxelMod/pull/29`.

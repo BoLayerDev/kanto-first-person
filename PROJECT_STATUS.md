@@ -29,7 +29,7 @@ Last updated: 2026-08-21
 - Both adapters are pushed to `BoLayerDev` forks and submitted upstream. Battle
   Art PR #29 and Dramaless PR #47 await host-owner review, merge, versioning,
   release, and real GPU testing.
-- Current adapter evidence commits are `8f1af4e` (Battle Art) and `0af5555`
+- Current adapter evidence commits are `8f1af4e` (Battle Art) and `8e045ad`
   (Dramaless). Canonical patches are outside Git
   under `Kanto First Person Evidence\host-patches`.
 - Legacy audio and art remain outside MIT but now have a private creator-signed

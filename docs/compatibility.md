@@ -32,7 +32,7 @@ engine-module imports; KFP does not use those imports. See the hash-bound
 | Host ID | Audited version | Audited commit | Companion API | Stable gate |
 |---|---:|---|---|---|
 | `BATTLE_ART_VOXEL_FORK` | 1.9.7 | `fcbe541` | PR adapter `8f1af4e` passes contract and cutaway tests | Host review and GPU run open |
-| `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | PR adapter `0af5555` passes contract and cutaway tests | Host review and GPU run open |
+| `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | PR adapter `8e045ad` passes contract, cutaway, and game-ID tests | Host review and GPU run open |
 
 Runtime selection requires exactly one active compatible host. Zero or multiple hosts leave KFP inactive.
 The adapter branches are pushed to project forks and submitted in upstream

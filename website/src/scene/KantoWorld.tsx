@@ -1,7 +1,28 @@
-import { useFrame, useThree } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import * as THREE from 'three'
-import { useJourneyStore } from '../state/journey'
+import {
+  BackSide,
+  Color,
+  CylinderGeometry,
+  DirectionalLight,
+  DynamicDrawUsage,
+  Euler,
+  Fog,
+  Group,
+  HemisphereLight,
+  InstancedMesh,
+  MathUtils,
+  Matrix4,
+  Mesh,
+  MeshStandardMaterial,
+  PerspectiveCamera,
+  Quaternion,
+  Scene,
+  ShaderMaterial,
+  SphereGeometry,
+  TorusGeometry,
+  Vector3,
+  WebGLRenderer,
+} from 'three'
+import type { QualityTier } from '../state/journey'
 
 const BALL_SEED = 0x151
 const HIGH_QUALITY_BALLS = 11
@@ -20,6 +41,23 @@ type BallTransform = {
   direction: number
 }
 
+export type KantoWorldRuntime = {
+  update: (time: number) => void
+  resize: (aspect: number) => void
+  updateDiagnostics: () => void
+  dispose: () => void
+}
+
+type KantoWorldOptions = {
+  scene: Scene
+  camera: PerspectiveCamera
+  renderer: WebGLRenderer
+  host: HTMLElement
+  quality: QualityTier
+  reducedMotion: boolean
+  aspect: number
+}
+
 function mulberry32(seed: number) {
   return () => {
     let value = (seed += 0x6d2b79f5)
@@ -31,7 +69,7 @@ function mulberry32(seed: number) {
 
 function createBallLayout(count: number, aspect: number): BallTransform[] {
   const random = mulberry32(BALL_SEED)
-  const halfFov = THREE.MathUtils.degToRad(25)
+  const halfFov = MathUtils.degToRad(25)
 
   return Array.from({ length: count }, (_, index) => {
     const side = index % 2 === 0 ? -1 : 1
@@ -57,231 +95,167 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
   })
 }
 
-function usePrefersReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(false)
-
-  useEffect(() => {
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const update = () => setReducedMotion(query.matches)
-    update()
-    query.addEventListener('change', update)
-    return () => query.removeEventListener('change', update)
-  }, [])
-
-  return reducedMotion
-}
-
-function StaticCamera() {
-  const { camera } = useThree()
-
-  useLayoutEffect(() => {
-    camera.position.set(0, 0.4, 11)
-    camera.lookAt(0, 0, -10)
-    const perspective = camera as THREE.PerspectiveCamera
-    perspective.fov = 50
-    perspective.updateProjectionMatrix()
-  }, [camera])
-
-  return null
-}
-
-function Atmosphere() {
-  const { scene } = useThree()
-
-  useLayoutEffect(() => {
-    scene.background = new THREE.Color('#050a12')
-    scene.fog = new THREE.Fog('#050a12', 12, 44)
-    return () => {
-      scene.background = null
-      scene.fog = null
-    }
-  }, [scene])
-
-  return (
-    <mesh frustumCulled={false} scale={80}>
-      <sphereGeometry args={[1, 24, 14]} />
-      <shaderMaterial
-        side={THREE.BackSide}
-        depthWrite={false}
-        toneMapped={false}
-        uniforms={{
-          uTop: { value: new THREE.Color('#050a12') },
-          uHorizon: { value: new THREE.Color('#26364a') },
-        }}
-        vertexShader={`
-          varying vec3 vDirection;
-          void main() {
-            vDirection = normalize(position);
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-          }
-        `}
-        fragmentShader={`
-          varying vec3 vDirection;
-          uniform vec3 uTop;
-          uniform vec3 uHorizon;
-          void main() {
-            float heightMix = pow(clamp(vDirection.y * 0.5 + 0.5, 0.0, 1.0), 0.7);
-            gl_FragColor = vec4(mix(uHorizon, uTop, heightMix), 1.0);
-          }
-        `}
-      />
-    </mesh>
-  )
-}
-
-const RING_LOCAL = new THREE.Matrix4().makeRotationX(Math.PI / 2)
-const BUTTON_OUTER_LOCAL = new THREE.Matrix4().compose(
-  new THREE.Vector3(0, 0, 1.035),
-  new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
-  new THREE.Vector3(1, 1, 1),
+const RING_LOCAL = new Matrix4().makeRotationX(Math.PI / 2)
+const BUTTON_OUTER_LOCAL = new Matrix4().compose(
+  new Vector3(0, 0, 1.035),
+  new Quaternion().setFromEuler(new Euler(Math.PI / 2, 0, 0)),
+  new Vector3(1, 1, 1),
 )
-const BUTTON_INNER_LOCAL = new THREE.Matrix4().compose(
-  new THREE.Vector3(0, 0, 1.13),
-  new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0)),
-  new THREE.Vector3(1, 1, 1),
+const BUTTON_INNER_LOCAL = new Matrix4().compose(
+  new Vector3(0, 0, 1.13),
+  new Quaternion().setFromEuler(new Euler(Math.PI / 2, 0, 0)),
+  new Vector3(1, 1, 1),
 )
 
-function PokeballField() {
-  const quality = useJourneyStore((state) => state.quality)
-  const reducedMotion = usePrefersReducedMotion()
-  const { gl, size } = useThree()
+export function createKantoWorld({
+  scene,
+  camera,
+  renderer,
+  host,
+  quality,
+  reducedMotion,
+  aspect,
+}: KantoWorldOptions): KantoWorldRuntime {
   const count = quality === 'high' ? HIGH_QUALITY_BALLS : LOW_QUALITY_BALLS
-  const aspect = size.width / Math.max(size.height, 1)
-  const layout = useMemo(() => createBallLayout(count, aspect), [aspect, count])
-  const top = useRef<THREE.InstancedMesh>(null)
-  const bottom = useRef<THREE.InstancedMesh>(null)
-  const band = useRef<THREE.InstancedMesh>(null)
-  const buttonOuter = useRef<THREE.InstancedMesh>(null)
-  const buttonInner = useRef<THREE.InstancedMesh>(null)
-  const scratch = useMemo(
-    () => ({
-      position: new THREE.Vector3(),
-      rotation: new THREE.Euler(),
-      quaternion: new THREE.Quaternion(),
-      scale: new THREE.Vector3(),
-      root: new THREE.Matrix4(),
-      world: new THREE.Matrix4(),
-    }),
-    [],
-  )
+  let layout = createBallLayout(count, aspect)
+  let lastTime = 0
+
+  scene.background = new Color('#050a12')
+  scene.fog = new Fog('#050a12', 12, 44)
+  camera.position.set(0, 0.4, 11)
+  camera.lookAt(0, 0, -10)
+
+  const root = new Group()
+  root.name = 'pokeball-world'
+  scene.add(root)
+
+  const atmosphereGeometry = new SphereGeometry(1, 20, 12)
+  const atmosphereMaterial = new ShaderMaterial({
+    side: BackSide,
+    depthWrite: false,
+    toneMapped: false,
+    uniforms: {
+      uTop: { value: new Color('#050a12') },
+      uHorizon: { value: new Color('#26364a') },
+    },
+    vertexShader: `
+      varying vec3 vDirection;
+      void main() {
+        vDirection = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec3 vDirection;
+      uniform vec3 uTop;
+      uniform vec3 uHorizon;
+      void main() {
+        float heightMix = pow(clamp(vDirection.y * 0.5 + 0.5, 0.0, 1.0), 0.7);
+        gl_FragColor = vec4(mix(uHorizon, uTop, heightMix), 1.0);
+      }
+    `,
+  })
+  const atmosphere = new Mesh(atmosphereGeometry, atmosphereMaterial)
+  atmosphere.name = 'atmosphere'
+  atmosphere.scale.setScalar(80)
+  atmosphere.frustumCulled = false
+  root.add(atmosphere)
+
+  const widthSegments = quality === 'high' ? 22 : 16
+  const heightSegments = quality === 'high' ? 12 : 9
+  const radialSegments = quality === 'high' ? 16 : 12
+  const topGeometry = new SphereGeometry(1, widthSegments, heightSegments, 0, Math.PI * 2, 0, Math.PI / 2)
+  const bottomGeometry = new SphereGeometry(1, widthSegments, heightSegments, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2)
+  const bandGeometry = new TorusGeometry(1.005, 0.075, 6, widthSegments)
+  const outerGeometry = new CylinderGeometry(0.29, 0.29, 0.16, radialSegments)
+  const innerGeometry = new CylinderGeometry(0.18, 0.18, 0.17, radialSegments)
+  const topMaterial = new MeshStandardMaterial({ color: POKEBALL_RED, roughness: 0.31, metalness: 0.03 })
+  const bottomMaterial = new MeshStandardMaterial({ color: POKEBALL_WHITE, roughness: 0.38, metalness: 0.02 })
+  const bandMaterial = new MeshStandardMaterial({ color: POKEBALL_BLACK, roughness: 0.5 })
+  const outerMaterial = new MeshStandardMaterial({ color: POKEBALL_BLACK, roughness: 0.45 })
+  const innerMaterial = new MeshStandardMaterial({ color: POKEBALL_WHITE, roughness: 0.24 })
+  const top = new InstancedMesh(topGeometry, topMaterial, count)
+  const bottom = new InstancedMesh(bottomGeometry, bottomMaterial, count)
+  const band = new InstancedMesh(bandGeometry, bandMaterial, count)
+  const buttonOuter = new InstancedMesh(outerGeometry, outerMaterial, count)
+  const buttonInner = new InstancedMesh(innerGeometry, innerMaterial, count)
+  const meshes = [top, bottom, band, buttonOuter, buttonInner]
+  meshes.forEach((mesh) => {
+    mesh.instanceMatrix.setUsage(DynamicDrawUsage)
+    root.add(mesh)
+  })
+
+  const key = new DirectionalLight('#fff4dc', 4.2)
+  key.position.set(-7, 10, 8)
+  const rim = new DirectionalLight('#d9e8ff', 1.15)
+  rim.position.set(8, -2, 6)
+  root.add(new HemisphereLight('#fff7e6', '#05070b', 2.1), key, rim)
+
+  const scratchPosition = new Vector3()
+  const scratchRotation = new Euler()
+  const scratchQuaternion = new Quaternion()
+  const scratchScale = new Vector3()
+  const rootMatrix = new Matrix4()
+  const worldMatrix = new Matrix4()
 
   const writeMatrices = (time: number) => {
-    const meshes = [top.current, bottom.current, band.current, buttonOuter.current, buttonInner.current]
-    if (meshes.some((mesh) => !mesh)) return
-
+    lastTime = time
     layout.forEach((ball, index) => {
       const drift = quality === 'high' && !reducedMotion ? Math.sin(time * 0.42 + ball.phase) * 0.18 : 0
       const spin = quality === 'high' && !reducedMotion ? time * ball.speed * ball.direction : 0
-      scratch.position.set(ball.position[0], ball.position[1] + drift, ball.position[2])
-      scratch.rotation.set(
+      scratchPosition.set(ball.position[0], ball.position[1] + drift, ball.position[2])
+      scratchRotation.set(
         ball.rotation[0] + spin * 0.34,
         ball.rotation[1] + spin,
         ball.rotation[2] + spin * 0.18,
       )
-      scratch.quaternion.setFromEuler(scratch.rotation)
-      scratch.scale.setScalar(ball.scale)
-      scratch.root.compose(scratch.position, scratch.quaternion, scratch.scale)
+      scratchQuaternion.setFromEuler(scratchRotation)
+      scratchScale.setScalar(ball.scale)
+      rootMatrix.compose(scratchPosition, scratchQuaternion, scratchScale)
 
-      top.current?.setMatrixAt(index, scratch.root)
-      bottom.current?.setMatrixAt(index, scratch.root)
-      scratch.world.multiplyMatrices(scratch.root, RING_LOCAL)
-      band.current?.setMatrixAt(index, scratch.world)
-      scratch.world.multiplyMatrices(scratch.root, BUTTON_OUTER_LOCAL)
-      buttonOuter.current?.setMatrixAt(index, scratch.world)
-      scratch.world.multiplyMatrices(scratch.root, BUTTON_INNER_LOCAL)
-      buttonInner.current?.setMatrixAt(index, scratch.world)
+      top.setMatrixAt(index, rootMatrix)
+      bottom.setMatrixAt(index, rootMatrix)
+      worldMatrix.multiplyMatrices(rootMatrix, RING_LOCAL)
+      band.setMatrixAt(index, worldMatrix)
+      worldMatrix.multiplyMatrices(rootMatrix, BUTTON_OUTER_LOCAL)
+      buttonOuter.setMatrixAt(index, worldMatrix)
+      worldMatrix.multiplyMatrices(rootMatrix, BUTTON_INNER_LOCAL)
+      buttonInner.setMatrixAt(index, worldMatrix)
     })
-
-    meshes.forEach((mesh) => {
-      if (mesh) mesh.instanceMatrix.needsUpdate = true
-    })
+    meshes.forEach((mesh) => { mesh.instanceMatrix.needsUpdate = true })
   }
 
-  useLayoutEffect(() => {
-    writeMatrices(0)
-    ;[top.current, bottom.current, band.current, buttonOuter.current, buttonInner.current].forEach(
-      (mesh) => mesh?.computeBoundingSphere(),
-    )
-    const host = gl.domElement.closest<HTMLElement>('.world-canvas')
-    if (host) {
-      host.dataset.ballCount = String(count)
-      host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
-    }
-  }, [count, gl, layout, quality, reducedMotion])
+  const refreshBounds = () => meshes.forEach((mesh) => mesh.computeBoundingSphere())
+  writeMatrices(0)
+  refreshBounds()
+  host.dataset.ballCount = String(count)
+  host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
 
-  useFrame(({ clock }) => {
-    if (quality === 'high' && !reducedMotion) writeMatrices(clock.elapsedTime)
-  })
+  const geometries = [atmosphereGeometry, topGeometry, bottomGeometry, bandGeometry, outerGeometry, innerGeometry]
+  const materials = [atmosphereMaterial, topMaterial, bottomMaterial, bandMaterial, outerMaterial, innerMaterial]
 
-  return (
-    <group name="pokeball-field">
-      <instancedMesh ref={top} args={[undefined, undefined, count]}>
-        <sphereGeometry args={[1, quality === 'high' ? 28 : 18, quality === 'high' ? 16 : 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color={POKEBALL_RED} roughness={0.31} metalness={0.03} />
-      </instancedMesh>
-      <instancedMesh ref={bottom} args={[undefined, undefined, count]}>
-        <sphereGeometry args={[1, quality === 'high' ? 28 : 18, quality === 'high' ? 16 : 10, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
-        <meshStandardMaterial color={POKEBALL_WHITE} roughness={0.38} metalness={0.02} />
-      </instancedMesh>
-      <instancedMesh ref={band} args={[undefined, undefined, count]}>
-        <torusGeometry args={[1.005, 0.075, 8, quality === 'high' ? 28 : 18]} />
-        <meshStandardMaterial color={POKEBALL_BLACK} roughness={0.5} />
-      </instancedMesh>
-      <instancedMesh ref={buttonOuter} args={[undefined, undefined, count]}>
-        <cylinderGeometry args={[0.29, 0.29, 0.16, quality === 'high' ? 24 : 16]} />
-        <meshStandardMaterial color={POKEBALL_BLACK} roughness={0.45} />
-      </instancedMesh>
-      <instancedMesh ref={buttonInner} args={[undefined, undefined, count]}>
-        <cylinderGeometry args={[0.18, 0.18, 0.17, quality === 'high' ? 24 : 16]} />
-        <meshStandardMaterial color={POKEBALL_WHITE} roughness={0.24} />
-      </instancedMesh>
-    </group>
-  )
-}
-
-function RenderDiagnostics() {
-  const { gl, scene } = useThree()
-  const frame = useRef(0)
-
-  useFrame(() => {
-    frame.current += 1
-    if (frame.current % 30 !== 0) return
-    const host = gl.domElement.closest<HTMLElement>('.world-canvas')
-    if (!host) return
-    const materials = new Set<THREE.Material>()
-    scene.traverse((object) => {
-      if (!(object instanceof THREE.Mesh)) return
-      const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
-      objectMaterials.forEach((material) => materials.add(material))
-    })
-    host.dataset.drawCalls = String(gl.info.render.calls)
-    host.dataset.triangles = String(gl.info.render.triangles)
-    host.dataset.geometries = String(gl.info.memory.geometries)
-    host.dataset.textures = String(gl.info.memory.textures)
-    host.dataset.materials = String(materials.size)
-  })
-
-  return null
-}
-
-function LightingRig() {
-  return (
-    <>
-      <hemisphereLight args={['#fff7e6', '#05070b', 2.1]} />
-      <directionalLight position={[-7, 10, 8]} color="#fff4dc" intensity={4.2} />
-      <directionalLight position={[8, -2, 6]} color="#d9e8ff" intensity={1.15} />
-    </>
-  )
-}
-
-export function KantoWorld() {
-  return (
-    <>
-      <Atmosphere />
-      <StaticCamera />
-      <LightingRig />
-      <PokeballField />
-      <RenderDiagnostics />
-    </>
-  )
+  return {
+    update(time) {
+      if (quality === 'high' && !reducedMotion) writeMatrices(time)
+    },
+    resize(nextAspect) {
+      layout = createBallLayout(count, nextAspect)
+      writeMatrices(lastTime)
+      refreshBounds()
+    },
+    updateDiagnostics() {
+      host.dataset.drawCalls = String(renderer.info.render.calls)
+      host.dataset.triangles = String(renderer.info.render.triangles)
+      host.dataset.geometries = String(renderer.info.memory.geometries)
+      host.dataset.textures = String(renderer.info.memory.textures)
+      host.dataset.materials = String(materials.length)
+    },
+    dispose() {
+      scene.remove(root)
+      geometries.forEach((geometry) => geometry.dispose())
+      materials.forEach((material) => material.dispose())
+      scene.background = null
+      scene.fog = null
+    },
+  }
 }

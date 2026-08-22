@@ -275,9 +275,12 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
 
 export function useProjectStatus() {
   const [status, setStatus] = useState(FALLBACK_PROJECT_STATUS)
+  const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
     const controller = new AbortController()
+    let active = true
+
     fetch(`${import.meta.env.BASE_URL}project-status.json`, {
       cache: 'no-store',
       signal: controller.signal,
@@ -287,12 +290,20 @@ export function useProjectStatus() {
         return response.json()
       })
       .then((value: unknown) => {
-        if (isProjectStatus(value)) setStatus({ ...FALLBACK_PROJECT_STATUS, ...value })
+        if (active && isProjectStatus(value)) {
+          setStatus({ ...FALLBACK_PROJECT_STATUS, ...value })
+        }
       })
       .catch(() => undefined)
+      .finally(() => {
+        if (active) setIsLoaded(true)
+      })
 
-    return () => controller.abort()
+    return () => {
+      active = false
+      controller.abort()
+    }
   }, [])
 
-  return status
+  return { status, isLoaded }
 }

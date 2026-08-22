@@ -55,6 +55,11 @@ return function(T)
     error("missing full-scene feature profile: " .. tostring(id), 2)
   end
 
+  local function equalTierField(tierLabel, field, actual, expected)
+    T.equal(actual, expected, ("%s %s was %s; expected %s"):format(
+      tierLabel, field, tostring(actual), tostring(expected)))
+  end
+
   T.test("platform process CPU clock excludes idle wall wait", function()
     local wallClock = Clocks.monotonicWallClock()
     local cpuClock, info = Clocks.processCpuClock()
@@ -109,9 +114,9 @@ return function(T)
 
   T.test("64x64 stress uses the exact snapshot index and fixed work fingerprints", function()
     local expected = {
-      LOW = { commands = 26, items = 4367, content = "64f9db93" },
-      BALANCED = { commands = 28, items = 7782, content = "252c129b" },
-      HIGH = { commands = 28, items = 12270, content = "bb821318" },
+      LOW = { commands = 26, items = 4367, content = "489def7a" },
+      BALANCED = { commands = 28, items = 7782, content = "dbf32a7b" },
+      HIGH = { commands = 28, items = 12270, content = "dfc72a8d" },
     }
     for _, tier in ipairs({ "LOW", "BALANCED", "HIGH" }) do
       local result = FullScene.run({
@@ -121,14 +126,22 @@ return function(T)
         tier = tier,
         run = "fingerprint-" .. tier,
       })
-      T.truthy(result.profile.worldIndexBindingObserved, tier)
-      T.truthy(result.profile.worldIndexBindingExact, tier)
-      T.equal(featureProfile(result, "world_geometry").checkpoints, 512, tier)
-      T.equal(result.commands, expected[tier].commands, tier)
-      T.equal(result.items, expected[tier].items, tier)
-      T.equal(result.contentFingerprint, expected[tier].content, tier)
-      T.equal(result.fingerprintCommands, result.commands, tier)
-      T.equal(result.excludedFingerprintCommands, 0, tier)
+      T.truthy(result.profile.worldIndexBindingObserved,
+        tier .. " world index binding was not observed")
+      T.truthy(result.profile.worldIndexBindingExact,
+        tier .. " world index binding was not exact")
+      equalTierField(tier, "WorldGeometry checkpoints",
+        featureProfile(result, "world_geometry").checkpoints, 512)
+      equalTierField(tier, "command count",
+        result.commands, expected[tier].commands)
+      equalTierField(tier, "item count",
+        result.items, expected[tier].items)
+      equalTierField(tier, "content fingerprint",
+        result.contentFingerprint, expected[tier].content)
+      equalTierField(tier, "fingerprint command count",
+        result.fingerprintCommands, result.commands)
+      equalTierField(tier, "excluded fingerprint command count",
+        result.excludedFingerprintCommands, 0)
     end
   end)
 

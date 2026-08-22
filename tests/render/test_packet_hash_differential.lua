@@ -1,7 +1,7 @@
 return function(T)
   local PacketHash = assert(loadfile(T.root .. "/src/render/PacketHash.lua"))()
   local MOD = 65521
-  local COMMAND_DOMAIN_PREFIX = "t2{s6:domain;s14:kfp-command-v1;s5:value;"
+  local COMMAND_DOMAIN_PREFIX = "t2{s6:domain;s14:kfp-command-v2;s5:value;"
   local TABLE_SUFFIX = "};"
   local RUNTIME_FIELDS = {
     cacheKey = true,
@@ -24,6 +24,34 @@ return function(T)
     if ta == "number" then return a < b end
     return tostring(a) < tostring(b)
   end
+  local function fixedBytes(value, width)
+    local out = {}
+    for index = width, 1, -1 do
+      local quotient = math.floor(value / 256)
+      local byte = value - quotient * 256
+      out[index] = string.char(byte)
+      value = quotient
+    end
+    T.equal(value, 0, "fixed binary value exceeded its width")
+    return table.concat(out)
+  end
+
+  local function referenceNumberFrame(value)
+    if value == 0 then return "z;" end
+    local negative = value < 0
+    if negative then value = -value end
+    local fraction, exponent = math.frexp(value)
+    local significand = fraction * 9007199254740992
+    local high = math.floor(significand / 67108864)
+    local low = significand - high * 67108864
+    local biasedExponent = exponent + 1074
+    local exponentHigh = math.floor(biasedExponent / 256)
+    local exponentLow = biasedExponent - exponentHigh * 256
+    if negative then exponentHigh = exponentHigh + 128 end
+    return string.char(102, exponentHigh, exponentLow)
+      .. fixedBytes(high, 4)
+      .. fixedBytes(low, 4)
+  end
 
   local function referenceBytes(value, limits)
     limits = limits or {}
@@ -41,8 +69,7 @@ return function(T)
         if not finite(item) then
           error("packet hash rejects non-finite numbers", 3)
         end
-        if item == 0 then item = 0 end
-        local number = string.format("%.17g", item)
+        local number = referenceNumberFrame(item)
         feed("d" .. #number .. ":" .. number .. ";")
         return
       end
@@ -159,7 +186,7 @@ return function(T)
     return result
   end
 
-  T.test("packet hashing matches the legacy reference for mixed random shapes", function()
+  T.test("packet hashing matches the independent reference for mixed random shapes", function()
     local random = newRandom(99173)
     local shapes = {
       { "x", "y", "z", "kind" },
@@ -202,6 +229,15 @@ return function(T)
       },
     }
     assertPacketMatchesReference(value)
+  end)
+
+  T.test("bounded numeric-frame reuse preserves overflow and repeated values", function()
+    local values = {}
+    for index = 1, 768 do values[index] = index + 0.25 end
+    for index = 769, 1536 do
+      values[index] = values[(index - 1) % 64 + 1]
+    end
+    assertPacketMatchesReference(values)
   end)
 
   T.test("verified layout reuse rejects absent extra and adversarial keys", function()

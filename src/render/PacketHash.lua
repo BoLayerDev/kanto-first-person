@@ -6,10 +6,17 @@ local FEED_CHUNK_BYTES = 64
 local SMALL_SORT_KEYS = 32
 local MAX_CACHED_STRING_LENGTH = 64
 local MAX_STRING_FRAMES = 256
+local MAX_NUMBER_FRAMES = 256
 local MAX_KEY_LAYOUTS = 64
 local MAX_LAYOUTS_PER_COUNT = 8
 local MAX_LAYOUT_KEYS = 16
-local COMMAND_DOMAIN_PREFIX = "t2{s6:domain;s14:kfp-command-v1;s5:value;"
+local DOUBLE_SIGNIFICAND = 9007199254740992
+local SIGNIFICAND_LOW_BASE = 67108864
+local FREXP_EXPONENT_BIAS = 1074
+local BINARY_NUMBER_TAG = 102 -- ASCII "f", outside decimal number syntax
+local ZERO_NUMBER_FRAME = "z;"
+-- This is the KFP hash-serialization version. The draw/API schema remains v1.
+local COMMAND_DOMAIN_PREFIX = "t2{s6:domain;s14:kfp-command-v2;s5:value;"
 local TABLE_SUFFIX = "};"
 
 local RUNTIME_FIELDS = {
@@ -25,6 +32,48 @@ local RUNTIME_FIELDS = {
 local function finite(value)
   return type(value) == "number" and value == value
     and value ~= math.huge and value ~= -math.huge
+end
+
+-- Frame every finite nonzero double from its exact binary parts. This avoids
+-- runtime and C-library decimal rounding rules. frexp normalizes subnormals;
+-- multiplying its fraction by 2^53 and splitting at 2^26 stays exact.
+-- The fixed-width layout is tag, signed biased exponent, high 27 bits, then
+-- low 26 bits. The sign occupies the high bit of the exponent's first byte.
+-- The f and z tags are outside the legacy finite-decimal alphabet, and the
+-- outer length prefix disambiguates the zero token's semicolon. Thus no new
+-- numeric frame can equal a legacy numeric frame.
+local function numberFrame(value)
+  if value == 0 then return ZERO_NUMBER_FRAME end
+  local negative = value < 0
+  if negative then value = -value end
+  local fraction, exponent = math.frexp(value)
+  local significand = fraction * DOUBLE_SIGNIFICAND
+  local high = math.floor(significand / SIGNIFICAND_LOW_BASE)
+  local low = significand - high * SIGNIFICAND_LOW_BASE
+  local biasedExponent = exponent + FREXP_EXPONENT_BIAS
+  local exponentHigh = math.floor(biasedExponent / 256)
+  local exponentLow = biasedExponent - exponentHigh * 256
+  if negative then exponentHigh = exponentHigh + 128 end
+
+  local high1 = math.floor(high / 256)
+  local high0 = high - high1 * 256
+  local high2 = math.floor(high1 / 256)
+  high1 = high1 - high2 * 256
+  local high3 = math.floor(high2 / 256)
+  high2 = high2 - high3 * 256
+
+  local low1 = math.floor(low / 256)
+  local low0 = low - low1 * 256
+  local low2 = math.floor(low1 / 256)
+  low1 = low1 - low2 * 256
+  local low3 = math.floor(low2 / 256)
+  low2 = low2 - low3 * 256
+
+  return string.char(
+    BINARY_NUMBER_TAG, exponentHigh, exponentLow,
+    high3, high2, high1, high0,
+    low3, low2, low1, low0
+  )
 end
 
 local function keyOrder(a, b)
@@ -124,6 +173,8 @@ local function hashValue(value, limits, checkpoint, captureState)
   local keyPools = {}
   local stringFrames = {}
   local stringFrameCount = 0
+  local numberFrames = {}
+  local numberFrameCount = 0
   local keyLayouts = {}
   local keyLayoutCount = 0
 
@@ -212,6 +263,37 @@ local function hashValue(value, limits, checkpoint, captureState)
     end
   end
 
+  local function cachedNumberState(value)
+    local cached = numberFrames[value]
+    if cached then return cached[1], cached[2], cached[3] end
+    local number = numberFrame(value)
+    local frame = "d" .. #number .. ":" .. number .. ";"
+    local length, aDelta, bDelta = #frame, 0, 0
+    for index = 1, length do
+      local byte = frame:byte(index)
+      aDelta = aDelta + byte
+      bDelta = bDelta + (length - index + 1) * byte
+    end
+    aDelta = aDelta % MOD
+    bDelta = bDelta % MOD
+    if numberFrameCount < MAX_NUMBER_FRAMES then
+      numberFrames[value] = { length, aDelta, bDelta }
+      numberFrameCount = numberFrameCount + 1
+    end
+    return length, aDelta, bDelta
+  end
+
+  local function feedNumber(value)
+    local length, aDelta, bDelta = cachedNumberState(value)
+    local initialA = a
+    a = (a + aDelta) % MOD
+    b = (b + length * initialA + bDelta) % MOD
+    if captureState then byteCount = (byteCount + length) % MOD end
+    -- Every numeric frame is shorter than FEED_CHUNK_BYTES, so this preserves
+    -- the original one-checkpoint incremental work boundary.
+    if checkpoint then checkpoint() end
+  end
+
   local encode
   encode = function(item, depth)
     local kind = type(item)
@@ -219,9 +301,7 @@ local function hashValue(value, limits, checkpoint, captureState)
     if kind == "boolean" then feed(item and "b1;" or "b0;"); return end
     if kind == "number" then
       if not finite(item) then error("packet hash rejects non-finite numbers", 3) end
-      if item == 0 then item = 0 end
-      local number = string.format("%.17g", item)
-      feed("d" .. #number .. ":" .. number .. ";")
+      feedNumber(item)
       return
     end
     if kind == "string" then feed(stringFrame(item)); return end

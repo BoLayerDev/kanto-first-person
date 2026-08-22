@@ -24,7 +24,87 @@ return function(T)
     local first = { phases = { background = { { kind = "mesh", width = 16 } } } }
     local second = { phases = { background = { { kind = "mesh", width = 17 } } } }
     T.notEqual(PacketHash.hash(first), PacketHash.hash(second))
-    T.equal(PacketHash.hash(first), "8fac1be2")
+    T.equal(PacketHash.hash(first), "4b031cf1")
+  end)
+
+  T.test("numeric frames are exact across runtimes and VM number tags", function()
+    local minimumSubnormal = math.ldexp(1, -1074)
+    local maximumSubnormal = math.ldexp(1, -1022) - minimumSubnormal
+    local minimumNormal = math.ldexp(1, -1022)
+    local maximumFinite = math.ldexp(2 - math.ldexp(1, -52), 1023)
+    local previousBelowOne = 1 - math.ldexp(1, -53)
+    local nextAboveOne = 1 + math.ldexp(1, -52)
+
+    -- These goldens come from independent IEEE-754 bit fields, with no
+    -- decimal formatter. They cover every boundary used by the binary frame.
+    local vectors = {
+      { "positive zero", 0.0, "065f01c1" },
+      { "negative zero", -0.0, "065f01c1" },
+      { "minimum subnormal", minimumSubnormal, "140001a7" },
+      { "maximum subnormal", maximumSubnormal, "340807d9" },
+      { "minimum normal", minimumNormal, "160801db" },
+      { "maximum finite", maximumFinite, "344e07e0" },
+      { "one tenth", 0.1, "23d004da" },
+      { "one third", 1 / 3, "201003db" },
+      { "previous below one", previousBelowOne, "342207dc" },
+      { "one", 1, "162001dd" },
+      { "next above one", nextAboveOne, "162201de" },
+      { "negative one", -1, "1ba0025d" },
+      { "positive int32 limit", 2147483647, "2f6105be" },
+      { "negative int32 limit", -2147483648, "1cd6027c" },
+      { "2^53 minus one", 9007199254740991, "36340811" },
+      { "2^53", 9007199254740992, "18320212" },
+      { "next double above 2^53", 9007199254740994, "18340213" },
+      { "weather rounding tie", 638.746246337890625, "224c0375" },
+      { "wildlife rounding tie", 273.620147705078125, "1c2d02ae" },
+      { "negative wildlife tie", -273.620147705078125, "21ad032e" },
+    }
+    local hashes = {}
+    for _, vector in ipairs(vectors) do
+      local name, value, expected = vector[1], vector[2], vector[3]
+      local actual = PacketHash.hash(value)
+      T.equal(actual, expected, name)
+      T.equal(#actual, 8, name)
+      T.truthy(actual:match("^[0-9a-f]+$"), name)
+      T.equal(finish(PacketHash.newJob(value), 1), expected, name)
+      hashes[name] = actual
+    end
+
+    T.equal(PacketHash.hash(1), PacketHash.hash(1.0))
+    T.equal(PacketHash.hash(1), PacketHash.hash(tonumber("1")))
+    T.equal(PacketHash.hash(2147483647), PacketHash.hash(2147483647.0))
+    T.equal(PacketHash.hash(2147483647),
+      PacketHash.hash(tonumber("2147483647")))
+    T.equal(PacketHash.hash(-2147483648), PacketHash.hash(-2147483648.0))
+    T.equal(PacketHash.hash(-2147483648),
+      PacketHash.hash(tonumber("-2147483648")))
+    T.notEqual(hashes["previous below one"], hashes.one)
+    T.notEqual(hashes.one, hashes["next above one"])
+    T.notEqual(hashes["2^53 minus one"], hashes["2^53"])
+    T.notEqual(hashes["2^53"], hashes["next double above 2^53"])
+
+    local numericKeys = {
+      [-2147483648] = "min",
+      [0.1] = "tenth",
+      [638.746246337890625] = "weather",
+      [9007199254740991] = "exact",
+    }
+    T.equal(PacketHash.hash(numericKeys), "13f52194")
+    T.equal(finish(PacketHash.newJob(numericKeys), 1), "13f52194")
+
+    local prefixSafe = {
+      booleanFalse = false,
+      booleanTrue = true,
+      numberOne = 1,
+      numberZero = -0.0,
+      stringFrame = "f",
+      stringZero = "z;",
+    }
+    T.equal(PacketHash.hash(prefixSafe), "bba82bcd")
+    T.notEqual(PacketHash.hash(false), PacketHash.hash(0))
+    T.notEqual(PacketHash.hash(true), PacketHash.hash(1))
+    T.notEqual(PacketHash.hash("f"), PacketHash.hash(1))
+    T.notEqual(PacketHash.hash("z;"), PacketHash.hash(0))
   end)
 
   T.test("packet hashes reject unsafe and unbounded data", function()
@@ -50,7 +130,7 @@ return function(T)
       texture = textureB, cacheKey = "old", schemaVersion = 99,
     }
     T.equal(PacketHash.hashCommand(first), PacketHash.hashCommand(second))
-    T.equal(PacketHash.hashCommand(first), "011e31dfb9e840f6")
+    T.equal(PacketHash.hashCommand(first), "00ba338a899442a2")
     second.geometry.width = 17
     T.notEqual(PacketHash.hashCommand(first), PacketHash.hashCommand(second))
     T.truthy(PacketHash.hashCommand(first):match("^[0-9a-f]+$"))

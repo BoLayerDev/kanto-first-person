@@ -29,24 +29,24 @@ return function(T)
   local goldenHashes = {
     -- A changed hash requires a deliberate review of the declarative command
     -- diff. These hashes do not represent pixel output.
-    indoor = "b5c5d5c7",
-    cave = "56288537",
-    forest = "6f68303c",
-    city_lavender = "1e5c51b5",
-    route_neighbor_edge = "fb85dae6",
-    shore = "fb9928b2",
-    mountain = "e2bcb2a0",
-    day = "2825a5bd",
-    night = "7f4231b4",
-    rain = "c2b9fc1b",
-    storm = "54305173",
-    battle_supported = "3a664439",
-    battle_unsupported = "ccbbe2b2",
+    indoor = "318d94c5",
+    cave = "e3d4bb55",
+    forest = "da83bda9",
+    city_lavender = "5a905f9c",
+    route_neighbor_edge = "fa42f131",
+    shore = "a4a51bb0",
+    mountain = "84b0b094",
+    day = "a35ca526",
+    night = "642239d9",
+    rain = "b7d2f86c",
+    storm = "234813a0",
+    battle_supported = "3f977848",
+    battle_unsupported = "bc31dc73",
   }
   local qualityHashes = {
-    HIGH = "6f68303c",
-    BALANCED = "df3f3170",
-    LOW = "593d9419",
+    HIGH = "da83bda9",
+    BALANCED = "6a0aa387",
+    LOW = "b292db9e",
   }
 
   local syntheticTexture = { syntheticOwnedResource = true }

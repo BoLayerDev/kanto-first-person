@@ -107,6 +107,12 @@ of each sealed command content hash. Benchmark fingerprints exclude `lights`
 and `postprocess`, so this benchmark does not define or freeze those optional
 kinds as expected output. The baseline draw kinds remain API-validated.
 
+KFP content hashes use the internal `kfp-command-v2` serialization domain.
+Nonzero finite numbers use exact fixed-width binary parts, and both signs of
+zero use one canonical token. Host decimal-rounding rules cannot change a
+hash. This hash domain is separate from the public `kfp1` cache-key grammar
+and API v1 draw schema, which stay unchanged.
+
 The 64x64 advisory stress check defaults to strict timing and uses the same
 five-run, 60 Hz, p50/p95/p99, maximum-slice, and unchanged 250 ms desktop
 rules. It prints the authored corpus and all three stress tiers before applying

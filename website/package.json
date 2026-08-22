@@ -8,6 +8,7 @@
     "typecheck": "tsc -b",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "test:status": "node --test scripts/generate-project-status.test.mjs",
     "test:responsive": "playwright test"
   },
   "dependencies": {

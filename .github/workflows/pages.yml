@@ -1,14 +1,16 @@
 name: Deploy Kanto Field Terminal
 
 on:
-  push:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
     branches: [v2-rewrite]
-    paths:
-      - "website/**"
-      - ".github/workflows/pages.yml"
+  release:
+    types: [published, edited, prereleased, released]
   workflow_dispatch:
 
 permissions:
+  actions: read
   contents: read
   pages: write
   id-token: write
@@ -20,12 +22,15 @@ concurrency:
 jobs:
   build:
     name: Build static site
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || 'v2-rewrite' }}
 
       - name: Install the pinned Node.js line
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -39,6 +44,20 @@ jobs:
 
       - name: Install locked dependencies
         run: npm ci --prefix website
+
+      - name: Generate the public GitHub status snapshot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITE_REPOSITORY: ${{ github.repository }}
+          SITE_SOURCE_BRANCH: v2-rewrite
+          SITE_SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          SITE_CI_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || '' }}
+          SITE_CI_RUN_URL: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.html_url || '' }}
+          SITE_CI_CONCLUSION: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion || '' }}
+          SITE_CI_HEAD_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || '' }}
+          SITE_GENERATED_AT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.updated_at || '' }}
+          SITE_REQUIRE_VERIFIED_CI: 'true'
+        run: node website/scripts/generate-project-status.mjs
 
       - name: Build the static site
         run: npm run build --prefix website

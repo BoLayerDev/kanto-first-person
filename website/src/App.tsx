@@ -1,13 +1,10 @@
 import { lazy, Suspense, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
 
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
-const RELEASE_VERSION = '2.0.0-alpha.1'
-const SOURCE_CHECKPOINT = 'cfc045b'
-const SOURCE_COMMIT = `${REPO}/commit/cfc045bec72c2ceecd558b24bcd643c8e0b720dc`
-const LATEST_CI = `${REPO}/actions/runs/32571329500`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 
 type MenuItem = {
@@ -85,23 +82,38 @@ function DetailLinks({ children }: { children: ReactNode }) {
   return <div className="detail-links">{children}</div>
 }
 
-function ReleaseBanner() {
+function ReleaseBanner({ status }: { status: ProjectStatus }) {
+  const buildLabel = status.ci.state === 'success' && status.ci.total > 0
+    ? `${status.ci.passed}/${status.ci.total} PASS`
+    : 'CHECK CI'
+  const syncDate = status.generatedAt.slice(0, 10)
+  const packageCard = status.release.available ? (
+    <a href={status.release.url} target="_blank" rel="noreferrer">
+      <span>PACKAGE</span><b>{status.release.label}</b><i aria-hidden="true">↗</i>
+    </a>
+  ) : (
+    <div><span>PACKAGE</span><b>{status.release.label}</b></div>
+  )
+
   return (
     <section className="release-banner" aria-labelledby="site-title">
       <div className="split-core release-core" aria-hidden="true"><span /></div>
       <div className="release-copy">
         <span className="release-kicker">KANTO FIRST PERSON // TRAINERS, STAND BY</span>
         <h1 id="site-title"><span>COMING</span> SOON</h1>
-        <p>{RELEASE_VERSION} is source-evidenced. Real-game acceptance and the signed public package are still in progress.</p>
+        <p>{status.version} tracks the verified GitHub branch. Real-game acceptance and the signed public package are still in progress.</p>
+        <span className="github-sync-note">
+          SYNCED {syncDate} · {status.commitMessage}
+        </span>
       </div>
       <div className="release-status" aria-label="Current release status">
-        <a href={LATEST_CI} target="_blank" rel="noreferrer">
-          <span>BUILD</span><b>11/11 PASS</b><i aria-hidden="true">↗</i>
+        <a href={status.ci.runUrl} target="_blank" rel="noreferrer">
+          <span>BUILD</span><b>{buildLabel}</b><i aria-hidden="true">↗</i>
         </a>
-        <a href={SOURCE_COMMIT} target="_blank" rel="noreferrer">
-          <span>SOURCE</span><b>{SOURCE_CHECKPOINT}</b><i aria-hidden="true">↗</i>
+        <a href={status.commitUrl} target="_blank" rel="noreferrer">
+          <span>SOURCE</span><b>{status.shortSha}</b><i aria-hidden="true">↗</i>
         </a>
-        <div><span>PACKAGE</span><b>NOT RELEASED</b></div>
+        {packageCard}
       </div>
     </section>
   )
@@ -206,14 +218,14 @@ function RewriteDetail() {
   )
 }
 
-function MenuDetail({ index }: { index: number }) {
+function MenuDetail({ index, status }: { index: number, status: ProjectStatus }) {
   if (index === 0) {
     return (
       <>
         <div className="stat-row"><span>TYPE</span><b>GRAPHICS OVERHAUL</b></div>
         <div className="stat-row"><span>GAMES</span><b>RED · BLUE · YELLOW</b></div>
         <div className="stat-row"><span>ENGINE</span><b>GEN1RECOMP API 2</b></div>
-        <div className="alpha-notice"><i /> 2.0.0-ALPHA.1 SOURCE CANDIDATE</div>
+        <div className="alpha-notice"><i /> {status.version.toUpperCase()} SOURCE CANDIDATE</div>
         <DetailLinks>
           <a href={`${BRANCH}/README.md`} target="_blank" rel="noreferrer">PROJECT OVERVIEW <span>↗</span></a>
           <a href={`${BRANCH}/ROADMAP.md`} target="_blank" rel="noreferrer">ROADMAP <span>↗</span></a>
@@ -286,7 +298,7 @@ function MenuDetail({ index }: { index: number }) {
   )
 }
 
-function OptionsMenu() {
+function OptionsMenu({ status }: { status: ProjectStatus }) {
   const menuIndex = useJourneyStore((state) => state.menuIndex)
   const edition = useJourneyStore((state) => state.edition)
   const quality = useJourneyStore((state) => state.quality)
@@ -299,8 +311,8 @@ function OptionsMenu() {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return
-      if (event.target instanceof HTMLAnchorElement) return
       const key = event.key.toLowerCase()
+      const isAnchor = event.target instanceof HTMLAnchorElement
       const isMenuButton = event.target instanceof HTMLButtonElement
         && menuButtons.current.includes(event.target)
       if (['arrowup', 'w'].includes(key)) {
@@ -322,7 +334,7 @@ function OptionsMenu() {
         const index = EDITIONS.indexOf(edition)
         setEdition(EDITIONS[(index + 1) % EDITIONS.length])
       } else if (['enter', ' ', 'z'].includes(key)) {
-        if (event.target instanceof HTMLButtonElement && !isMenuButton && key !== 'z') return
+        if (isAnchor || (event.target instanceof HTMLButtonElement && !isMenuButton && key !== 'z')) return
         event.preventDefault()
         window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
       } else if (['escape', 'x'].includes(key)) {
@@ -337,7 +349,7 @@ function OptionsMenu() {
 
   return (
     <main className="terminal-shell">
-      <ReleaseBanner />
+      <ReleaseBanner status={status} />
 
       <div className="terminal-grid">
         <nav className="menu-window pixel-window" aria-label="Main options">
@@ -392,7 +404,7 @@ function OptionsMenu() {
           <div className="detail-copy">
             <h2 id="detail-title">{item.title}</h2>
             <p className="detail-summary">{item.summary}</p>
-            <MenuDetail index={menuIndex} />
+            <MenuDetail index={menuIndex} status={status} />
           </div>
         </section>
       </div>
@@ -409,6 +421,7 @@ function OptionsMenu() {
 }
 
 export function App() {
+  const status = useProjectStatus()
   const edition = useJourneyStore((state) => state.edition)
   const setQuality = useJourneyStore((state) => state.setQuality)
   const palette = PALETTES[edition]
@@ -433,7 +446,7 @@ export function App() {
         <WorldCanvas />
       </Suspense>
       <div className="screen-treatment" aria-hidden="true" />
-      <OptionsMenu />
+      <OptionsMenu status={status} />
     </div>
   )
 }

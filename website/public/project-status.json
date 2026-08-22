@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "version": "2.0.0-alpha.1",
+  "experimental": true,
+  "branch": "v2-rewrite",
+  "commit": "79b385131d3628f405ad264a01973c479991fc43",
+  "shortSha": "79b3851",
+  "commitMessage": "docs(release): bind alpha evidence to cfc checkpoint",
+  "commitUrl": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43",
+  "generatedAt": "2026-08-22T11:49:22Z",
+  "ci": {
+    "state": "success",
+    "runId": "32571329500",
+    "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500",
+    "passed": 11,
+    "total": 11
+  },
+  "release": {
+    "available": false,
+    "label": "NOT RELEASED",
+    "tag": "",
+    "url": "https://github.com/BoLayerDev/kanto-first-person/releases"
+  }
+}

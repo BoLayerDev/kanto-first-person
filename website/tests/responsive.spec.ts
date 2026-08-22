@@ -170,8 +170,10 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   const banner = page.getByRole('region', { name: 'COMING SOON' })
   await expect(banner).toContainText('2.0.0-alpha.1')
   await expect(banner).toContainText('11/11 PASS')
-  await expect(banner).toContainText('cfc045b')
+  await expect(banner).toContainText('79b3851')
   await expect(banner).toContainText('NOT RELEASED')
+  await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
+  await expect(banner.getByRole('link', { name: /SOURCE 79b3851/ })).toHaveAttribute('href', /commit\/79b3851/)
 
   for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'NEXT-GEN REBUILD', 'OPEN GITHUB']) {
     await page.getByRole('button', { name: label }).click()

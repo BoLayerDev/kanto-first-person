@@ -5,7 +5,7 @@ const PAGE_PATH = '/kanto-first-person/'
 test.describe('mobile field terminal', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  test('is readable, touch-friendly, stacked, and scrollable', async ({ page }) => {
+  test('is readable, touch-friendly, stacked, and scrollable', async ({ page }, testInfo) => {
     await page.goto(PAGE_PATH)
 
     const layout = await page.evaluate(() => {
@@ -86,6 +86,7 @@ test.describe('mobile field terminal', () => {
     expect(layout.canvas.width).toBe(390)
     expect(layout.canvas.height).toBe(844)
 
+    await page.screenshot({ path: testInfo.outputPath('mobile-menu.png'), fullPage: true })
     const root = page.locator('#root')
     await root.evaluate((element) => element.scrollTo({ top: 320 }))
     await expect.poll(() => root.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
@@ -204,7 +205,7 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
   await expect(banner.getByRole('link', { name: /SOURCE 5e8544f/ })).toHaveAttribute('href', /commit\/5e8544f/)
 
-  const routes = ['features', 'guide', 'support', 'rebuild', 'activity', 'github']
+  const routes = ['features', 'activity', 'guide', 'support', 'rebuild', 'github']
   for (const [index, route] of routes.entries()) {
     await page.evaluate((hash) => { window.location.hash = hash }, route)
     await expect(page.locator('.menu-window > button').nth(index + 1)).toHaveAttribute('aria-current', 'page')
@@ -277,7 +278,10 @@ test('shows the complete verified project history in the research archive', asyn
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)
 
-  await expect(page.getByRole('button', { name: 'RESEARCH ARCHIVE' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('button', { name: 'RESEARCH LOG' })).toHaveAttribute('aria-current', 'page')
+  const menuButtons = page.locator('.menu-window > button')
+  await expect(menuButtons.nth(1)).toContainText('FIELD FEATURES')
+  await expect(menuButtons.nth(2)).toContainText('RESEARCH LOG')
   await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
   const vitals = page.locator('[aria-label="Complete development totals"]')
   await expect(vitals.getByText('110', { exact: true })).toBeVisible()

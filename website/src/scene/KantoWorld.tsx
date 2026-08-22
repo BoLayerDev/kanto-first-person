@@ -7,10 +7,10 @@ import { PALETTES } from '../world/palettes'
 const CAMERA_VIEWS = [
   { position: new THREE.Vector3(3.8, 3.15, 8.2), target: new THREE.Vector3(0, 1.35, -1.5) },
   { position: new THREE.Vector3(4.4, 3.3, -5), target: new THREE.Vector3(0, 1.5, -15) },
+  { position: new THREE.Vector3(5.2, 4.4, -17), target: new THREE.Vector3(0, 1.3, -27) },
   { position: new THREE.Vector3(-3.5, 3.1, -11), target: new THREE.Vector3(0, 1.6, -22) },
   { position: new THREE.Vector3(3.2, 2.7, -27), target: new THREE.Vector3(0, 1.5, -36) },
   { position: new THREE.Vector3(-5.4, 4.8, -15), target: new THREE.Vector3(0, 1.6, -25) },
-  { position: new THREE.Vector3(5.2, 4.4, -17), target: new THREE.Vector3(0, 1.3, -27) },
   { position: new THREE.Vector3(0, 5.6, -22), target: new THREE.Vector3(0, 1.1, -34) },
 ]
 

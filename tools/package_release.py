@@ -115,13 +115,28 @@ UTC_TIMESTAMP = re.compile(
 EVIDENCE_KIND = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 OBJECT_ID = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 ARTIFACT_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$")
+ARTIFACT_SUFFIXES = (
+    ".modpkg",
+    ".zip",
+    "-SHA256SUMS.txt",
+    "-attestation.json",
+)
+MAX_WINDOWS_COMPONENT_UNITS = 255
+WINDOWS_DEVICE_SUFFIXES = (
+    *(str(number) for number in range(1, 10)),
+    "\N{SUPERSCRIPT ONE}",
+    "\N{SUPERSCRIPT TWO}",
+    "\N{SUPERSCRIPT THREE}",
+)
 WINDOWS_DEVICE_NAMES = {
     "AUX",
     "CON",
+    "CONIN$",
+    "CONOUT$",
     "NUL",
     "PRN",
-    *(f"COM{number}" for number in range(1, 10)),
-    *(f"LPT{number}" for number in range(1, 10)),
+    *(f"COM{suffix}" for suffix in WINDOWS_DEVICE_SUFFIXES),
+    *(f"LPT{suffix}" for suffix in WINDOWS_DEVICE_SUFFIXES),
 }
 
 
@@ -216,6 +231,13 @@ def validate_manifest(manifest: object) -> dict[str, object]:
             raise RuntimeError(
                 f"manifest {field} must be a portable artifact component"
             )
+    stem = f"{manifest['id']}-{manifest['version']}"
+    if any(
+        len((stem + suffix).encode("utf-16-le")) // 2
+        > MAX_WINDOWS_COMPONENT_UNITS
+        for suffix in ARTIFACT_SUFFIXES
+    ):
+        raise RuntimeError("manifest id and version produce an overlong artifact name")
     return manifest
 
 
@@ -236,6 +258,7 @@ def validate_relative_path(relative: str) -> None:
         or any(
             part in ("", ".", "..", "__pycache__")
             or part.startswith(".")
+            or len(part.encode("utf-16-le")) // 2 > MAX_WINDOWS_COMPONENT_UNITS
             for part in parts
         )
         or any(
@@ -243,7 +266,11 @@ def validate_relative_path(relative: str) -> None:
             or part.endswith((" ", "."))
             for part in parts
         )
-        or any(part.split(".", 1)[0].upper() in WINDOWS_DEVICE_NAMES for part in parts)
+        or any(
+            part.split(".", 1)[0].rstrip(" .").upper()
+            in WINDOWS_DEVICE_NAMES
+            for part in parts
+        )
     ):
         raise RuntimeError(f"unsafe package path: {relative!r}")
 

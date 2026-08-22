@@ -421,6 +421,23 @@ class ReleaseGateTests(unittest.TestCase):
                 ):
                     PACKAGE_RELEASE.validate_manifest(manifest)
 
+        longest_suffix = max(
+            PACKAGE_RELEASE.ARTIFACT_SUFFIXES,
+            key=lambda value: len(value.encode("utf-16-le")),
+        )
+        max_stem_units = (
+            PACKAGE_RELEASE.MAX_WINDOWS_COMPONENT_UNITS
+            - len(longest_suffix.encode("utf-16-le")) // 2
+        )
+        safe_id = "i" * 128
+        safe_version = "1" * (max_stem_units - len(safe_id) - 1)
+        safe = {"id": safe_id, "version": safe_version}
+        self.assertEqual(PACKAGE_RELEASE.validate_manifest(safe), safe)
+        with self.assertRaisesRegex(RuntimeError, "overlong artifact name"):
+            PACKAGE_RELEASE.validate_manifest(
+                {"id": safe_id, "version": safe_version + "1"}
+            )
+
     def test_runtime_package_paths_use_an_explicit_allowlist(self):
         self.assertTrue(PACKAGE_RELEASE.allowed_runtime_path("src/core/RNG.lua"))
         self.assertTrue(
@@ -584,6 +601,16 @@ class ReleaseGateTests(unittest.TestCase):
             "src\\backslash.lua",
             "src/../traversal.lua",
             "src/CON.lua",
+            "src/CONIN$.lua",
+            "src/conout$.txt.lua",
+            "src/CON .lua",
+            "src/COM1 .lua",
+            "src/COM\N{SUPERSCRIPT ONE}.lua",
+            "src/COM\N{SUPERSCRIPT TWO}.txt.lua",
+            "src/COM\N{SUPERSCRIPT THREE}.lua",
+            "src/LPT\N{SUPERSCRIPT ONE}.lua",
+            "src/LPT\N{SUPERSCRIPT TWO}.txt.lua",
+            "src/LPT\N{SUPERSCRIPT THREE}.lua",
             "src/trailing.",
             "src/trailing ",
             "src/.secret.lua",
@@ -596,6 +623,16 @@ class ReleaseGateTests(unittest.TestCase):
             with self.subTest(relative=relative):
                 with self.assertRaisesRegex(RuntimeError, "unsafe package path"):
                     PACKAGE_RELEASE.validate_relative_path(relative)
+
+        PACKAGE_RELEASE.validate_relative_path(
+            "src/" + "a" * 251 + ".lua"
+        )
+        for overlong in (
+            "src/" + "a" * 252 + ".lua",
+            "src/" + "\N{GRINNING FACE}" * 126 + ".lua",
+        ):
+            with self.assertRaisesRegex(RuntimeError, "unsafe package path"):
+                PACKAGE_RELEASE.validate_relative_path(overlong)
 
     def test_modpkg_runtime_must_match_staging_paths_and_bytes(self):
         with tempfile.TemporaryDirectory() as raw:

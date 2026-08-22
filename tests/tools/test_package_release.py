@@ -400,6 +400,27 @@ class ReleaseGateTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
             PACKAGE_RELEASE.strict_json_loads('{"permissions":[],"permissions":["filesystem"]}')
 
+    def test_manifest_rejects_unsafe_artifact_components(self):
+        self.assertEqual(
+            PACKAGE_RELEASE.load_manifest_bytes(
+                b'{"id":"ds_fp_ceiling","version":"2.0.0-alpha.1"}'
+            )["version"],
+            "2.0.0-alpha.1",
+        )
+        for field, value in (
+            ("id", "../outside"),
+            ("id", "C:\\outside"),
+            ("version", "/absolute"),
+            ("version", "2.0.0 beta"),
+        ):
+            manifest = {"id": "fixture", "version": "1.0.0"}
+            manifest[field] = value
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(
+                    RuntimeError, "portable artifact component"
+                ):
+                    PACKAGE_RELEASE.validate_manifest(manifest)
+
     def test_runtime_package_paths_use_an_explicit_allowlist(self):
         self.assertTrue(PACKAGE_RELEASE.allowed_runtime_path("src/core/RNG.lua"))
         self.assertTrue(

@@ -114,6 +114,7 @@ UTC_TIMESTAMP = re.compile(
 )
 EVIDENCE_KIND = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 OBJECT_ID = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
+ARTIFACT_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$")
 WINDOWS_DEVICE_NAMES = {
     "AUX",
     "CON",
@@ -207,8 +208,14 @@ def validate_manifest(manifest: object) -> dict[str, object]:
     if not isinstance(manifest, dict):
         raise RuntimeError("manifest root must be a JSON object")
     for field in ("id", "version"):
-        if not isinstance(manifest.get(field), str) or not manifest[field]:
-            raise RuntimeError(f"manifest {field} must be a non-empty string")
+        value = manifest.get(field)
+        if (
+            not isinstance(value, str)
+            or ARTIFACT_COMPONENT.fullmatch(value) is None
+        ):
+            raise RuntimeError(
+                f"manifest {field} must be a portable artifact component"
+            )
     return manifest
 
 

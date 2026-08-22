@@ -15,6 +15,7 @@
       .card { font-size: 18px; }
       .body { font-size: 26px; }
       .label { font-size: 29px; }
+      .translation-label { font-size: 25px; letter-spacing: -1px; }
       .title { font-size: 76px; letter-spacing: -4px; }
     </style>
   </defs>
@@ -87,12 +88,12 @@
     <text x="34" y="48" class="tiny" fill="#ffdc5b">GAME TRANSLATION TABLE // COMMITS BECOME READABLE PROGRESS</text>
 
     <g transform="translate(28 86)">
-      <g><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FEAT</text><text x="18" y="77" class="label" fill="#ee4c47">NEW MOVE</text></g>
-      <g transform="translate(242)"><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FIX</text><text x="18" y="77" class="label" fill="#ee4c47">HP RESTORED</text></g>
-      <g transform="translate(484)"><rect width="218" height="104" fill="#fff8df" stroke="#2e5ea7" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">PERF</text><text x="18" y="77" class="label" fill="#2e5ea7">SPEED +1</text></g>
-      <g transform="translate(726)"><rect width="218" height="104" fill="#fff8df" stroke="#4e8b55" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">CI / TEST</text><text x="18" y="77" class="label" fill="#4e8b55">LAB VERIFIED</text></g>
-      <g transform="translate(968)"><rect width="218" height="104" fill="#fff8df" stroke="#9a5c3f" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">DOCS</text><text x="18" y="77" class="label" fill="#9a5c3f">FIELD NOTES</text></g>
-      <g transform="translate(1210)"><rect width="218" height="104" fill="#fff8df" stroke="#7254a8" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">REFACTOR</text><text x="18" y="77" class="label" fill="#7254a8">EVOLVED</text></g>
+      <g class="translation-card"><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FEAT</text><text x="18" y="77" class="translation-label" fill="#ee4c47">NEW MOVE</text></g>
+      <g class="translation-card" transform="translate(242)"><rect width="218" height="104" fill="#fff8df" stroke="#ee4c47" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">FIX</text><text x="18" y="77" class="translation-label" fill="#ee4c47">HP RESTORED</text></g>
+      <g class="translation-card" transform="translate(484)"><rect width="218" height="104" fill="#fff8df" stroke="#2e5ea7" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">PERF</text><text x="18" y="77" class="translation-label" fill="#2e5ea7">SPEED +1</text></g>
+      <g class="translation-card" transform="translate(726)"><rect width="218" height="104" fill="#fff8df" stroke="#4e8b55" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">CI / TEST</text><text x="18" y="77" class="translation-label" fill="#4e8b55">LAB VERIFIED</text></g>
+      <g class="translation-card" transform="translate(968)"><rect width="218" height="104" fill="#fff8df" stroke="#9a5c3f" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">DOCS</text><text x="18" y="77" class="translation-label" fill="#9a5c3f">FIELD NOTES</text></g>
+      <g class="translation-card" transform="translate(1210)"><rect width="218" height="104" fill="#fff8df" stroke="#7254a8" stroke-width="5"/><text x="18" y="40" class="tiny" fill="#59654d">REFACTOR</text><text x="18" y="77" class="translation-label" fill="#7254a8">EVOLVED</text></g>
     </g>
   </g>
 

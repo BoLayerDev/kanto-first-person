@@ -14,11 +14,15 @@ local API = load("companion/api_v1.lua")
 local LRU = load("src/core/LRU.lua")
 local LedgeLeapPolicy = load("src/gameplay/LedgeLeapPolicy.lua")
 local PacketHash = load("src/render/PacketHash.lua")
+local Quality = load("src/render/Quality.lua")
 local SceneCompiler = load("src/render/SceneCompiler.lua")
 
-local function highResolutionClock()
+local function monotonicWallClock()
   local ok, ffi = pcall(require, "ffi")
-  if ok and ffi.os == "Windows" then
+  if not ok then
+    error("packet-seal timing requires LuaJIT FFI")
+  end
+  if ffi.os == "Windows" then
     ffi.cdef([[
       int QueryPerformanceCounter(int64_t *value);
       int QueryPerformanceFrequency(int64_t *value);
@@ -34,10 +38,27 @@ local function highResolutionClock()
       return tonumber(value[0]) / unitsPerSecond
     end
   end
-  return os.clock
+  ffi.cdef([[
+    struct kfp_benchmark_timespec {
+      long tv_sec;
+      long tv_nsec;
+    };
+    int clock_gettime(int clock_id, struct kfp_benchmark_timespec *value);
+  ]])
+  local clockId = ffi.os == "OSX" and 6 or 1
+  local value = ffi.new("struct kfp_benchmark_timespec[1]")
+  return function()
+    assert(ffi.C.clock_gettime(clockId, value) == 0,
+      "clock_gettime failed")
+    return tonumber(value[0].tv_sec) + tonumber(value[0].tv_nsec) / 1000000000
+  end
 end
 
-local benchmarkClock = highResolutionClock()
+local benchmarkClock = monotonicWallClock()
+local timingMode = BenchmarkStats.timingMode(
+  arg,
+  os.getenv("KFP_BENCHMARK_MODE")
+)
 
 local optionValues = {}
 for _, row in ipairs(Config.optionSchema()) do optionValues[row.key] = row.default end
@@ -98,41 +119,52 @@ end
 
 if retained == nil then error("benchmark result was unexpectedly nil") end
 
-local function denseSceneBuffer()
+local FULL_DENSE_ITEMS = 64 * 64
+local MAX_BATCH_ITEMS = 2048
+
+local function denseSceneBuffer(itemCount)
   local buffer = CommandBuffer.new({
     maxCommands = 4096,
-    maxBatchItems = 2048,
+    maxBatchItems = MAX_BATCH_ITEMS,
     hashCommand = PacketHash.hashCommand,
     newHashCommandJob = PacketHash.newCommandHashJob,
   })
-  for z = 1, 64 do
-    for x = 1, 64 do
-      buffer:addBatchItem("opaque_after_terrain", "instances", "dense", {
-        owner = "benchmark", material = "trees", sortKey = "trees",
-        prototype = {
-          primitive = "box",
-          width = 1,
-          height = 2,
-          depth = 1,
-          role = "terrain",
-        },
-      }, {
-        x = x,
-        y = (x + z) % 7,
-        z = z,
-      })
-    end
+  for index = 1, itemCount do
+    local x = (index - 1) % 64 + 1
+    local z = math.floor((index - 1) / 64) + 1
+    buffer:addBatchItem("opaque_after_terrain", "instances", "dense", {
+      owner = "benchmark", material = "trees", sortKey = "trees",
+      prototype = {
+        primitive = "box",
+        width = 1,
+        height = 2,
+        depth = 1,
+        role = "terrain",
+      },
+    }, {
+      x = x,
+      y = (x + z) % 7,
+      z = z,
+    })
   end
   return buffer
 end
 
-local function validateDensePacket(packet)
-  assert(packet.commandCount == 2,
-    "dense scene must use two protocol-valid batches")
+local function validateDensePacket(packet, itemCount)
+  local expectedCommands = math.ceil(itemCount / MAX_BATCH_ITEMS)
+  assert(packet.commandCount == expectedCommands,
+    "dense scene must use the expected protocol-valid batches")
   local commands = packet.phases.opaque_after_terrain
-  assert(#commands == 2 and #commands[1].items == 2048
-      and #commands[2].items == 2048,
-    "dense scene batches must stay within the 2,048-item protocol limit")
+  assert(#commands == expectedCommands,
+    "dense scene packet command count is inconsistent")
+  local remaining = itemCount
+  for _, command in ipairs(commands) do
+    local expectedItems = math.min(remaining, MAX_BATCH_ITEMS)
+    assert(#command.items == expectedItems,
+      "dense scene batches must stay within the 2,048-item protocol limit")
+    remaining = remaining - expectedItems
+  end
+  assert(remaining == 0, "dense scene packet lost benchmark items")
   for _, phaseCommands in pairs(packet.phases) do
     for _, command in ipairs(phaseCommands) do
       local ok, err = API.validate_draw_command(command, command.kind)
@@ -143,8 +175,8 @@ end
 
 local FRAME_MS = 1000 / 60
 
-local function benchmarkDenseSeal(budgetMs, label)
-  local buffer = denseSceneBuffer()
+local function benchmarkDenseSeal(budgetMs, itemCount, label)
+  local buffer = denseSceneBuffer(itemCount)
   collectgarbage("collect")
   local compiler = SceneCompiler.new({
     features = {},
@@ -158,26 +190,25 @@ local function benchmarkDenseSeal(budgetMs, label)
   })
   local requestCpuMs = (benchmarkClock() - requestStarted) * 1000
 
-  local slices, totalCpuMs = {}, 0
+  local slices, totalWallMs = {}, 0
   local updates = 0
   while not compiler:active() do
     local started = benchmarkClock()
     compiler:step(budgetMs)
     local elapsedMs = (benchmarkClock() - started) * 1000
     slices[#slices + 1] = elapsedMs
-    totalCpuMs = totalCpuMs + elapsedMs
+    totalWallMs = totalWallMs + elapsedMs
     updates = updates + 1
     if updates > 10000 then error("dense scene seal did not finish") end
   end
 
   local packet = compiler:active()
-  validateDensePacket(packet)
-  assert(updates > 1, "dense scene seal completed in one unbounded slice")
+  validateDensePacket(packet, itemCount)
   return {
     updates = updates,
     slices = slices,
     requestCpuMs = requestCpuMs,
-    totalCpuMs = totalCpuMs,
+    totalWallMs = totalWallMs,
     -- The request is issued immediately after an update. Each compiler step
     -- then runs once on the next 60 Hz update. Readiness also includes the
     -- final compiler slice that produces the packet.
@@ -190,47 +221,67 @@ local function benchmarkDenseSeal(budgetMs, label)
   }
 end
 
--- Warm the LuaJIT traces before the five measured 60 Hz request cycles.
-benchmarkDenseSeal(2.0, "warmup")
-for _, tier in ipairs({
-  { name = "low", budget = 0.5 },
-  { name = "balanced", budget = 1.0 },
-  { name = "high", budget = 2.0 },
-}) do
+local qualityPolicies = Quality.all()
+local tiers = {
+  { name = "low", policy = qualityPolicies.LOW },
+  { name = "balanced", policy = qualityPolicies.BALANCED },
+  { name = "high", policy = qualityPolicies.HIGH },
+}
+for _, tier in ipairs(tiers) do
+  tier.budget = tier.policy.buildBudgetMs
+  tier.itemCount = BenchmarkStats.scaledItemCount(
+    FULL_DENSE_ITEMS,
+    tier.policy.density
+  )
+end
+
+io.write(("packet_seal_timing      mode %s | monotonic wall observations"
+  .. " | prebuilt buffer | not full-scene evidence\n"):format(timingMode))
+
+-- Warm the LuaJIT traces with the complete High-tier corpus before the five
+-- measured 60 Hz request cycles for each production density policy.
+benchmarkDenseSeal(
+  qualityPolicies.HIGH.buildBudgetMs,
+  FULL_DENSE_ITEMS,
+  "warmup"
+)
+for _, tier in ipairs(tiers) do
   local sliceSamples, readinessSamples = {}, {}
-  local updateSamples, cpuSamples, requestSamples = {}, {}, {}
+  local updateSamples, wallSamples, requestSamples = {}, {}, {}
   for attempt = 1, 5 do
-    local result = benchmarkDenseSeal(tier.budget, tier.name .. ":" .. attempt)
+    local result = benchmarkDenseSeal(
+      tier.budget,
+      tier.itemCount,
+      tier.name .. ":" .. attempt
+    )
     for _, elapsedMs in ipairs(result.slices) do
       sliceSamples[#sliceSamples + 1] = elapsedMs
     end
     readinessSamples[#readinessSamples + 1] = result.readinessMs
     updateSamples[#updateSamples + 1] = result.updates
-    cpuSamples[#cpuSamples + 1] = result.totalCpuMs
+    wallSamples[#wallSamples + 1] = result.totalWallMs
     requestSamples[#requestSamples + 1] = result.requestCpuMs
   end
 
-  local sliceStats = BenchmarkStats.assertSliceBudget(
+  local sliceStats, readinessStats = BenchmarkStats.evaluatePacketSeal(
     sliceSamples,
-    tier.budget,
-    0.25,
-    tier.name
-  )
-  local readinessStats = BenchmarkStats.assertDesktopReadiness(
     readinessSamples,
-    tier.name
+    tier.budget,
+    tier.name .. " packet seal",
+    timingMode
   )
   local updateStats = BenchmarkStats.statistics(updateSamples)
-  local cpuStats = BenchmarkStats.statistics(cpuSamples)
+  local wallStats = BenchmarkStats.statistics(wallSamples)
   local requestStats = BenchmarkStats.statistics(requestSamples)
-  io.write(("%-24s 5 runs | updates p50/p95/p99 %d/%d/%d"
+  io.write(("%-24s 5 runs | items %d | updates p50/p95/p99 %d/%d/%d"
     .. " | ready ms %.3f/%.3f/%.3f | slice ms %.3f/%.3f/%.3f max %.3f"
-    .. " | CPU ms %.3f | request ms %.3f\n"):format(
-    "scene_seal_" .. tier.name,
+    .. " | wall ms %.3f | request wall ms %.3f\n"):format(
+    "packet_seal_" .. tier.name,
+    tier.itemCount,
     updateStats.p50, updateStats.p95, updateStats.p99,
     readinessStats.p50, readinessStats.p95, readinessStats.p99,
     sliceStats.p50, sliceStats.p95, sliceStats.p99, sliceStats.maximum,
-    cpuStats.p50,
+    wallStats.p50,
     requestStats.p50
   ))
 end

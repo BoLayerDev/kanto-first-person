@@ -43,12 +43,29 @@ The public corpus uses synthetic ROM-free maps for indoor, cave, forest, city, r
 7. Run an uncached map-entry test separately.
 8. Run 100 alternating transitions and a 30-minute soak.
 
-`tools/run_benchmarks.lua` is a ROM-free desktop microbenchmark. It issues one
-compiler update per simulated 60 Hz frame. Native 30 Hz Low-tier results are a
-separate device-evidence gate; the desktop microbenchmark does not infer or
-replace them. The desktop microbenchmark applies the 250 ms readiness limit to
-High, Balanced, and Low. The 750 ms allowance applies only to separately
-recorded evidence from the lowest certified native device.
+`tools/run_benchmarks.lua` is a ROM-free packet-seal stress check. The command
+buffer is built before timing and the compiler has no feature tasks. It is not a
+complete uncached-scene benchmark. Its 4,096-item synthetic corpus is the
+High-tier workload. Balanced and Low apply their production 60% and 30% density
+policies to that same ordered corpus. The report includes the exact item count
+for each tier and uses one compiler update per simulated 60 Hz frame.
+
+The default command uses `KFP_BENCHMARK_MODE=strict`. Run it only on a controlled
+native reference system. Strict mode applies the unchanged build-slice limit
+plus 0.25 ms and the 250 ms simulated packet-seal readiness limit to High,
+Balanced, and Low.
+
+The workflow explicitly sets `KFP_BENCHMARK_MODE=shared-ci`. This mode validates
+packet shape, API conformance, tier workload, and incremental completion. It
+reports monotonic wall-clock observations but does not treat them as performance
+evidence because shared-runner descheduling can add unbounded wall time that KFP
+did not consume. Deterministic slice and hash-parity tests remain mandatory in
+the normal test suite. Shared-CI mode must never approve a performance gate.
+
+Passing strict mode does not satisfy the complete uncached-scene gate. Record
+that gate separately with the runtime corpus and the injected LÖVE monotonic
+clock. Native 30 Hz Low-tier results are also separate device evidence. The
+750 ms allowance applies only to the lowest certified native device.
 
 ## Pass conditions
 

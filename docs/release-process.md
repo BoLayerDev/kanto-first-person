@@ -62,6 +62,9 @@ python -m unittest discover -s tests/tools -p "test_*.py" -v
 Record the exact engine and host commits. Re-audit the latest Gen1recomp release.
 Confirm that the selected ledger has the exact manifest version, channel, tag,
 gate set, affirmative approval, and immutable evidence hashes.
+Run the benchmark command in its default strict mode only on the recorded,
+controlled native reference system. A shared-CI report is structural and
+advisory; it cannot approve performance or complete uncached-scene readiness.
 
 ## Tag and build
 

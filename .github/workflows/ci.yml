@@ -43,7 +43,9 @@ jobs:
       - name: Run ROM-free tests
         run: lua tools/run_tests.lua
 
-      - name: Run bounded microbenchmarks
+      - name: Run packet-seal stress check with advisory timing
+        env:
+          KFP_BENCHMARK_MODE: shared-ci
         run: lua tools/run_benchmarks.lua
 
       - name: Test release and device-evidence controls

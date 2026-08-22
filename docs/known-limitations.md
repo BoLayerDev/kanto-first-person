@@ -52,7 +52,8 @@ a waiver for a failed release gate.
 
 ## Performance and release state
 
-- Source microbenchmarks pass, but real GPU frame-time, draw-call, scene-ready,
+- Packet-seal correctness and deterministic work gates pass. Shared-CI wall
+  timing is advisory. Native GPU frame-time, draw-call, complete scene-ready,
   100-transition, and 30-minute soak evidence is incomplete.
 - No public alpha package is approved. Existing packages are private,
   non-publishable engineering artifacts.

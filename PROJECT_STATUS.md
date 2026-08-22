@@ -13,9 +13,10 @@ Last updated: 2026-08-22
   current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Current local common-source gates pass: 252 Lua tests, 84 Lua syntax checks,
-  28 Python tests, repository policy, deterministic cloud generation, and
-  microbenchmarks. CI for the v0.2.19 pin has not run yet.
+- Current local common-source gates pass: Lua and Python tests, Lua syntax,
+  repository policy, deterministic cloud generation, packet-seal correctness,
+  and deterministic work gates. Shared-CI wall timing is advisory and does not
+  approve performance. CI for the v0.2.19 pin has not run yet.
 
 ## Active workstreams
 

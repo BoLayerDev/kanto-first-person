@@ -28,6 +28,28 @@ function BenchmarkStats.statistics(values)
   }
 end
 
+function BenchmarkStats.scaledItemCount(fullCount, density)
+  fullCount = tonumber(fullCount)
+  density = tonumber(density)
+  if not finite(fullCount) or fullCount ~= math.floor(fullCount)
+      or fullCount < 1 or not finite(density)
+      or density <= 0 or density > 1 then
+    error("benchmark workload inputs are invalid", 2)
+  end
+  return math.max(1, math.floor(fullCount * density))
+end
+
+function BenchmarkStats.timingMode(arguments, configured)
+  for _, value in ipairs(arguments or {}) do
+    error("unknown benchmark option: " .. tostring(value), 2)
+  end
+  configured = configured or "strict"
+  if configured ~= "strict" and configured ~= "shared-ci" then
+    error("invalid KFP_BENCHMARK_MODE: " .. tostring(configured), 2)
+  end
+  return configured
+end
+
 function BenchmarkStats.assertSliceBudget(values, budgetMs, toleranceMs, label)
   budgetMs = tonumber(budgetMs)
   toleranceMs = tonumber(toleranceMs)
@@ -38,7 +60,7 @@ function BenchmarkStats.assertSliceBudget(values, budgetMs, toleranceMs, label)
   local stats = BenchmarkStats.statistics(values)
   local limit = budgetMs + toleranceMs
   if stats.maximum > limit + 0.000001 then
-    error(("%s seal slice %.3f ms exceeds %.3f ms limit"):format(
+    error(("%s slice %.3f ms exceeds %.3f ms limit"):format(
       tostring(label or "scene"), stats.maximum, limit), 2)
   end
   return stats
@@ -59,10 +81,26 @@ function BenchmarkStats.assertDesktopReadiness(values, label)
   local stats = BenchmarkStats.statistics(values)
   local limit = BenchmarkStats.DESKTOP_READINESS_LIMIT_MS
   if stats.p95 > limit + 0.000001 then
-    error(("%s dense scene readiness %.3f ms exceeds %.3f ms limit"):format(
+    error(("%s readiness %.3f ms exceeds %.3f ms limit"):format(
       tostring(label or "scene"), stats.p95, limit), 2)
   end
   return stats
+end
+
+function BenchmarkStats.evaluatePacketSeal(
+    sliceValues, readinessValues, budgetMs, label, mode)
+  if mode ~= "strict" and mode ~= "shared-ci" then
+    error("packet-seal timing mode is invalid", 2)
+  end
+  local sliceStats = BenchmarkStats.statistics(sliceValues)
+  local readinessStats = BenchmarkStats.statistics(readinessValues)
+  if mode == "strict" then
+    sliceStats = BenchmarkStats.assertSliceBudget(
+      sliceValues, budgetMs, 0.25, label)
+    readinessStats = BenchmarkStats.assertDesktopReadiness(
+      readinessValues, label)
+  end
+  return sliceStats, readinessStats
 end
 
 return BenchmarkStats

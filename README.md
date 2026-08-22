@@ -262,6 +262,9 @@ python -m unittest discover -s tests/tools -p "test_*.py" -v
 GitHub Actions repeats these gates across Windows, Linux, macOS, and every
 audited engine target. Use the CI badge and machine-readable release ledger for
 the current immutable result; README test counts are intentionally not cached.
+Shared CI validates the quality-scaled packet-seal structure and reports its
+wall timing as advisory data. It does not approve native performance or complete
+uncached-scene readiness. See the [benchmark method](docs/benchmark-method.md).
 
 Strict engine checks:
 

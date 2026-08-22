@@ -5,7 +5,6 @@ import { KantoWorld } from './KantoWorld'
 
 export default function WorldCanvas() {
   const quality = useJourneyStore((state) => state.quality)
-  const setSelectedHotspot = useJourneyStore((state) => state.setSelectedHotspot)
 
   return (
     <div className="world-canvas" aria-hidden="true">
@@ -19,8 +18,7 @@ export default function WorldCanvas() {
           gl.toneMapping = THREE.ACESFilmicToneMapping
           gl.toneMappingExposure = 1.05
         }}
-        onPointerMissed={() => setSelectedHotspot(null)}
-        fallback={<div className="webgl-fallback">3D view unavailable. The field guide is still below.</div>}
+        fallback={<div className="webgl-fallback">3D preview unavailable. All menu options remain available.</div>}
       >
         <KantoWorld />
       </Canvas>

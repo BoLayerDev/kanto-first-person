@@ -27,12 +27,13 @@ Last updated: 2026-08-22
 - Companion API lane: `companion/`, API specification, and contract fixtures.
 - Core lane: `src/core/`, core tests, test harness, and CI.
 - Config/gameplay lane: `src/config/`, `src/gameplay/`, option migration, parity, and tests.
-- Website showcase lane: `website/` and the Pages workflow are merged at
-  `59abbd8`. The scroll-driven 3D journey, scanner, Red/Blue/Yellow atmosphere
-  switch, field guides, and support center are published at
-  `https://bolayerdev.github.io/kanto-first-person/`. The production workflow,
-  HTTPS route, and all built asset requests pass. Desktop interaction,
-  renderer, and mobile QA remain open.
+- Website showcase lane: `website/` and the Pages workflow are published at
+  `https://bolayerdev.github.io/kanto-first-person/`. The
+  `feature/gen1-options-terminal` branch replaces the long scroll journey and
+  scanner with one compact Gen 1-inspired options menu, a fixed-camera 3D
+  diorama, keyboard/touch navigation, version palettes, field guides, and
+  support routes. Its local production build passes; publication and
+  desktop/mobile browser QA remain open.
 
 ## Known risks
 

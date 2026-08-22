@@ -176,6 +176,55 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '6')
 })
 
+test.describe('desktop motion system', () => {
+  test.use({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' })
+
+  test('connects menu motion, research discovery, loading, and badge unlock states', async ({ page }, testInfo) => {
+    await page.addInitScript(() => window.localStorage.setItem('kfp-last-research-commit', 'older-commit'))
+    await page.goto(PAGE_PATH)
+
+    await expect(page.locator('.loader-ball').first()).toBeVisible()
+    await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-world-ready', 'true')
+    await expect(page.locator('.load-status-chip')).toHaveCount(0)
+
+    const detail = page.locator('.detail-window')
+    await expect(detail).toHaveAttribute('data-ambience', 'lab')
+    await expect(detail.locator('.detail-ambience')).toHaveClass(/ambience-lab/)
+    await page.getByRole('button', { name: 'FIELD FEATURES' }).click()
+    await expect(detail).toHaveAttribute('data-ambience', 'route')
+    await expect(detail.locator('.detail-ambience')).toHaveClass(/ambience-route/)
+    await expect(detail.locator('.pokedex-scan')).toHaveCSS('animation-name', 'pokedex-panel-scan')
+
+    await page.getByRole('button', { name: 'KANTO FIRST PERSON' }).click()
+    const discovery = page.getByRole('status').filter({ hasText: 'NEW RESEARCH DISCOVERED' })
+    await expect(discovery).toBeAttached()
+    await expect(page.locator('.activity-footer .is-counting')).toBeAttached()
+    await expect.poll(() => page.locator('.activity-log').evaluate(
+      (element) => element.scrollWidth <= element.clientWidth + 1,
+    )).toBe(true)
+
+    await page.getByRole('button', { name: 'RESEARCH LOG' }).click()
+    const unlockingBadge = page.locator('.milestone-deck a.is-unlocking')
+    await expect(unlockingBadge).toHaveCount(1)
+    await expect(unlockingBadge).toHaveCSS('animation-name', 'badge-unlock')
+
+    const sceneStats = await page.locator('.world-pokeballs').evaluate((element) => ({
+      drawCalls: Number(element.getAttribute('data-draw-calls')),
+      geometries: Number(element.getAttribute('data-geometries')),
+      materials: Number(element.getAttribute('data-materials')),
+      textures: Number(element.getAttribute('data-textures')),
+      triangles: Number(element.getAttribute('data-triangles')),
+    }))
+    expect(sceneStats.drawCalls).toBeLessThanOrEqual(8)
+    expect(sceneStats.geometries).toBeLessThanOrEqual(6)
+    expect(sceneStats.materials).toBeLessThanOrEqual(6)
+    expect(sceneStats.textures).toBeLessThanOrEqual(1)
+    expect(sceneStats.triangles).toBeLessThanOrEqual(20_000)
+
+    await page.screenshot({ path: testInfo.outputPath('desktop-motion-system.png'), fullPage: true })
+  })
+})
+
 test('keeps the home vital labels fully visible', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)

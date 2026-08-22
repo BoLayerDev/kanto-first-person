@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
@@ -9,6 +9,7 @@ const REWRITE_START_COMMIT = '0f453187210d3d388a02196affee413994df1a77'
 const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 const MENU_SLUGS = ['home', 'features', 'activity', 'guide', 'support', 'rebuild', 'github'] as const
+const AMBIENCE_MODES = ['lab', 'route', 'research', 'mist', 'signal', 'evolution', 'stars'] as const
 
 type MenuItem = {
   label: string
@@ -168,6 +169,38 @@ function longDurationLabel(seconds = 0) {
 
 function taskTitle(title: string) {
   return title.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+}
+
+function useCountUp(target: number, active: boolean) {
+  const [value, setValue] = useState(target)
+
+  useEffect(() => {
+    if (!active || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setValue(target)
+      return
+    }
+    let frame = 0
+    const startedAt = performance.now()
+    const tick = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / 850)
+      setValue(Math.round(target * (1 - ((1 - progress) ** 3))))
+      if (progress < 1) frame = window.requestAnimationFrame(tick)
+    }
+    setValue(0)
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [active, target])
+
+  return value
+}
+
+function PokeballLoader({ label }: { label: string }) {
+  return (
+    <div className="pokeball-loader" role="status">
+      <span className="loader-ball" aria-hidden="true"><i /></span>
+      <b>{label}</b>
+    </div>
+  )
 }
 
 function Timestamp({ date, now }: { date: string, now: number }) {
@@ -397,9 +430,10 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
   )
 }
 
-function ActivityLog({ status }: { status: ProjectStatus }) {
+function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, newResearch?: boolean }) {
   const updates = status.activity.slice(0, 4)
   const now = useLiveNow()
+  const displayedCount = useCountUp(status.activity.length, newResearch)
 
   return (
     <section className="activity-log" aria-labelledby="activity-title">
@@ -412,7 +446,11 @@ function ActivityLog({ status }: { status: ProjectStatus }) {
       </div>
       <ol>
         {updates.map((update, index) => (
-          <li key={update.sha} style={{ '--log-index': index } as CSSProperties}>
+          <li
+            className={index === 0 && newResearch ? 'is-discovered' : ''}
+            key={update.sha}
+            style={{ '--log-index': index } as CSSProperties}
+          >
             <a className="activity-entry-main" href={update.url} target="_blank" rel="noreferrer">
               <span className="activity-type">{update.type}</span>
               <b>{activityTitle(update.message)}</b>
@@ -423,9 +461,16 @@ function ActivityLog({ status }: { status: ProjectStatus }) {
         ))}
       </ol>
       <div className="activity-footer">
-        <span>{status.activity.length} VERIFIED FIELD UPDATES LOADED</span>
+        <span className={newResearch ? 'is-counting' : ''}>
+          <strong>{displayedCount}</strong> VERIFIED FIELD UPDATES LOADED
+        </span>
         <a href="#activity">OPEN FULL LOG ▶</a>
       </div>
+      {newResearch ? (
+        <div className="research-discovery" role="status">
+          <i aria-hidden="true" /><span>NEW RESEARCH DISCOVERED</span><b>#{status.shortSha}</b>
+        </div>
+      ) : null}
     </section>
   )
 }
@@ -609,7 +654,15 @@ function RewriteDetail() {
   )
 }
 
-function ResearchArchive({ status }: { status: ProjectStatus }) {
+function ResearchArchive({
+  status,
+  unlockNewest,
+  onUnlockComplete,
+}: {
+  status: ProjectStatus
+  unlockNewest: boolean
+  onUnlockComplete: () => void
+}) {
   const now = useLiveNow()
   const [activityFilter, setActivityFilter] = useState('all')
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
@@ -653,6 +706,12 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
     ? status.activity
     : status.activity.filter((entry) => activityCategory(entry) === activityFilter)
 
+  useEffect(() => {
+    if (!unlockNewest) return
+    const timer = window.setTimeout(onUnlockComplete, 1800)
+    return () => window.clearTimeout(timer)
+  }, [onUnlockComplete, unlockNewest])
+
   return (
     <div className="archive-page">
       <TrainerClock status={status} />
@@ -679,7 +738,13 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         </div>
         <div>
           {automaticMilestones.map((entry, index) => (
-            <a href={entry.url} target="_blank" rel="noreferrer" key={entry.sha}>
+            <a
+              className={index === 0 && unlockNewest ? 'is-unlocking' : ''}
+              href={entry.url}
+              target="_blank"
+              rel="noreferrer"
+              key={entry.sha}
+            >
               <i aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>
               <span>{entry.type}</span>
               <b>{activityTitle(entry.message)}</b>
@@ -753,7 +818,19 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
   )
 }
 
-function MenuDetail({ index, status }: { index: number, status: ProjectStatus }) {
+function MenuDetail({
+  index,
+  status,
+  newResearch,
+  unlockNewest,
+  onUnlockComplete,
+}: {
+  index: number
+  status: ProjectStatus
+  newResearch: boolean
+  unlockNewest: boolean
+  onUnlockComplete: () => void
+}) {
   if (index === 0) {
     return (
       <>
@@ -770,7 +847,7 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
           <ProofDrop status={status} />
         </div>
         <DevStats status={status} />
-        <ActivityLog status={status} />
+        <ActivityLog status={status} newResearch={newResearch} />
       </>
     )
   }
@@ -792,7 +869,13 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
   }
 
   if (index === 2) {
-    return <ResearchArchive status={status} />
+    return (
+      <ResearchArchive
+        status={status}
+        unlockNewest={unlockNewest}
+        onUnlockComplete={onUnlockComplete}
+      />
+    )
   }
 
   if (index === 3) {
@@ -843,7 +926,17 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
   )
 }
 
-function OptionsMenu({ status }: { status: ProjectStatus }) {
+function OptionsMenu({
+  status,
+  newResearch,
+  unlockNewest,
+  onUnlockComplete,
+}: {
+  status: ProjectStatus
+  newResearch: boolean
+  unlockNewest: boolean
+  onUnlockComplete: () => void
+}) {
   const menuIndex = useJourneyStore((state) => state.menuIndex)
   const edition = useJourneyStore((state) => state.edition)
   const quality = useJourneyStore((state) => state.quality)
@@ -949,12 +1042,28 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
           </div>
         </nav>
 
-        <section className="detail-window pixel-window" aria-live="polite" aria-labelledby="detail-title">
+        <section
+          className="detail-window pixel-window"
+          data-ambience={AMBIENCE_MODES[menuIndex]}
+          data-effects={quality}
+          aria-live="polite"
+          aria-labelledby="detail-title"
+        >
+          <div className={`detail-ambience ambience-${AMBIENCE_MODES[menuIndex]}`} aria-hidden="true">
+            {Array.from({ length: 8 }, (_, index) => <i key={index} style={{ '--particle': index } as CSSProperties} />)}
+          </div>
+          <span className="pokedex-scan" key={`scan-${menuIndex}`} aria-hidden="true" />
           <div className="window-label">{item.eyebrow}</div>
-          <div className="detail-copy">
+          <div className="detail-copy" key={`copy-${menuIndex}`}>
             <h2 id="detail-title">{item.title}</h2>
             <p className="detail-summary">{item.summary}</p>
-            <MenuDetail index={menuIndex} status={status} />
+            <MenuDetail
+              index={menuIndex}
+              status={status}
+              newResearch={newResearch}
+              unlockNewest={unlockNewest}
+              onUnlockComplete={onUnlockComplete}
+            />
           </div>
         </section>
       </div>
@@ -971,7 +1080,7 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
 }
 
 export function App() {
-  const status = useProjectStatus()
+  const { status, isLoaded: statusLoaded } = useProjectStatus()
   const edition = useJourneyStore((state) => state.edition)
   const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setQuality = useJourneyStore((state) => state.setQuality)
@@ -999,6 +1108,26 @@ export function App() {
   }, [setMenuIndex])
 
   const [worldReady, setWorldReady] = useState(false)
+  const [worldMounted, setWorldMounted] = useState(false)
+  const [newResearch, setNewResearch] = useState(false)
+  const [unlockNewest, setUnlockNewest] = useState(false)
+
+  useEffect(() => {
+    if (!statusLoaded) return
+    const storageKey = 'kfp-last-research-commit'
+    try {
+      const previousCommit = window.localStorage.getItem(storageKey)
+      if (previousCommit !== status.commit) {
+        setNewResearch(true)
+        setUnlockNewest(true)
+        window.localStorage.setItem(storageKey, status.commit)
+        const timer = window.setTimeout(() => setNewResearch(false), 2800)
+        return () => window.clearTimeout(timer)
+      }
+    } catch {
+      setNewResearch(false)
+    }
+  }, [status.commit, statusLoaded])
 
   useEffect(() => {
     const windowWithIdle = window as Window & {
@@ -1013,6 +1142,9 @@ export function App() {
     return () => window.clearTimeout(handle)
   }, [])
 
+  const handleWorldReady = useCallback(() => setWorldMounted(true), [])
+  const handleUnlockComplete = useCallback(() => setUnlockNewest(false), [])
+
   const themeStyle = {
     '--accent': palette.accent,
     '--accent-bright': palette.accentBright,
@@ -1024,12 +1156,22 @@ export function App() {
   return (
     <div className={`app edition-${edition}`} style={themeStyle}>
       {worldReady ? (
-        <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
-          <WorldCanvas />
+        <Suspense fallback={<div className="world-canvas world-loading"><PokeballLoader label="LOADING WORLD DATA" /></div>}>
+          <WorldCanvas onReady={handleWorldReady} />
         </Suspense>
-      ) : <div className="world-canvas world-loading">WORLD DATA STANDBY...</div>}
+      ) : <div className="world-canvas world-loading"><PokeballLoader label="WORLD DATA STANDBY" /></div>}
       <div className="screen-treatment" aria-hidden="true" />
-      <OptionsMenu status={status} />
+      {(!statusLoaded || !worldMounted) ? (
+        <div className="load-status-chip">
+          <PokeballLoader label={!statusLoaded ? 'SYNCING OAK LAB' : 'WORLD READY CHECK'} />
+        </div>
+      ) : null}
+      <OptionsMenu
+        status={status}
+        newResearch={newResearch}
+        unlockNewest={unlockNewest}
+        onUnlockComplete={handleUnlockComplete}
+      />
     </div>
   )
 }

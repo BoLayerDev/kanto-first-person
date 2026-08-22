@@ -70,7 +70,10 @@ return function(T)
   T.test("unknown phases and command kinds fail closed", function()
     local buffer = newBuffer()
     T.raises(function() buffer:add("unknown", { kind = "mesh" }) end)
-    T.raises(function() buffer:add("background", { kind = "filesystem" }) end)
+    for _, kind in ipairs({ "filesystem", "lights", "postprocess" }) do
+      T.raises(function() buffer:add("background", { kind = kind }) end,
+        "unsupported draw kind")
+    end
   end)
 
   T.test("command buffers require an explicit canonical hash", function()

@@ -23,8 +23,6 @@ local DRAW_KINDS = {
   mesh = true,
   instances = true,
   billboards = true,
-  lights = true,
-  postprocess = true,
 }
 
 local MAX_COMMANDS = 8192

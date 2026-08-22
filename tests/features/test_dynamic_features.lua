@@ -36,7 +36,7 @@ return function(T)
     world = world,
     config = values,
     quality = { density = 1, resolved = "HIGH", panoramaWidth = 4096 },
-    services = { capabilities = { draw_lights = 1, draw_postprocess = 1 } },
+    services = { capabilities = {} },
     checkpoint = function() end,
   }
 
@@ -151,22 +151,22 @@ return function(T)
     T.equal(actual, expected)
   end)
 
-  T.test("unsupported optional draw methods emit no commands", function()
+  T.test("invented capability names cannot enable non-API-v1 commands", function()
     local limited = {
       world = world,
       config = values,
       quality = context.quality,
-      services = { capabilities = {} },
+      services = { capabilities = { draw_lights = 1, draw_postprocess = 1 } },
       checkpoint = function() end,
     }
     local buffer = newBuffer()
     Atmosphere.new({ util = Util }):compile(limited, buffer)
     Weather.new({ util = Util }):compile(limited, buffer)
     local packet = buffer:seal()
+    local allowed = { mesh = true, instances = true, billboards = true }
     for _, commands in pairs(packet.phases) do
       for _, command in ipairs(commands) do
-        T.falsy(command.kind == "lights")
-        T.falsy(command.kind == "postprocess")
+        T.truthy(allowed[command.kind], command.kind)
       end
     end
   end)

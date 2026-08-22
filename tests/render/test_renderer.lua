@@ -51,4 +51,22 @@ return function(T)
     T.equal(renderer:renderPhase(packet, "background", { draw = draw }), 0)
     T.deepEqual(renderer:status().disabledOwners, { "false_result", "nil_result" })
   end)
+
+  T.test("renderer never dispatches crafted non-API-v1 command kinds", function()
+    local calls = 0
+    local draw = {
+      lights = function() calls = calls + 1; return true end,
+      postprocess = function() calls = calls + 1; return true end,
+    }
+    local packet = { phases = { translucent_after_actors = {
+      { kind = "lights", owner = "crafted_light" },
+      { kind = "postprocess", owner = "crafted_postprocess" },
+    } } }
+    local renderer = Renderer.new()
+    T.equal(renderer:renderPhase(packet, "translucent_after_actors", { draw = draw }), 0)
+    T.equal(calls, 0)
+    T.equal(renderer:status().failed, 2)
+    T.deepEqual(renderer:status().disabledOwners,
+      { "crafted_light", "crafted_postprocess" })
+  end)
 end

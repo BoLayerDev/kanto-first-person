@@ -173,16 +173,6 @@ function Interior:compile(context, buffer)
     U.checkpoint(context, cellIndex, 24)
   end
 
-  if U.capability(context, "draw_lights")
-      and U.option(config, "doorway_light", true) then
-    buffer:add("opaque_after_terrain", {
-      kind = "lights",
-      owner = self.id,
-      sortKey = "interior:door_spill",
-      lights = "door_spill",
-      cutaway = cutaway,
-    })
-  end
 end
 
 return Interior

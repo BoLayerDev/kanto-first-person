@@ -21,13 +21,13 @@ with one host-plus-KFP run from the same copied save and camera position.
 
 | Scene class | Required examples | Required checks |
 |---|---|---|
-| Interior | House, Center, Mart, large building | Ceiling, cutaway, walls, doors, windows, posters, rails, lights |
+| Interior | House, Center, Mart, large building | Ceiling, cutaway, walls, doors, windows, posters, rails, lamp fittings; doorway light is unavailable in alpha |
 | Cave | Dry cave, pool, ladder or warp | Roof, formations, water, sconces, depth, collision visibility |
 | Forest | Dense forest and edge connection | Canopy, vines, grass, particles, cutaway, neighboring terrain |
-| City | Standard city and Lavender | Apron, buildings, horizon, fog, night lighting |
+| City | Standard city and Lavender | Apron, buildings, horizon; Lavender fog and night lamplight are unavailable in alpha |
 | Route | Open route and connected edge | Neighbor seams, trees, props, mountains, distance haze |
 | Shore | Coast or lake edge | Water boundary, shore tag, spray, reflections, apron |
-| Weather | Clear, rain, storm, rainbow | Transitions, lightning, puddles, photosensitivity review |
+| Weather | Clear, rain, storm, rainbow | Transitions, rain, puddles, rainbow; lightning is unavailable in alpha |
 | Sky | Day, sunset, night | Panorama, clouds, stars, aircraft, deterministic placement |
 | Battle | Outdoor and indoor battle | Host remains usable; unsupported KFP battle work stays disabled |
 | UI | Menu, dialogue, transition | Engine UI and field effects remain above the world correctly |

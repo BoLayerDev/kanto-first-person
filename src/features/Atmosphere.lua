@@ -113,16 +113,6 @@ function Atmosphere:compile(context, buffer)
     })
   end
 
-  if U.capability(context, "draw_postprocess")
-      and U.option(config, "lavender_fog", true) and U.hasTag(world, "lavender") then
-    buffer:add("translucent_after_actors", {
-      kind = "postprocess",
-      owner = self.id,
-      material = "fog:lavender",
-      sortKey = "90:lavender_veil",
-      effect = { kind = "lavender_veil", passes = quality.resolved == "LOW" and 1 or 2 },
-    })
-  end
 end
 
 return Atmosphere

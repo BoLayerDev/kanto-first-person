@@ -65,6 +65,46 @@ return function(T)
     T.equal(client:status().state, "inactive")
   end)
 
+  T.test("client accepts only the exact API v1 capability set", function()
+    for _, capabilities in ipairs({
+      {
+        world_snapshot = 1, camera_delta = 1, render_phases = 1,
+        quality_tier = 1, draw_lights = 1,
+      },
+      {
+        world_snapshot = 1, camera_delta = 1, render_phases = 1,
+        quality_tier = "1",
+      },
+    }) do
+      local mod = provider("BATTLE_ART_VOXEL_FORK", capabilities)
+      local client = Client.new({
+        find = function() return mod end,
+        spec = {},
+      })
+      T.falsy(client:resolve())
+      T.equal(client:status().state, "inactive")
+    end
+
+    T.raises(function()
+      Client.new({
+        find = function() end,
+        spec = {},
+        requiredCapabilities = { "render_phases", "draw_postprocess" },
+      })
+    end, "non%-standard API v1 capability")
+  end)
+
+  T.test("client rejects a provider whose descriptor names another host", function()
+    local mod = provider("DRAMALESS_SHAPE")
+    local client = Client.new({
+      hostIds = { "BATTLE_ART_VOXEL_FORK" },
+      find = function() return mod end,
+      spec = {},
+    })
+    T.falsy(client:resolve())
+    T.equal(client:status().state, "inactive")
+  end)
+
   T.test("client isolates malformed candidates and resolves a later host", function()
     local conversion_calls = 0
     local hostile_error = setmetatable({}, {
@@ -110,6 +150,36 @@ return function(T)
       error("mutated provider register ran")
     end
     T.equal(client:attach(), handle)
+  end)
+
+  T.test("client gives the spec factory a copied validated descriptor", function()
+    local mod, handle = provider("BATTLE_ART_VOXEL_FORK")
+    local raw = mod.exports.voxel_companion
+    raw.capabilities.shadow_pass = 1
+    local descriptor
+    local client = Client.new({
+      find = function(id) if id == "BATTLE_ART_VOXEL_FORK" then return mod end end,
+      spec = function(selected)
+        descriptor = selected
+        return { id = "ds_fp_ceiling" }
+      end,
+    })
+    local selection = client:resolve()
+    T.truthy(selection)
+    selection.descriptor.host.id = "MUTATED_SELECTION"
+    selection.descriptor.capabilities.shadow_pass = nil
+    raw.host.id = "MUTATED_HOST"
+    raw.host.version = "99.0.0"
+    raw.capabilities.shadow_pass = nil
+    raw.capabilities.draw_lights = 1
+    T.equal(client:attach(), handle)
+    T.notEqual(descriptor, raw)
+    T.notEqual(descriptor.host, raw.host)
+    T.notEqual(descriptor.capabilities, raw.capabilities)
+    T.equal(descriptor.host.id, "BATTLE_ART_VOXEL_FORK")
+    T.equal(descriptor.host.version, "1.0.0")
+    T.equal(descriptor.capabilities.shadow_pass, 1)
+    T.equal(descriptor.capabilities.draw_lights, nil)
   end)
 
   T.test("client validates registration handles", function()

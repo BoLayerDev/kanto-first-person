@@ -72,6 +72,9 @@ Last updated: 2026-08-22
   but none exposes an owner-scoped public runtime image resolver. Birds and
   ground flocks stay hidden and emit no packet. The bounded upstream contract
   is in `docs/derived-asset-runtime-api-proposal.md`.
+- The frozen API v1 draw baseline contains only `mesh`, `instances`, and
+  `billboards`. Doorway light, lightning, Lavender fog, and depth blur keep
+  their migrated values but emit no alpha packet and have hidden controls.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
 - The website production route and static asset delivery pass HTTP checks. Its
   live canvas, desktop interaction, mobile layout, and renderer budget have not

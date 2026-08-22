@@ -34,6 +34,7 @@ engine adapters.
 | `remove` | ignored | KFP 2 has no patch, unpatcher, ledger, or host-file delete path. |
 | `jumpkey`, `jumppad` | preserved as bindings | A binding is a preference. It does not grant movement authority. |
 | any KFP 1.x upgrade | `ledge_leap=false` | Ledge Leap changes gameplay. Alpha builds force it off because no atomic public engine attempt API exists. |
+| `spill`, `lightning`, `fog`, `dof` | normalized values preserved; alpha rows hidden and runtime output disabled | API v1 has no portable light or post-process command. |
 
 An explicit v2 value wins when the injected reader returns `value, true`.
 The second result means that the value is persisted, not an automatic row
@@ -156,9 +157,10 @@ Groups are `quality`, `geometry`, `lighting`, `sky`, `weather`, `flora`,
 Consumers must treat snapshots and their nested tables as read-only plain data.
 
 Alpha builds hide controls that do not yet have an executable and verified
-runtime: third-person ceiling mode, ceiling detail, birds, ground flock,
-lamplight, Debug HUD, and Ledge Leap. Their keys remain in the schema so
-migration data is not lost. Ledge Leap alone is also forced to `false`.
+runtime: doorway light, birds, ground flock, lightning, lamplight, Lavender
+fog, depth blur, Debug HUD, Ledge Leap, and its bindings. Their keys remain in
+the schema so migration data is not lost. Ledge Leap alone is also forced to
+`false`; the other hidden values remain normalized in the snapshot.
 
 ## Persistent migration record
 

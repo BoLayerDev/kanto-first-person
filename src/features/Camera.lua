@@ -27,19 +27,7 @@ function Camera.new(deps)
   }, Camera)
 end
 
-function Camera:compile(context, buffer)
-  local dof = tostring(self.util.option(context.config, "depth_blur", "OFF")):upper()
-  if self.util.capability(context, "draw_postprocess")
-      and dof ~= "OFF" and context.quality.resolved ~= "LOW" then
-    buffer:add("translucent_after_actors", {
-      kind = "postprocess",
-      owner = self.id,
-      material = "camera:dof",
-      sortKey = "99:camera_dof",
-      effect = { kind = "depth_of_field", strength = dof },
-    })
-  end
-end
+function Camera:compile() end
 
 function Camera:update(frame, config)
   frame = frame or {}

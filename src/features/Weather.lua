@@ -69,17 +69,6 @@ function Weather:compile(context, buffer)
     end
   end
 
-  if U.capability(context, "draw_lights")
-      and world.weather == "storm" and U.option(config, "lightning", true) then
-    buffer:add("translucent_after_actors", {
-      kind = "lights",
-      owner = self.id,
-      sortKey = "weather:lightning",
-      lights = "lightning",
-      seed = U.hash(world.id, "lightning"),
-      safety = true,
-    })
-  end
   if U.option(config, "rainbows", true) and world.weather == "clearing" then
     buffer:add("background", {
       kind = "mesh",
@@ -87,17 +76,6 @@ function Weather:compile(context, buffer)
       material = "weather:rainbow",
       sortKey = "weather:rainbow",
       geometry = { primitive = "rainbow", seed = U.hash(world.id, "rainbow") },
-    })
-  end
-  if U.capability(context, "draw_postprocess")
-      and U.option(config, "lavender_fog", true)
-      and (world.weather == "fog" or world.weather == "storm") then
-    buffer:add("translucent_after_actors", {
-      kind = "postprocess",
-      owner = self.id,
-      material = "weather:fog",
-      sortKey = "weather:fog",
-      effect = { kind = "depth_fog", density = world.weather == "storm" and 0.35 or 0.2 },
     })
   end
 end

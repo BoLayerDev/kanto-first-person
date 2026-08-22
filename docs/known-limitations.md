@@ -42,11 +42,15 @@ a waiver for a failed release gate.
   owner-scoped runtime image resolver. The exact blocker and bounded upstream
   proposal are in the
   [derived-asset runtime API proposal](derived-asset-runtime-api-proposal.md).
+- API v1 permits only `mesh`, `instances`, and `billboards` draw commands. It
+  has no portable light or post-process command. Doorway light, lightning,
+  Lavender fog, and depth blur therefore emit no alpha packet. Their migration
+  values remain stored, but their controls stay hidden.
 - Third-person and diorama ceilings now emit portable NONE, CUTAWAY, and FULL
   policies. Ceiling detail emits portable beams and roses. Their controls are
   visible, but camera-mode placement and GPU review remain open.
-- Night lamplight and the debug HUD have no certified runtime consumer and stay
-  hidden.
+- Night lamplight and the debug HUD also have no certified runtime consumer and
+  stay hidden.
 - Rich battle props, object-shadow passes, and terrain lifts remain disabled on
   a host that does not advertise the matching optional capability.
 

@@ -25,23 +25,21 @@ return function(T)
     mesh = true,
     instances = true,
     billboards = true,
-    lights = true,
-    postprocess = true,
   }
   local goldenHashes = {
     -- A changed hash requires a deliberate review of the declarative command
     -- diff. These hashes do not represent pixel output.
-    indoor = "f4a72cb4",
+    indoor = "b5c5d5c7",
     cave = "56288537",
     forest = "6f68303c",
-    city_lavender = "53a4bc70",
+    city_lavender = "1e5c51b5",
     route_neighbor_edge = "fb85dae6",
     shore = "fb9928b2",
     mountain = "e2bcb2a0",
     day = "2825a5bd",
     night = "7f4231b4",
     rain = "c2b9fc1b",
-    storm = "48b41755",
+    storm = "54305173",
     battle_supported = "3a664439",
     battle_unsupported = "ccbbe2b2",
   }

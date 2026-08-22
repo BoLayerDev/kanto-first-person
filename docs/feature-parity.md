@@ -31,10 +31,11 @@ Blue, and Yellow.
 | Third-person and diorama ceiling modes | Represented | NONE, CUTAWAY, and FULL packet tests pass; camera-mode and GPU review remain open |
 | Single and two-cell double doors | Represented | Door orientation and warp tests |
 | Windows and Center, Mart, and general poster strips | Represented | Asset-frame and alpha-cutoff tests |
-| Contact shadows, picture rails, skirting, and doorway spill | Represented | Depth, cutoff, and light-boundary tests |
-| Ceiling lamps, pooled light, detail, beams, and roses | Represented | Exact geometry, light placement, and GPU review |
+| Contact shadows, picture rails, and skirting | Represented | Depth and cutoff tests |
+| Doorway light spill | Open | API v1 has no portable light command; the alpha control is hidden and its migration value is retained |
+| Ceiling lamp fittings, detail, beams, and roses | Represented | Exact geometry and GPU review |
 | Cave roofs, stalactites, and stalagmites | Represented | Cave tileset and collision-safe visual corpus |
-| Cave pools, torches, light spread, and bats | Represented | Animation, batching, and audio tests |
+| Cave pools, torch fittings and particles, and bats | Represented | Animation, batching, and audio tests |
 
 ## Outdoor static world
 
@@ -57,8 +58,9 @@ Blue, and Yellow.
 | Distant birds and derived local bird frames | Open | Import transform exists, but the five pinned engines have no public owner-scoped runtime resolver; alpha control is hidden; see the [upstream API proposal](derived-asset-runtime-api-proposal.md) |
 | Ground flocks that reset by map | Open | No executable packet is emitted; alpha control is hidden until the same owner-scoped resolver is released |
 | Planes, contrails, and rare blimps | Represented | Spawn timing, batching, and visibility tests |
-| Rain, storms, lightning, umbrellas, puddles, splashes, and rainbows | Represented | Weather transitions and photosensitivity review |
-| Lavender fog and the 1.60 veil | Represented | Lavender map tags and post-process cost |
+| Rain, storms, umbrellas, puddles, splashes, and rainbows | Represented | Weather transitions and photosensitivity review |
+| Lightning | Open | API v1 has no portable light command; the alpha control is hidden and its migration value is retained |
+| Lavender fog and the 1.60 veil | Open | API v1 has no portable post-process command; the alpha control is hidden and its migration value is retained |
 | Night lamplight | Open | No runtime consumer; alpha control is hidden |
 | Forest canopy, light wells, hanging vines, and sun shafts | Represented | Canopy items carry explicit map-cell coordinates for host cutaways; GPU placement, sway, interaction, and mesh-lifetime review remain open |
 | Grass height, wind, insects, leaves, seeds, drips, dust, spray, and smoke | Represented | Fixed-capacity pool and density policy tests |
@@ -72,7 +74,7 @@ Blue, and Yellow.
 | Jump crouch, arc, landing settle, and independent head bob | Represented | Fixed-step timing and first-person camera corpus |
 | Doorway step | Represented | Warp-distance false-positive tests |
 | Narrow, normal, wide, and ultra first-person FOV | Represented | Host camera capability and projection tests |
-| Depth blur levels | Represented | Depth source, quality policy, and GPU cost tests |
+| Depth blur levels | Open | API v1 has no portable post-process command; the alpha control is hidden and its migration value is retained |
 
 ## Gameplay, diagnostics, and lifecycle
 

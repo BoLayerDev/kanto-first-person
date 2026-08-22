@@ -28,7 +28,12 @@ and assets. Alpha does not hook input or queue gameplay movement.
 
 ### Host boundary
 
-The host exports `voxel_companion` API major 1. KFP finds known active host IDs, then checks the exported API and capabilities. A host ID never proves compatibility by itself.
+The host exports `voxel_companion` API major 1. KFP finds known active host IDs,
+then checks the exported API and capabilities. It rejects a descriptor whose
+host ID does not match the selected mod, whose capability version is not the
+number `1`, or whose capability name is outside the eight-name API v1 set. KFP
+copies the validated host descriptor and capability map before registration. A
+host ID never proves compatibility by itself.
 
 ### Feature boundary
 
@@ -76,11 +81,15 @@ The fixed phase order is:
 
 Commands are sorted by explicit phase, material, shader, depth, blend, and stable batch key. They never depend on Lua table iteration order.
 
+The portable command set is exactly `mesh`, `instances`, and `billboards`.
+Command-buffer writes reject all other kinds. The renderer also refuses a
+crafted packet with another kind and never calls an undeclared draw method.
+
 ## Failure model
 
 - Entry failure rolls back mod-owned registrations through Gen1recomp.
 - Host discovery failure keeps KFP inactive.
-- Missing optional capabilities disable only affected systems.
+- Missing standard optional capabilities disable only affected systems.
 - A feature error opens that feature's circuit breaker and records one diagnostic.
 - A companion callback error disables KFP for the session, not the host.
 - A draw failure restores host graphics state.

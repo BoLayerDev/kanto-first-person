@@ -88,8 +88,6 @@ local function config(overrides)
 end
 
 local outdoorCaps = {
-  draw_lights = 1,
-  draw_postprocess = 1,
   shadow_pass = 1,
 }
 
@@ -105,11 +103,10 @@ local cases = {
       cell(2, 1, { outside = true }, "synthetic:outside", false),
     }),
     config = config(),
-    capabilities = { draw_lights = 1 },
+    capabilities = {},
     expect = {
       { phase = "opaque_after_terrain", owner = "interior", kind = "instances" },
       { phase = "opaque_after_terrain", material = "shadow:contact" },
-      { phase = "opaque_after_terrain", kind = "lights" },
     },
   },
   {
@@ -191,7 +188,6 @@ local cases = {
       { phase = "background", owner = "atmosphere", material = "horizon:city" },
       { phase = "opaque_after_terrain", owner = "world_geometry",
         key = "tall_tree_canopies" },
-      { phase = "translucent_after_actors", owner = "atmosphere", kind = "postprocess" },
     },
   },
   {
@@ -336,8 +332,8 @@ local cases = {
     config = config(),
     capabilities = outdoorCaps,
     expect = {
-      { phase = "translucent_after_actors", owner = "weather", kind = "lights" },
-      { phase = "translucent_after_actors", owner = "weather", kind = "postprocess" },
+      { phase = "translucent_after_actors", owner = "weather",
+        material = "weather:rain" },
     },
   },
   {

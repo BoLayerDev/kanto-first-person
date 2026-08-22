@@ -101,7 +101,7 @@ return function(T)
     T.truthy(ledge.label:find("GAMEPLAY", 1, true))
     T.truthy(ledge.description:find("movement", 1, true))
     for _, key in ipairs({
-      "birds", "groundflock", "lights",
+      "spill", "birds", "groundflock", "lightning", "lights", "fog", "dof",
       "ledge_leap", "jumpkey", "jumppad", "debug",
     }) do
       T.equal(rows[key].visible_if.key, "__kfp_alpha_feature_ready", key)

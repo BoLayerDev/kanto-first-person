@@ -5,8 +5,6 @@ local METHOD_FOR_KIND = {
   mesh = "mesh",
   instances = "instances",
   billboards = "billboards",
-  lights = "lights",
-  postprocess = "postprocess",
 }
 
 local function diagnose(self, code, message, fields)

@@ -77,16 +77,16 @@ open · 🔒 unavailable in this alpha
 
 | Area | What KFP is rebuilding | State |
 |---|---|:---:|
-| 🏠 **Interiors** | Walls, ceilings, cutaways, doors, windows, rails, posters, doorway light | 🟡 |
+| 🏠 **Interiors** | Walls, ceilings, cutaways, doors, windows, rails, posters | 🟡 |
 | 🪨 **Caves** | Uneven roofs, stalactites, stalagmites, pools, sconces, bats | 🟡 |
 | 🌲 **Routes** | World apron, neighboring terrain, raised trees, mountains, grounded props | 🟡 |
 | 🌿 **Forests** | Canopy, vines, light wells, grass, wind, insects, particles | 🟡 |
-| 🌦️ **Atmosphere** | Horizons, clouds, stars, aircraft, rain, storms, fog, rainbows | 🟡 |
-| 🎧 **Camera and sound** | Head bob, jump feel, doorway step, FOV, depth intent, ambient beds | 🟡 🔴 |
+| 🌦️ **Atmosphere** | Horizons, clouds, stars, aircraft, rain, puddles, umbrellas, rainbows | 🟡 |
+| 🎧 **Camera and sound** | Head bob, jump feel, doorway step, FOV, ambient beds | 🟡 🔴 |
 | 🌳 **Battle and shadows** | Battle props and corrected object shadows | 🔵 🔴 |
 | 🐦 **Wildlife** | Birds and ground flocks | 🔒 |
 | 🏠 **Ceiling controls** | Third-person and diorama NONE, CUTAWAY, and FULL modes; beams and roses | 🟡 🔴 |
-| 💡 **Open controls** | Lamplight and debug HUD | 🔒 |
+| 💡 **API v1 exclusions** | Doorway light, lightning, Lavender fog, depth blur, lamplight, debug HUD | 🔒 |
 | 🦘 **Ledge Leap** | Corrected directional policy | 🔒 |
 
 `Represented` means a ROM-free test can inspect a bounded v2 command. It does
@@ -192,7 +192,10 @@ flowchart TD
 
 ### API rules
 
-- API major versions and required capabilities must match.
+- API major versions and required capabilities must match. KFP accepts only the
+  eight standard API v1 capability names and copies the validated descriptor.
+- Draw packets use only `mesh`, `instances`, and `billboards`. API v1 does not
+  define `lights` or `postprocess` commands.
 - Optional capabilities disable only related features.
 - Host contexts and resources are borrowed and read-only.
 - KFP retains no live host objects after a callback.
@@ -236,6 +239,9 @@ KFP keeps mod ID `ds_fp_ceiling` so all 53 unique v1.60 keys can migrate.
 - `REMOVE PATCH` is retired.
 - Jump key and gamepad bindings are retained.
 - Migration never enables Ledge Leap.
+- Doorway light, lightning, Lavender fog, and depth blur values are retained,
+  but their controls are hidden and they emit no alpha packet. API v1 has no
+  portable light or post-process command.
 
 See the [complete option table](docs/options-migration.md).
 

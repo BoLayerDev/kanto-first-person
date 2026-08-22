@@ -293,7 +293,9 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
             <a href={task.url} target="_blank" rel="noreferrer">
               <span>QUEST #{String(task.number).padStart(2, '0')}</span>
               <b>{taskTitle(task.title)}</b>
-              <small>PR ROUTE <strong>{longDurationLabel(task.deliverySeconds)}</strong></small>
+              <small className="quest-timing">
+                PR TIME <strong className="quest-duration">{longDurationLabel(task.deliverySeconds)}</strong>
+              </small>
             </a>
           </li>
         ))}

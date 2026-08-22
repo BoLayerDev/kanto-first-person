@@ -237,6 +237,10 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
+  const researchDate = vitals.getByLabel('Research began 2026-08-03')
+  await expect(researchDate).toHaveAttribute('datetime', '2026-08-03')
+  await expect(researchDate).toHaveText('08.03')
+  await expect(vitals.getByText('RESEARCH BEGAN / 2026')).toBeVisible()
 
   const milestones = page.getByRole('region', { name: 'FIELD BADGES' })
   await expect(milestones).toContainText('NO MANUAL LOGGING REQUIRED')
@@ -251,6 +255,30 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(systemMap).toBeVisible()
   await expect.poll(() => systemMap.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
   await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
+})
+
+test('keeps the research start date readable at desktop and mobile widths', async ({ page }) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`${PAGE_PATH}#activity`)
+
+    const card = page.locator('.archive-date-vital')
+    const fit = await card.evaluate((element) => {
+      const value = element.querySelector('b') as HTMLElement
+      const label = element.querySelector('span') as HTMLElement
+      const cardBox = element.getBoundingClientRect()
+      const valueBox = value.getBoundingClientRect()
+      const labelBox = label.getBoundingClientRect()
+      return {
+        valueFits: value.scrollWidth <= value.clientWidth + 1
+          && valueBox.right <= cardBox.right + 1,
+        labelFits: label.scrollWidth <= label.clientWidth + 1
+          && labelBox.right <= cardBox.right + 1,
+      }
+    })
+
+    expect(fit, `research date card must fit at ${width}px`).toEqual({ valueFits: true, labelFits: true })
+  }
 })
 
 test('keeps every activity translation label inside its graphic card', async ({ page }) => {

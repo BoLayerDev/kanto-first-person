@@ -16,7 +16,11 @@
       "date": "2026-08-22T05:49:22-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43"
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43",
+      "ci": {
+        "durationSeconds": 39,
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500"
+      }
     },
     {
       "sha": "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
@@ -753,7 +757,10 @@
     "runId": "32571329500",
     "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500",
     "passed": 11,
-    "total": 11
+    "total": 11,
+    "startedAt": "2026-08-22T11:49:44Z",
+    "completedAt": "2026-08-22T11:50:23Z",
+    "durationSeconds": 39
   },
   "release": {
     "available": false,

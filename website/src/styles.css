@@ -507,6 +507,185 @@ a {
   text-overflow: ellipsis;
 }
 
+.trainer-clock {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: stretch;
+  border: 4px solid var(--game-ink);
+  color: var(--paper);
+  background: var(--game-ink);
+}
+
+.trainer-clock-label {
+  display: grid;
+  place-items: center;
+  padding: 0.55rem 0.7rem;
+  color: var(--accent-soft);
+  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  line-height: 1.4;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.trainer-clock > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 2px;
+  background: var(--game-pale);
+}
+
+.trainer-clock > div > span,
+.trainer-clock > div > a {
+  display: flex;
+  min-width: 0;
+  min-height: 54px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.45rem 0.65rem;
+  color: var(--game-ink);
+  background: var(--paper-dark);
+  text-decoration: none;
+}
+
+.trainer-clock > div > a:hover,
+.trainer-clock > div > a:focus-visible {
+  color: var(--paper);
+  background: var(--accent);
+}
+
+.trainer-clock small {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--game-mid);
+  font-size: clamp(0.28rem, 0.35vw, 0.35rem);
+  line-height: 1.35;
+}
+
+.trainer-clock b,
+.trainer-clock time {
+  overflow: hidden;
+  font-size: clamp(0.4rem, 0.52vw, 0.52rem);
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trainer-clock > div > a:hover small,
+.trainer-clock > div > a:focus-visible small {
+  color: var(--paper);
+}
+
+.timestamp-wrap {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.timestamp-trigger {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 48px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: help;
+  flex-shrink: 0;
+}
+
+.timestamp-trigger:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.timestamp-tooltip {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max-content;
+  max-width: min(290px, calc(100vw - 2rem));
+  padding: 0.45rem 0.55rem;
+  border: 2px solid var(--paper);
+  color: var(--paper);
+  background: var(--game-ink);
+  box-shadow: 3px 3px 0 var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.4;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition: opacity 100ms linear, transform 100ms linear;
+  visibility: hidden;
+}
+
+.timestamp-wrap:hover .timestamp-tooltip,
+.timestamp-wrap:focus-within .timestamp-tooltip,
+.timestamp-wrap.is-open .timestamp-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
+}
+
+.activity-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  padding: 0.25rem 0.6rem;
+  border-left: 2px solid var(--game-pale);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.34rem, 0.42vw, 0.42rem);
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.activity-meta .timestamp-tooltip {
+  right: 0;
+  left: auto;
+}
+
+.activity-state,
+.activity-ci {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  padding: 0.2rem 0.35rem;
+}
+
+.activity-state {
+  border: 2px solid currentColor;
+}
+
+.activity-state.is-live {
+  color: #2f7e49;
+}
+
+.activity-state.is-today {
+  color: var(--accent);
+}
+
+.activity-state.is-archived {
+  color: var(--game-mid);
+}
+
+.activity-ci {
+  min-height: 48px;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.activity-ci:hover,
+.activity-ci:focus-visible {
+  color: var(--paper);
+  background: var(--accent);
+}
+
 .activity-log {
   border: 4px solid var(--game-ink);
   color: var(--game-ink);
@@ -567,14 +746,17 @@ a {
 }
 
 .activity-log li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
   border-bottom: 2px dotted var(--game-pale);
   animation: research-log-in 420ms steps(5, end) both;
   animation-delay: calc(var(--log-index) * 65ms);
 }
 
-.activity-log li a {
+.activity-entry-main {
   display: grid;
-  grid-template-columns: minmax(90px, 0.38fr) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(90px, 0.38fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
   min-height: 50px;
@@ -582,8 +764,8 @@ a {
   text-decoration: none;
 }
 
-.activity-log li a:hover,
-.activity-log li a:focus-visible {
+.activity-entry-main:hover,
+.activity-entry-main:focus-visible {
   color: var(--paper);
   background: var(--accent);
 }
@@ -594,8 +776,8 @@ a {
   line-height: 1.35;
 }
 
-.activity-log li a:hover .activity-type,
-.activity-log li a:focus-visible .activity-type {
+.activity-entry-main:hover .activity-type,
+.activity-entry-main:focus-visible .activity-type {
   color: var(--paper);
 }
 
@@ -607,7 +789,7 @@ a {
   white-space: nowrap;
 }
 
-.activity-log time,
+.activity-log .timestamp-trigger,
 .activity-log code {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -615,10 +797,8 @@ a {
   font-weight: 900;
 }
 
-.activity-log li a:hover time,
-.activity-log li a:hover code,
-.activity-log li a:focus-visible time,
-.activity-log li a:focus-visible code {
+.activity-entry-main:hover code,
+.activity-entry-main:focus-visible code {
   color: var(--paper);
 }
 
@@ -925,6 +1105,9 @@ a {
 }
 
 .archive-ledger li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
   border-bottom: 2px dotted var(--game-pale);
 }
 
@@ -932,9 +1115,9 @@ a {
   border-bottom: 0;
 }
 
-.archive-ledger li a {
+.archive-entry-main {
   display: grid;
-  grid-template-columns: 54px minmax(95px, 0.38fr) minmax(0, 1fr) minmax(90px, 0.32fr) auto auto;
+  grid-template-columns: 54px minmax(95px, 0.38fr) minmax(0, 1fr) minmax(90px, 0.32fr) auto;
   align-items: center;
   gap: 0.65rem;
   min-height: 54px;
@@ -942,8 +1125,8 @@ a {
   text-decoration: none;
 }
 
-.archive-ledger li a:hover,
-.archive-ledger li a:focus-visible {
+.archive-entry-main:hover,
+.archive-entry-main:focus-visible {
   color: var(--paper);
   background: var(--accent);
 }
@@ -955,10 +1138,10 @@ a {
   line-height: 1.4;
 }
 
-.archive-ledger li a:hover .archive-number,
-.archive-ledger li a:hover .archive-entry-type,
-.archive-ledger li a:focus-visible .archive-number,
-.archive-ledger li a:focus-visible .archive-entry-type {
+.archive-entry-main:hover .archive-number,
+.archive-entry-main:hover .archive-entry-type,
+.archive-entry-main:focus-visible .archive-number,
+.archive-entry-main:focus-visible .archive-entry-type {
   color: var(--paper);
 }
 
@@ -971,7 +1154,6 @@ a {
 }
 
 .archive-author,
-.archive-ledger time,
 .archive-ledger code {
   overflow: hidden;
   color: var(--game-mid);
@@ -982,12 +1164,10 @@ a {
   white-space: nowrap;
 }
 
-.archive-ledger li a:hover .archive-author,
-.archive-ledger li a:hover time,
-.archive-ledger li a:hover code,
-.archive-ledger li a:focus-visible .archive-author,
-.archive-ledger li a:focus-visible time,
-.archive-ledger li a:focus-visible code {
+.archive-entry-main:hover .archive-author,
+.archive-entry-main:hover code,
+.archive-entry-main:focus-visible .archive-author,
+.archive-entry-main:focus-visible code {
   color: var(--paper);
 }
 
@@ -2073,7 +2253,7 @@ a {
     min-height: 52px;
   }
 
-  .activity-log li a {
+  .activity-entry-main {
     grid-template-columns: minmax(90px, 0.4fr) minmax(0, 1fr) auto;
   }
 
@@ -2089,7 +2269,7 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .archive-ledger li a {
+  .archive-entry-main {
     grid-template-columns: 54px minmax(95px, 0.38fr) minmax(0, 1fr) minmax(90px, 0.32fr) auto;
   }
 
@@ -2256,6 +2436,28 @@ a {
     font-size: 0.56rem;
   }
 
+  .trainer-clock {
+    grid-template-columns: 1fr;
+  }
+
+  .trainer-clock-label {
+    min-height: 38px;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.5rem;
+    transform: none;
+    writing-mode: horizontal-tb;
+  }
+
+  .trainer-clock > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trainer-clock small,
+  .trainer-clock b,
+  .trainer-clock time {
+    font-size: 0.5rem;
+  }
+
   .activity-header,
   .activity-footer {
     align-items: flex-start;
@@ -2263,7 +2465,11 @@ a {
     gap: 0.35rem;
   }
 
-  .activity-log li a {
+  .activity-log li {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-entry-main {
     grid-template-columns: 1fr auto;
     gap: 0.35rem 0.7rem;
     min-height: 64px;
@@ -2277,7 +2483,7 @@ a {
   }
 
   .activity-type,
-  .activity-log time,
+  .activity-log .timestamp-trigger,
   .activity-header > div span,
   .live-signal,
   .activity-footer {
@@ -2286,6 +2492,20 @@ a {
 
   .activity-header > div b {
     font-size: 0.65rem;
+  }
+
+  .activity-meta {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    padding: 0.2rem 0.7rem;
+    border-top: 2px solid var(--game-pale);
+    border-left: 0;
+    font-size: 0.5rem;
+  }
+
+  .activity-meta .timestamp-tooltip {
+    right: auto;
+    left: 0;
   }
 
   .archive-vitals b {
@@ -2323,15 +2543,18 @@ a {
     min-height: 112px;
   }
 
-  .archive-ledger li a {
+  .archive-ledger li {
+    grid-template-columns: 1fr;
+  }
+
+  .archive-entry-main {
     grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 0.35rem 0.65rem;
     min-height: 88px;
   }
 
   .archive-number,
-  .archive-entry-type,
-  .archive-ledger time {
+  .archive-entry-type {
     font-size: 0.5rem;
   }
 

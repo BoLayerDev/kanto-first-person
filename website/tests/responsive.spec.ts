@@ -224,6 +224,24 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(log).toContainText('LAB VERIFIED')
   await expect(log.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
   await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
+
+  const clock = page.getByRole('region', { name: 'Trainer Clock' })
+  await expect(clock).toContainText('LAST UPDATE')
+  await expect(clock).toContainText('LAB RUN')
+  await expect(clock).toContainText('39S')
+  await expect(clock).toContainText('DEPLOYED')
+  await expect(clock).toContainText('7-DAY ACTIVITY')
+
+  const latest = log.locator('ol > li').first()
+  await expect(latest).toContainText('LIVE')
+  await expect(latest).toContainText('CI 39S')
+  const timestamp = latest.getByRole('button', { name: /ago|just now/i })
+  await expect(timestamp).toHaveAttribute('title', /2026/)
+  await timestamp.focus()
+  await expect(latest.getByRole('tooltip')).toBeVisible()
+  await timestamp.click()
+  await expect(timestamp).toHaveAttribute('aria-expanded', 'true')
+  await expect(latest.getByRole('tooltip')).toHaveCSS('opacity', '1')
 })
 
 test('shows the complete verified project history in the research archive', async ({ page }) => {
@@ -250,11 +268,41 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(ledger.locator('ol > li')).toHaveCount(82)
   await expect(ledger.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
   await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
+  await expect(ledger.locator('ol > li').first()).toContainText('LIVE')
+  await expect(ledger).toContainText('TODAY')
+  await expect(ledger).toContainText('ARCHIVED')
 
   const systemMap = page.getByRole('img', { name: /Diagram showing commits/ })
   await expect(systemMap).toBeVisible()
   await expect.poll(() => systemMap.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(1600)
   await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
+})
+
+test('keeps Trainer Clock and commit timing controls readable at desktop and mobile widths', async ({ page }) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(PAGE_PATH)
+
+    const clock = page.getByRole('region', { name: 'Trainer Clock' })
+    const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
+    await expect(clock).toBeVisible()
+    await expect(log).toBeVisible()
+
+    const fit = await page.locator('.trainer-clock, .activity-log').evaluateAll((items) => items.map((item) => ({
+      clipped: item.scrollWidth > item.clientWidth + 1,
+      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    })))
+    expect(fit, `timing UI must fit at ${width}px`).toEqual(
+      fit.map(() => ({ clipped: false, pageOverflow: false })),
+    )
+
+    const trigger = log.locator('.timestamp-trigger').first()
+    const box = await trigger.evaluate((element) => {
+      const rect = element.getBoundingClientRect()
+      return { width: rect.width, height: rect.height }
+    })
+    expect(box.height).toBeGreaterThanOrEqual(48)
+  }
 })
 
 test('keeps the verified rewrite start date readable at desktop and mobile widths', async ({ page }) => {

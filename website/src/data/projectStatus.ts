@@ -18,6 +18,10 @@ export type ProjectStatus = {
     author: string
     type: string
     url: string
+    ci?: {
+      durationSeconds: number
+      runUrl: string
+    }
   }>
   ci: {
     state: 'success' | 'unknown'
@@ -25,6 +29,9 @@ export type ProjectStatus = {
     runUrl: string
     passed: number
     total: number
+    startedAt?: string
+    completedAt?: string
+    durationSeconds?: number
   }
   release: {
     available: boolean
@@ -53,7 +60,7 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     ['d54933db7efc1854ecdf0aa981932d7725ebca1b', '2026-08-22T04:20:09-06:00', 'fix(benchmark): bind production world index', 'HP RESTORED'],
     ['f1939259b5b9b5bc3af8938ab0f54651d5087303', '2026-08-22T04:11:00-06:00', 'perf(world): reuse snapshot index for anchors', 'SPEED +1'],
     ['c5936f96468830cd560243d1746c511b8820e9cc', '2026-08-22T03:59:52-06:00', 'perf(weather): hoist compile invariants', 'SPEED +1'],
-  ].map(([sha, date, message, type]) => ({
+  ].map(([sha, date, message, type], index) => ({
     sha,
     shortSha: sha.slice(0, 7),
     message,
@@ -61,6 +68,12 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     author: 'Bo Layer',
     type,
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sha}`,
+    ...(index === 0 ? {
+      ci: {
+        durationSeconds: 39,
+        runUrl: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
+      },
+    } : {}),
   })),
   ci: {
     state: 'success',
@@ -68,6 +81,9 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     runUrl: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
     passed: 11,
     total: 11,
+    startedAt: '2026-08-22T11:49:44Z',
+    completedAt: '2026-08-22T11:50:23Z',
+    durationSeconds: 39,
   },
   release: {
     available: false,
@@ -90,7 +106,10 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
       && typeof entry.message === 'string'
       && typeof entry.author === 'string'
       && typeof entry.type === 'string'
-      && typeof entry.url === 'string')
+      && typeof entry.url === 'string'
+      && (entry.ci === undefined
+        || (typeof entry.ci.durationSeconds === 'number'
+          && typeof entry.ci.runUrl === 'string')))
     && typeof candidate.ci?.runUrl === 'string'
     && typeof candidate.release?.available === 'boolean'
 }

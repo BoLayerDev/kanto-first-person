@@ -27,6 +27,13 @@ function clean(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback
 }
 
+function elapsedSeconds(startedAt, completedAt) {
+  const started = Date.parse(startedAt)
+  const completed = Date.parse(completedAt)
+  if (!Number.isFinite(started) || !Number.isFinite(completed) || completed < started) return 0
+  return Math.max(1, Math.round((completed - started) / 1000))
+}
+
 function activityType(message) {
   const prefix = message.match(/^([a-z]+)(?:\([^)]+\))?:/i)?.[1]?.toLowerCase()
   if (prefix === 'feat') return 'NEW MOVE'
@@ -96,6 +103,8 @@ let ciRunId = clean(process.env.SITE_CI_RUN_ID)
 let ciRunUrl = clean(process.env.SITE_CI_RUN_URL)
 let ciConclusion = clean(process.env.SITE_CI_CONCLUSION)
 let ciHeadSha = clean(process.env.SITE_CI_HEAD_SHA)
+let ciStartedAt = clean(process.env.SITE_CI_STARTED_AT)
+let ciCompletedAt = clean(process.env.SITE_CI_COMPLETED_AT)
 let generatedAt = clean(process.env.SITE_GENERATED_AT, new Date().toISOString())
 
 if (!ciRunId && token) {
@@ -111,6 +120,13 @@ if (!ciRunId && token) {
   }
 }
 
+let ciRunDetails = null
+if (ciRunId && token) {
+  ciRunDetails = await github(`/actions/runs/${encodeURIComponent(ciRunId)}`)
+  ciStartedAt = clean(ciStartedAt, ciRunDetails?.run_started_at)
+  ciCompletedAt = clean(ciCompletedAt, ciRunDetails?.updated_at)
+}
+
 let passed = Number.parseInt(clean(process.env.SITE_CI_PASSED, '0'), 10) || 0
 let total = Number.parseInt(clean(process.env.SITE_CI_TOTAL, '0'), 10) || 0
 
@@ -119,6 +135,42 @@ if (ciRunId && token && (!passed || !total)) {
   const jobs = Array.isArray(result?.jobs) ? result.jobs : []
   total = jobs.length
   passed = jobs.filter((job) => job.conclusion === 'success').length
+}
+
+const ciDurationSeconds = elapsedSeconds(ciStartedAt, ciCompletedAt)
+
+if (token) {
+  const result = await github(
+    `/actions/workflows/ci.yml/runs?branch=${encodeURIComponent(branch)}&status=completed&per_page=100`,
+  )
+  const runs = Array.isArray(result?.workflow_runs) ? result.workflow_runs : []
+  const successfulRuns = new Map()
+
+  for (const run of runs) {
+    if (run.conclusion !== 'success' || !run.head_sha || successfulRuns.has(run.head_sha)) continue
+    const durationSeconds = elapsedSeconds(run.run_started_at, run.updated_at)
+    if (!durationSeconds) continue
+    successfulRuns.set(run.head_sha, {
+      durationSeconds,
+      runUrl: run.html_url,
+    })
+  }
+
+  if (ciHeadSha === commit && ciDurationSeconds && !successfulRuns.has(commit)) {
+    successfulRuns.set(commit, {
+      durationSeconds: ciDurationSeconds,
+      runUrl: ciRunUrl,
+    })
+  }
+
+  activity = activity.map((entry) => {
+    const run = successfulRuns.get(entry.sha)
+    return run ? { ...entry, ci: run } : entry
+  })
+} else if (ciHeadSha === commit && ciDurationSeconds) {
+  activity = activity.map((entry) => entry.sha === commit
+    ? { ...entry, ci: { durationSeconds: ciDurationSeconds, runUrl: ciRunUrl } }
+    : entry)
 }
 
 if (process.env.SITE_REQUIRE_VERIFIED_CI === 'true') {
@@ -172,6 +224,9 @@ const status = {
     runUrl: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
     passed,
     total,
+    startedAt: ciStartedAt,
+    completedAt: ciCompletedAt,
+    durationSeconds: ciDurationSeconds,
   },
   release,
 }

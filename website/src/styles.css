@@ -684,6 +684,16 @@ a {
   line-height: 1.45;
 }
 
+.archive-date-vital time {
+  display: block;
+  max-width: 100%;
+}
+
+.archive-date-vital span {
+  overflow: hidden;
+  text-overflow: clip;
+}
+
 .milestone-deck {
   border: 4px solid var(--game-ink);
   background: var(--paper-dark);

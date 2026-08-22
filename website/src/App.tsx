@@ -310,6 +310,7 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
   const firstUpdate = status.activity.at(-1)?.date.slice(0, 10) ?? 'UNKNOWN'
+  const firstUpdateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(firstUpdate)
   const typeCounts = [...status.activity.reduce((counts, entry) => {
     counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1)
     return counts
@@ -326,7 +327,14 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         <div><b>{status.activity.length}</b><span>VERIFIED COMMITS</span></div>
         <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
         <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
-        <div><b>{firstUpdate}</b><span>RESEARCH BEGAN</span></div>
+        <div className="archive-date-vital">
+          {firstUpdateParts ? (
+            <time dateTime={firstUpdate} aria-label={`Research began ${firstUpdate}`}>
+              <b>{firstUpdateParts[2]}.{firstUpdateParts[3]}</b>
+            </time>
+          ) : <b>--.--</b>}
+          <span>RESEARCH BEGAN{firstUpdateParts ? ` / ${firstUpdateParts[1]}` : ''}</span>
+        </div>
       </div>
 
       <section className="milestone-deck" aria-labelledby="milestone-title">

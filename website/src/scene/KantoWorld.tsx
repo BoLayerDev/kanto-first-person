@@ -4,8 +4,9 @@ import * as THREE from 'three'
 import { useJourneyStore } from '../state/journey'
 
 const BALL_SEED = 0x151
-const HIGH_QUALITY_BALLS = 18
-const LOW_QUALITY_BALLS = 10
+const HIGH_QUALITY_BALLS = 11
+const LOW_QUALITY_BALLS = 6
+const BALL_SCALE_TIERS = [0.62, 0.86, 1.12, 1.42] as const
 const POKEBALL_RED = '#e43b3f'
 const POKEBALL_WHITE = '#f5f1df'
 const POKEBALL_BLACK = '#141719'
@@ -36,6 +37,7 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
     const side = index % 2 === 0 ? -1 : 1
     const distance = 13 + random() * 25
     const halfHeight = Math.tan(halfFov) * distance
+    const scaleTier = BALL_SCALE_TIERS[(index * 3 + 1) % BALL_SCALE_TIERS.length]
     return {
       position: [
         side * halfHeight * aspect * (0.86 + random() * 0.1),
@@ -47,7 +49,7 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
         (random() - 0.5) * 0.9,
         (random() - 0.5) * 0.48,
       ],
-      scale: halfHeight * (0.075 + random() * 0.065),
+      scale: halfHeight * 0.105 * scaleTier * (0.94 + random() * 0.12),
       phase: random() * Math.PI * 2,
       speed: 0.045 + random() * 0.075,
       direction: random() > 0.5 ? 1 : -1,
@@ -142,7 +144,7 @@ const BUTTON_INNER_LOCAL = new THREE.Matrix4().compose(
 function PokeballField() {
   const quality = useJourneyStore((state) => state.quality)
   const reducedMotion = usePrefersReducedMotion()
-  const { size } = useThree()
+  const { gl, size } = useThree()
   const count = quality === 'high' ? HIGH_QUALITY_BALLS : LOW_QUALITY_BALLS
   const aspect = size.width / Math.max(size.height, 1)
   const layout = useMemo(() => createBallLayout(count, aspect), [aspect, count])
@@ -200,7 +202,12 @@ function PokeballField() {
     ;[top.current, bottom.current, band.current, buttonOuter.current, buttonInner.current].forEach(
       (mesh) => mesh?.computeBoundingSphere(),
     )
-  }, [layout, quality, reducedMotion])
+    const host = gl.domElement.closest<HTMLElement>('.world-canvas')
+    if (host) {
+      host.dataset.ballCount = String(count)
+      host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
+    }
+  }, [count, gl, layout, quality, reducedMotion])
 
   useFrame(({ clock }) => {
     if (quality === 'high' && !reducedMotion) writeMatrices(clock.elapsedTime)

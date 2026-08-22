@@ -166,6 +166,14 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.height).toBe(900)
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-scene-mode', 'pokeballs-only')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-menu-reactive', 'false')
+  const qualityToggle = page.locator('.quality-toggle')
+  if (await qualityToggle.getAttribute('aria-label') === 'Effects quality low') {
+    await qualityToggle.click()
+  }
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '11')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '4')
+  await qualityToggle.click()
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '6')
 })
 
 test('keeps the home vital labels fully visible', async ({ page }) => {

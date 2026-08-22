@@ -22,6 +22,21 @@ test('generates a complete offline GitHub status snapshot', async () => {
     type: 'NEW MOVE',
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sourceSha}`,
   }]
+  const ciRuns = [{
+    id: 42,
+    conclusion: 'success',
+    head_sha: sourceSha,
+    html_url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
+    run_started_at: '2026-08-22T11:58:15Z',
+    updated_at: '2026-08-22T12:00:00Z',
+  }]
+  const pullRequests = [{
+    number: 12,
+    title: 'feat(website): Add verified dev stats',
+    html_url: 'https://github.com/BoLayerDev/kanto-first-person/pull/12',
+    created_at: '2026-08-22T11:55:00Z',
+    merged_at: '2026-08-22T12:00:00Z',
+  }]
 
   try {
     const result = spawnSync(process.execPath, [generator], {
@@ -42,6 +57,8 @@ test('generates a complete offline GitHub status snapshot', async () => {
         SITE_REPOSITORY: 'BoLayerDev/kanto-first-person',
         SITE_REQUIRE_VERIFIED_CI: 'true',
         SITE_ACTIVITY_JSON: JSON.stringify(activity),
+        SITE_CI_RUNS_JSON: JSON.stringify(ciRuns),
+        SITE_PULL_REQUESTS_JSON: JSON.stringify(pullRequests),
         SITE_SOURCE_BRANCH: 'v2-rewrite',
         SITE_SOURCE_SHA: sourceSha,
         SITE_STATUS_OUTPUT: outputPath,
@@ -65,6 +82,27 @@ test('generates a complete offline GitHub status snapshot', async () => {
     })
     assert.equal(status.release.available, false)
     assert.deepEqual(status.activity[0], { ...activity[0], ci: status.activity[0].ci })
+    assert.deepEqual(status.devStats, {
+      rewriteStartedAt: '',
+      activeDays: 1,
+      successfulLabRuns: 1,
+      labRuntimeSeconds: 105,
+      mergedPullRequests: 1,
+      medianPullRequestSeconds: 300,
+      aiUsage: {
+        state: 'unavailable',
+        label: 'LOCKED',
+        note: 'GitHub does not receive trusted Codex task token totals.',
+      },
+    })
+    assert.deepEqual(status.pullRequests[0], {
+      number: 12,
+      title: 'feat(website): Add verified dev stats',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/pull/12',
+      createdAt: '2026-08-22T11:55:00Z',
+      mergedAt: '2026-08-22T12:00:00Z',
+      deliverySeconds: 300,
+    })
     assert.match(status.commitUrl, new RegExp(sourceSha))
 
     const rejected = spawnSync(process.execPath, [generator], {

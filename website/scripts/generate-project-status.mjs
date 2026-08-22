@@ -27,6 +27,17 @@ function clean(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback
 }
 
+function activityType(message) {
+  const prefix = message.match(/^([a-z]+)(?:\([^)]+\))?:/i)?.[1]?.toLowerCase()
+  if (prefix === 'feat') return 'NEW MOVE'
+  if (prefix === 'fix') return 'HP RESTORED'
+  if (prefix === 'perf') return 'SPEED +1'
+  if (prefix === 'ci' || prefix === 'test') return 'LAB VERIFIED'
+  if (prefix === 'docs') return 'FIELD NOTES'
+  if (prefix === 'refactor') return 'EVOLVED'
+  return 'RESEARCH UPDATE'
+}
+
 const repository = clean(process.env.SITE_REPOSITORY, manifest.github)
 const branch = clean(process.env.SITE_SOURCE_BRANCH, git('branch', '--show-current') || 'v2-rewrite')
 const commit = clean(process.env.SITE_SOURCE_SHA, git('rev-parse', 'HEAD'))
@@ -37,6 +48,29 @@ const commitMessage = clean(
 )
 const repositoryUrl = `https://github.com/${repository}`
 const token = clean(process.env.GITHUB_TOKEN)
+const activityOverride = clean(process.env.SITE_ACTIVITY_JSON)
+let activity = []
+
+if (activityOverride) {
+  try {
+    activity = JSON.parse(activityOverride)
+  } catch {
+    activity = []
+  }
+} else {
+  const records = git('log', '-8', '--format=%H%x1f%cI%x1f%s').split('\n').filter(Boolean)
+  activity = records.map((record) => {
+    const [sha, date, message] = record.split('\x1f')
+    return {
+      sha,
+      shortSha: sha.slice(0, 7),
+      message,
+      date,
+      type: activityType(message),
+      url: `${repositoryUrl}/commit/${sha}`,
+    }
+  })
+}
 
 async function github(pathname) {
   if (!token) return null
@@ -130,6 +164,7 @@ const status = {
   commitMessage,
   commitUrl: commit ? `${repositoryUrl}/commit/${commit}` : repositoryUrl,
   generatedAt,
+  activity,
   ci: {
     state: ciConclusion === 'success' ? 'success' : 'unknown',
     runId: ciRunId,

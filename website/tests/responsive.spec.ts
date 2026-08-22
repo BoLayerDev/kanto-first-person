@@ -181,6 +181,48 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   }
 })
 
+test('shows verified work as a game-style research log on the homepage', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
+  await expect(log).toBeVisible()
+  await expect(log).toContainText('WORK CONTINUES')
+  await expect(log).toContainText('FIELD NOTES')
+  await expect(log).toContainText('HP RESTORED')
+  await expect(log).toContainText('LAB VERIFIED')
+  await expect(log.getByRole('link', { name: /bind alpha evidence/ })).toHaveAttribute('href', /commit\/79b3851/)
+  await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', /commits\/v2-rewrite$/)
+})
+
+test('supports shareable hash routes and browser history', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#rebuild`)
+
+  await expect(page.getByRole('button', { name: 'NEXT-GEN REBUILD' })).toHaveAttribute('aria-current', 'page')
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'SUPPORT CENTER' }).click()
+  await expect(page).toHaveURL(/#support$/)
+  await expect(page.getByRole('heading', { name: 'Evidence before guesses.' })).toBeVisible()
+
+  await page.goBack()
+  await expect(page).toHaveURL(/#rebuild$/)
+  await expect(page.getByRole('heading', { name: 'Same Kanto. New foundations.' })).toBeVisible()
+})
+
+test('publishes social preview metadata and labels concept media honestly', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(`${PAGE_PATH}#rebuild`)
+
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute('content', /og-kanto-rebuild\.png$/)
+  const concept = page.getByRole('img', { name: /Original pixel-art concept/ })
+  await expect(concept).toBeVisible()
+  await expect(page.getByText('CONCEPT ART // NOT GAMEPLAY')).toBeVisible()
+  await expect(page.getByText('REAL FOOTAGE UNLOCKS AFTER ACCEPTANCE')).toBeVisible()
+  await expect.poll(() => concept.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0)
+})
+
 test('explains the rewrite with conceptual comparison graphics and verified upgrades', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)

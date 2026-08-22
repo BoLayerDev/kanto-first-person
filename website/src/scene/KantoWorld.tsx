@@ -1,4 +1,3 @@
-import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
@@ -393,18 +392,6 @@ function LightingRig() {
   )
 }
 
-function PostEffects() {
-  const quality = useJourneyStore((state) => state.quality)
-  if (quality === 'low') return null
-
-  return (
-    <EffectComposer multisampling={0}>
-      <Bloom intensity={0.72} luminanceThreshold={0.88} mipmapBlur radius={0.45} />
-      <Vignette eskil={false} offset={0.22} darkness={0.58} />
-    </EffectComposer>
-  )
-}
-
 export function KantoWorld() {
   return (
     <>
@@ -416,7 +403,6 @@ export function KantoWorld() {
       <ForestRoute />
       <CrystalCave />
       <WeatherParticles />
-      <PostEffects />
     </>
   )
 }

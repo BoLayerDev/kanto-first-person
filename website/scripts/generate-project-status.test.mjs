@@ -13,6 +13,14 @@ test('generates a complete offline GitHub status snapshot', async () => {
   const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'kfp-status-'))
   const outputPath = path.join(temporaryDirectory, 'project-status.json')
   const sourceSha = '1234567890abcdef1234567890abcdef12345678'
+  const activity = [{
+    sha: sourceSha,
+    shortSha: '1234567',
+    message: 'feat(world): Open a new route',
+    date: '2026-08-22T12:00:00Z',
+    type: 'NEW MOVE',
+    url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sourceSha}`,
+  }]
 
   try {
     const result = spawnSync(process.execPath, [generator], {
@@ -30,6 +38,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
         SITE_GENERATED_AT: '2026-08-22T12:00:00Z',
         SITE_REPOSITORY: 'BoLayerDev/kanto-first-person',
         SITE_REQUIRE_VERIFIED_CI: 'true',
+        SITE_ACTIVITY_JSON: JSON.stringify(activity),
         SITE_SOURCE_BRANCH: 'v2-rewrite',
         SITE_SOURCE_SHA: sourceSha,
         SITE_STATUS_OUTPUT: outputPath,
@@ -46,6 +55,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
     assert.equal(status.ci.state, 'success')
     assert.deepEqual([status.ci.passed, status.ci.total], [11, 11])
     assert.equal(status.release.available, false)
+    assert.deepEqual(status.activity, activity)
     assert.match(status.commitUrl, new RegExp(sourceSha))
 
     const rejected = spawnSync(process.execPath, [generator], {

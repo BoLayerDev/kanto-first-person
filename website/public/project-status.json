@@ -8,6 +8,72 @@
   "commitMessage": "docs(release): bind alpha evidence to cfc checkpoint",
   "commitUrl": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43",
   "generatedAt": "2026-08-22T11:49:22Z",
+  "activity": [
+    {
+      "sha": "79b385131d3628f405ad264a01973c479991fc43",
+      "shortSha": "79b3851",
+      "message": "docs(release): bind alpha evidence to cfc checkpoint",
+      "date": "2026-08-22T05:49:22-06:00",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43"
+    },
+    {
+      "sha": "cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
+      "shortSha": "cfc045b",
+      "message": "fix(render): canonicalize numeric packet hashes",
+      "date": "2026-08-22T05:20:50-06:00",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/cfc045bec72c2ceecd558b24bcd643c8e0b720dc"
+    },
+    {
+      "sha": "6682cc4369a4e9536ec7cd243922fc71dcdbad50",
+      "shortSha": "6682cc4",
+      "message": "ci: pin exact LuaJIT sources",
+      "date": "2026-08-22T05:10:27-06:00",
+      "type": "LAB VERIFIED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6682cc4369a4e9536ec7cd243922fc71dcdbad50"
+    },
+    {
+      "sha": "136d67c4802450e20fb2d64ae024a7af3194a385",
+      "shortSha": "136d67c",
+      "message": "docs(release): fail closed during evidence refresh",
+      "date": "2026-08-22T04:29:43-06:00",
+      "type": "FIELD NOTES",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/136d67c4802450e20fb2d64ae024a7af3194a385"
+    },
+    {
+      "sha": "719acbfe9250062fbe97546df03819d82fa824b2",
+      "shortSha": "719acbf",
+      "message": "perf(render): cache packet hash frames and layouts",
+      "date": "2026-08-22T04:24:04-06:00",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/719acbfe9250062fbe97546df03819d82fa824b2"
+    },
+    {
+      "sha": "d54933db7efc1854ecdf0aa981932d7725ebca1b",
+      "shortSha": "d54933d",
+      "message": "fix(benchmark): bind production world index",
+      "date": "2026-08-22T04:20:09-06:00",
+      "type": "HP RESTORED",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d54933db7efc1854ecdf0aa981932d7725ebca1b"
+    },
+    {
+      "sha": "f1939259b5b9b5bc3af8938ab0f54651d5087303",
+      "shortSha": "f193925",
+      "message": "perf(world): reuse snapshot index for anchors",
+      "date": "2026-08-22T04:11:00-06:00",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f1939259b5b9b5bc3af8938ab0f54651d5087303"
+    },
+    {
+      "sha": "c5936f96468830cd560243d1746c511b8820e9cc",
+      "shortSha": "c5936f9",
+      "message": "perf(weather): hoist compile invariants",
+      "date": "2026-08-22T03:59:52-06:00",
+      "type": "SPEED +1",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c5936f96468830cd560243d1746c511b8820e9cc"
+    }
+  ],
   "ci": {
     "state": "success",
     "runId": "32571329500",

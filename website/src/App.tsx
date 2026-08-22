@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useRef, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
@@ -6,6 +6,7 @@ import { PALETTES, type Edition } from './world/palettes'
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
+const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'github'] as const
 
 type MenuItem = {
   label: string
@@ -80,6 +81,42 @@ const REWRITE_UPGRADES = [
 
 function DetailLinks({ children }: { children: ReactNode }) {
   return <div className="detail-links">{children}</div>
+}
+
+function activityTitle(message: string) {
+  return message.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+}
+
+function ActivityLog({ status }: { status: ProjectStatus }) {
+  const updates = status.activity.slice(0, 4)
+
+  return (
+    <section className="activity-log" aria-labelledby="activity-title">
+      <div className="activity-header">
+        <div>
+          <span>LIVE FROM {status.branch.toUpperCase()}</span>
+          <b id="activity-title">OAK RESEARCH LOG</b>
+        </div>
+        <span className="live-signal"><i /> WORK CONTINUES</span>
+      </div>
+      <ol>
+        {updates.map((update, index) => (
+          <li key={update.sha} style={{ '--log-index': index } as CSSProperties}>
+            <a href={update.url} target="_blank" rel="noreferrer">
+              <span className="activity-type">{update.type}</span>
+              <b>{activityTitle(update.message)}</b>
+              <time dateTime={update.date}>{update.date.slice(5, 10).replace('-', '/')}</time>
+              <code>{update.shortSha}</code>
+            </a>
+          </li>
+        ))}
+      </ol>
+      <div className="activity-footer">
+        <span>{status.activity.length} VERIFIED FIELD UPDATES LOADED</span>
+        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">OPEN FULL LOG ↗</a>
+      </div>
+    </section>
+  )
 }
 
 function ReleaseBanner({ status }: { status: ProjectStatus }) {
@@ -168,6 +205,27 @@ function RewriteDetail() {
 
       <RewriteComparisonGraphic />
 
+      <section className="field-media" aria-labelledby="field-media-title">
+        <figure>
+          <div className="media-frame">
+            <img
+              src={`${import.meta.env.BASE_URL}og-kanto-rebuild.png`}
+              alt="Original pixel-art concept of a first-person route leading toward a wide mountain region"
+              loading="lazy"
+            />
+            <span>CONCEPT ART // NOT GAMEPLAY</span>
+          </div>
+          <figcaption><b id="field-media-title">THE 2.0 WORLD VISION</b><span>Original project artwork</span></figcaption>
+        </figure>
+        <div className="capture-lock">
+          <span className="capture-icon" aria-hidden="true">▣</span>
+          <span>DEVICE CAPTURE / SLOT 01</span>
+          <b>REAL FOOTAGE UNLOCKS AFTER ACCEPTANCE</b>
+          <p>No staged gameplay. No ROM data. The first real comparison will appear only after device evidence passes.</p>
+          <a href={`${BRANCH}/docs/device-test-guide.md`} target="_blank" rel="noreferrer">VIEW THE CAPTURE GATE ↗</a>
+        </div>
+      </section>
+
       <div className="rebuild-vitals" aria-label="Rewrite highlights">
         <div><b>53</b><span>LEGACY SETTINGS MAPPED</span></div>
         <div><b>5</b><span>ENGINE TARGETS IN CI</span></div>
@@ -222,14 +280,12 @@ function MenuDetail({ index, status }: { index: number, status: ProjectStatus })
   if (index === 0) {
     return (
       <>
-        <div className="stat-row"><span>TYPE</span><b>GRAPHICS OVERHAUL</b></div>
-        <div className="stat-row"><span>GAMES</span><b>RED · BLUE · YELLOW</b></div>
-        <div className="stat-row"><span>ENGINE</span><b>GEN1RECOMP API 2</b></div>
-        <div className="alpha-notice"><i /> {status.version.toUpperCase()} SOURCE CANDIDATE</div>
-        <DetailLinks>
-          <a href={`${BRANCH}/README.md`} target="_blank" rel="noreferrer">PROJECT OVERVIEW <span>↗</span></a>
-          <a href={`${BRANCH}/ROADMAP.md`} target="_blank" rel="noreferrer">ROADMAP <span>↗</span></a>
-        </DetailLinks>
+        <div className="home-vitals">
+          <span><small>VERSION</small><b>{status.version.toUpperCase()}</b></span>
+          <span><small>LAB SCAN</small><b>{status.ci.passed}/{status.ci.total} PASS</b></span>
+          <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
+        </div>
+        <ActivityLog status={status} />
       </>
     )
   }
@@ -308,6 +364,12 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
   const menuButtons = useRef<Array<HTMLButtonElement | null>>([])
   const item = MENU_ITEMS[menuIndex]
 
+  const navigateToMenu = (index: number) => {
+    setMenuIndex(index)
+    const nextHash = `#${MENU_SLUGS[index]}`
+    if (window.location.hash !== nextHash) window.history.pushState({}, '', nextHash)
+  }
+
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (event.altKey || event.ctrlKey || event.metaKey) return
@@ -318,12 +380,12 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
       if (['arrowup', 'w'].includes(key)) {
         event.preventDefault()
         const nextIndex = (menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length
-        setMenuIndex(nextIndex)
+        navigateToMenu(nextIndex)
         menuButtons.current[nextIndex]?.focus()
       } else if (['arrowdown', 's'].includes(key)) {
         event.preventDefault()
         const nextIndex = (menuIndex + 1) % MENU_ITEMS.length
-        setMenuIndex(nextIndex)
+        navigateToMenu(nextIndex)
         menuButtons.current[nextIndex]?.focus()
       } else if (['arrowleft', 'a'].includes(key)) {
         event.preventDefault()
@@ -339,7 +401,7 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
         window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
       } else if (['escape', 'x'].includes(key)) {
         event.preventDefault()
-        setMenuIndex(0)
+        navigateToMenu(0)
         menuButtons.current[0]?.focus()
       }
     }
@@ -361,8 +423,7 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
               aria-current={index === menuIndex ? 'page' : undefined}
               key={menuItem.label}
               ref={(button) => { menuButtons.current[index] = button }}
-              onClick={() => setMenuIndex(index)}
-              onPointerEnter={() => setMenuIndex(index)}
+              onClick={() => navigateToMenu(index)}
             >
               <span className="menu-cursor" aria-hidden="true">▶</span>
               <span>{menuItem.label}</span>
@@ -423,6 +484,7 @@ function OptionsMenu({ status }: { status: ProjectStatus }) {
 export function App() {
   const status = useProjectStatus()
   const edition = useJourneyStore((state) => state.edition)
+  const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setQuality = useJourneyStore((state) => state.setQuality)
   const palette = PALETTES[edition]
 
@@ -431,6 +493,36 @@ export function App() {
     const limitedDevice = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4
     if (reducedMotion.matches || limitedDevice) setQuality('low')
   }, [setQuality])
+
+  useEffect(() => {
+    const syncMenuToLocation = () => {
+      const slug = window.location.hash.slice(1).toLowerCase()
+      const index = MENU_SLUGS.indexOf(slug as (typeof MENU_SLUGS)[number])
+      setMenuIndex(index >= 0 ? index : 0)
+    }
+    syncMenuToLocation()
+    window.addEventListener('popstate', syncMenuToLocation)
+    window.addEventListener('hashchange', syncMenuToLocation)
+    return () => {
+      window.removeEventListener('popstate', syncMenuToLocation)
+      window.removeEventListener('hashchange', syncMenuToLocation)
+    }
+  }, [setMenuIndex])
+
+  const [worldReady, setWorldReady] = useState(false)
+
+  useEffect(() => {
+    const windowWithIdle = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+      cancelIdleCallback?: (handle: number) => void
+    }
+    if (windowWithIdle.requestIdleCallback) {
+      const handle = windowWithIdle.requestIdleCallback(() => setWorldReady(true), { timeout: 900 })
+      return () => windowWithIdle.cancelIdleCallback?.(handle)
+    }
+    const handle = window.setTimeout(() => setWorldReady(true), 250)
+    return () => window.clearTimeout(handle)
+  }, [])
 
   const themeStyle = {
     '--accent': palette.accent,
@@ -442,9 +534,11 @@ export function App() {
 
   return (
     <div className={`app edition-${edition}`} style={themeStyle}>
-      <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
-        <WorldCanvas />
-      </Suspense>
+      {worldReady ? (
+        <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
+          <WorldCanvas />
+        </Suspense>
+      ) : <div className="world-canvas world-loading">WORLD DATA STANDBY...</div>}
       <div className="screen-treatment" aria-hidden="true" />
       <OptionsMenu status={status} />
     </div>

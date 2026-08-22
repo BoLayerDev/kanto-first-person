@@ -5,8 +5,14 @@
   "channel": "alpha",
   "gates": {
     "asset_rights": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "rights_grant",
+          "locator": "private-evidence://asset-rights/2026-08-21-creator-grant/evidence-manifest.json",
+          "sha256": "167d3d22b06ce7c545363013377a22bafdc58901ad8cc9501b25fcb0b03a419e"
+        }
+      ],
+      "passed": true
     },
     "automated_tests": {
       "evidence": [],

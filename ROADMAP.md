@@ -5,7 +5,8 @@
 - Preserve original Git history and release hashes.
 - Create project rules, status, architecture, provenance, parity, risk, and coordination records.
 - Create a private remote, Backup Guardian entry, source checkpoint, and clean-clone restore test.
-- Capture creator permission evidence outside Git.
+- Capture creator permission evidence outside Git and publish only a redacted
+  hash-bound approval record. Complete for the current legacy-asset inventory.
 
 Exit: the project is recoverable and no legacy artifact is mistaken for reproducible source.
 

@@ -291,7 +291,7 @@ Stable release needs:
 - Reviewed and released adapters for both hosts.
 - Red, Blue, and Yellow GPU acceptance.
 - Corrected v1.60 visual parity.
-- Clear asset modification and redistribution rights.
+- Recorded asset modification and redistribution rights. ✅
 - Native evidence for every claimed platform.
 - Performance, leak, reproducibility, and uninstall evidence.
 - Community review and a fresh engine audit.
@@ -311,15 +311,17 @@ One open required gate keeps the project prerelease.
 | Performance | [Benchmark method](docs/benchmark-method.md) |
 | Release | [Machine-readable gates](docs/release-gates.json) |
 | Release process | [Signing, packages, and publication](docs/release-process.md) |
-| Asset permission | [Creator permission request](docs/asset-permission-request-template.md) |
+| Asset rights | [Redacted approval record](docs/rights-approval.json) |
+| Permission template | [Creator permission request](docs/asset-permission-request-template.md) |
 | Milestones | [Roadmap](ROADMAP.md) |
 | Recovery | [Project status](PROJECT_STATUS.md) |
 
 ## 📜 Rights, credits, and Poké Ball fine print
 
 Independently authored v2 source is MIT licensed. Legacy panoramas, posters,
-and audio remain outside that grant until durable evidence proves modification
-and redistribution rights.
+and audio remain outside MIT and are covered by a separate express creator
+grant. Only its redacted hash-bound approval record is public; the signed
+original stays private.
 
 Never commit or package ROMs, saves, imported cache content, ROM-derived PNG
 files, credentials, or private evidence. See

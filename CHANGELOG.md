@@ -22,8 +22,11 @@
 - Published source pull requests for the Battle Art and Dramaless companion
   adapters; host-owner review, GPU testing, versioning, and release remain open.
 - Moved legacy art and audio under a separate rights notice.
+- Recorded a private creator-signed modification and redistribution grant for
+  the current legacy-asset inventory; Git contains only its redacted hash.
 
 This alpha is not a stable release. Certified adapters, real rendering,
-device evidence, rights evidence, and reproducible artifacts remain gates.
+device evidence, remaining channel gates, and reproducible artifacts remain
+open. The asset-rights gate is complete for the current inventory.
 
 Earlier release history remains available in the preserved Git history.

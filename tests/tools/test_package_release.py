@@ -67,19 +67,38 @@ class ReleaseGateTests(unittest.TestCase):
             },
         )
 
-    def test_unapproved_public_ledger_covers_every_required_gate(self):
+    def test_unapproved_public_ledger_records_completed_asset_rights(self):
         ledger = json.loads(
             (ROOT / "docs" / "release-gates.json").read_text(encoding="utf-8")
+        )
+        rights = json.loads(
+            (ROOT / "docs" / "rights-approval.json").read_text(encoding="utf-8")
         )
         self.assertFalse(ledger["approved"])
         self.assertEqual(
             set(ledger["gates"]), set(PACKAGE_RELEASE.REQUIRED_RELEASE_GATES)
         )
-        self.assertTrue(all(not gate["passed"] for gate in ledger["gates"].values()))
+        self.assertTrue(rights["approved"])
+        self.assertEqual(
+            rights["evidence_sha256"], rights["approval_record"]["sha256"]
+        )
+        self.assertTrue(ledger["gates"]["asset_rights"]["passed"])
+        self.assertEqual(
+            ledger["gates"]["asset_rights"]["evidence"],
+            [rights["approval_record"]],
+        )
+        self.assertTrue(all(
+            not gate["passed"]
+            for name, gate in ledger["gates"].items()
+            if name != "asset_rights"
+        ))
 
-    def test_unapproved_alpha_ledger_covers_every_required_gate(self):
+    def test_unapproved_alpha_ledger_records_completed_asset_rights(self):
         ledger = json.loads(
             (ROOT / "docs" / "prerelease-gates.json").read_text(encoding="utf-8")
+        )
+        rights = json.loads(
+            (ROOT / "docs" / "rights-approval.json").read_text(encoding="utf-8")
         )
         self.assertFalse(ledger["approved"])
         self.assertEqual(ledger["channel"], "alpha")
@@ -88,7 +107,16 @@ class ReleaseGateTests(unittest.TestCase):
             set(ledger["gates"]),
             set(PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES["alpha"]),
         )
-        self.assertTrue(all(not gate["passed"] for gate in ledger["gates"].values()))
+        self.assertTrue(ledger["gates"]["asset_rights"]["passed"])
+        self.assertEqual(
+            ledger["gates"]["asset_rights"]["evidence"],
+            [rights["approval_record"]],
+        )
+        self.assertTrue(all(
+            not gate["passed"]
+            for name, gate in ledger["gates"].items()
+            if name != "asset_rights"
+        ))
 
     def test_release_policy_selects_prerelease_and_stable_ledgers(self):
         self.assertEqual(

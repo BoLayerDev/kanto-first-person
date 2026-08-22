@@ -30,7 +30,8 @@ Last updated: 2026-08-21
 - Frozen adapter evidence commits are `0185b44` (Battle Art) and `bc24063`
   (Dramaless). Canonical patches are outside Git
   under `Kanto First Person Evidence\host-patches`.
-- The repository has legacy audio and art but no historical license file.
+- Legacy audio and art remain outside MIT but now have a private creator-signed
+  modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
 
@@ -51,8 +52,8 @@ Last updated: 2026-08-21
 2. Complete corrected 1.60 visual and device evidence.
 3. Obtain host-owner review and released adapter versions from
    `absol89/DramaticShapeVoxelMod#29` and `artyrambles/DRAMALESS_SHAPE#47`.
-4. Send `docs/asset-permission-request-template.md` and preserve the signed
-   modification and redistribution grant.
+4. Keep the private rights inventory hash aligned if any covered legacy asset
+   changes; never publish the original permission pages.
 5. Create or import a protected GPG release key, back it up, and record only
    its public fingerprint in repository configuration and release evidence.
 6. Complete performance, leak, platform, reproducibility, and uninstall gates.

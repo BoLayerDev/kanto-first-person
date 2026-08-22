@@ -150,7 +150,8 @@ No item is complete until the applicable gates pass:
    every owned resource once.
 7. Windows, Linux, macOS, Android, iOS, Switch, Xbox, PortMaster, and Anbernic
    claims stay open until device owners provide evidence.
-8. Packaged art and audio remain blocked on their rights and provenance gates.
+8. Packaged legacy art and audio have a private creator grant and a hash-bound
+   inventory. Any asset change must refresh that evidence before release.
 
 Unverified behavior must stay marked Open. A source-level match is not a device,
 host, performance, or visual pass.

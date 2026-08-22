@@ -12,6 +12,10 @@
 
 Release range: `>=0.2.17 <0.3.0`. Development builds report `0.0.0-dev`, so CI pins their commit separately.
 
+All five exact pins passed [CI run
+32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+at KFP source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`.
+
 The v0.2.19 release contains the current audited dev commit plus release-only
 iOS repository metadata. From v0.2.18, the manifest validator, sandbox, render
 registry schema, render pipeline, and modkit are byte-identical. The Loader
@@ -36,15 +40,19 @@ The same five pins have no public owner-scoped runtime method for output from
 
 ## Voxel hosts
 
-| Host ID | Audited version | Audited commit | Companion API | Stable gate |
+| Host ID | Audited base | PR head | Companion API evidence | Release gate |
 |---|---:|---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 | `fcbe541` | PR adapter `8f1af4e` passes contract and cutaway tests | Host review and GPU run open |
-| `DRAMALESS_SHAPE` | 2.0.3 | `f14795b` | PR adapter `8e045ad` passes contract, cutaway, and game-ID tests | Host review and GPU run open |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | `cee25fd` | 2,636 host, 11 lifecycle, and 54 companion checks pass | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is open and mergeable; owner release and GPU retest are open |
+| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | `f757544` | 89 host and 59 syntax checks pass | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) is open and mergeable; owner release and GPU retest are open |
 
 Runtime selection requires exactly one active compatible host. Zero or multiple hosts leave KFP inactive.
 The adapter branches are pushed to project forks and submitted in upstream
 pull requests. They are review evidence, not released host versions, and must
 not be described as released until each host owner publishes them.
+
+Both heads commit Git-identical copies of the companion API and shared fixture.
+Their canonical source hashes are in the [alpha-readiness
+evidence](release-evidence/alpha-readiness-2026-08-22.json).
 
 ## Platforms
 

@@ -17,6 +17,24 @@
 - Sandbox change: `83682f011df5039c4ea7042141590d38ca7e21d5`.
 - Source: `https://github.com/bryanthaboi/gen1recomp`.
 
+## KFP alpha checkpoint
+
+- Public source commit:
+  `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`.
+- [CI run
+  32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311):
+  success on Windows, Linux, macOS, and all five pinned Gen1recomp targets.
+- The v0.2.19 job reproduced the private test package byte for byte.
+- A fresh public clone matched commit
+  `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`, Git tree
+  `c9e9ee391e76abb4ed2c63308305f8467f6c1d1f`, and all 166 tracked files.
+  Source-integrity record SHA-256:
+  `d73871c05f91e93c9eafd3ba7d2d9a73508c2ee19ad9928d5cad3ffb2118fce1`.
+- Shared-CI timing is structural and advisory. It is not native or full-scene
+  performance evidence.
+- Machine-readable evidence:
+  `docs/release-evidence/alpha-readiness-2026-08-22.json`.
+
 ## Kanto First Person legacy
 
 - Git source commit: `94d0151be839f02fea4a35ab1c3df41fbaddc6c1`.
@@ -34,28 +52,34 @@
 - Source: `https://github.com/artyrambles/kanto-first-person/tree/proof-of-concept-rewrite`.
 - Status: design evidence only. Do not cherry-pick.
 
-## Initial voxel hosts
+## Initial voxel host baselines
 
 - Battle Art: `BATTLE_ART_VOXEL_FORK` 1.9.7, commit `fcbe541676cd7f245fa73df3d01dcbabec37a1fe`.
 - Dramaless Shape: `DRAMALESS_SHAPE` 2.0.3, commit `f14795b17e85d5d5baedcad63944065e446a4b0b`.
 
-Fork adapter commits and binary patches are implementation evidence only.
+Fork adapter commits and patch hashes are implementation evidence only.
 They are not host-owner releases:
 
-- Frozen companion dispatcher SHA-256:
-  `864da19493f773a52fb2111efc02d79e9882b87c5a762af5b124326a74a32b33`.
-- Battle Art adapter: `8f1af4e28d46e205739bc133a26a065a7d592025`;
+- Frozen companion API (`companion/api_v1.lua`) SHA-256:
+  `6fded9c804298ab064db61b908382be7c9a74ad29d611444c33e1bcc53a33d26`.
+- Shared draw fixture (`tests/fixtures/voxel_companion_draw_v1.lua`) SHA-256:
+  `de1dca98a04ad9446b0af4c13523dab7f365bc7a76e70bc44b24f323d98a9bfa`.
+- Battle Art adapter: `cee25fd117d881aa63ad7ef0bc7905ca0063fb29`;
   patch SHA-256
-  `446d4bb9e91617caa60a0f64d4dfa4a4bb6c86b56ff70e71ad915433e9eed4b9`.
-- Dramaless adapter: `8e045ad657f72ba1c74d326f4957976a7e154fc4`;
+  `5d65aabd8a4f759cc28d57c97173ff4e521466d25d414f340b4796fb8a5e6539`.
+  The branch passes 2,636 host, 11 lifecycle, and 54 companion checks.
+- Dramaless adapter: `f7575445d00593b7db1ecd66f93e8c26989f4136`;
   patch SHA-256
-  `83f4b89dff6ec863d54cf81630bce7441e68a367281185e0a0d9173d1a82137f`.
+  `2b771ec588cd9ea34b24d9e820b23015fb11d3ec684ef6e7fd53c7ee220180df`.
+  The branch passes 89 host checks and 59 Lua syntax checks.
 - Battle Art delivery fork and upstream review:
-  `https://github.com/BoLayerDev/DramaticShapeVoxelMod/tree/kfp-companion-api-v1`
-  and `https://github.com/absol89/DramaticShapeVoxelMod/pull/29`.
+  [delivery branch](https://github.com/BoLayerDev/DramaticShapeVoxelMod/tree/kfp-companion-api-v1)
+  and [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29),
+  which is open and mergeable at the recorded head.
 - Dramaless delivery fork and upstream review:
-  `https://github.com/BoLayerDev/DRAMALESS_SHAPE/tree/kfp-companion-api-v1`
-  and `https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47`.
+  [delivery branch](https://github.com/BoLayerDev/DRAMALESS_SHAPE/tree/kfp-companion-api-v1)
+  and [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47),
+  which is open and mergeable at the recorded head.
 
 ## Private evidence
 

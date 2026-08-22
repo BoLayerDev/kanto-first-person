@@ -107,20 +107,25 @@ open · 🔒 unavailable in this alpha
 | Rewrite `dev` baseline | `06e06e3` | ✅ audited |
 | Current audited `dev` | `478e3bf` | ✅ audited |
 
+All five targets passed [CI run
+32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+at source checkpoint `af8610c`.
+
 ### Voxel hosts
 
 | Host | Audited base | Current adapter gate |
 |---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29), head `cee25fd`; open and mergeable |
-| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47), head `f757544`; open and mergeable |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29), head `cee25fd`; checks pass; open and mergeable |
+| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47), head `f757544`; checks pass; open and mergeable |
 
 KFP needs **exactly one** compatible active host. Zero hosts leave it inactive.
 Two hosts also leave it inactive. KFP never guesses which renderer should own
 the world. Only the two hosts in this table are supported; every other host
 fails closed. “Mergeable” does not mean approved, merged, or released.
 
-Public CI covers Windows, Linux, and macOS source gates. Every other platform
-remains experimental until a device owner records native evidence.
+[Public CI](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+covers Windows, Linux, and macOS source gates. Its timing is advisory. Every
+platform needs recorded native runtime evidence before a stable support claim.
 
 <a id="install"></a>
 
@@ -314,10 +319,12 @@ flowchart LR
     class W,B,R,V future;
 ```
 
-The alpha ledger is not approved. Asset rights are recorded complete; released
-host adapters, Red/Blue/Yellow GPU review, native-device results, soak and leak
-evidence, reproducibility, signing, and community review remain gated. Any open
-required gate keeps the project prerelease. See the exact
+The alpha ledger is not approved. The current source checkpoint has automated,
+contract, known-limitations, source-integrity, and byte-for-byte package
+evidence. Released host adapters, migration proof, Red/Blue/Yellow GPU review,
+native performance, soak and leak evidence, a signed tag, and community review
+remain open. Any open required gate keeps the project prerelease. See the
+[alpha evidence](docs/release-evidence/alpha-readiness-2026-08-22.json) and
 [machine-readable gates](docs/prerelease-gates.json).
 
 ## 📚 Professor's notes
@@ -334,7 +341,8 @@ required gate keeps the project prerelease. See the exact
 | Runtime QA | [Scene, lifecycle, and soak matrix](docs/qa-matrix.md) |
 | Device evidence | [Device-owner test guide](docs/device-test-guide.md) |
 | Known limits | [Alpha limitations](docs/known-limitations.md) |
-| Release | [Machine-readable gates](docs/release-gates.json) |
+| Alpha evidence | [Hash-bound readiness record](docs/release-evidence/alpha-readiness-2026-08-22.json) |
+| Release | [Alpha gates](docs/prerelease-gates.json) · [Stable gates](docs/release-gates.json) |
 | Release process | [Signing, packages, and publication](docs/release-process.md) |
 | Asset rights | [Redacted approval record](docs/rights-approval.json) |
 | Permission template | [Creator permission request](docs/asset-permission-request-template.md) |

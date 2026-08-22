@@ -87,13 +87,12 @@ evidence uses this same matrix.
 
 ## Current runtime checkpoint
 
-The exact KFP `ee5b735` files and both submitted host adapters were placed in
-isolated Windows identities with Yellow. The first runtime inspection found
-KFP disabled for Battle Art, so that capture is only a host baseline. Dramaless
-loaded KFP, registered all 54 option rows, and attached in a production Loader
-probe. Its live outdoor scene did not show the selected Valley horizon. A
-ROM-free production-path trace accepted the horizon plus indoor ceiling and
-wall batches with no submission failure, so a probe-enabled restart must now
-separate live scene state from GPU presentation. No scene-class,
-visual-acceptance, performance, lifecycle, transition, or soak row is complete
-yet.
+The last live Windows inspection used older pre-final files: KFP `47e4161`,
+Battle Art `8f1af4e`, and Dramaless `0af5555`. It is diagnostic evidence only.
+The user confirmed that the old Dramaless Mart view lacked the expected KFP
+walls and roof, and outdoor inspection did not prove the selected horizon.
+
+The current KFP source checkpoint `af8610c`, Battle Art head `cee25fd`, and
+Dramaless head `f757544` have not completed a controlled restart and capture.
+No scene-class, visual-acceptance, native-performance, lifecycle, transition,
+or soak row is complete yet.

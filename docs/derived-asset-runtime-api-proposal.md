@@ -19,8 +19,8 @@ correct:
 
 ## Audit scope
 
-The audit was rechecked at KFP commit
-`d301c779478e524c2e35dbeafa7347ae35103ba5` and these exact public
+The audit was rechecked for KFP source checkpoint
+`af8610cc2ddd7bb4049c26ca7673c8d0a5319351` and these exact public
 Gen1recomp commits:
 
 | Target | Commit | Result |
@@ -163,4 +163,4 @@ The future KFP implementation must add injected, ROM-free tests for method
 absence, method faults, partial species, frame-B fallback, borrowed lifetime,
 option visibility, deterministic map resets, bounded counts, draw schema v1,
 and the absence of path strings. Both host companion suites and the full
-four-target engine matrix must then pass before device or GPU review starts.
+five-target engine matrix must then pass before device or GPU review starts.

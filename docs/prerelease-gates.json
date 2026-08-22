@@ -15,16 +15,34 @@
       "passed": true
     },
     "automated_tests": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "ci_run",
+          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
+          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+        }
+      ],
+      "passed": true
     },
     "companion_contracts": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "companion_contracts",
+          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
+          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+        }
+      ],
+      "passed": true
     },
     "known_limitations": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "known_limitations",
+          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
+          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+        }
+      ],
+      "passed": true
     },
     "released_hosts": {
       "evidence": [],
@@ -35,12 +53,24 @@
       "passed": false
     },
     "package_reproducibility": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "package_reproduction",
+          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
+          "sha256": "874573926811607d5d2f92ac416be9c48c4a019bddd9cd4f1108356cc24354a1"
+        }
+      ],
+      "passed": true
     },
     "source_integrity": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "source_integrity",
+          "locator": "private-evidence://source-integrity/2026-08-22-af8610c/source-integrity.json",
+          "sha256": "d73871c05f91e93c9eafd3ba7d2d9a73508c2ee19ad9928d5cad3ffb2118fce1"
+        }
+      ],
+      "passed": true
     }
   },
   "release_version": "2.0.0-alpha.1",

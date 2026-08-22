@@ -6,13 +6,20 @@ a waiver for a failed release gate.
 ## Installation and compatibility
 
 - Battle Art and Dramaless compatibility exists only on the submitted PR
-  branches until the host owners merge and publish releases.
+  branches until the host owners merge and publish releases. [Battle Art PR
+  #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is open and
+  mergeable at `cee25fd`; 2,636 host, 11 lifecycle, and 54 companion checks
+  pass. [Dramaless PR
+  #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) is open and
+  mergeable at `f757544`; 89 host and 59 syntax checks pass. These results do
+  not make either branch an owner-published release.
 - KFP needs exactly one compatible active voxel host. Zero or two compatible
   hosts leave KFP inactive by design.
 - An old KFP installation can leave modified host files. KFP 2 does not repair
   them. Reinstall a clean host before testing or upgrading.
-- Current native runtime evidence is Windows-only. Other platforms remain
-  experimental until device owners complete the runtime QA matrix.
+- Current runtime activity is Windows-only and has no accepted visual or
+  performance matrix. All platforms remain experimental until device owners
+  complete the native runtime QA matrix.
 
 ## Games and visual evidence
 
@@ -29,7 +36,7 @@ a waiver for a failed release gate.
 - Represented effects still need host/GPU review. This includes interiors,
   caves, map edges, weather, skies, camera behavior, audio, battles, shadows,
   quality tiers, and transitions.
-- Wildlife birds and ground flocks emit no runtime draw packet. All four pinned
+- Wildlife birds and ground flocks emit no runtime draw packet. All five pinned
   Gen1recomp targets can build the transform output, but none has a public,
   owner-scoped runtime image resolver. The exact blocker and bounded upstream
   proposal are in the
@@ -52,9 +59,18 @@ a waiver for a failed release gate.
 
 ## Performance and release state
 
+- [CI run
+  32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+  passed public source gates on Windows, Linux, macOS, and all five engine pins.
+  Its v0.2.19 job reproduced a private package byte for byte. This checkpoint
+  does not approve a public package, a signed tag, live visual output, or native
+  performance.
 - Packet-seal correctness and deterministic work gates pass. Shared-CI wall
-  timing is advisory. Native GPU frame-time, draw-call, complete scene-ready,
-  100-transition, and 30-minute soak evidence is incomplete.
+  timing is structural and advisory. Native CPU/GPU frame time, draw calls,
+  complete uncached-scene readiness, 100-transition resource stability, and a
+  30-minute soak remain open.
+- The v1-to-v2 migration-safety gate remains open. The documented clean-host
+  reinstall route still needs final release-candidate proof.
 - No public alpha package is approved. Existing packages are private,
   non-publishable engineering artifacts.
 - Stable publication also needs Red, Blue, and Yellow acceptance, native

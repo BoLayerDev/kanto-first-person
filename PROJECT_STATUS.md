@@ -13,10 +13,13 @@ Last updated: 2026-08-22
   current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Current local common-source gates pass: Lua and Python tests, Lua syntax,
-  repository policy, deterministic cloud generation, packet-seal correctness,
-  and deterministic work gates. Shared-CI wall timing is advisory and does not
-  approve performance. CI for the v0.2.19 pin has not run yet.
+- Public source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`
+  passed [CI run 32558047311](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311)
+  on Windows, Linux, macOS, and all five pinned engine commits. The run includes
+  256 ROM-free Lua tests, 84 Lua syntax checks, 28 Python tests, repository
+  policy, and byte-for-byte private package reproduction on v0.2.19.
+- Shared-CI packet-seal timing is structural and advisory. Native CPU/GPU,
+  complete uncached-scene, transition, and soak performance remain open.
 
 ## Active workstreams
 
@@ -29,12 +32,19 @@ Last updated: 2026-08-22
 
 - The Git tag named `firstperson1.60.0` contains manifest version 1.57.2. The release archives contain unpublished 1.60 source.
 - The old mod can leave unsafe source edits inside voxel hosts.
-- Both adapters are pushed to `BoLayerDev` forks and submitted upstream. Battle
-  Art PR #29 and Dramaless PR #47 await host-owner review, merge, versioning,
+- Both final adapter heads are pushed to `BoLayerDev` forks. [Battle Art PR
+  #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) is open and
+  mergeable at `cee25fd117d881aa63ad7ef0bc7905ca0063fb29`; 2,636 host, 11
+  lifecycle, and 54 companion checks pass. [Dramaless PR
+  #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47) is open and
+  mergeable at `f7575445d00593b7db1ecd66f93e8c26989f4136`; 89 host checks and
+  59 syntax checks pass. Both still need owner review, merge, versioning,
   release, and real GPU testing.
-- New Battle Art and Dramaless visual corrections are under final local review.
-  The PR heads and canonical patch hashes will be refreshed only after the
-  common sky contract and both host suites pass together.
+- Both adapter heads commit Git-identical copies of the frozen KFP API and
+  shared fixture. Their canonical source SHA-256 values are
+  `6fded9c804298ab064db61b908382be7c9a74ad29d611444c33e1bcc53a33d26`
+  and
+  `de1dca98a04ad9446b0af4c13523dab7f365bc7a76e70bc44b24f323d98a9bfa`.
 - Legacy audio and art remain outside MIT but now have a private creator-signed
   modification and redistribution grant with a redacted hash-bound record.
 - Full real-game visual validation needs private player-owned imports and cannot run in public CI.
@@ -43,9 +53,9 @@ Last updated: 2026-08-22
   bad panorama placement and repeated bands in Dramaless, plus oversized
   translucent cloud and canopy geometry in Battle Art. A pre-restart Dramaless
   Mart capture also lacked KFP walls and ceilings. The common packet contract
-  and both host renderers now have source-level corrections under review. A
-  controlled restart at the final commits must verify the outdoor and interior
-  results. Red and Blue imports are not present.
+  and both host renderers now have source-level corrections at the recorded PR
+  heads. A controlled restart at those exact commits must verify the outdoor
+  and interior results. Red and Blue imports are not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
 - All five pinned Gen1recomp targets can build KFP's declared bird transform,
@@ -61,16 +71,22 @@ Last updated: 2026-08-22
   committed locally and passes an independent-clone restore test.
 - The public remote tracks the maintained rewrite on `v2-rewrite`. Use
   `git ls-remote origin refs/heads/v2-rewrite` for the current immutable SHA.
-- A fresh clone from the public remote passed the Lua suite, syntax gate,
-  repository policy gate, Python release-control suite, and removed-host scan.
+- Public source checkpoint `af8610cc2ddd7bb4049c26ca7673c8d0a5319351`
+  passed CI run 32558047311 across three hosted operating systems and five
+  pinned engine commits.
+- A fresh clone of exact public commit `af8610c` matched its Git tree, index,
+  checkout, 166-file archive, and strict package allowlist. Git object, unsafe
+  path, link, and secret checks passed. The hash-bound source-integrity record
+  is referenced from the alpha evidence ledger.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.
 
 ## Next actions
 
 1. Complete the Yellow visual, lifecycle, performance, transition, and soak
    matrix; import legally owned Red and Blue copies before their private runs.
-2. Obtain host-owner review and released adapter versions from
-   `absol89/DramaticShapeVoxelMod#29` and `artyrambles/DRAMALESS_SHAPE#47`.
+2. Obtain host-owner review and released adapter versions from [Battle Art PR
+   #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) and
+   [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47).
 3. Keep the private rights inventory hash aligned if any covered legacy asset
    changes; never publish the original permission pages.
 4. Request and re-audit an official owner-scoped derived-image API before any

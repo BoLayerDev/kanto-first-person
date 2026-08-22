@@ -54,7 +54,7 @@ Blue, and Yellow.
 | KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Name-to-asset and HIGH/BALANCED/LOW file selection are locked by tests and a public hash inventory; physical scale is quality-independent; GPU placement still needs review |
 | Three cloud decks | Represented | KFP-owned deterministic binary masks, repeat sampling, borrowed-resource ownership, and packet validation are tested; GPU height, parallax, and day/night blending remain open |
 | Stars, nebula, twinkle, and shooting stars | Represented | Night timing and deterministic seed tests |
-| Distant birds and derived local bird frames | Open | Import transform exists, but the four pinned engines have no public owner-scoped runtime resolver; alpha control is hidden; see the [upstream API proposal](derived-asset-runtime-api-proposal.md) |
+| Distant birds and derived local bird frames | Open | Import transform exists, but the five pinned engines have no public owner-scoped runtime resolver; alpha control is hidden; see the [upstream API proposal](derived-asset-runtime-api-proposal.md) |
 | Ground flocks that reset by map | Open | No executable packet is emitted; alpha control is hidden until the same owner-scoped resolver is released |
 | Planes, contrails, and rare blimps | Represented | Spawn timing, batching, and visibility tests |
 | Rain, storms, lightning, umbrellas, puddles, splashes, and rainbows | Represented | Weather transitions and photosensitivity review |
@@ -67,7 +67,7 @@ Blue, and Yellow.
 
 | Legacy behavior to preserve | v2 decision | Current evidence still needed |
 | --- | --- | --- |
-| Cave, forest, night, rain, route, town, and shore ambient beds | Represented | Rights gate, loop points, cross-fade, and suspend/resume tests |
+| Cave, forest, night, rain, route, town, and shore ambient beds | Represented | Loop points, cross-fade, and suspend/resume tests |
 | Grass, cave, wood, door, and shop-door one-shots | Represented | Event routing, cadence, and volume review |
 | Jump crouch, arc, landing settle, and independent head bob | Represented | Fixed-step timing and first-person camera corpus |
 | Doorway step | Represented | Warp-distance false-positive tests |
@@ -154,10 +154,12 @@ No item is complete until the applicable gates pass:
 1. ROM-free unit and contract tests inspect deterministic commands.
 2. Synthetic render tests verify phase, material, depth, blend, and batch keys.
 3. Private player-owned Red, Blue, and Yellow review verifies visual placement.
-4. Battle Art and Dramaless adapters pass one companion
-   conformance suite.
-5. Frame time, build slices, cache limits, draw calls, pools, and release counts
-   stay inside HIGH, BALANCED, and LOW policy.
+4. The exact Battle Art `cee25fd` and Dramaless `f757544` adapter heads pass
+   their ROM-free host and companion checks. Owner releases and GPU review stay
+   open.
+5. Deterministic packet-seal and slice-structure checks pass. Native frame time,
+   full uncached-scene readiness, draw calls, pools, leaks, and release counts
+   must still stay inside HIGH, BALANCED, and LOW policy.
 6. Map change, option change, host change, reload, suspend, and shutdown release
    every owned resource once.
 7. Windows, Linux, macOS, Android, iOS, Switch, Xbox, PortMaster, and Anbernic

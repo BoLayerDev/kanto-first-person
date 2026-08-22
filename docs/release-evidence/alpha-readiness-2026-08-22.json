@@ -1,0 +1,201 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-08-22T06:57:44Z",
+  "scope": "2.0.0-alpha.1 source-integration checkpoint",
+  "kfp": {
+    "commit": "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+    "git_tree": "c9e9ee391e76abb4ed2c63308305f8467f6c1d1f",
+    "ci": {
+      "run_id": 32558047311,
+      "url": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311",
+      "completed_at": "2026-08-22T06:52:08Z",
+      "conclusion": "success",
+      "head_commit": "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+      "operating_systems": [
+        "ubuntu-latest",
+        "windows-latest",
+        "macos-latest"
+      ],
+      "engine_pins": [
+        {
+          "target": "v0.2.17",
+          "commit": "44f4680b24823629489ed5a2adad648d0dceb640"
+        },
+        {
+          "target": "v0.2.18",
+          "commit": "70d7b6383e2c005857013dc897fd096886b08f0b"
+        },
+        {
+          "target": "v0.2.19",
+          "commit": "116a6ba450dd65f25c9be150952fc3c27be904c0"
+        },
+        {
+          "target": "dev-baseline",
+          "commit": "06e06e305bbcefe97c216a31bb25265ffb5e6b18"
+        },
+        {
+          "target": "dev-current",
+          "commit": "478e3bf8ebf7646edfda88320c6472cf32db2e67"
+        }
+      ],
+      "source_checks": {
+        "lua_syntax": {
+          "compiled": 84,
+          "failed": 0
+        },
+        "lua_tests": {
+          "passed": 256,
+          "failed": 0,
+          "files": 34
+        },
+        "python_tests": {
+          "passed": 28,
+          "failed": 0
+        },
+        "repository_policy": "pass"
+      },
+      "packet_seal_stress": {
+        "mode": "shared-ci",
+        "result": "structural-pass",
+        "timing_claim": "advisory-only"
+      },
+      "package_reproduction": {
+        "job_id": 96995257227,
+        "engine_target": "v0.2.19",
+        "engine_commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
+        "result": "byte-for-byte-pass",
+        "publishable": false
+      }
+    },
+    "companion_api": {
+      "path": "companion/api_v1.lua",
+      "sha256": "6fded9c804298ab064db61b908382be7c9a74ad29d611444c33e1bcc53a33d26"
+    },
+    "shared_fixture": {
+      "path": "tests/fixtures/voxel_companion_draw_v1.lua",
+      "sha256": "de1dca98a04ad9446b0af4c13523dab7f365bc7a76e70bc44b24f323d98a9bfa"
+    },
+    "synthetic_scene_test": {
+      "path": "tests/integration/test_synthetic_scene_golden.lua",
+      "sha256": "eb1e667e8dc766caea68d5cc65006007d693d59c38f3586898e64dc0520f26f3"
+    }
+  },
+  "source_integrity": {
+    "passed": true,
+    "record": {
+      "kind": "source_integrity",
+      "locator": "private-evidence://source-integrity/2026-08-22-af8610c/source-integrity.json",
+      "sha256": "d73871c05f91e93c9eafd3ba7d2d9a73508c2ee19ad9928d5cad3ffb2118fce1"
+    },
+    "remote_commit_exact": true,
+    "fresh_clone_clean": true,
+    "tracked_file_count": 166,
+    "tracked_path_list_sha256": "585e3cce8d53a2417807ba12a4c2c97511fd77d106c35c85d5c1a00f611f3d2d",
+    "unsafe_path_count": 0,
+    "secret_finding_count": 0,
+    "git_archive_sha256": "d73a041f4f5420fa296fd00d026698b7f1426184ff1c7b88337cf17fcbc64dd7",
+    "private_package_reproduction": {
+      "engine_commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
+      "publishable": false,
+      "two_builds_byte_identical": true,
+      "zip_sha256": "7c433fa7028d05d46a786d53c0c082f23fbd66d45a43c14a69f590b8beb91210",
+      "modpkg_sha256": "fc687639d9c93b383efcb41a9231451453fbb0bbe597c7fa75d3098dadb0cd46"
+    }
+  },
+  "voxel_hosts": [
+    {
+      "host": "Battle Art",
+      "host_id": "BATTLE_ART_VOXEL_FORK",
+      "host_version": "1.9.7",
+      "base_commit": "fcbe541676cd7f245fa73df3d01dcbabec37a1fe",
+      "pr": {
+        "number": 29,
+        "url": "https://github.com/absol89/DramaticShapeVoxelMod/pull/29",
+        "head_commit": "cee25fd117d881aa63ad7ef0bc7905ca0063fb29",
+        "state": "OPEN",
+        "draft": false,
+        "mergeable": "MERGEABLE",
+        "merge_state_status": "CLEAN"
+      },
+      "patch": {
+        "kind": "host_patch",
+        "locator": "private-evidence://host-patches/BATTLE_ART_VOXEL_FORK.patch",
+        "sha256": "5d65aabd8a4f759cc28d57c97173ff4e521466d25d414f340b4796fb8a5e6539"
+      },
+      "checks": {
+        "host": {
+          "passed": 2636,
+          "total": 2636
+        },
+        "lifecycle": {
+          "passed": 11,
+          "total": 11
+        },
+        "companion": {
+          "passed": 54,
+          "total": 54
+        }
+      },
+      "released": false
+    },
+    {
+      "host": "Dramaless",
+      "host_id": "DRAMALESS_SHAPE",
+      "host_version": "2.0.3",
+      "base_commit": "f14795b17e85d5d5baedcad63944065e446a4b0b",
+      "pr": {
+        "number": 47,
+        "url": "https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47",
+        "head_commit": "f7575445d00593b7db1ecd66f93e8c26989f4136",
+        "state": "OPEN",
+        "draft": false,
+        "mergeable": "MERGEABLE",
+        "merge_state_status": "CLEAN"
+      },
+      "patch": {
+        "kind": "host_patch",
+        "locator": "private-evidence://host-patches/DRAMALESS_SHAPE.patch",
+        "sha256": "2b771ec588cd9ea34b24d9e820b23015fb11d3ec684ef6e7fd53c7ee220180df"
+      },
+      "checks": {
+        "host": {
+          "passed": 89,
+          "total": 89
+        },
+        "lua_syntax": {
+          "passed": 59,
+          "total": 59
+        }
+      },
+      "released": false
+    }
+  ],
+  "known_limitations": {
+    "path": "docs/known-limitations.md",
+    "sha256": "2123ca2d156a9b891c3b0b883225af3fdd42985722fa497f60e3e3afb40c30d8"
+  },
+  "open_evidence": {
+    "released_hosts": true,
+    "migration_safety": true,
+    "live_visual_acceptance": true,
+    "red_blue_yellow_acceptance": true,
+    "native_cpu_gpu_performance": true,
+    "complete_uncached_scene_performance": true,
+    "transition_and_soak_stability": true,
+    "signed_tag": true
+  },
+  "prerelease_gates": {
+    "approved": false,
+    "asset_rights": true,
+    "automated_tests": true,
+    "companion_contracts": true,
+    "released_hosts": false,
+    "migration_safety": false,
+    "package_reproducibility": true,
+    "source_integrity": true,
+    "known_limitations": true,
+    "live_visual_acceptance": false,
+    "native_performance": false,
+    "signed_tag": false
+  }
+}

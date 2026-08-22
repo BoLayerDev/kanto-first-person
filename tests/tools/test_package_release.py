@@ -103,7 +103,7 @@ class ReleaseGateTests(unittest.TestCase):
             if name not in {"asset_rights", "engine_reaudit"}
         ))
 
-    def test_unapproved_alpha_ledger_records_completed_asset_rights(self):
+    def test_unapproved_alpha_ledger_records_proved_checkpoint_gates(self):
         ledger = json.loads(
             (ROOT / "docs" / "prerelease-gates.json").read_text(encoding="utf-8")
         )
@@ -118,16 +118,121 @@ class ReleaseGateTests(unittest.TestCase):
             set(PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES["alpha"]),
         )
         self.assertTrue(ledger["gates"]["asset_rights"]["passed"])
-        self.assertIn("released_hosts", ledger["gates"])
-        self.assertFalse(ledger["gates"]["released_hosts"]["passed"])
         self.assertEqual(
             ledger["gates"]["asset_rights"]["evidence"],
             [rights["approval_record"]],
         )
+        passed = {
+            "asset_rights",
+            "automated_tests",
+            "companion_contracts",
+            "known_limitations",
+            "package_reproducibility",
+            "source_integrity",
+        }
+        open_gates = {"released_hosts", "migration_safety"}
+        self.assertEqual(
+            {name for name, gate in ledger["gates"].items() if gate["passed"]},
+            passed,
+        )
+        self.assertEqual(
+            {name for name, gate in ledger["gates"].items() if not gate["passed"]},
+            open_gates,
+        )
+
+        checkpoint_gates = passed - {"asset_rights", "source_integrity"}
+        evidence_paths = set()
+        for name in checkpoint_gates:
+            items = ledger["gates"][name]["evidence"]
+            self.assertEqual(len(items), 1)
+            report = ROOT / items[0]["locator"]
+            self.assertEqual(
+                hashlib.sha256(report.read_bytes()).hexdigest(),
+                items[0]["sha256"],
+            )
+            evidence_paths.add(report)
+        self.assertEqual(len(evidence_paths), 1)
+
+        checkpoint = json.loads(
+            evidence_paths.pop().read_text(encoding="utf-8")
+        )
+        for name in passed:
+            self.assertTrue(checkpoint["prerelease_gates"][name])
+        self.assertFalse(checkpoint["prerelease_gates"]["approved"])
+        self.assertFalse(checkpoint["prerelease_gates"]["released_hosts"])
+        self.assertFalse(checkpoint["prerelease_gates"]["migration_safety"])
+        self.assertFalse(checkpoint["prerelease_gates"]["live_visual_acceptance"])
+        self.assertFalse(checkpoint["prerelease_gates"]["native_performance"])
+        self.assertFalse(checkpoint["prerelease_gates"]["signed_tag"])
+
+        self.assertEqual(checkpoint["kfp"]["ci"]["run_id"], 32558047311)
+        self.assertEqual(checkpoint["kfp"]["ci"]["conclusion"], "success")
+        self.assertEqual(
+            checkpoint["kfp"]["ci"]["head_commit"],
+            "af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
+        )
+        self.assertEqual(
+            {item["commit"] for item in checkpoint["kfp"]["ci"]["engine_pins"]},
+            PACKAGE_RELEASE.PINNED_ENGINES,
+        )
+        self.assertEqual(
+            checkpoint["kfp"]["ci"]["packet_seal_stress"]["timing_claim"],
+            "advisory-only",
+        )
+        for field in ("companion_api", "shared_fixture", "synthetic_scene_test"):
+            item = checkpoint["kfp"][field]
+            self.assertEqual(
+                hashlib.sha256((ROOT / item["path"]).read_bytes()).hexdigest(),
+                item["sha256"],
+            )
+        limitations = checkpoint["known_limitations"]
+        self.assertEqual(
+            hashlib.sha256((ROOT / limitations["path"]).read_bytes()).hexdigest(),
+            limitations["sha256"],
+        )
+
+        source = checkpoint["source_integrity"]
+        self.assertTrue(source["passed"])
+        self.assertTrue(source["fresh_clone_clean"])
+        self.assertTrue(source["remote_commit_exact"])
+        self.assertEqual(source["unsafe_path_count"], 0)
+        self.assertEqual(source["secret_finding_count"], 0)
+        self.assertTrue(
+            source["private_package_reproduction"]["two_builds_byte_identical"]
+        )
+        self.assertFalse(
+            source["private_package_reproduction"]["publishable"]
+        )
+        self.assertEqual(
+            ledger["gates"]["source_integrity"]["evidence"],
+            [source["record"]],
+        )
+
+        hosts = {item["host"]: item for item in checkpoint["voxel_hosts"]}
+        self.assertEqual(
+            hosts["Battle Art"]["pr"]["head_commit"],
+            "cee25fd117d881aa63ad7ef0bc7905ca0063fb29",
+        )
+        self.assertEqual(
+            hosts["Battle Art"]["patch"]["sha256"],
+            "5d65aabd8a4f759cc28d57c97173ff4e521466d25d414f340b4796fb8a5e6539",
+        )
+        self.assertEqual(hosts["Battle Art"]["checks"]["host"]["passed"], 2636)
+        self.assertEqual(
+            hosts["Dramaless"]["pr"]["head_commit"],
+            "f7575445d00593b7db1ecd66f93e8c26989f4136",
+        )
+        self.assertEqual(
+            hosts["Dramaless"]["patch"]["sha256"],
+            "2b771ec588cd9ea34b24d9e820b23015fb11d3ec684ef6e7fd53c7ee220180df",
+        )
+        self.assertEqual(hosts["Dramaless"]["checks"]["host"]["passed"], 89)
         self.assertTrue(all(
-            not gate["passed"]
-            for name, gate in ledger["gates"].items()
-            if name != "asset_rights"
+            item["pr"]["state"] == "OPEN"
+            and item["pr"]["mergeable"] == "MERGEABLE"
+            and item["pr"]["merge_state_status"] == "CLEAN"
+            and item["released"] is False
+            for item in hosts.values()
         ))
 
     def test_release_policy_selects_prerelease_and_stable_ledgers(self):

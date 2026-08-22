@@ -29,11 +29,14 @@ Last updated: 2026-08-22
 - Config/gameplay lane: `src/config/`, `src/gameplay/`, option migration, parity, and tests.
 - Website showcase lane: `website/` and the Pages workflow are published at
   `https://bolayerdev.github.io/kanto-first-person/`. The
-  `feature/gen1-options-terminal` branch replaces the long scroll journey and
+  merged `feature/gen1-options-terminal` work replaces the long scroll journey and
   scanner with one compact Gen 1-inspired options menu, a fixed-camera 3D
   diorama, keyboard/touch navigation, version palettes, field guides, and
-  support routes. Its local production build passes; publication and
-  desktop/mobile browser QA remain open.
+  support routes. Merge commit `dec53c15fdc32285afae0313c8bbe7e8615b2def`
+  passed [CI run 32560074293](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32560074293)
+  and [Pages run 32560074192](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32560074192).
+  The production route and all 10 generated assets return HTTP 200.
+  Desktop/mobile browser QA remains open.
 
 ## Known risks
 

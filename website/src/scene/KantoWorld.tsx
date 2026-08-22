@@ -2,25 +2,16 @@ import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { useFrame, useThree } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
-import { HOTSPOTS } from '../data/hotspots'
-import { useJourneyStore, type HotspotId } from '../state/journey'
+import { useJourneyStore } from '../state/journey'
 import { PALETTES } from '../world/palettes'
 
-const CAMERA_PATH = new THREE.CatmullRomCurve3([
-  new THREE.Vector3(0, 2.45, 7.5),
-  new THREE.Vector3(0, 2.25, 3.2),
-  new THREE.Vector3(0, 2.1, -3.5),
-  new THREE.Vector3(0.5, 2.35, -12),
-  new THREE.Vector3(-0.45, 2.6, -22),
-  new THREE.Vector3(0.15, 2.25, -31),
-  new THREE.Vector3(0, 2.7, -41),
-])
-
-const HOTSPOT_POSITIONS: Record<HotspotId, [number, number, number]> = {
-  interiors: [2.65, 2.25, 0.8],
-  weather: [-2.8, 2.8, -16.5],
-  caves: [2.2, 2.1, -36.5],
-}
+const CAMERA_VIEWS = [
+  { position: new THREE.Vector3(3.8, 3.15, 8.2), target: new THREE.Vector3(0, 1.35, -1.5) },
+  { position: new THREE.Vector3(4.4, 3.3, -5), target: new THREE.Vector3(0, 1.5, -15) },
+  { position: new THREE.Vector3(-3.5, 3.1, -11), target: new THREE.Vector3(0, 1.6, -22) },
+  { position: new THREE.Vector3(3.2, 2.7, -27), target: new THREE.Vector3(0, 1.5, -36) },
+  { position: new THREE.Vector3(5.2, 4.4, -17), target: new THREE.Vector3(0, 1.3, -27) },
+]
 
 function damp(current: number, target: number, lambda: number, delta: number) {
   return THREE.MathUtils.lerp(current, target, 1 - Math.exp(-lambda * delta))
@@ -35,27 +26,25 @@ function mulberry32(seed: number) {
   }
 }
 
-function JourneyCamera() {
-  const progress = useJourneyStore((state) => state.progress)
+function MenuCamera() {
+  const menuIndex = useJourneyStore((state) => state.menuIndex)
   const quality = useJourneyStore((state) => state.quality)
-  const lookTarget = useMemo(() => new THREE.Vector3(), [])
-  const nextPoint = useMemo(() => new THREE.Vector3(), [])
+  const cameraTarget = useMemo(() => CAMERA_VIEWS[0].position.clone(), [])
+  const lookTarget = useMemo(() => CAMERA_VIEWS[0].target.clone(), [])
 
   useFrame(({ camera, pointer }, delta) => {
-    const target = CAMERA_PATH.getPointAt(progress)
-    CAMERA_PATH.getPointAt(Math.min(progress + 0.035, 1), nextPoint)
+    const view = CAMERA_VIEWS[menuIndex] ?? CAMERA_VIEWS[0]
+    cameraTarget.copy(view.position)
+    const pointerAmount = quality === 'high' ? 0.22 : 0.04
+    cameraTarget.x += pointer.x * pointerAmount
+    cameraTarget.y += pointer.y * pointerAmount * 0.4
 
-    const pointerAmount = quality === 'high' ? 0.16 : 0.04
-    target.x += pointer.x * pointerAmount
-    target.y += pointer.y * pointerAmount * 0.45
-
-    camera.position.lerp(target, 1 - Math.exp(-4.5 * delta))
-    lookTarget.copy(nextPoint)
-    lookTarget.y = damp(lookTarget.y, target.y - 0.12, 4, delta)
+    camera.position.lerp(cameraTarget, 1 - Math.exp(-3.8 * delta))
+    lookTarget.lerp(view.target, 1 - Math.exp(-4.2 * delta))
     camera.lookAt(lookTarget)
 
     const perspective = camera as THREE.PerspectiveCamera
-    perspective.fov = damp(perspective.fov, 54 + Math.sin(progress * Math.PI) * 5, 4, delta)
+    perspective.fov = damp(perspective.fov, menuIndex === 4 ? 58 : 52, 4, delta)
     perspective.updateProjectionMatrix()
   })
 
@@ -321,56 +310,6 @@ function CrystalCave() {
   )
 }
 
-function HotspotBeacon({ id }: { id: HotspotId }) {
-  const scannerEnabled = useJourneyStore((state) => state.scannerEnabled)
-  const hovered = useJourneyStore((state) => state.hoveredHotspot === id)
-  const selected = useJourneyStore((state) => state.selectedHotspot === id)
-  const setHovered = useJourneyStore((state) => state.setHoveredHotspot)
-  const setSelected = useJourneyStore((state) => state.setSelectedHotspot)
-  const edition = useJourneyStore((state) => state.edition)
-  const group = useRef<THREE.Group>(null)
-  const palette = PALETTES[edition]
-
-  useFrame(({ clock }, delta) => {
-    if (!group.current) return
-    group.current.rotation.y += delta * 0.8
-    const pulse = 1 + Math.sin(clock.elapsedTime * 3 + HOTSPOTS[id].number.length) * 0.08
-    const target = selected ? 1.35 : hovered ? 1.2 : pulse
-    group.current.scale.lerp(new THREE.Vector3(target, target, target), 1 - Math.exp(-8 * delta))
-  })
-
-  if (!scannerEnabled) return null
-
-  return (
-    <group ref={group} position={HOTSPOT_POSITIONS[id]}>
-      <mesh
-        onPointerEnter={(event) => {
-          event.stopPropagation()
-          setHovered(id)
-        }}
-        onPointerLeave={() => setHovered(null)}
-        onClick={(event) => {
-          event.stopPropagation()
-          setSelected(id)
-        }}
-      >
-        <icosahedronGeometry args={[0.34, 1]} />
-        <meshStandardMaterial
-          color={palette.accentSoft}
-          emissive={palette.signal}
-          emissiveIntensity={selected ? 3.5 : 2.2}
-          roughness={0.25}
-        />
-      </mesh>
-      <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[0.63, 0.035, 8, 32]} />
-        <meshBasicMaterial color={palette.signal} toneMapped={false} />
-      </mesh>
-      <pointLight color={palette.signal} intensity={6} distance={5} />
-    </group>
-  )
-}
-
 function WeatherParticles() {
   const edition = useJourneyStore((state) => state.edition)
   const quality = useJourneyStore((state) => state.quality)
@@ -470,15 +409,12 @@ export function KantoWorld() {
     <>
       <AtmosphereRig />
       <GradientSky />
-      <JourneyCamera />
+      <MenuCamera />
       <LightingRig />
       <StartingRoom />
       <ForestRoute />
       <CrystalCave />
       <WeatherParticles />
-      {(Object.keys(HOTSPOTS) as HotspotId[]).map((id) => (
-        <HotspotBeacon id={id} key={id} />
-      ))}
       <PostEffects />
     </>
   )

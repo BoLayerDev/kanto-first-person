@@ -74,8 +74,9 @@ Exit: both host adapters and every claimed platform are certified.
 ## Companion track — Public field terminal
 
 - Publish an original React Three Fiber showcase at the repository Pages URL.
-- Use one scroll-owned camera journey through interior, route, and cave scenes.
-- Add accessible scanner targets and Red/Blue/Yellow atmosphere modes.
+- Use one fixed-camera 3D diorama behind a compact Gen 1-inspired options menu.
+- Support keyboard, pointer, and touch menu navigation plus Red/Blue/Yellow
+  atmosphere modes.
 - Explain the mod, its Alpha gate, compatibility, safe migration, known limits,
   testing, security, and support routes without distributing ROM-derived art.
 - Keep the site build isolated from the Lua runtime and deterministic package.

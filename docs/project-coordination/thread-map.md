@@ -10,7 +10,7 @@ Last updated: 2026-08-22
 | Options and gameplay | Config/gameplay lane | `src/config/`, `src/gameplay/`, parity and migration docs, related tests | Migration complete; Ledge runtime gated off |
 | Host adapters | Two isolated host lanes | Isolated task-owned host clones only | Pushed PR branches pass contracts; owner and GPU gates open |
 | Runtime evidence | Coordinator | Private isolated identities and public evidence schemas | Yellow profiles prepared; activation and GPU runs open |
-| Website showcase | Coordinator | `website/`, `.github/workflows/pages.yml`, website-only CI | Merged and published; desktop and mobile browser QA open |
+| Website showcase | Coordinator | `website/`, `.github/workflows/pages.yml`, website-only CI | Gen 1 options-menu redesign builds on a feature branch; publication and browser QA open |
 
 ## Handoff contract
 

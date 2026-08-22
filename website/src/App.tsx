@@ -1,123 +1,258 @@
-import { lazy, Suspense, useEffect, type CSSProperties } from 'react'
+import { lazy, Suspense, useEffect, type CSSProperties, type ReactNode } from 'react'
 import { useJourneyStore } from './state/journey'
-import { AtmosphereSwitch, GuideAndSupport, QualityControl, ScannerPanel } from './ui/FieldTerminal'
-import { PALETTES } from './world/palettes'
+import { PALETTES, type Edition } from './world/palettes'
 
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
+const BRANCH = `${REPO}/blob/v2-rewrite`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 
-function BootSequence() {
-  const booted = useJourneyStore((state) => state.booted)
-  const setBooted = useJourneyStore((state) => state.setBooted)
-  if (booted) return null
+type MenuItem = {
+  label: string
+  eyebrow: string
+  title: string
+  summary: string
+}
+
+const MENU_ITEMS: MenuItem[] = [
+  {
+    label: 'KANTO FIRST PERSON',
+    eyebrow: 'PROJECT FILE / 001',
+    title: 'A new point of view.',
+    summary:
+      'A world-detail graphics overhaul for Gen1recomp. Rooms gain depth. Caves gain roofs. Routes reach the horizon.',
+  },
+  {
+    label: 'FIELD FEATURES',
+    eyebrow: 'FIELD DATA / 025',
+    title: 'The world gets bigger.',
+    summary:
+      'Interiors, forests, caves, horizons, weather, camera motion, and ambient sound rebuild the visual shape of Kanto.',
+  },
+  {
+    label: 'TRAINER GUIDE',
+    eyebrow: 'MANUAL / SAFE START',
+    title: 'Enter prepared.',
+    summary:
+      'KFP is an Alpha source candidate. A signed package and released API v1 host adapter are required before player installation.',
+  },
+  {
+    label: 'SUPPORT CENTER',
+    eyebrow: 'LINK CENTER / ONLINE',
+    title: 'Evidence before guesses.',
+    summary:
+      'Check compatibility, known limits, device testing, security guidance, and the issue tracker from one place.',
+  },
+  {
+    label: 'OPEN GITHUB',
+    eyebrow: 'SOURCE / PUBLIC',
+    title: 'See how it works.',
+    summary:
+      'Read the source, architecture, tests, roadmap, release gates, and complete project history on GitHub.',
+  },
+]
+
+const EDITIONS: Edition[] = ['red', 'blue', 'yellow']
+const PRIMARY_LINKS = [
+  `${BRANCH}/README.md`,
+  `${BRANCH}/docs/feature-parity.md`,
+  `${BRANCH}/docs/upgrade-v1-to-v2.md`,
+  `${BRANCH}/docs/compatibility.md`,
+  REPO,
+]
+
+function DetailLinks({ children }: { children: ReactNode }) {
+  return <div className="detail-links">{children}</div>
+}
+
+function MenuDetail({ index }: { index: number }) {
+  if (index === 0) {
+    return (
+      <>
+        <div className="stat-row"><span>TYPE</span><b>GRAPHICS OVERHAUL</b></div>
+        <div className="stat-row"><span>GAMES</span><b>RED · BLUE · YELLOW</b></div>
+        <div className="stat-row"><span>ENGINE</span><b>GEN1RECOMP API 2</b></div>
+        <div className="alpha-notice"><i /> 2.0.0-ALPHA.1 SOURCE CANDIDATE</div>
+        <DetailLinks>
+          <a href={`${BRANCH}/README.md`} target="_blank" rel="noreferrer">PROJECT OVERVIEW <span>↗</span></a>
+          <a href={`${BRANCH}/ROADMAP.md`} target="_blank" rel="noreferrer">ROADMAP <span>↗</span></a>
+        </DetailLinks>
+      </>
+    )
+  }
+
+  if (index === 1) {
+    return (
+      <>
+        <div className="feature-list">
+          <span>01</span><b>INTERIORS</b><small>Walls, ceilings, windows, doors, and light</small>
+          <span>02</span><b>OPEN WORLD</b><small>Terrain aprons, trees, mountains, and horizons</small>
+          <span>03</span><b>ATMOSPHERE</b><small>Clouds, rain, storms, fog, stars, and particles</small>
+          <span>04</span><b>CAVES</b><small>Uneven roofs, pools, stone columns, and sconces</small>
+        </div>
+        <DetailLinks>
+          <a href={`${BRANCH}/docs/feature-parity.md`} target="_blank" rel="noreferrer">FULL FEATURE LEDGER <span>↗</span></a>
+        </DetailLinks>
+      </>
+    )
+  }
+
+  if (index === 2) {
+    return (
+      <>
+        <div className="warning-box">
+          <b>WAIT FOR A SIGNED PRERELEASE.</b>
+          <p>Do not use GitHub&apos;s automatic source ZIP as a mod package.</p>
+        </div>
+        <ol className="install-steps">
+          <li><b>01</b><span>Install one released compatible voxel host.</span></li>
+          <li><b>02</b><span>Import the signed KFP package.</span></li>
+          <li><b>03</b><span>Enable KFP and restart Gen1recomp.</span></li>
+          <li><b>04</b><span>Confirm API v1 attachment.</span></li>
+        </ol>
+        <DetailLinks>
+          <a href={`${BRANCH}/docs/upgrade-v1-to-v2.md`} target="_blank" rel="noreferrer">SAFE UPGRADE GUIDE <span>↗</span></a>
+          <a href={`${BRANCH}/docs/options-migration.md`} target="_blank" rel="noreferrer">OPTION MIGRATION <span>↗</span></a>
+        </DetailLinks>
+      </>
+    )
+  }
+
+  if (index === 3) {
+    return (
+      <DetailLinks>
+        <a href={`${BRANCH}/docs/compatibility.md`} target="_blank" rel="noreferrer">COMPATIBILITY MATRIX <span>↗</span></a>
+        <a href={`${BRANCH}/docs/known-limitations.md`} target="_blank" rel="noreferrer">KNOWN LIMITATIONS <span>↗</span></a>
+        <a href={`${BRANCH}/docs/device-test-guide.md`} target="_blank" rel="noreferrer">DEVICE TEST GUIDE <span>↗</span></a>
+        <a href={`${BRANCH}/SECURITY.md`} target="_blank" rel="noreferrer">SECURITY POLICY <span>↗</span></a>
+        <a href={`${REPO}/issues/new/choose`} target="_blank" rel="noreferrer">REPORT AN ISSUE <span>↗</span></a>
+      </DetailLinks>
+    )
+  }
 
   return (
-    <div className="boot-screen" role="dialog" aria-modal="true" aria-labelledby="boot-title">
-      <div className="boot-noise" aria-hidden="true" />
-      <div className="boot-core" aria-hidden="true">
-        <span />
-      </div>
-      <div className="boot-copy">
-        <div className="boot-kicker">GEN1RECOMP FIELD SYSTEM</div>
-        <h1 id="boot-title">KANTO<br />FIRST PERSON</h1>
-        <p>A new point of view for the classic Kanto journey.</p>
-        <button type="button" onClick={() => setBooted(true)}>
-          <span>ENTER THE WORLD</span>
-          <span aria-hidden="true">▶</span>
-        </button>
-        <small>Original fan project · No ROM data included</small>
-      </div>
+    <div className="github-launch">
+      <div className="repo-mark" aria-hidden="true">&lt;/&gt;</div>
+      <p>Public source · MIT code · ROM-free tests · Reproducible release gates</p>
+      <a className="launch-button" href={REPO} target="_blank" rel="noreferrer">
+        OPEN REPOSITORY <span>↗</span>
+      </a>
     </div>
   )
 }
 
-function StoryJourney() {
+function OptionsMenu() {
+  const menuIndex = useJourneyStore((state) => state.menuIndex)
+  const edition = useJourneyStore((state) => state.edition)
+  const quality = useJourneyStore((state) => state.quality)
+  const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
+  const setEdition = useJourneyStore((state) => state.setEdition)
+  const setQuality = useJourneyStore((state) => state.setQuality)
+  const item = MENU_ITEMS[menuIndex]
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return
+      if (event.target instanceof HTMLAnchorElement) return
+      const key = event.key.toLowerCase()
+      if (['arrowup', 'w'].includes(key)) {
+        event.preventDefault()
+        setMenuIndex((menuIndex - 1 + MENU_ITEMS.length) % MENU_ITEMS.length)
+      } else if (['arrowdown', 's'].includes(key)) {
+        event.preventDefault()
+        setMenuIndex((menuIndex + 1) % MENU_ITEMS.length)
+      } else if (['arrowleft', 'a'].includes(key)) {
+        event.preventDefault()
+        const index = EDITIONS.indexOf(edition)
+        setEdition(EDITIONS[(index - 1 + EDITIONS.length) % EDITIONS.length])
+      } else if (['arrowright', 'd'].includes(key)) {
+        event.preventDefault()
+        const index = EDITIONS.indexOf(edition)
+        setEdition(EDITIONS[(index + 1) % EDITIONS.length])
+      } else if (key === 'z') {
+        event.preventDefault()
+        window.open(PRIMARY_LINKS[menuIndex], '_blank', 'noopener,noreferrer')
+      } else if (['escape', 'x'].includes(key)) {
+        setMenuIndex(0)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [edition, menuIndex, setEdition, setMenuIndex])
+
   return (
-    <main className="story-journey" id="journey">
-      <section className="story-section story-hero" aria-labelledby="hero-title">
-        <div className="story-card">
-          <span className="eyebrow">KANTO FIRST PERSON 2.0</span>
-          <h1 id="hero-title">THE WORLD<br />HAS <em>DEPTH.</em></h1>
-          <p>
-            Rooms gain walls. Routes reach the horizon. Caves close around you. The voxel host
-            stays safe and in control.
-          </p>
-          <div className="hero-actions">
-            <a className="primary-action" href="#field-guide">OPEN FIELD GUIDE</a>
-            <a className="secondary-action" href={REPO} target="_blank" rel="noreferrer">
-              VIEW SOURCE <span aria-hidden="true">↗</span>
-            </a>
-          </div>
-        </div>
-        <div className="scroll-cue" aria-hidden="true"><span /> SCROLL TO WALK</div>
-      </section>
-
-      <section className="story-section story-interior" aria-labelledby="interior-title">
-        <div className="story-card story-card-right">
-          <span className="chapter-number">01 / INTERIORS</span>
-          <h2 id="interior-title">Every room becomes a real place.</h2>
-          <p>
-            Ceilings, windows, rails, posters, doorway light, and deliberate cutaways restore the
-            shapes that the top-down view could only suggest.
-          </p>
-          <div className="feature-tags"><span>CEILINGS</span><span>LIGHT</span><span>DEPTH</span></div>
-        </div>
-      </section>
-
-      <section className="story-section story-route" aria-labelledby="route-title">
-        <div className="story-card">
-          <span className="chapter-number">02 / THE OPEN WORLD</span>
-          <h2 id="route-title">The map edge disappears.</h2>
-          <p>
-            Raised trees, neighboring terrain, mountains, clouds, grass, wind, fog, and rain make
-            each route feel connected to a world beyond the tiles.
-          </p>
-          <div className="feature-tags"><span>WEATHER</span><span>HORIZONS</span><span>FLORA</span></div>
-        </div>
-      </section>
-
-      <section className="story-section story-cave" aria-labelledby="cave-title">
-        <div className="story-card story-card-right">
-          <span className="chapter-number">03 / BELOW KANTO</span>
-          <h2 id="cave-title">Caves finally have a roof.</h2>
-          <p>
-            Uneven stone, pools, columns, depth fog, and bounded practical light turn a flat room
-            into a place that surrounds you.
-          </p>
-          <div className="feature-tags"><span>VOLUME</span><span>FOG</span><span>ATMOSPHERE</span></div>
-        </div>
-      </section>
-
-      <section className="story-section story-terminal" id="camera-end" aria-labelledby="terminal-title">
-        <div className="terminal-callout">
-          <span className="eyebrow">VOXEL COMPANION API v1</span>
-          <h2 id="terminal-title">One host. One safe contract. A much bigger world.</h2>
-          <p>
-            KFP does not patch or replace another mod. The selected voxel host owns the renderer
-            and calls KFP through a bounded extension API.
-          </p>
-          <a href={`${REPO}/blob/v2-rewrite/docs/architecture.md`} target="_blank" rel="noreferrer">
-            EXPLORE THE ARCHITECTURE <span aria-hidden="true">→</span>
-          </a>
-        </div>
-      </section>
-
-      <GuideAndSupport />
-
-      <footer className="site-footer">
+    <main className="terminal-shell">
+      <section className="title-strip" aria-labelledby="site-title">
+        <div className="split-core" aria-hidden="true"><span /></div>
         <div>
-          <strong>KANTO FIRST PERSON</strong>
-          <span>2.0.0-alpha.1 source candidate</span>
+          <span>KFP // FIELD OPTIONS</span>
+          <h1 id="site-title">KANTO FIRST PERSON</h1>
         </div>
-        <p>
-          Independent fan project. Not affiliated with or endorsed by Nintendo, Game Freak,
-          Creatures, or The Pokémon Company.
-        </p>
-        <nav aria-label="Project links">
-          <a href={REPO} target="_blank" rel="noreferrer">GitHub</a>
-          <a href={`${REPO}/blob/v2-rewrite/README.md`} target="_blank" rel="noreferrer">Docs</a>
-          <a href={`${REPO}/blob/v2-rewrite/THIRD_PARTY_NOTICES.md`} target="_blank" rel="noreferrer">Notices</a>
+        <div className="alpha-chip"><i /> ALPHA</div>
+      </section>
+
+      <div className="terminal-grid">
+        <nav className="menu-window pixel-window" aria-label="Main options">
+          <div className="window-label">OPTIONS</div>
+          {MENU_ITEMS.map((menuItem, index) => (
+            <button
+              type="button"
+              className={index === menuIndex ? 'is-selected' : ''}
+              aria-current={index === menuIndex ? 'page' : undefined}
+              key={menuItem.label}
+              onClick={() => setMenuIndex(index)}
+              onPointerEnter={() => setMenuIndex(index)}
+            >
+              <span className="menu-cursor" aria-hidden="true">▶</span>
+              <span>{menuItem.label}</span>
+            </button>
+          ))}
+
+          <div className="menu-divider" />
+          <div className="inline-option">
+            <span>VERSION</span>
+            <div aria-label="Version palette">
+              {EDITIONS.map((value) => (
+                <button
+                  type="button"
+                  className={edition === value ? 'is-active' : ''}
+                  aria-pressed={edition === value}
+                  onClick={() => setEdition(value)}
+                  key={value}
+                >
+                  {value.slice(0, 1).toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="inline-option">
+            <span>EFFECTS</span>
+            <button
+              type="button"
+              className="quality-toggle"
+              onClick={() => setQuality(quality === 'high' ? 'low' : 'high')}
+              aria-label={`Effects quality ${quality}`}
+            >
+              ◀ {quality.toUpperCase()} ▶
+            </button>
+          </div>
         </nav>
+
+        <section className="detail-window pixel-window" aria-live="polite" aria-labelledby="detail-title">
+          <div className="window-label">{item.eyebrow}</div>
+          <div className="detail-copy">
+            <h2 id="detail-title">{item.title}</h2>
+            <p className="detail-summary">{item.summary}</p>
+            <MenuDetail index={menuIndex} />
+          </div>
+        </section>
+      </div>
+
+      <footer className="control-strip">
+        <div><kbd>↑↓</kbd><span>SELECT</span></div>
+        <div><kbd>←→</kbd><span>VERSION</span></div>
+        <div><kbd>Z</kbd><span>OPEN</span></div>
+        <div><kbd>X</kbd><span>BACK</span></div>
+        <p>Independent fan project · No ROM data · Not affiliated with Nintendo, Game Freak, Creatures, or The Pokémon Company.</p>
       </footer>
     </main>
   )
@@ -125,28 +260,8 @@ function StoryJourney() {
 
 export function App() {
   const edition = useJourneyStore((state) => state.edition)
-  const scannerEnabled = useJourneyStore((state) => state.scannerEnabled)
-  const progress = useJourneyStore((state) => state.progress)
-  const setProgress = useJourneyStore((state) => state.setProgress)
   const setQuality = useJourneyStore((state) => state.setQuality)
   const palette = PALETTES[edition]
-
-  useEffect(() => {
-    const updateProgress = () => {
-      const cameraEnd = document.getElementById('camera-end')
-      const available = cameraEnd
-        ? cameraEnd.offsetTop + cameraEnd.offsetHeight - window.innerHeight
-        : document.documentElement.scrollHeight - window.innerHeight
-      setProgress(available > 0 ? window.scrollY / available : 0)
-    }
-    updateProgress()
-    window.addEventListener('scroll', updateProgress, { passive: true })
-    window.addEventListener('resize', updateProgress)
-    return () => {
-      window.removeEventListener('scroll', updateProgress)
-      window.removeEventListener('resize', updateProgress)
-    }
-  }, [setProgress])
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -160,32 +275,15 @@ export function App() {
     '--accent-soft': palette.accentSoft,
     '--ink': palette.ink,
     '--panel': palette.panel,
-    '--journey-progress': `${progress * 100}%`,
   } as CSSProperties
 
   return (
-    <div className={`app edition-${edition} ${scannerEnabled ? 'scanner-is-active' : ''}`} style={themeStyle}>
-      <a className="skip-link" href="#field-guide">Skip to field guide</a>
-      <Suspense fallback={<div className="world-canvas world-loading">BUILDING KANTO...</div>}>
+    <div className={`app edition-${edition}`} style={themeStyle}>
+      <Suspense fallback={<div className="world-canvas world-loading">LOADING WORLD DATA...</div>}>
         <WorldCanvas />
       </Suspense>
       <div className="screen-treatment" aria-hidden="true" />
-      {scannerEnabled && <div className="scan-reticle" aria-hidden="true"><span /></div>}
-
-      <header className="site-header">
-        <a className="wordmark" href="#journey" aria-label="Kanto First Person home">
-          <span>KFP</span>
-          <b>FIELD<br />TERMINAL</b>
-        </a>
-        <div className="header-status"><i /> ALPHA SIGNAL</div>
-        <QualityControl />
-      </header>
-
-      <div className="journey-meter" aria-hidden="true"><span /></div>
-      <AtmosphereSwitch />
-      <ScannerPanel />
-      <StoryJourney />
-      <BootSequence />
+      <OptionsMenu />
     </div>
   )
 }

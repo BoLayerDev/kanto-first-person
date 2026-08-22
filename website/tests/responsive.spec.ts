@@ -281,6 +281,34 @@ test('keeps the research start date readable at desktop and mobile widths', asyn
   }
 })
 
+test('keeps field badge numbers clear of milestone titles', async ({ page }) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(`${PAGE_PATH}#activity`)
+
+    const cards = page.locator('.milestone-deck a')
+    await expect(cards).toHaveCount(6)
+    const layout = await cards.evaluateAll((items) => items.map((card) => {
+      const badge = card.querySelector('i') as HTMLElement
+      const title = card.querySelector('b') as HTMLElement
+      const badgeBox = badge.getBoundingClientRect()
+      const titleBox = title.getBoundingClientRect()
+      return {
+        overlap: !(titleBox.right <= badgeBox.left
+          || titleBox.left >= badgeBox.right
+          || titleBox.bottom <= badgeBox.top
+          || titleBox.top >= badgeBox.bottom),
+        titleClipped: title.scrollWidth > title.clientWidth + 1
+          || title.scrollHeight > title.clientHeight + 1,
+      }
+    }))
+
+    expect(layout, `field badges must fit at ${width}px`).toEqual(
+      layout.map(() => ({ overlap: false, titleClipped: false })),
+    )
+  }
+})
+
 test('keeps every activity translation label inside its graphic card', async ({ page }) => {
   await page.goto(`${PAGE_PATH}activity-system-share.svg`)
 

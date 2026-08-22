@@ -739,9 +739,11 @@ a {
 
 .milestone-deck a {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 1.8rem;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  column-gap: 0.65rem;
+  align-items: start;
   min-height: 128px;
   padding: 0.8rem;
   color: var(--game-ink);
@@ -756,9 +758,8 @@ a {
 }
 
 .milestone-deck a i {
-  position: absolute;
-  top: 0.7rem;
-  right: 0.7rem;
+  grid-column: 2;
+  grid-row: 1;
   display: grid;
   place-items: center;
   width: 1.8rem;
@@ -770,7 +771,10 @@ a {
 }
 
 .milestone-deck a > span {
-  max-width: calc(100% - 2.2rem);
+  grid-column: 1;
+  grid-row: 1;
+  align-self: center;
+  max-width: 100%;
   color: var(--accent);
   font-size: clamp(0.34rem, 0.44vw, 0.44rem);
   line-height: 1.4;
@@ -782,13 +786,17 @@ a {
 }
 
 .milestone-deck a b {
+  grid-column: 1 / -1;
+  grid-row: 2;
   margin-top: 0.65rem;
   font-size: clamp(0.42rem, 0.54vw, 0.54rem);
   line-height: 1.5;
 }
 
 .milestone-deck a small {
-  margin-top: auto;
+  grid-column: 1 / -1;
+  grid-row: 3;
+  align-self: end;
   padding-top: 0.65rem;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;

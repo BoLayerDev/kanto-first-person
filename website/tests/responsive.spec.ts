@@ -100,6 +100,10 @@ test.describe('mobile field terminal', () => {
     await page.goto(PAGE_PATH)
 
     await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: /BUILD 11\/11 PASS/ })).toBeFocused()
+    await page.keyboard.press('Tab')
+    await expect(page.getByRole('link', { name: /SOURCE 79b3851/ })).toBeFocused()
+    await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 
     await page.keyboard.press('ArrowDown')
@@ -206,6 +210,10 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
+
+  const milestones = page.getByRole('region', { name: 'FIELD BADGES' })
+  await expect(milestones).toContainText('NO MANUAL LOGGING REQUIRED')
+  await expect(milestones.getByRole('link')).toHaveCount(6)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
   await expect(ledger.locator('ol > li')).toHaveCount(82)

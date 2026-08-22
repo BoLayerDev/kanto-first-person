@@ -76,7 +76,7 @@
       <rect x="16" y="16" width="262" height="34" fill="#ee4c47"/>
       <text x="28" y="41" class="tiny" fill="#f8f2d8">04 / PUBLIC</text>
       <text x="28" y="93" class="label" fill="#172017">SITE UPDATE</text>
-      <text x="28" y="128" class="card" fill="#59654d">LATEST 4 UP FRONT</text>
+      <text x="28" y="128" class="card" fill="#59654d">LATEST 4 + MILESTONES</text>
       <text x="28" y="153" class="card" fill="#59654d">ALL HISTORY IN ARCHIVE</text>
     </g>
   </g>

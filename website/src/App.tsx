@@ -292,6 +292,11 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
     counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1)
     return counts
   }, new Map<string, number>())]
+  const automaticMilestones = status.activity.filter((entry) => (
+    ['NEW MOVE', 'EVOLVED', 'LAB VERIFIED'].includes(entry.type)
+    || /^[a-z]+\((release|device|compat|architecture)\):/i.test(entry.message)
+    || /^release:/i.test(entry.message)
+  )).slice(0, 6)
 
   return (
     <div className="archive-page">
@@ -301,6 +306,23 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
         <div><b>{firstUpdate}</b><span>RESEARCH BEGAN</span></div>
       </div>
+
+      <section className="milestone-deck" aria-labelledby="milestone-title">
+        <div className="milestone-header">
+          <div><span>AUTO-SELECTED FROM VERIFIED HISTORY</span><b id="milestone-title">FIELD BADGES</b></div>
+          <span>NO MANUAL LOGGING REQUIRED</span>
+        </div>
+        <div>
+          {automaticMilestones.map((entry, index) => (
+            <a href={entry.url} target="_blank" rel="noreferrer" key={entry.sha}>
+              <i aria-hidden="true">{String(index + 1).padStart(2, '0')}</i>
+              <span>{entry.type}</span>
+              <b>{activityTitle(entry.message)}</b>
+              <small>{entry.date.slice(0, 10)} · {entry.shortSha}</small>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <figure className="archive-system-map">
         <img

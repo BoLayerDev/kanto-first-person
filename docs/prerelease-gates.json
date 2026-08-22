@@ -15,34 +15,16 @@
       "passed": true
     },
     "automated_tests": {
-      "evidence": [
-        {
-          "kind": "ci_run",
-          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b"
-        }
-      ],
-      "passed": true
+      "evidence": [],
+      "passed": false
     },
     "companion_contracts": {
-      "evidence": [
-        {
-          "kind": "companion_contracts",
-          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b"
-        }
-      ],
-      "passed": true
+      "evidence": [],
+      "passed": false
     },
     "known_limitations": {
-      "evidence": [
-        {
-          "kind": "known_limitations",
-          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b"
-        }
-      ],
-      "passed": true
+      "evidence": [],
+      "passed": false
     },
     "released_hosts": {
       "evidence": [],
@@ -53,24 +35,12 @@
       "passed": false
     },
     "package_reproducibility": {
-      "evidence": [
-        {
-          "kind": "package_reproduction",
-          "locator": "docs/release-evidence/alpha-readiness-2026-08-22.json",
-          "sha256": "688cc40cfd3b6011f74b6a92611caf72765bdbc64fec139364099d0690ef4e6b"
-        }
-      ],
-      "passed": true
+      "evidence": [],
+      "passed": false
     },
     "source_integrity": {
-      "evidence": [
-        {
-          "kind": "source_integrity",
-          "locator": "private-evidence://source-integrity/2026-08-22-0683051/source-integrity.json",
-          "sha256": "e17cd7141f9b6d884108912c6fdc11fee1dcf55c94094e47ec23fb8274721260"
-        }
-      ],
-      "passed": true
+      "evidence": [],
+      "passed": false
     }
   },
   "release_version": "2.0.0-alpha.1",

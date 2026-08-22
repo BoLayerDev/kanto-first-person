@@ -13,11 +13,16 @@ Last updated: 2026-08-22
   current `dev` (`478e3bf`).
 - Runtime target: LuaJIT / Lua 5.1, LÖVE 11.5, and LÖVE 12 on iOS.
 - Current milestone: `2.0.0-alpha.1` source-integration candidate.
-- Public source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
-  passed [CI run 32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
-  on Windows, Linux, macOS, and all five pinned engine commits. The run includes
-  260 ROM-free Lua tests, 87 Lua syntax checks, 43 Python tests, repository
-  policy, and byte-for-byte private package reproduction on v0.2.19.
+- Historical public source checkpoint
+  `0683051a9ade567df8f5a5a73a2693646274e578` passed
+  [CI run 32561890609](https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609)
+  on Windows, Linux, macOS, and all five pinned engine commits. That evidence
+  applies only to the recorded commit. It does not approve the current
+  integration candidate.
+- The alpha ledger fails closed during source integration. Only asset rights
+  are passed. Automated tests, companion contracts, known limitations,
+  package reproducibility, source integrity, released hosts, and migration
+  safety are pending fresh evidence for the exact pushed source head.
 - Shared-CI packet-seal timing is structural and advisory. Native CPU/GPU,
   complete uncached-scene, transition, and soak performance remain open.
 
@@ -87,30 +92,33 @@ Last updated: 2026-08-22
   committed locally and passes an independent-clone restore test.
 - The public remote tracks the maintained rewrite on `v2-rewrite`. Use
   `git ls-remote origin refs/heads/v2-rewrite` for the current immutable SHA.
-- Public source checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
+- Historical public checkpoint `0683051a9ade567df8f5a5a73a2693646274e578`
   passed CI run 32561890609 across three hosted operating systems and five
-  pinned engine commits.
-- A fresh clone of exact public commit `0683051` matched its Git tree, index,
-  checkout, 186-file archive, and strict package allowlist. Git object, unsafe
-  path, link, and secret checks passed. The hash-bound source-integrity record
-  is referenced from the alpha evidence ledger.
+  pinned engine commits. Its fresh-clone, source-integrity, and package
+  evidence remain preserved as history and are not referenced by the pending
+  alpha ledger.
 - Existing local Gen1recomp workspaces are not part of this project and must remain unchanged.
 
 ## Next actions
 
-1. Complete the Yellow visual, lifecycle, performance, transition, and soak
+1. Push the integrated source and fail-closed pending ledger together. Wait
+   for green CI on that exact public head.
+2. Audit a fresh clone of the exact pushed head and reproduce its private
+   package. Commit the new hash-bound evidence and ledger update separately.
+   Do not carry forward evidence from an older source commit.
+3. Complete the Yellow visual, lifecycle, performance, transition, and soak
    matrix; import legally owned Red and Blue copies before their private runs.
-2. Obtain host-owner review and released adapter versions from [Battle Art PR
+4. Obtain host-owner review and released adapter versions from [Battle Art PR
    #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29) and
    [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47).
-3. Keep the private rights inventory hash aligned if any covered legacy asset
+5. Keep the private rights inventory hash aligned if any covered legacy asset
    changes; never publish the original permission pages.
-4. Request and re-audit an official owner-scoped derived-image API before any
+6. Request and re-audit an official owner-scoped derived-image API before any
    KFP wildlife runtime or option change.
-5. Create or import a protected GPG release key, back it up, and record only
+7. Create or import a protected GPG release key, back it up, and record only
    its public fingerprint in repository configuration and release evidence.
-6. Complete performance, leak, platform, reproducibility, and uninstall gates.
-7. Run separately approved desktop and mobile website QA, then record canvas
+8. Complete performance, leak, platform, reproducibility, and uninstall gates.
+9. Run separately approved desktop and mobile website QA, then record canvas
    diagnostics and repair any visual or interaction findings.
 
 ## Completion rule

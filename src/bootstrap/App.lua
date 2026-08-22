@@ -703,7 +703,8 @@ function App:_connect()
   local selected, resolveError = candidate:resolve()
   local current = self.client and self.client:status() or nil
   if selected and current and current.state == "attached"
-      and self.hostScope and self.hostProvider == selected.provider then
+      and self.hostScope and self.hostProvider
+      and self.hostProvider.register == selected.register then
     return true
   end
 

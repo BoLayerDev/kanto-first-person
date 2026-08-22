@@ -1,6 +1,8 @@
 local WorldGeometry = {}
 WorldGeometry.__index = WorldGeometry
 
+local MAX_INDEX_ENTRIES = 65536
+
 function WorldGeometry.new(deps)
   deps = deps or {}
   if not deps.util then error("WorldGeometry needs util", 2) end
@@ -22,6 +24,129 @@ local function legacyTreeLift(cell)
   return 8 + step * 6
 end
 
+local function coordinateKey(cell)
+  return tostring(cell and cell.x or 0) .. "|" .. tostring(cell and cell.z or 0)
+end
+
+local function selectBucket(U, buckets, world, spacing, salt, cell, rank)
+  local bx = math.floor((tonumber(cell.x) or 0) / spacing)
+  local bz = math.floor((tonumber(cell.z) or 0) / spacing)
+  local bucketKey = bx .. "|" .. bz
+  local score = U.hash(world and world.id or "world", cell.x, cell.z, salt)
+  local chosen = buckets[bucketKey]
+  rank = tonumber(rank) or 0
+  if not chosen or rank > chosen.rank
+      or (rank == chosen.rank and score < chosen.score)
+      or (rank == chosen.rank and score == chosen.score
+        and coordinateKey(cell) < coordinateKey(chosen.cell)) then
+    buckets[bucketKey] = { cell = cell, rank = rank, score = score }
+  end
+end
+
+local function anchorSet(buckets)
+  local anchors = {}
+  for _, chosen in pairs(buckets) do
+    anchors[coordinateKey(chosen.cell)] = true
+  end
+  return anchors
+end
+
+local function validateIndex(U, world, binding, context)
+  local services = type(context) == "table" and context.services or nil
+  if binding == nil then
+    binding = type(services) == "table" and services.worldIndex or nil
+  end
+  if type(binding) ~= "table" or getmetatable(binding) ~= nil then
+    return nil
+  end
+  local boundWorld = rawget(binding, "world")
+  local boundWidth = rawget(binding, "width")
+  local boundHeight = rawget(binding, "height")
+  local boundCount = rawget(binding, "cellCount")
+  local cells = rawget(binding, "cells")
+  if not rawequal(boundWorld, world)
+      or type(boundWidth) ~= "number" or boundWidth ~= world.width
+      or type(boundHeight) ~= "number" or boundHeight ~= world.height
+      or type(boundCount) ~= "number"
+      or boundCount ~= #(world.cells or {})
+      or type(cells) ~= "table" or getmetatable(cells) ~= nil then
+    return nil
+  end
+
+  local expectedCount = #(world.cells or {})
+  local maximumKey = world.width * world.height
+  local seen, count, key = {}, 0, nil
+  while true do
+    local value
+    key, value = next(cells, key)
+    if key == nil then break end
+    count = count + 1
+    if count > MAX_INDEX_ENTRIES or type(key) ~= "number"
+        or key ~= key or key == math.huge or key == -math.huge
+        or key ~= math.floor(key) or key < 1 or key > maximumKey
+        or type(value) ~= "table" or getmetatable(value) ~= nil
+        or seen[value] then
+      return nil
+    end
+    local coordinate = key - 1
+    local cellX, cellZ = rawget(value, "x"), rawget(value, "z")
+    if type(cellX) ~= "number" or cellX ~= coordinate % world.width
+        or type(cellZ) ~= "number"
+        or cellZ ~= math.floor(coordinate / world.width) then
+      return nil
+    end
+    seen[value] = true
+    U.checkpoint(context, count, 32)
+  end
+  if count ~= expectedCount then return nil end
+
+  for index = 1, expectedCount do
+    local cell = rawget(world.cells, index)
+    if type(cell) ~= "table" or getmetatable(cell) ~= nil then return nil end
+    local cellX, cellZ = rawget(cell, "x"), rawget(cell, "z")
+    if type(cellX) ~= "number" or type(cellZ) ~= "number" then return nil end
+    local coordinate = cellZ * world.width + cellX + 1
+    if not rawequal(rawget(cells, coordinate), cell) or not seen[cell] then
+      return nil
+    end
+    U.checkpoint(context, index, 32)
+  end
+  return cells
+end
+
+-- Select every world-geometry anchor in one deterministic cell pass. The
+-- supplied index is never accepted unless every visited coordinate maps back
+-- to the exact normalized cell. A mismatch has no buffer side effect, so the
+-- caller can rebuild the index and restart this local preprocessing safely.
+local function collectAnchors(U, world, policy, enabled, cellIndex, context)
+  local treeBuckets, mountainBuckets, boulderBuckets, objectBuckets = {}, {}, {}, {}
+  for index, cell in ipairs(world.cells or {}) do
+    if enabled.tree and U.isSemanticSupport(cell, "tree_support") then
+      selectBucket(U, treeBuckets, world, policy.tree, "tree_support", cell, 0)
+    end
+    if enabled.mountain and U.isMountainClusterMember(world, cellIndex, cell) then
+      selectBucket(U, mountainBuckets, world, policy.mountain, "mountain_peak",
+        cell, U.hasTag(cell, "mountain_seed") and 1 or 0)
+    end
+    if enabled.boulder and U.isSemanticSupport(cell, "boulder_tree") then
+      selectBucket(U, boulderBuckets, world, policy.tree, "boulder_tree", cell, 0)
+    end
+    if enabled.object and U.isSemanticSupport(cell, "object")
+        and not U.hasTag(cell, "tree_support")
+        and not U.hasTag(cell, "mountain_support")
+        and not U.hasTag(cell, "boulder_tree") then
+      selectBucket(U, objectBuckets, world, policy.object, "object_shadow", cell, 0)
+    end
+    U.checkpoint(context, index, 32)
+  end
+  return {
+    tree = anchorSet(treeBuckets),
+    mountain = anchorSet(mountainBuckets),
+    boulder = anchorSet(boulderBuckets),
+    object = anchorSet(objectBuckets),
+  }
+end
+
 function WorldGeometry:compile(context, buffer)
   local U = self.util
   local world, config, quality = context.world, context.config, context.quality
@@ -33,38 +158,40 @@ function WorldGeometry:compile(context, buffer)
   local mountainPeaks = U.option(config, "mountain_peaks", true)
   local boulderTrees = U.option(config, "boulder_trees", false)
   local objectShadows = U.option(config, "object_shadows", true)
-  local treeAnchors = {}
-  if tallTrees or objectShadows then
-    treeAnchors = U.clusterAnchors(world, policy.tree, "tree_support",
-      function(cell) return U.isSemanticSupport(cell, "tree_support") end,
-      nil, context)
+  local enabled = {
+    tree = tallTrees or objectShadows,
+    mountain = mountainPeaks or objectShadows,
+    boulder = boulderTrees or objectShadows,
+    object = objectShadows,
+  }
+  local anchors = { tree = {}, mountain = {}, boulder = {}, object = {} }
+  local anyAnchors = tallTrees or mountainPeaks or boulderTrees or objectShadows
+  if anyAnchors then
+    local cellIndex
+    if enabled.mountain then
+      cellIndex = validateIndex(U, world, nil, context)
+      if not cellIndex then
+        -- Direct feature tests and older internal callers do not have App's
+        -- snapshot binding. Rebuild from normalized cells and validate the
+        -- complete key set before any semantic lookup.
+        local rebuilt = U.indexCells(world, context)
+        cellIndex = assert(validateIndex(U, world, {
+          world = world,
+          cells = rebuilt,
+          width = world.width,
+          height = world.height,
+          cellCount = #(world.cells or {}),
+        }, context), "rebuilt world index is invalid")
+      end
+    end
+    anchors = assert(collectAnchors(
+      U, world, policy, enabled, cellIndex, context
+    ))
   end
-  local mountainAnchors = {}
-  if mountainPeaks or objectShadows then
-    local cellIndex = U.indexCells(world, context)
-    mountainAnchors = U.clusterAnchors(world, policy.mountain, "mountain_peak",
-      function(cell)
-        return U.isMountainClusterMember(world, cellIndex, cell)
-      end,
-      function(cell) return U.hasTag(cell, "mountain_seed") and 1 or 0 end,
-      context)
-  end
-  local boulderAnchors = {}
-  if boulderTrees or objectShadows then
-    boulderAnchors = U.clusterAnchors(world, policy.tree, "boulder_tree",
-      function(cell) return U.isSemanticSupport(cell, "boulder_tree") end,
-      nil, context)
-  end
-  local objectAnchors = {}
-  if objectShadows then
-    objectAnchors = U.clusterAnchors(world, policy.object, "object_shadow",
-      function(cell)
-        return U.isSemanticSupport(cell, "object")
-          and not U.hasTag(cell, "tree_support")
-          and not U.hasTag(cell, "mountain_support")
-          and not U.hasTag(cell, "boulder_tree")
-      end, nil, context)
-  end
+  local treeAnchors = anchors.tree
+  local mountainAnchors = anchors.mountain
+  local boulderAnchors = anchors.boulder
+  local objectAnchors = anchors.object
 
   if worldApron then
     buffer:add("opaque_after_terrain", {

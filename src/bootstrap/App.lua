@@ -329,6 +329,16 @@ function App:_requestScene()
     services = {
       capabilities = self.hostCapabilities,
       assets = self.textureCatalog,
+      -- Bind the index to the exact normalized snapshot that created it.
+      -- Feature code can reject stale or externally supplied indexes without
+      -- trusting host-owned state.
+      worldIndex = {
+        world = self.world,
+        cells = self.worldIndex,
+        width = self.world.width,
+        height = self.world.height,
+        cellCount = #(self.world.cells or {}),
+      },
     },
   })
   if cached == true then

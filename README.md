@@ -19,10 +19,10 @@
 
 > [!IMPORTANT]
 > **Trainer notice:** this is `2.0.0-alpha.1` development source, not a stable
-> player release. Battle Art and Dramaless need released companion adapters
+> player release. Battle Art and Dramaless need released API v1 host adapters
 > before KFP can render in a normal installation.
 
-Kanto First Person (KFP) is a world-detail companion for Gen1recomp voxel
+Kanto First Person (KFP) is a world-detail graphics overhaul for Gen1recomp voxel
 hosts. It rebuilds the visual ambition of the old Interiors and Tweaks mod
 without copying, patching, restoring, or deleting another mod's files.
 
@@ -34,7 +34,7 @@ It targets **Pokémon Red, Blue, and Yellow**. It ships no ROM data.
 
 | Field | Entry |
 |---|---|
-| **Type** | Graphics companion |
+| **Type** | Graphics overhaul |
 | **Stage** | `2.0.0-alpha.1` source candidate |
 | **Games** | Red · Blue · Yellow |
 | **Engine** | Gen1recomp `>=0.2.17 <0.3.0` |
@@ -44,7 +44,7 @@ It targets **Pokémon Red, Blue, and Yellow**. It ships no ROM data.
 | **Gameplay** | Ledge Leap is hidden and forced off |
 
 **Quick routes:** [Features](#features) · [Compatibility](#compatibility) ·
-[Safe upgrade](#safe-upgrade) · [Architecture](#architecture) ·
+[Install and upgrade](#install) · [Architecture](#architecture) ·
 [Developer guide](#development) · [Roadmap](#roadmap)
 
 ## ✨ Evolution from v1
@@ -57,7 +57,7 @@ Version 2 is a clean evolution:
 
 | v1 | v2 |
 |---|---|
-| Spliced host source | Calls a public companion API |
+| Spliced host source | Calls a public host-extension API |
 | Used backups and file ledgers | Owns only KFP files and resources |
 | Replaced callbacks | Registers one isolated extension |
 | Shared broad mutable state | Uses bounded immutable snapshots |
@@ -101,26 +101,46 @@ open · 🔒 unavailable in this alpha
 
 | Target | Commit | Check |
 |---|---|:---:|
-| `v0.2.17` | `44f4680` | ✅ CI |
-| `v0.2.18` | `70d7b6` | ✅ CI |
-| Rewrite `dev` baseline | `06e06e3` | ✅ CI |
-| Current audited `dev` | `478e3bf` | ✅ local; CI queued with this checkpoint |
+| `v0.2.17` | `44f4680` | ✅ audited |
+| `v0.2.18` | `70d7b6` | ✅ audited |
+| `v0.2.19` | `116a6ba` | ✅ current release; audited |
+| Rewrite `dev` baseline | `06e06e3` | ✅ audited |
+| Current audited `dev` | `478e3bf` | ✅ audited |
 
 ### Voxel hosts
 
-| Host | Audited source | Adapter gate |
+| Host | Audited base | Current adapter gate |
 |---|---|---|
-| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | Contract suite passes; owner release and GPU run open |
-| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | Contract suite passes; owner release and GPU run open |
+| `BATTLE_ART_VOXEL_FORK` | 1.9.7 at `fcbe541` | [Battle Art PR #29](https://github.com/absol89/DramaticShapeVoxelMod/pull/29), head `cee25fd`; open and mergeable |
+| `DRAMALESS_SHAPE` | 2.0.3 at `f14795b` | [Dramaless PR #47](https://github.com/artyrambles/DRAMALESS_SHAPE/pull/47), head `f757544`; open and mergeable |
 
 KFP needs **exactly one** compatible active host. Zero hosts leave it inactive.
 Two hosts also leave it inactive. KFP never guesses which renderer should own
-the world.
+the world. Only the two hosts in this table are supported; every other host
+fails closed. “Mergeable” does not mean approved, merged, or released.
 
 Public CI covers Windows, Linux, and macOS source gates. Every other platform
 remains experimental until a device owner records native evidence.
 
-<a id="safe-upgrade"></a>
+<a id="install"></a>
+
+## 🎒 Clean installation
+
+Use this route only after a signed KFP prerelease and an owner-released host
+adapter exist:
+
+1. Install **Battle Art or Dramaless** with its released API v1 adapter.
+2. Enable exactly one voxel host.
+3. In Gen1recomp, select **MODS → Import mod .zip** and choose the signed KFP
+   release ZIP.
+4. Enable KFP, restart Gen1recomp, and confirm API v1 attachment in the KFP
+   diagnostic.
+
+Do not use GitHub's automatic source ZIP. Never merge KFP files into a host.
+To roll back, close Gen1recomp and import the prior signed KFP package again.
+
+There is no supported public alpha package yet. Players should wait for a
+tagged prerelease and matching host releases.
 
 ## 🧭 Safe migration route
 
@@ -137,13 +157,11 @@ Old KFP installations can leave edits inside a voxel host.
 > repair host files. An updated adapter only scans for old markers. If it
 > finds one, it refuses registration and asks for a clean host reinstall.
 
-There is no supported public alpha package yet. Players should wait for a
-tagged prerelease and matching host releases. Read the
-[complete upgrade guide](docs/upgrade-v1-to-v2.md).
+Read the [complete upgrade guide](docs/upgrade-v1-to-v2.md).
 
 <a id="architecture"></a>
 
-## 🔗 The companion link
+## 🔗 The safe renderer link
 
 Gen1recomp permits one active world renderer. KFP does not compete for it. The
 selected host keeps `drawWorld` and calls KFP at fixed phases.
@@ -167,7 +185,7 @@ flowchart TD
     class R green;
 ```
 
-### Companion rules
+### API rules
 
 - API major versions and required capabilities must match.
 - Optional capabilities disable only related features.
@@ -181,6 +199,12 @@ flowchart TD
 Portable phases are `background`, `opaque_after_terrain`, and
 `translucent_after_actors`. Battle, shadow, and terrain-patch work appears only
 when a host advertises the matching capability.
+
+Only a host adapter reads tile IDs or broad engine state. It copies approved
+semantic facts, such as tree and mountain support roles, into the normalized
+snapshot. KFP rejects unknown, walkable, and isolated supports, then applies
+deterministic density for the selected quality tier. Camera output is additive;
+terrain output is declarative; KFP never retains a live host object.
 
 Read the [normative Voxel Companion API v1](docs/voxel-companion-api-v1.md)
 for schemas, callback order, leases, limits, faults, and conformance fixtures.
@@ -232,12 +256,12 @@ luajit tools/check_syntax.lua
 luajit tools/validate_project.lua
 luajit tools/run_tests.lua
 luajit tools/run_benchmarks.lua
-python -m unittest tests.tools.test_package_release -v
+python -m unittest discover -s tests/tools -p "test_*.py" -v
 ```
 
-Current result: **222 Lua tests**, **81 syntax checks**, and **21 Python policy
-tests**. GitHub Actions repeats them across three operating systems and four
-pinned engine targets.
+GitHub Actions repeats these gates across Windows, Linux, macOS, and every
+audited engine target. Use the CI badge and machine-readable release ledger for
+the current immutable result; README test counts are intentionally not cached.
 
 Strict engine checks:
 
@@ -287,17 +311,11 @@ flowchart LR
     class W,B,R,V future;
 ```
 
-Stable release needs:
-
-- Reviewed and released adapters for both hosts.
-- Red, Blue, and Yellow GPU acceptance.
-- Corrected v1.60 visual parity.
-- Recorded asset modification and redistribution rights. ✅
-- Native evidence for every claimed platform.
-- Performance, leak, reproducibility, and uninstall evidence.
-- Community review and a fresh engine audit.
-
-One open required gate keeps the project prerelease.
+The alpha ledger is not approved. Asset rights are recorded complete; released
+host adapters, Red/Blue/Yellow GPU review, native-device results, soak and leak
+evidence, reproducibility, signing, and community review remain gated. Any open
+required gate keeps the project prerelease. See the exact
+[machine-readable gates](docs/prerelease-gates.json).
 
 ## 📚 Professor's notes
 

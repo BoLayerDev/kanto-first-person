@@ -1,0 +1,39 @@
+{
+  "audited_at": "2026-08-22T02:57:11Z",
+  "compatible": true,
+  "contracts": {
+    "dev": {
+      "src/mods/Loader.lua": "64a0b5c7e67d8648b700f958529c95b73555edb60f639e94ec7b67c4a5e9a1c7",
+      "src/mods/Manifest.lua": "8859dbf962ed9b30c4c97616125ca566b3bf978c7304f72b0c7a9922eed89592",
+      "src/mods/Sandbox.lua": "477662648188f87be4aa862e8119210c7e22e5acd76ff55e00465bc8a9b8f64d",
+      "src/mods/Schemas.lua": "1935458e567372c34bd03c3fc76d6edf1cbad7bb33fee4c2943de755299b7869",
+      "src/render/Pipelines.lua": "4d4cd286c003164d8e852f5f3dee26d50d97632bc11bdaaf0159db90629ebfd8",
+      "tools/modkit.py": "2b827ea9307e791cbfd6098b4f18241c6739a779c422b68586f4c2378783688f"
+    },
+    "stable": {
+      "src/mods/Loader.lua": "96347713d9898537c13f7f488072017780b21e688abddc7248e5ccec2327dec7",
+      "src/mods/Manifest.lua": "8859dbf962ed9b30c4c97616125ca566b3bf978c7304f72b0c7a9922eed89592",
+      "src/mods/Sandbox.lua": "477662648188f87be4aa862e8119210c7e22e5acd76ff55e00465bc8a9b8f64d",
+      "src/mods/Schemas.lua": "1935458e567372c34bd03c3fc76d6edf1cbad7bb33fee4c2943de755299b7869",
+      "src/render/Pipelines.lua": "4d4cd286c003164d8e852f5f3dee26d50d97632bc11bdaaf0159db90629ebfd8",
+      "tools/modkit.py": "2b827ea9307e791cbfd6098b4f18241c6739a779c422b68586f4c2378783688f"
+    }
+  },
+  "findings": [
+    "API 2 manifest validation is unchanged and compatible.",
+    "The sandbox, render registry schema, render pipeline, and modkit are byte-identical.",
+    "The dev Loader adds a Gen1-side denial for Gen2 engine-module imports; KFP does not import those modules."
+  ],
+  "results": {
+    "dev_lint": "pass",
+    "dev_strict_validate": "pass",
+    "stable_lint": "pass",
+    "stable_strict_validate": "pass"
+  },
+  "schema": 1,
+  "targets": {
+    "dev": "478e3bf8ebf7646edfda88320c6472cf32db2e67",
+    "stable": "70d7b6383e2c005857013dc897fd096886b08f0b",
+    "stable_tag": "v0.2.18"
+  }
+}

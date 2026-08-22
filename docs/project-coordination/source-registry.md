@@ -9,7 +9,9 @@
 - Baseline audited dev commit:
   `06e06e305bbcefe97c216a31bb25265ffb5e6b18`.
 - Current audited dev commit:
-  `087a2751895899ad6e79800599ae27a8f40cf1e3`.
+  `478e3bf8ebf7646edfda88320c6472cf32db2e67`.
+- Current engine audit record:
+  `docs/release-evidence/gen1recomp-2026-08-21.json`.
 - Sandbox change: `83682f011df5039c4ea7042141590d38ca7e21d5`.
 - Source: `https://github.com/bryanthaboi/gen1recomp`.
 

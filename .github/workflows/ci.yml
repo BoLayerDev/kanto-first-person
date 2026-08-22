@@ -64,7 +64,7 @@ jobs:
             commit: 06e06e305bbcefe97c216a31bb25265ffb5e6b18
             compat_version: 0.2.17
           - target: dev-current
-            commit: 087a2751895899ad6e79800599ae27a8f40cf1e3
+            commit: 478e3bf8ebf7646edfda88320c6472cf32db2e67
             compat_version: 0.2.18
 
     steps:

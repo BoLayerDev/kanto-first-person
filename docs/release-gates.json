@@ -27,8 +27,14 @@
       "passed": false
     },
     "engine_reaudit": {
-      "evidence": [],
-      "passed": false
+      "evidence": [
+        {
+          "kind": "engine_audit",
+          "locator": "docs/release-evidence/gen1recomp-2026-08-21.json",
+          "sha256": "608cd6dc5629f1455695c06187f387a586f3534566fa4c87c4f84dd0ad140f8a"
+        }
+      ],
+      "passed": true
     },
     "performance_and_leaks": {
       "evidence": [],

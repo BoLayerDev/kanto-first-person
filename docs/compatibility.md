@@ -7,9 +7,15 @@
 | Gen1recomp v0.2.17 | `44f4680b24823629489ed5a2adad648d0dceb640` | Minimum range; validate and lint pass |
 | Gen1recomp v0.2.18 | `70d7b6383e2c005857013dc897fd096886b08f0b` | Latest shipped tag; validate and lint pass |
 | Gen1recomp dev baseline | `06e06e305bbcefe97c216a31bb25265ffb5e6b18` | Validate and lint pass |
-| Gen1recomp dev current | `087a2751895899ad6e79800599ae27a8f40cf1e3` | Re-audited; validate and lint pass |
+| Gen1recomp dev current | `478e3bf8ebf7646edfda88320c6472cf32db2e67` | Re-audited; API 2, sandbox, pipelines, strict validate, and lint pass |
 
 Release range: `>=0.2.17 <0.3.0`. Development builds report `0.0.0-dev`, so CI pins their commit separately.
+
+The current dev audit found no KFP-facing contract change from v0.2.18. The
+manifest validator, sandbox, render registry schema, render pipeline, and
+modkit are byte-identical. The Loader change adds a Gen1-side denial for Gen2
+engine-module imports; KFP does not use those imports. See the hash-bound
+[engine audit](release-evidence/gen1recomp-2026-08-21.json).
 
 ## Games
 

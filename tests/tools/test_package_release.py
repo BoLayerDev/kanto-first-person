@@ -1,3 +1,4 @@
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -63,7 +64,7 @@ class ReleaseGateTests(unittest.TestCase):
                 "44f4680b24823629489ed5a2adad648d0dceb640",
                 "06e06e305bbcefe97c216a31bb25265ffb5e6b18",
                 "70d7b6383e2c005857013dc897fd096886b08f0b",
-                "087a2751895899ad6e79800599ae27a8f40cf1e3",
+                "478e3bf8ebf7646edfda88320c6472cf32db2e67",
             },
         )
 
@@ -87,10 +88,18 @@ class ReleaseGateTests(unittest.TestCase):
             ledger["gates"]["asset_rights"]["evidence"],
             [rights["approval_record"]],
         )
+        self.assertTrue(ledger["gates"]["engine_reaudit"]["passed"])
+        engine_evidence = ledger["gates"]["engine_reaudit"]["evidence"]
+        self.assertEqual(len(engine_evidence), 1)
+        report = ROOT / engine_evidence[0]["locator"]
+        self.assertEqual(
+            hashlib.sha256(report.read_bytes()).hexdigest(),
+            engine_evidence[0]["sha256"],
+        )
         self.assertTrue(all(
             not gate["passed"]
             for name, gate in ledger["gates"].items()
-            if name != "asset_rights"
+            if name not in {"asset_rights", "engine_reaudit"}
         ))
 
     def test_unapproved_alpha_ledger_records_completed_asset_rights(self):

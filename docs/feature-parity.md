@@ -54,8 +54,8 @@ Blue, and Yellow.
 | KANTO, FUJI, VALLEY, and CITY panoramas | Represented | Name-to-asset and HIGH/BALANCED/LOW file selection are locked by tests and a public hash inventory; physical scale is quality-independent; GPU placement still needs review |
 | Three cloud decks | Represented | KFP-owned deterministic binary masks, repeat sampling, borrowed-resource ownership, and packet validation are tested; GPU height, parallax, and day/night blending remain open |
 | Stars, nebula, twinkle, and shooting stars | Represented | Night timing and deterministic seed tests |
-| Distant birds and derived local bird frames | Open | Import transform exists, but no public runtime resolver emits them; alpha control is hidden |
-| Ground flocks that reset by map | Open | No executable packet is emitted; alpha control is hidden |
+| Distant birds and derived local bird frames | Open | Import transform exists, but the four pinned engines have no public owner-scoped runtime resolver; alpha control is hidden; see the [upstream API proposal](derived-asset-runtime-api-proposal.md) |
+| Ground flocks that reset by map | Open | No executable packet is emitted; alpha control is hidden until the same owner-scoped resolver is released |
 | Planes, contrails, and rare blimps | Represented | Spawn timing, batching, and visibility tests |
 | Rain, storms, lightning, umbrellas, puddles, splashes, and rainbows | Represented | Weather transitions and photosensitivity review |
 | Lavender fog and the 1.60 veil | Represented | Lavender map tags and post-process cost |

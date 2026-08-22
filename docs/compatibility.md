@@ -17,6 +17,10 @@ modkit are byte-identical. The Loader change adds a Gen1-side denial for Gen2
 engine-module imports; KFP does not use those imports. See the hash-bound
 [engine audit](release-evidence/gen1recomp-2026-08-21.json).
 
+The same four pins have no public owner-scoped runtime method for output from
+`assets_transforms`. Birds and ground flocks therefore stay disabled. See the
+[derived-asset runtime API proposal](derived-asset-runtime-api-proposal.md).
+
 ## Games
 
 | Game | 2.0 target |

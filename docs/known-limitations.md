@@ -29,8 +29,11 @@ a waiver for a failed release gate.
 - Represented effects still need host/GPU review. This includes interiors,
   caves, map edges, weather, skies, camera behavior, audio, battles, shadows,
   quality tiers, and transitions.
-- Wildlife birds and ground flocks emit no runtime draw packet because no
-  approved public derived-asset resolver is available.
+- Wildlife birds and ground flocks emit no runtime draw packet. All four pinned
+  Gen1recomp targets can build the transform output, but none has a public,
+  owner-scoped runtime image resolver. The exact blocker and bounded upstream
+  proposal are in the
+  [derived-asset runtime API proposal](derived-asset-runtime-api-proposal.md).
 - Third-person and diorama ceilings now emit portable NONE, CUTAWAY, and FULL
   policies. Ceiling detail emits portable beams and roses. Their controls are
   visible, but camera-mode placement and GPU review remain open.

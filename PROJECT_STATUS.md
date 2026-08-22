@@ -46,6 +46,10 @@ Last updated: 2026-08-21
   results. Red and Blue imports are not present.
 - Battle Art has two pre-existing strict Modkit `MK301` findings for its own
   ROM-cache interface files. The companion contract suite still passes.
+- All four pinned Gen1recomp targets can build KFP's declared bird transform,
+  but none exposes an owner-scoped public runtime image resolver. Birds and
+  ground flocks stay hidden and emit no packet. The bounded upstream contract
+  is in `docs/derived-asset-runtime-api-proposal.md`.
 - Native Switch, Xbox, iOS, Android, PortMaster, and Anbernic gates need device owners.
 
 ## Recovery point
@@ -67,9 +71,11 @@ Last updated: 2026-08-21
    `absol89/DramaticShapeVoxelMod#29` and `artyrambles/DRAMALESS_SHAPE#47`.
 3. Keep the private rights inventory hash aligned if any covered legacy asset
    changes; never publish the original permission pages.
-4. Create or import a protected GPG release key, back it up, and record only
+4. Request and re-audit an official owner-scoped derived-image API before any
+   KFP wildlife runtime or option change.
+5. Create or import a protected GPG release key, back it up, and record only
    its public fingerprint in repository configuration and release evidence.
-5. Complete performance, leak, platform, reproducibility, and uninstall gates.
+6. Complete performance, leak, platform, reproducibility, and uninstall gates.
 
 ## Completion rule
 

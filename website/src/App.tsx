@@ -4,6 +4,10 @@ import { PALETTES, type Edition } from './world/palettes'
 
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
+const RELEASE_VERSION = '2.0.0-alpha.1'
+const SOURCE_CHECKPOINT = 'cfc045b'
+const SOURCE_COMMIT = `${REPO}/commit/cfc045bec72c2ceecd558b24bcd643c8e0b720dc`
+const LATEST_CI = `${REPO}/actions/runs/32571329500`
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 
 type MenuItem = {
@@ -62,6 +66,28 @@ const PRIMARY_LINKS = [
 
 function DetailLinks({ children }: { children: ReactNode }) {
   return <div className="detail-links">{children}</div>
+}
+
+function ReleaseBanner() {
+  return (
+    <section className="release-banner" aria-labelledby="site-title">
+      <div className="split-core release-core" aria-hidden="true"><span /></div>
+      <div className="release-copy">
+        <span className="release-kicker">KANTO FIRST PERSON // TRAINERS, STAND BY</span>
+        <h1 id="site-title"><span>COMING</span> SOON</h1>
+        <p>{RELEASE_VERSION} is source-evidenced. Real-game acceptance and the signed public package are still in progress.</p>
+      </div>
+      <div className="release-status" aria-label="Current release status">
+        <a href={LATEST_CI} target="_blank" rel="noreferrer">
+          <span>BUILD</span><b>11/11 PASS</b><i aria-hidden="true">↗</i>
+        </a>
+        <a href={SOURCE_COMMIT} target="_blank" rel="noreferrer">
+          <span>SOURCE</span><b>{SOURCE_CHECKPOINT}</b><i aria-hidden="true">↗</i>
+        </a>
+        <div><span>PACKAGE</span><b>NOT RELEASED</b></div>
+      </div>
+    </section>
+  )
 }
 
 function MenuDetail({ index }: { index: number }) {
@@ -191,14 +217,7 @@ function OptionsMenu() {
 
   return (
     <main className="terminal-shell">
-      <section className="title-strip" aria-labelledby="site-title">
-        <div className="split-core" aria-hidden="true"><span /></div>
-        <div>
-          <span>KFP // FIELD OPTIONS</span>
-          <h1 id="site-title">KANTO FIRST PERSON</h1>
-        </div>
-        <div className="alpha-chip"><i /> ALPHA</div>
-      </section>
+      <ReleaseBanner />
 
       <div className="terminal-grid">
         <nav className="menu-window pixel-window" aria-label="Main options">

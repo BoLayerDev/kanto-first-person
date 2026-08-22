@@ -136,9 +136,11 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
     })
     const menu = document.querySelector<HTMLElement>('.menu-window')!
     const detail = document.querySelector<HTMLElement>('.detail-window')!
+    const banner = document.querySelector<HTMLElement>('.release-banner')!
     const canvas = document.querySelector<HTMLElement>('.world-canvas')!
     const root = document.querySelector<HTMLElement>('#root')!
     return {
+      banner: box(banner.getBoundingClientRect()),
       menu: box(menu.getBoundingClientRect()),
       detail: box(detail.getBoundingClientRect()),
       menuDisplay: getComputedStyle(menu).display,
@@ -151,6 +153,7 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   })
 
   expect(layout.menuDisplay).toBe('flex')
+  expect(layout.banner.bottom).toBeLessThan(layout.menu.top)
   expect(layout.menu.right).toBeLessThan(layout.detail.left)
   expect(Math.abs(layout.menu.top - layout.detail.top)).toBeLessThan(1)
   expect(Math.abs(layout.menu.height - layout.detail.height)).toBeLessThan(1)
@@ -158,6 +161,22 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.position).toBe('fixed')
   expect(layout.canvas.width).toBe(1440)
   expect(layout.canvas.height).toBe(900)
+})
+
+test('keeps the verified coming-soon status above every menu page', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const banner = page.getByRole('region', { name: 'COMING SOON' })
+  await expect(banner).toContainText('2.0.0-alpha.1')
+  await expect(banner).toContainText('11/11 PASS')
+  await expect(banner).toContainText('cfc045b')
+  await expect(banner).toContainText('NOT RELEASED')
+
+  for (const label of ['FIELD FEATURES', 'TRAINER GUIDE', 'SUPPORT CENTER', 'OPEN GITHUB']) {
+    await page.getByRole('button', { name: label }).click()
+    await expect(banner).toBeVisible()
+  }
 })
 
 test('uses standard desktop open and back keys', async ({ page }) => {

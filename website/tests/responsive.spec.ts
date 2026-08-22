@@ -237,10 +237,10 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
-  const researchDate = vitals.getByLabel('Research began 2026-08-03')
-  await expect(researchDate).toHaveAttribute('datetime', '2026-08-03')
-  await expect(researchDate).toHaveText('08.03')
-  await expect(vitals.getByText('RESEARCH BEGAN / 2026')).toBeVisible()
+  const rewriteDate = vitals.getByLabel('Rewrite began 2026-08-21')
+  await expect(rewriteDate).toHaveAttribute('datetime', '2026-08-21')
+  await expect(rewriteDate).toHaveText('AUG 21')
+  await expect(vitals.getByText('REWRITE BEGAN / 2026')).toBeVisible()
 
   const milestones = page.getByRole('region', { name: 'FIELD BADGES' })
   await expect(milestones).toContainText('NO MANUAL LOGGING REQUIRED')
@@ -257,7 +257,7 @@ test('shows the complete verified project history in the research archive', asyn
   await expect(page.getByRole('link', { name: /DOWNLOAD SHARE GRAPHIC/ })).toHaveAttribute('href', /activity-system-share\.png$/)
 })
 
-test('keeps the research start date readable at desktop and mobile widths', async ({ page }) => {
+test('keeps the verified rewrite start date readable at desktop and mobile widths', async ({ page }) => {
   for (const width of [1440, 901, 390]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(`${PAGE_PATH}#activity`)
@@ -277,7 +277,7 @@ test('keeps the research start date readable at desktop and mobile widths', asyn
       }
     })
 
-    expect(fit, `research date card must fit at ${width}px`).toEqual({ valueFits: true, labelFits: true })
+    expect(fit, `rewrite date card must fit at ${width}px`).toEqual({ valueFits: true, labelFits: true })
   }
 })
 

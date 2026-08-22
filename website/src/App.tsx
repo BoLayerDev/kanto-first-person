@@ -5,6 +5,8 @@ import { PALETTES, type Edition } from './world/palettes'
 
 const REPO = 'https://github.com/BoLayerDev/kanto-first-person'
 const BRANCH = `${REPO}/blob/v2-rewrite`
+const REWRITE_START_COMMIT = '0f453187210d3d388a02196affee413994df1a77'
+const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 const MENU_SLUGS = ['home', 'features', 'guide', 'support', 'rebuild', 'activity', 'github'] as const
 
@@ -309,8 +311,12 @@ function RewriteDetail() {
 function ResearchArchive({ status }: { status: ProjectStatus }) {
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
-  const firstUpdate = status.activity.at(-1)?.date.slice(0, 10) ?? 'UNKNOWN'
-  const firstUpdateParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(firstUpdate)
+  const rewriteStart = status.activity.find((entry) => entry.sha === REWRITE_START_COMMIT)
+  const rewriteStartDate = rewriteStart?.date.slice(0, 10) ?? 'UNKNOWN'
+  const rewriteStartParts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(rewriteStartDate)
+  const rewriteStartMonth = rewriteStartParts
+    ? MONTH_LABELS[Number(rewriteStartParts[2]) - 1]
+    : undefined
   const typeCounts = [...status.activity.reduce((counts, entry) => {
     counts.set(entry.type, (counts.get(entry.type) ?? 0) + 1)
     return counts
@@ -328,12 +334,12 @@ function ResearchArchive({ status }: { status: ProjectStatus }) {
         <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
         <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
         <div className="archive-date-vital">
-          {firstUpdateParts ? (
-            <time dateTime={firstUpdate} aria-label={`Research began ${firstUpdate}`}>
-              <b>{firstUpdateParts[2]}.{firstUpdateParts[3]}</b>
+          {rewriteStartParts && rewriteStartMonth ? (
+            <time dateTime={rewriteStartDate} aria-label={`Rewrite began ${rewriteStartDate}`}>
+              <b>{rewriteStartMonth} {rewriteStartParts[3]}</b>
             </time>
           ) : <b>--.--</b>}
-          <span>RESEARCH BEGAN{firstUpdateParts ? ` / ${firstUpdateParts[1]}` : ''}</span>
+          <span>REWRITE BEGAN{rewriteStartParts ? ` / ${rewriteStartParts[1]}` : ''}</span>
         </div>
       </div>
 

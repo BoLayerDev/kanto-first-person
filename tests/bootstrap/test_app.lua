@@ -549,11 +549,14 @@ return function(T)
       T.truthy(dispatcher:start({ world = snapshot }),
         "start cycle " .. cycle)
       control.emit("map.entered", { via = "warp" })
-      control.options.head_bob = cycle % 2 == 0
+      local configGeneration = mod.exports.kfp.status().configGeneration
+      control.options.headbob = cycle % 2 == 1
       control.emit("mod.options_changed", {
         mod = mod.id,
-        key = "head_bob",
+        key = "headbob",
       })
+      T.equal(mod.exports.kfp.status().configGeneration, configGeneration + 1,
+        "option invalidation cycle " .. cycle)
       snapshot.revision = cycle + 1000
       T.truthy(dispatcher:world_changed(snapshot),
         "map change cycle " .. cycle)

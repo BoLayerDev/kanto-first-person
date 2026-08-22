@@ -267,7 +267,7 @@ test('shows automatic project time and PR task timing without claiming work hour
   const quests = stats.locator('.quest-log > li')
   await expect(quests).toHaveCount(3)
   await expect(quests.first()).toContainText('QUEST #11')
-  await expect(quests.first()).toContainText('PR ROUTE 3M 2S')
+  await expect(quests.first()).toContainText('PR TIME 3M 2S')
   await expect(quests.first().getByRole('link')).toHaveAttribute('href', /pull\/11$/)
 
   await page.goto(`${PAGE_PATH}#activity`)
@@ -358,6 +358,12 @@ test('keeps the dev stats save file readable at desktop and mobile widths', asyn
         height: link.getBoundingClientRect().height,
         clipped: link.scrollWidth > link.clientWidth + 1,
       })),
+      questDurations: [...element.querySelectorAll<HTMLElement>('.quest-duration')].map((duration) => ({
+        text: duration.textContent?.trim(),
+        clipped: duration.scrollWidth > duration.clientWidth + 1,
+        fontSize: Number.parseFloat(getComputedStyle(duration).fontSize),
+        fontFamily: getComputedStyle(duration).fontFamily,
+      })),
     }))
 
     expect(fit.clipped, `dev stats must fit at ${width}px`).toBe(false)
@@ -368,6 +374,11 @@ test('keeps the dev stats save file readable at desktop and mobile widths', asyn
     for (const link of fit.questLinks) {
       expect(link.height).toBeGreaterThanOrEqual(48)
       expect(link.clipped).toBe(false)
+    }
+    for (const duration of fit.questDurations) {
+      expect(duration.clipped, `${duration.text} must fit at ${width}px`).toBe(false)
+      expect(duration.fontSize, `${duration.text} must remain readable at ${width}px`).toBeGreaterThanOrEqual(9.5)
+      expect(duration.fontFamily).toContain('ui-monospace')
     }
 
     if (width === 1440 || width === 390) {

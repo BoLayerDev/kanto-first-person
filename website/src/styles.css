@@ -749,12 +749,15 @@ a {
 
 .quest-log a > span,
 .quest-log a > small {
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
   line-height: 1.4;
 }
 
 .quest-log a > span {
   color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.4rem, 0.48vw, 0.48rem);
+  font-weight: 900;
+  letter-spacing: 0.03em;
 }
 
 .quest-log a:hover > span,
@@ -772,17 +775,34 @@ a {
 
 .quest-log a > small {
   color: var(--game-mid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.4rem, 0.46vw, 0.46rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
   white-space: nowrap;
 }
 
-.quest-log a > small strong {
-  color: var(--game-ink);
+.quest-log a > .quest-timing {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.quest-log .quest-duration {
+  min-width: 6.5ch;
+  color: var(--accent);
+  font-size: clamp(0.62rem, 0.72vw, 0.72rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: right;
 }
 
 .quest-log a:hover > small,
 .quest-log a:focus-visible > small,
-.quest-log a:hover > small strong,
-.quest-log a:focus-visible > small strong {
+.quest-log a:hover .quest-duration,
+.quest-log a:focus-visible .quest-duration {
   color: var(--paper);
 }
 
@@ -2723,6 +2743,10 @@ a {
   .quest-log a > span,
   .quest-log a > small {
     font-size: 0.5rem;
+  }
+
+  .quest-log .quest-duration {
+    font-size: 0.75rem;
   }
 
   .quest-log a > b {

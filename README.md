@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/readme/kfp-hero.png" alt="An original pixel-art first-person journey from a tiled room, through a bright forest route, into a moonlit voxel cave" width="100%">
+  <img src="docs/images/readme/kfp-hero-v2.png" alt="A vibrant pixel-art Kanto adventure from a Poké Ball-themed tiled room, through a bright forest route, into a moonlit voxel cave" width="100%">
 </p>
 
 <h1 align="center">Kanto First Person 2.0</h1>
@@ -28,7 +28,7 @@ without copying, patching, restoring, or deleting another mod's files.
 
 It targets **Pokémon Red, Blue, and Yellow**. It ships no ROM data.
 
-<p align="center"><sub>The banner is original project art. It uses no official character, logo, screenshot, sprite, or ROM-derived image.</sub></p>
+<p align="center"><sub>The banner is original fan art with Poké Ball-inspired motifs. It uses no game screenshot, extracted sprite, character art, or ROM-derived image.</sub></p>
 
 ## 📖 Pokédex entry
 

@@ -20,6 +20,7 @@ roms/
 # local tool state
 .cache/
 .tmp/
+.lua/
 .luarocks/
 __pycache__/
 *.pyc

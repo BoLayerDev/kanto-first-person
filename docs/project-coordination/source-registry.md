@@ -32,7 +32,6 @@
 
 ## Initial voxel hosts
 
-- Dramatic Shape: `DRAMATIC_SHAPE` 1.9.0, commit `cd10ac3158db9a53e2e33efa3651935723715c9b`.
 - Battle Art: `BATTLE_ART_VOXEL_FORK` 1.9.7, commit `fcbe541676cd7f245fa73df3d01dcbabec37a1fe`.
 - Dramaless Shape: `DRAMALESS_SHAPE` 2.0.3, commit `f14795b17e85d5d5baedcad63944065e446a4b0b`.
 
@@ -47,9 +46,6 @@ They are not host-owner releases:
 - Dramaless adapter: `bc24063c489ed09c8eed832e0840ad3d9b78ea0d`;
   patch SHA-256
   `9bdc3475f55cc06488a9bc9e9082bea4a978d067b80c7224c26e94923c1c2ae4`.
-- Dramatic Shape adapter: `a395bbcec6c3231d0a0622f99c080c38e9dc297d`;
-  patch SHA-256
-  `b6527ec740fdfb123385e19e1296af5b1e5ee1939670b9a13cddd6dbfe7cc3cf`.
 
 ## Private evidence
 

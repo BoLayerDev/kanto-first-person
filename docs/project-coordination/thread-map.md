@@ -8,7 +8,7 @@ Last updated: 2026-08-21
 | Voxel Companion API | Companion lane | `companion/`, `docs/voxel-companion-api-v1.md`, `tests/companion/` | Frozen v1 source contract complete |
 | Core runtime | Core lane | `src/core/`, `tests/core/`, test bootstrap, CI | Source implementation complete |
 | Options and gameplay | Config/gameplay lane | `src/config/`, `src/gameplay/`, parity and migration docs, related tests | Migration complete; Ledge runtime gated off |
-| Host adapters | Three isolated host lanes | Isolated task-owned host clones only | Local source tests pass; owner/GPU gates open |
+| Host adapters | Two isolated host lanes | Isolated task-owned host clones only | Local source tests pass; owner/GPU gates open |
 
 ## Handoff contract
 

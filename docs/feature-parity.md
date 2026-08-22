@@ -142,7 +142,7 @@ No item is complete until the applicable gates pass:
 1. ROM-free unit and contract tests inspect deterministic commands.
 2. Synthetic render tests verify phase, material, depth, blend, and batch keys.
 3. Private player-owned Red, Blue, and Yellow review verifies visual placement.
-4. Dramatic Shape, Battle Art, and Dramaless adapters pass one companion
+4. Battle Art and Dramaless adapters pass one companion
    conformance suite.
 5. Frame time, build slices, cache limits, draw calls, pools, and release counts
    stay inside HIGH, BALANCED, and LOW policy.

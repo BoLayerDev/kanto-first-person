@@ -1059,18 +1059,18 @@ a {
 }
 .info-tip-trigger {
   display: grid;
-  width: 32px;
-  min-width: 32px;
-  height: 32px;
-  min-height: 32px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  min-height: 24px;
   place-items: center;
   padding: 0;
   border: 2px solid currentColor;
   border-radius: 50%;
   color: inherit;
   background: var(--paper-dark);
-  box-shadow: 2px 2px 0 color-mix(in srgb, var(--game-mid) 38%, transparent);
-  font: 900 0.78rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  box-shadow: 1px 1px 0 color-mix(in srgb, var(--game-mid) 38%, transparent);
+  font: 900 0.64rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   cursor: help;
 }
 .info-tip-trigger:hover,

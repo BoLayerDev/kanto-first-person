@@ -40,6 +40,13 @@ function elapsedSeconds(startedAt, completedAt) {
   return Math.max(1, Math.round((completed - started) / 1000))
 }
 
+function compactDuration(seconds = 0) {
+  if (!seconds) return 'TIME UNAVAILABLE'
+  const minutes = Math.floor(seconds / 60)
+  const remainder = seconds % 60
+  return minutes ? `${minutes}M ${remainder}S` : `${remainder}S`
+}
+
 function activityType(message) {
   const prefix = message.match(/^([a-z]+)(?:\([^)]+\))?:/i)?.[1]?.toLowerCase()
   if (prefix === 'feat') return 'NEW MOVE'
@@ -463,6 +470,51 @@ const proof = {
   url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
 }
 
+const deployRunId = clean(process.env.SITE_DEPLOY_RUN_ID)
+const deployRunUrl = clean(
+  process.env.SITE_DEPLOY_RUN_URL,
+  deployRunId ? `${repositoryUrl}/actions/runs/${deployRunId}` : `${repositoryUrl}/actions/workflows/pages.yml`,
+)
+const sourceVerified = ciConclusion === 'success' && ciHeadSha === commit && total > 0 && passed === total
+const receipt = {
+  id: `OAK-${shortSha.toUpperCase()}-${ciRunId || 'LOCAL'}`,
+  issuedAt: generatedAt,
+  rows: [
+    {
+      id: 'source',
+      label: 'SOURCE LOCK',
+      value: `COMMIT ${shortSha.toUpperCase()}`,
+      detail: `${branch.toUpperCase()} SOURCE`,
+      state: sourceVerified ? 'VERIFIED' : 'RECORDED',
+      url: commit ? `${repositoryUrl}/commit/${commit}` : repositoryUrl,
+    },
+    {
+      id: 'lab',
+      label: 'LAB SCAN',
+      value: ciConclusion === 'success' && total > 0 ? `${passed}/${total} CHECKS PASSED` : 'CHECK CI EVIDENCE',
+      detail: `GITHUB ACTIONS · ${compactDuration(ciDurationSeconds)}`,
+      state: ciConclusion === 'success' && total > 0 && passed === total ? 'PASSED' : 'CHECK',
+      url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
+    },
+    {
+      id: 'snapshot',
+      label: 'STATUS FILE',
+      value: `FILED ${generatedAt.slice(0, 10)}`,
+      detail: 'STATIC PROJECT-STATUS.JSON',
+      state: 'AUTO',
+      url: deployRunUrl,
+    },
+    {
+      id: 'package',
+      label: 'PLAYER PACKAGE',
+      value: release.available ? release.label : 'NOT RELEASED',
+      detail: release.available ? 'SIGNED PUBLIC PACKAGE' : 'RELEASE GATES STILL OPEN',
+      state: release.available ? 'READY' : 'WAITING',
+      url: release.url,
+    },
+  ],
+}
+
 const status = {
   schemaVersion: 1,
   version: clean(manifest.version, 'UNKNOWN'),
@@ -478,6 +530,7 @@ const status = {
   releaseJourney,
   weeklyReport,
   proof,
+  receipt,
   devStats,
   pullRequests,
   ci: {

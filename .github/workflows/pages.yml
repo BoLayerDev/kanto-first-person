@@ -60,6 +60,8 @@ jobs:
           SITE_CI_STARTED_AT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.run_started_at || '' }}
           SITE_CI_COMPLETED_AT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.updated_at || '' }}
           SITE_GENERATED_AT: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.updated_at || '' }}
+          SITE_DEPLOY_RUN_ID: ${{ github.run_id }}
+          SITE_DEPLOY_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SITE_REQUIRE_VERIFIED_CI: 'true'
         run: node website/scripts/generate-project-status.mjs
 

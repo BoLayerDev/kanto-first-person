@@ -63,6 +63,8 @@ test('generates a complete offline GitHub status snapshot', async () => {
         SITE_CI_RUN_URL: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
         SITE_CI_TOTAL: '11',
         SITE_COMMIT_MESSAGE: `Remove ${privateMetricLabel} content`,
+        SITE_DEPLOY_RUN_ID: '84',
+        SITE_DEPLOY_RUN_URL: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/84',
         SITE_GENERATED_AT: '2026-08-22T12:00:00Z',
         SITE_ISSUES_JSON: JSON.stringify(issues),
         SITE_REPOSITORY: 'BoLayerDev/kanto-first-person',
@@ -121,6 +123,14 @@ test('generates a complete offline GitHub status snapshot', async () => {
       environment: 'GITHUB ACTIONS',
       url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
     })
+    assert.equal(status.receipt.id, 'OAK-1234567-42')
+    assert.equal(status.receipt.issuedAt, '2026-08-22T12:00:00Z')
+    assert.deepEqual(status.receipt.rows.map((row) => row.id), ['source', 'lab', 'snapshot', 'package'])
+    assert.deepEqual(status.receipt.rows.map((row) => row.state), ['VERIFIED', 'PASSED', 'AUTO', 'WAITING'])
+    assert.equal(status.receipt.rows[0].url, `https://github.com/BoLayerDev/kanto-first-person/commit/${sourceSha}`)
+    assert.equal(status.receipt.rows[1].url, 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42')
+    assert.equal(status.receipt.rows[2].url, 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/84')
+    assert.equal(status.receipt.rows[3].url, 'https://github.com/BoLayerDev/kanto-first-person/releases')
     assert.equal(status.commitMessage, 'fix(website): Clean up public development stats')
     assert.deepEqual(status.activity[0], {
       ...activity[0],

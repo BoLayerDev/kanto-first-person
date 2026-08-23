@@ -431,21 +431,38 @@ function WeeklyOakReport({ status }: { status: ProjectStatus }) {
   )
 }
 
-function ProofDrop({ status }: { status: ProjectStatus }) {
+function OakLabReceipt({ status }: { status: ProjectStatus }) {
   return (
-    <section className="proof-drop" aria-labelledby="proof-drop-title">
-      <header><span>LATEST VERIFIED EVIDENCE</span><b id="proof-drop-title">PROOF DROP</b></header>
-      <a href={status.proof.url} target="_blank" rel="noreferrer">
-        <span className="proof-kind">{status.proof.kind}</span>
-        <b>{status.proof.label}</b>
-        <dl>
-          <div><dt>BUILD</dt><dd>{status.proof.version}</dd></div>
-          <div><dt>COMMIT</dt><dd>{status.proof.commit}</dd></div>
-          <div><dt>CAPTURED</dt><dd>{status.proof.capturedAt.slice(0, 10)}</dd></div>
-          <div><dt>TEST RIG</dt><dd>{status.proof.environment}</dd></div>
-        </dl>
-        <small>OPEN VERIFIED EVIDENCE ↗</small>
-      </a>
+    <section className="oak-lab-receipt" aria-labelledby="oak-lab-receipt-title">
+      <header>
+        <div>
+          <span>GITHUB ACTIONS // AUTO FILED</span>
+          <b id="oak-lab-receipt-title">OAK LAB RECEIPT</b>
+        </div>
+        <span className="receipt-signal"><i aria-hidden="true" /> VERIFIED DATA</span>
+      </header>
+      <div className="receipt-paper">
+        <div className="receipt-meta">
+          <span>RECEIPT {status.receipt.id}</span>
+          <time dateTime={status.receipt.issuedAt}>{exactTime(status.receipt.issuedAt)}</time>
+        </div>
+        <ol>
+          {status.receipt.rows.map((row, index) => (
+            <li key={row.id}>
+              <a href={row.url} target="_blank" rel="noreferrer">
+                <span className="receipt-index">{String(index + 1).padStart(2, '0')}</span>
+                <span className="receipt-copy"><b>{row.label}</b><small>{row.detail}</small></span>
+                <strong>{row.value}</strong>
+                <span className={`receipt-state is-${row.state.toLowerCase()}`}>{row.state}</span>
+              </a>
+            </li>
+          ))}
+        </ol>
+        <footer>
+          <span>EVERY LINE OPENS ITS GITHUB EVIDENCE</span>
+          <b>NO PUBLIC API CALLS</b>
+        </footer>
+      </div>
     </section>
   )
 }
@@ -915,7 +932,7 @@ function MenuDetail({
         <ReleaseJourney status={status} />
         <div className="progress-proof-grid">
           <WeeklyOakReport status={status} />
-          <ProofDrop status={status} />
+          <OakLabReceipt status={status} />
         </div>
         <DevStats status={status} />
         <ActivityLog status={status} newResearch={newResearch} />

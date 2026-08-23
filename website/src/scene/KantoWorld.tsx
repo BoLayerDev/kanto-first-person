@@ -28,11 +28,18 @@ const BALL_SEED = 0x151
 const HIGH_QUALITY_BALLS = 11
 const LOW_QUALITY_BALLS = 6
 const BALL_SCALE_TIERS = [0.62, 0.86, 1.12, 1.42] as const
+const BALL_SCALE_PATTERN = [0.62, 0.86, 1.12, 0.62, 0.86, 1.42, 0.62, 1.12, 1.42, 0.86, 0.86] as const
+const LEFT_VERTICAL_SLOTS = [-0.84, -0.5, -0.17, 0.17, 0.5, 0.84] as const
+const RIGHT_VERTICAL_SLOTS = [-0.78, -0.39, 0, 0.39, 0.78] as const
+const LEFT_EDGE_SLOTS = [0.88, 0.96, 0.84, 0.94, 0.86, 0.97] as const
+const RIGHT_EDGE_SLOTS = [0.9, 0.97, 0.84, 0.95, 0.88] as const
 const POKEBALL_RED = '#e43b3f'
 const POKEBALL_WHITE = '#f5f1df'
 const POKEBALL_BLACK = '#141719'
 
 type BallTransform = {
+  side: -1 | 1
+  screenY: number
   position: [number, number, number]
   rotation: [number, number, number]
   scale: number
@@ -73,13 +80,19 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
 
   return Array.from({ length: count }, (_, index) => {
     const side = index % 2 === 0 ? -1 : 1
+    const sideIndex = Math.floor(index / 2)
+    const verticalSlots = side === -1 ? LEFT_VERTICAL_SLOTS : RIGHT_VERTICAL_SLOTS
+    const edgeSlots = side === -1 ? LEFT_EDGE_SLOTS : RIGHT_EDGE_SLOTS
+    const screenY = verticalSlots[sideIndex % verticalSlots.length]
     const distance = 13 + random() * 25
     const halfHeight = Math.tan(halfFov) * distance
-    const scaleTier = BALL_SCALE_TIERS[(index * 3 + 1) % BALL_SCALE_TIERS.length]
+    const scaleTier = BALL_SCALE_PATTERN[index % BALL_SCALE_PATTERN.length]
     return {
+      side,
+      screenY,
       position: [
-        side * halfHeight * aspect * (0.86 + random() * 0.1),
-        (random() - 0.5) * halfHeight * 1.65,
+        side * halfHeight * aspect * edgeSlots[sideIndex % edgeSlots.length],
+        screenY * halfHeight,
         11 - distance,
       ],
       rotation: [
@@ -87,7 +100,7 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
         (random() - 0.5) * 0.9,
         (random() - 0.5) * 0.48,
       ],
-      scale: halfHeight * 0.105 * scaleTier * (0.94 + random() * 0.12),
+      scale: halfHeight * 0.105 * scaleTier,
       phase: random() * Math.PI * 2,
       speed: 0.045 + random() * 0.075,
       direction: random() > 0.5 ? 1 : -1,
@@ -228,8 +241,23 @@ export function createKantoWorld({
   const refreshBounds = () => meshes.forEach((mesh) => mesh.computeBoundingSphere())
   writeMatrices(0)
   refreshBounds()
+  const sideGaps = (side: -1 | 1) => {
+    const positions = layout
+      .filter((ball) => ball.side === side)
+      .map((ball) => ball.screenY)
+      .sort((a, b) => a - b)
+    return {
+      gap: Math.min(...positions.slice(1).map((position, index) => position - positions[index])),
+      span: positions.at(-1)! - positions[0],
+    }
+  }
+  const leftLayout = sideGaps(-1)
+  const rightLayout = sideGaps(1)
   host.dataset.ballCount = String(count)
   host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
+  host.dataset.ballLayout = 'balanced-side-zones'
+  host.dataset.minVerticalGap = Math.min(leftLayout.gap, rightLayout.gap).toFixed(2)
+  host.dataset.minVerticalSpan = Math.min(leftLayout.span, rightLayout.span).toFixed(2)
 
   const geometries = [atmosphereGeometry, topGeometry, bottomGeometry, bandGeometry, outerGeometry, innerGeometry]
   const materials = [atmosphereMaterial, topMaterial, bottomMaterial, bandMaterial, outerMaterial, innerMaterial]

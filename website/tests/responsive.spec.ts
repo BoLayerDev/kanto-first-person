@@ -422,8 +422,8 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   expect(bannerPalette.ball).toContain('rgb(255, 255, 255)')
   expect(bannerPalette.ballBorder).toBe('0px')
   expect(bannerPalette.ballShadow).toBe('none')
-  expect(bannerPalette.centerRing).toBe('rgb(255, 255, 255)')
-  expect(bannerPalette.centerFill).toBe('rgb(17, 22, 15)')
+  expect(bannerPalette.centerRing).toBe('rgb(17, 22, 15)')
+  expect(bannerPalette.centerFill).toBe('rgb(255, 255, 255)')
 
   const routes = ['features', 'activity', 'guide', 'support', 'rebuild', 'github']
   for (const [index, route] of routes.entries()) {

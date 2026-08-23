@@ -568,7 +568,7 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
   )
 }
 
-function ReleaseBanner({ status }: { status: ProjectStatus }) {
+function ReleaseBanner({ status, edition }: { status: ProjectStatus; edition: Edition }) {
   const buildLabel = status.ci.state === 'success' && status.ci.total > 0
     ? `${status.ci.passed}/${status.ci.total} PASS`
     : 'CHECK CI'
@@ -582,7 +582,14 @@ function ReleaseBanner({ status }: { status: ProjectStatus }) {
 
   return (
     <section className="release-banner" aria-labelledby="site-title">
-      <div className="split-core release-core" aria-hidden="true"><span /></div>
+      <div className="release-core" aria-hidden="true">
+        <img
+          src={`${import.meta.env.BASE_URL}balls/${RELEASE_BALL_ASSETS[edition]}`}
+          alt=""
+          width="512"
+          height="512"
+        />
+      </div>
       <div className="release-copy">
         <span className="release-kicker">KANTO FIRST PERSON // TRAINERS, STAND BY</span>
         <h1 id="site-title"><span>COMING</span> SOON</h1>
@@ -1089,7 +1096,7 @@ function OptionsMenu({
 
   return (
     <main className="terminal-shell">
-      <ReleaseBanner status={status} />
+      <ReleaseBanner status={status} edition={edition} />
 
       <div className="terminal-grid">
         <nav className="menu-window pixel-window" aria-label="Main options">
@@ -1246,7 +1253,6 @@ export function App() {
     '--edition-grass': palette.grass,
     '--edition-stone': palette.stone,
     '--edition-signal': palette.signal,
-    '--release-ball-image': `url("${import.meta.env.BASE_URL}balls/${RELEASE_BALL_ASSETS[edition]}")`,
   } as CSSProperties
 
   return (

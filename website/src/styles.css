@@ -273,8 +273,21 @@ a {
 }
 
 .release-core {
+  position: relative;
+  flex: 0 0 auto;
   width: clamp(58px, 5.5vw, 76px);
-  background: var(--release-ball-image) center / 130% 130% no-repeat;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.release-core img {
+  position: absolute;
+  inset: -15%;
+  display: block;
+  width: 130%;
+  height: 130%;
+  max-width: none;
+  object-fit: contain;
 }
 
 .release-status {
@@ -347,16 +360,6 @@ a {
   border-radius: 50%;
   background: var(--paper);
   transform: translate(-50%, -50%);
-}
-
-.split-core.release-core {
-  border: 0;
-  background: var(--release-ball-image) center / 130% 130% no-repeat;
-  box-shadow: none;
-}
-
-.split-core.release-core span {
-  display: none;
 }
 
 .alpha-chip {

@@ -352,14 +352,25 @@ test('keeps Professor Oak report labels and totals clearly separated', async ({ 
     await page.goto(PAGE_PATH)
 
     const report = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
+    const totalStyle = await report.locator('.weekly-report-total b').evaluate((total) => {
+      const style = getComputedStyle(total)
+      return {
+        fontFamily: style.fontFamily,
+        fontSize: Number.parseFloat(style.fontSize),
+      }
+    })
     const cells = await report.locator('dl > div').evaluateAll((items) => items.map((item) => {
       const label = item.querySelector('dt') as HTMLElement
       const value = item.querySelector('dd') as HTMLElement
       const labelBox = label.getBoundingClientRect()
       const valueBox = value.getBoundingClientRect()
+      const labelStyle = getComputedStyle(label)
       const valueStyle = getComputedStyle(value)
       return {
         clipped: item.scrollWidth > item.clientWidth + 1 || item.scrollHeight > item.clientHeight + 1,
+        label: label.textContent?.trim(),
+        labelFontFamily: labelStyle.fontFamily,
+        labelFontSize: Number.parseFloat(labelStyle.fontSize),
         fontFamily: valueStyle.fontFamily,
         fontSize: Number.parseFloat(valueStyle.fontSize),
         gap: valueBox.top - labelBox.bottom,
@@ -368,13 +379,25 @@ test('keeps Professor Oak report labels and totals clearly separated', async ({ 
     }))
 
     expect(cells).toHaveLength(6)
+    expect(totalStyle.fontFamily).toContain('monospace')
+    expect(totalStyle.fontSize).toBeGreaterThanOrEqual(19)
     for (const cell of cells) {
       expect(cell.clipped).toBe(false)
+      expect(cell.labelFontFamily).toContain('monospace')
+      expect(cell.labelFontSize).toBeGreaterThanOrEqual(10)
       expect(cell.fontFamily).toContain('monospace')
       expect(cell.fontSize).toBeGreaterThanOrEqual(13.5)
       expect(cell.gap).toBeGreaterThanOrEqual(5)
       expect(cell.height).toBeGreaterThanOrEqual(58)
     }
+    expect(cells.map((cell) => cell.label)).toEqual([
+      'NEW MOVES',
+      'BUGS FIXED',
+      'SPEED UPS',
+      'LAB CHECKS',
+      'FIELD NOTES',
+      'MILESTONES',
+    ])
 
     if (width === 901) {
       await report.screenshot({ path: testInfo.outputPath('oak-report-legibility.png') })

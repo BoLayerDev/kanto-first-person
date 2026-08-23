@@ -932,8 +932,20 @@ a {
   gap: 0.7rem;
   padding: 0.75rem 0.8rem 0.35rem;
 }
-.weekly-report-total b { color: var(--accent); font-size: 1.15rem; }
-.weekly-report-total span { color: var(--game-mid); font-size: 0.4rem; }
+.weekly-report-total b {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 1.2rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+}
+.weekly-report-total span {
+  color: #3f4d3b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.56rem;
+  font-weight: 800;
+}
 .weekly-report dl,
 .proof-drop dl {
   display: grid;
@@ -958,8 +970,12 @@ a {
 .weekly-report dt,
 .proof-drop dt { color: var(--game-mid); font-size: clamp(0.3rem, 0.38vw, 0.38rem); line-height: 1.4; }
 .weekly-report dt {
-  font-size: clamp(0.36rem, 0.44vw, 0.44rem);
-  line-height: 1.5;
+  color: #3f4d3b;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
 }
 .weekly-report dd {
   color: var(--accent);
@@ -3610,11 +3626,14 @@ a {
     grid-column: 1 / -1;
   }
 
-  .weekly-report dt,
   .proof-drop dt,
   .proof-drop small,
   .weekly-report-total span {
     font-size: 0.5rem;
+  }
+
+  .weekly-report dt {
+    font-size: 10px;
   }
 
   .proof-drop dd {

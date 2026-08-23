@@ -493,9 +493,7 @@ test('shows automatic project time and PR task timing without claiming work hour
   await expect(stats).toContainText('26M 51S')
   await expect(stats).toContainText('MEDIAN PR TIME')
   await expect(stats).toContainText('59S')
-  await expect(stats).toContainText('AI TOKENS')
-  await expect(stats).toContainText('NOT TRACKED')
-  await expect(stats).toContainText('AI TOKENS ARE PRIVATE AND NOT EXPORTED')
+  await expect(stats.locator('dl > div')).toHaveCount(5)
   await expect(stats).toContainText('NOT HANDS-ON HOURS')
 
   const quests = stats.locator('.quest-log > li')

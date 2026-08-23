@@ -66,13 +66,6 @@ export type ProjectStatus = {
     labRuntimeSeconds: number
     mergedPullRequests: number
     medianPullRequestSeconds: number
-    aiUsage: {
-      state: 'available' | 'unavailable'
-      label: string
-      note: string
-      totalTokens?: number
-      taskCount?: number
-    }
   }
   pullRequests: Array<{
     number: number
@@ -186,11 +179,6 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     labRuntimeSeconds: 1611,
     mergedPullRequests: 11,
     medianPullRequestSeconds: 59,
-    aiUsage: {
-      state: 'unavailable',
-      label: 'NOT TRACKED',
-      note: 'Codex task token usage is private and is not exported to this public GitHub site.',
-    },
   },
   pullRequests: [
     {
@@ -261,7 +249,6 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
     && typeof candidate.devStats?.labRuntimeSeconds === 'number'
     && typeof candidate.devStats?.mergedPullRequests === 'number'
     && typeof candidate.devStats?.medianPullRequestSeconds === 'number'
-    && typeof candidate.devStats?.aiUsage?.state === 'string'
     && Array.isArray(candidate.pullRequests)
     && candidate.pullRequests.every((pull) => typeof pull.number === 'number'
       && typeof pull.title === 'string'

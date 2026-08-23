@@ -399,9 +399,6 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
     ? Math.max(1, Math.floor((now - rewriteStart) / 1000))
     : 0
   const tasks = complete ? status.pullRequests : status.pullRequests.slice(0, 3)
-  const tokenLabel = status.devStats.aiUsage.state === 'available'
-    ? `${status.devStats.aiUsage.totalTokens?.toLocaleString() ?? '--'}`
-    : status.devStats.aiUsage.label
 
   return (
     <section className="dev-stats" aria-labelledby={complete ? 'dev-stats-full-title' : 'dev-stats-title'}>
@@ -419,13 +416,6 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         <div><dt>MERGED TASKS</dt><dd>{status.devStats.mergedPullRequests}</dd></div>
         <div><dt>TOTAL CI TIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
         <div><dt>MEDIAN PR TIME</dt><dd>{longDurationLabel(status.devStats.medianPullRequestSeconds)}</dd></div>
-        <div
-          className="token-stat"
-          title={status.devStats.aiUsage.note}
-          aria-label={`AI tokens: ${tokenLabel}. ${status.devStats.aiUsage.note}`}
-        >
-          <dt>AI TOKENS</dt><dd>{tokenLabel}</dd>
-        </div>
       </dl>
 
       <div className="quest-log-heading">
@@ -446,7 +436,7 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         ))}
       </ol>
       <footer>
-        <span>CI TIME = GITHUB ACTIONS WALL TIME. PR TIME = OPEN TO MERGE. AI TOKENS ARE PRIVATE AND NOT EXPORTED.</span>
+        <span>CI TIME = GITHUB ACTIONS WALL TIME. PR TIME = OPEN TO MERGE.</span>
         <span>NOT HANDS-ON HOURS.</span>
       </footer>
     </section>

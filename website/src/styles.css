@@ -811,7 +811,7 @@ a {
 .mission-board,
 .release-journey,
 .weekly-report,
-.proof-drop {
+.oak-lab-receipt {
   border: 4px solid var(--game-ink);
   color: var(--game-ink);
   background: var(--paper-dark);
@@ -821,7 +821,7 @@ a {
 .mission-board > header,
 .release-journey > header,
 .weekly-report > header,
-.proof-drop > header {
+.oak-lab-receipt > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -837,15 +837,15 @@ a {
 .release-journey > header div b,
 .weekly-report > header span,
 .weekly-report > header b,
-.proof-drop > header span,
-.proof-drop > header b {
+.oak-lab-receipt > header div span,
+.oak-lab-receipt > header div b {
   display: block;
 }
 
 .mission-board > header div span,
 .release-journey > header div span,
 .weekly-report > header span,
-.proof-drop > header span,
+.oak-lab-receipt > header div span,
 .release-journey > header > span {
   margin-bottom: 0.25rem;
   color: var(--game-pale);
@@ -856,7 +856,7 @@ a {
 .mission-board > header div b,
 .release-journey > header div b,
 .weekly-report > header b,
-.proof-drop > header b {
+.oak-lab-receipt > header div b {
   font-size: clamp(0.6rem, 0.84vw, 0.84rem);
   line-height: 1.4;
 }
@@ -1004,16 +1004,14 @@ a {
   align-items: center;
   gap: 0.45rem;
 }
-.weekly-report dl,
-.proof-drop dl {
+.weekly-report dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2px;
   margin: 0;
   padding: 0.4rem 0.8rem 0.8rem;
 }
-.weekly-report dl > div,
-.proof-drop dl > div { min-width: 0; padding: 0.45rem; background: var(--paper); }
+.weekly-report dl > div { min-width: 0; padding: 0.45rem; background: var(--paper); }
 .weekly-report dl > div {
   display: grid;
   align-content: center;
@@ -1022,11 +1020,8 @@ a {
   padding: 0.55rem 0.6rem;
 }
 .weekly-report dt,
-.weekly-report dd,
-.proof-drop dt,
-.proof-drop dd { margin: 0; }
-.weekly-report dt,
-.proof-drop dt { color: var(--game-mid); font-size: clamp(0.5rem, 0.456vw, 0.5rem); line-height: 1.4; }
+.weekly-report dd { margin: 0; }
+.weekly-report dt { color: var(--game-mid); font-size: clamp(0.5rem, 0.456vw, 0.5rem); line-height: 1.4; }
 .weekly-report dt {
   display: flex;
   min-width: 0;
@@ -1126,32 +1121,175 @@ a {
   transform: translateY(0);
   visibility: visible;
 }
-.proof-drop > a { display: grid; gap: 0.55rem; padding: 0.75rem; color: var(--game-ink); text-decoration: none; }
-.proof-drop > a:hover,
-.proof-drop > a:focus-visible { color: var(--paper); background: var(--accent); }
-.proof-kind { color: var(--accent); font-size: 0.5rem; }
-.proof-drop > a > b {
-  font-family: var(--font-readable);
-  font-size: clamp(0.82rem, 1.02vw, 1.02rem);
-  font-weight: 900;
-  letter-spacing: 0.01em;
-  line-height: 1.4;
+.receipt-signal {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--accent-soft);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
+  white-space: nowrap;
 }
-.proof-drop dl { padding: 0; }
-.proof-drop dd {
-  overflow: hidden;
-  margin-top: 0.3rem;
+
+.receipt-signal i {
+  width: 0.55rem;
+  aspect-ratio: 1;
+  background: #66a85f;
+  box-shadow: 0 0 0 2px var(--paper), 0 0 12px #66a85f;
+  animation: status-pulse 1.1s steps(2, end) infinite;
+}
+
+.receipt-paper {
+  position: relative;
+  margin: 0.7rem;
+  border: 2px solid var(--game-mid);
+  color: var(--game-ink);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 27px, rgba(97, 113, 82, 0.12) 27px 28px),
+    #fff8d9;
+  box-shadow: 4px 4px 0 color-mix(in srgb, var(--game-mid) 35%, transparent);
+}
+
+.receipt-paper::before,
+.receipt-paper::after {
+  position: absolute;
+  z-index: 1;
+  top: -2px;
+  bottom: -2px;
+  width: 6px;
+  content: '';
+  background: repeating-linear-gradient(180deg, var(--paper-dark) 0 5px, transparent 5px 10px);
+  pointer-events: none;
+}
+
+.receipt-paper::before { left: -2px; }
+.receipt-paper::after { right: -2px; }
+
+.receipt-meta,
+.receipt-paper footer {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.516rem, 0.624vw, 0.624rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
   font-weight: 900;
+  line-height: 1.45;
+}
+
+.receipt-meta {
+  border-bottom: 2px dashed var(--game-mid);
+  color: var(--game-mid);
+}
+
+.receipt-meta > * {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.proof-drop small { color: var(--game-mid); font-size: 0.5rem; }
-.proof-drop > a:hover .proof-kind,
-.proof-drop > a:hover small,
-.proof-drop > a:focus-visible .proof-kind,
-.proof-drop > a:focus-visible small { color: var(--paper); }
+
+.receipt-paper ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.receipt-paper li + li { border-top: 2px dotted var(--game-pale); }
+
+.receipt-paper li a {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  min-height: 76px;
+  align-items: center;
+  gap: 0.3rem 0.65rem;
+  padding: 0.5rem 0.7rem;
+  color: var(--game-ink);
+  text-decoration: none;
+}
+
+.receipt-paper li a:hover,
+.receipt-paper li a:focus-visible {
+  color: var(--paper);
+  background: var(--accent);
+  outline: 0;
+}
+
+.receipt-index {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.66rem;
+  font-weight: 900;
+}
+
+.receipt-copy,
+.receipt-copy b,
+.receipt-copy small { display: block; min-width: 0; }
+
+.receipt-copy { grid-column: 2; grid-row: 1; }
+
+.receipt-copy b {
+  margin-bottom: 0.2rem;
+  font-size: clamp(0.6rem, 0.696vw, 0.696rem);
+  line-height: 1.35;
+}
+
+.receipt-copy small {
+  overflow: hidden;
+  color: var(--game-mid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
+  font-weight: 800;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.receipt-paper li strong {
+  grid-column: 2;
+  grid-row: 2;
+  overflow-wrap: anywhere;
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.792vw, 0.792rem);
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.receipt-state {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  min-width: 7.5ch;
+  padding: 0.28rem 0.35rem;
+  border: 2px solid currentColor;
+  color: #347345;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
+  font-weight: 900;
+  text-align: center;
+}
+
+.receipt-state.is-waiting,
+.receipt-state.is-check { color: var(--accent); }
+
+.receipt-paper li a:hover .receipt-index,
+.receipt-paper li a:hover .receipt-copy small,
+.receipt-paper li a:hover .receipt-state,
+.receipt-paper li a:focus-visible .receipt-index,
+.receipt-paper li a:focus-visible .receipt-copy small,
+.receipt-paper li a:focus-visible .receipt-state { color: var(--paper); }
+
+.receipt-paper footer {
+  border-top: 2px dashed var(--game-mid);
+  color: var(--game-mid);
+}
+
+.receipt-paper footer b {
+  color: var(--accent);
+  white-space: nowrap;
+}
 
 @keyframes badge-scan {
   50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--accent) 20%, transparent); }
@@ -3869,7 +4007,8 @@ a {
   .release-journey > header div span,
   .release-journey > header > span,
   .weekly-report > header span,
-  .proof-drop > header span,
+  .oak-lab-receipt > header div span,
+  .receipt-signal,
   .mission-card > span,
   .mission-card small,
   .release-journey a > span,
@@ -3881,7 +4020,7 @@ a {
   .mission-board > header div b,
   .release-journey > header div b,
   .weekly-report > header b,
-  .proof-drop > header b {
+  .oak-lab-receipt > header div b {
     font-size: 0.78rem;
   }
 
@@ -3897,8 +4036,6 @@ a {
     grid-column: 1 / -1;
   }
 
-  .proof-drop dt,
-  .proof-drop small,
   .weekly-report-total > span {
     font-size: 0.6rem;
   }
@@ -3933,8 +4070,28 @@ a {
     transform: translateY(-50%);
   }
 
-  .proof-drop dd {
-    font-size: 0.66rem;
+  .oak-lab-receipt > header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .receipt-paper li a {
+    grid-template-columns: 1.7rem minmax(0, 1fr) auto;
+    min-height: 76px;
+    gap: 0.35rem 0.55rem;
+  }
+
+  .receipt-meta,
+  .receipt-paper footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.6rem;
+  }
+
+  .receipt-paper footer b {
+    white-space: normal;
   }
 
   .feature-list {

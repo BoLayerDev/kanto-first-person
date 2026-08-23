@@ -59,6 +59,18 @@ export type ProjectStatus = {
     environment: string
     url: string
   }
+  receipt: {
+    id: string
+    issuedAt: string
+    rows: Array<{
+      id: 'source' | 'lab' | 'snapshot' | 'package'
+      label: string
+      value: string
+      detail: string
+      state: string
+      url: string
+    }>
+  }
   devStats: {
     rewriteStartedAt: string
     activeDays: number
@@ -172,6 +184,16 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     environment: 'GITHUB ACTIONS',
     url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
   },
+  receipt: {
+    id: 'OAK-79B3851-32571329500',
+    issuedAt: '2026-08-22T11:50:23Z',
+    rows: [
+      { id: 'source', label: 'SOURCE LOCK', value: 'COMMIT 79B3851', detail: 'V2-REWRITE SOURCE', state: 'VERIFIED', url: 'https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43' },
+      { id: 'lab', label: 'LAB SCAN', value: '11/11 CHECKS PASSED', detail: 'GITHUB ACTIONS · 39S', state: 'PASSED', url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500' },
+      { id: 'snapshot', label: 'STATUS FILE', value: 'FILED 2026-08-22', detail: 'STATIC PROJECT-STATUS.JSON', state: 'AUTO', url: 'https://github.com/BoLayerDev/kanto-first-person/actions/workflows/pages.yml' },
+      { id: 'package', label: 'PLAYER PACKAGE', value: 'NOT RELEASED', detail: 'RELEASE GATES STILL OPEN', state: 'WAITING', url: 'https://github.com/BoLayerDev/kanto-first-person/releases' },
+    ],
+  },
   devStats: {
     rewriteStartedAt: '2026-08-21T16:42:07-06:00',
     activeDays: 2,
@@ -243,6 +265,15 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
         && typeof gate.url === 'string')))
     && (candidate.weeklyReport === undefined || typeof candidate.weeklyReport.total === 'number')
     && (candidate.proof === undefined || typeof candidate.proof.url === 'string')
+    && (candidate.receipt === undefined || (typeof candidate.receipt.id === 'string'
+      && typeof candidate.receipt.issuedAt === 'string'
+      && Array.isArray(candidate.receipt.rows)
+      && candidate.receipt.rows.length > 0
+      && candidate.receipt.rows.every((row) => typeof row.label === 'string'
+        && typeof row.value === 'string'
+        && typeof row.detail === 'string'
+        && typeof row.state === 'string'
+        && typeof row.url === 'string')))
     && typeof candidate.devStats?.rewriteStartedAt === 'string'
     && typeof candidate.devStats?.activeDays === 'number'
     && typeof candidate.devStats?.successfulLabRuns === 'number'

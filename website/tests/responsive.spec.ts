@@ -506,6 +506,10 @@ test('keeps Research Log timing details in flow without covering badges or rows'
 })
 
 test('shows the automatic progress command center on the homepage', async ({ page }) => {
+  const publicGithubApiRequests: string[] = []
+  page.on('request', (request) => {
+    if (request.url().startsWith('https://api.github.com/')) publicGithubApiRequests.push(request.url())
+  })
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
 
@@ -525,11 +529,53 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   await expect(journey).toContainText('RELEASED')
 
   await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('COMMITS / LAST 7 DAYS')
-  const proof = page.getByRole('region', { name: 'PROOF DROP' })
-  await expect(proof).toContainText('BUILD')
-  await expect(proof).toContainText('COMMIT')
-  await expect(proof).toContainText('CAPTURED')
-  await expect(proof).toContainText('TEST RIG')
+  const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
+  await expect(receipt).toContainText('SOURCE LOCK')
+  await expect(receipt).toContainText('LAB SCAN')
+  await expect(receipt).toContainText('STATUS FILE')
+  await expect(receipt).toContainText('PLAYER PACKAGE')
+  await expect(receipt).toContainText('NO PUBLIC API CALLS')
+  await expect(receipt.getByRole('link')).toHaveCount(4)
+  expect(publicGithubApiRequests).toEqual([])
+})
+
+test('keeps every Oak Lab receipt line readable and linked to GitHub evidence', async ({ page }, testInfo) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(PAGE_PATH)
+
+    const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
+    const rows = receipt.locator('.receipt-paper li a')
+    await expect(rows).toHaveCount(4)
+
+    const rowMetrics = await rows.evaluateAll((links) => links.map((link) => {
+      const value = link.querySelector('strong') as HTMLElement
+      const copy = link.querySelector('.receipt-copy') as HTMLElement
+      const state = link.querySelector('.receipt-state') as HTMLElement
+      const box = link.getBoundingClientRect()
+      return {
+        height: box.height,
+        href: (link as HTMLAnchorElement).href,
+        clipped: value.scrollWidth > value.clientWidth + 1
+          || value.scrollHeight > value.clientHeight + 1
+          || copy.scrollWidth > copy.clientWidth + 1
+          || copy.scrollHeight > copy.clientHeight + 1
+          || state.scrollWidth > state.clientWidth + 1
+          || state.scrollHeight > state.clientHeight + 1,
+      }
+    }))
+
+    for (const row of rowMetrics) {
+      expect(row.href).toMatch(/^https:\/\/github\.com\/BoLayerDev\/kanto-first-person\//)
+      expect(row.clipped).toBe(false)
+      expect(row.height).toBeGreaterThanOrEqual(76)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)).toBe(false)
+
+    if (width === 901 || width === 390) {
+      await receipt.screenshot({ path: testInfo.outputPath(`oak-lab-receipt-${width}.png`) })
+    }
+  }
 })
 
 test('keeps Professor Oak report labels and totals clearly separated', async ({ page }, testInfo) => {
@@ -750,7 +796,7 @@ test('uses readable type for live data and pixel type for game labels', async ({
         stylesFor('.home-vitals b'),
         stylesFor('.trainer-clock b'),
         stylesFor('.mission-card b'),
-        stylesFor('.proof-drop > a > b'),
+        stylesFor('.receipt-paper li strong'),
         stylesFor('.dev-stats dd'),
         stylesFor('.quest-log a > b'),
         stylesFor('.activity-log li b'),
@@ -767,7 +813,7 @@ test('uses readable type for live data and pixel type for game labels', async ({
     '.home-vitals b',
     '.trainer-clock b',
     '.mission-card b',
-    '.proof-drop > a > b',
+    '.receipt-paper li strong',
     '.dev-stats dd',
     '.quest-log a > b',
     '.activity-log li b',
@@ -1083,7 +1129,7 @@ test('uses standard desktop open and back keys', async ({ page }) => {
   await buildLink.focus()
   await expect(buildLink).toBeFocused()
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('link', { name: /SOURCE/ })).toBeFocused()
+  await expect(page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /^SOURCE / })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
   await page.keyboard.press('ArrowDown')

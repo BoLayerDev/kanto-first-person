@@ -88,8 +88,11 @@ test.describe('mobile field terminal', () => {
     expect(layout.canvas.width).toBe(390)
     expect(layout.canvas.height).toBe(844)
 
-    await page.screenshot({ path: testInfo.outputPath('mobile-menu.png'), fullPage: true })
     const root = page.locator('#root')
+    await page.waitForTimeout(600)
+    await expect.poll(() => root.evaluate((element) => element.scrollWidth - element.clientWidth)).toBeLessThanOrEqual(0)
+
+    await page.screenshot({ path: testInfo.outputPath('mobile-menu.png'), fullPage: true })
     await root.evaluate((element) => element.scrollTo({ top: 320 }))
     await expect.poll(() => root.evaluate((element) => element.scrollTop)).toBeGreaterThan(0)
     const scrolledCanvas = page.locator('.world-canvas')

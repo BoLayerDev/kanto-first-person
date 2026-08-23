@@ -340,7 +340,7 @@ function TrainerClock({ status }: { status: ProjectStatus }) {
         </a>
         <span><small>DEPLOYED</small><Timestamp date={deployedAt} now={now} /></span>
         <span title="Commits on v2-rewrite during the last seven days">
-          <small>COMMITS / 7 DAYS</small><b>{weeklyActivity}</b>
+          <small>LAST 7 DAYS</small><b>{weeklyActivity}</b>
         </span>
       </div>
     </section>
@@ -412,9 +412,9 @@ function WeeklyOakReport({ status }: { status: ProjectStatus }) {
       <div className="weekly-report-total">
         <b>{status.weeklyReport.total}</b>
         <span className="weekly-report-total-label">
-          COMMITS / LAST 7 DAYS
+          LAST 7 DAYS
           <InfoTip
-            label="COMMITS / LAST 7 DAYS"
+            label="LAST 7 DAYS"
             text="Every commit recorded on the v2-rewrite branch during the last seven days, including merges and work that does not fit a category below."
           />
         </span>
@@ -800,7 +800,7 @@ function ResearchArchive({
     <div className="archive-page">
       <TrainerClock status={status} />
       <div className="archive-vitals" aria-label="Complete development totals">
-        <div><b>{status.activity.length}</b><span>COMMITS / ALL TIME</span></div>
+        <div title="All commits in the complete repository history"><b>{status.activity.length}</b><span>FULL REPO HISTORY</span></div>
         <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
         <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
         <div className="archive-date-vital">

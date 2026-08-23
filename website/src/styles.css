@@ -11,6 +11,9 @@
   --game-ink: #172017;
   --game-mid: #59654d;
   --game-pale: #b6bd93;
+  --edition-banner: #ff8a73;
+  --edition-deep: #541522;
+  --edition-sky: #ed5e4b;
 }
 
 * {
@@ -57,6 +60,7 @@ a {
   height: 100%;
   overflow: hidden;
   isolation: isolate;
+  background: var(--edition-deep);
 }
 
 .world-canvas {
@@ -173,9 +177,12 @@ a {
 
 .world-pokeballs + .screen-treatment {
   background:
-    linear-gradient(90deg, rgba(4, 6, 9, 0.55) 0%, rgba(4, 6, 9, 0.32) 46%, rgba(4, 6, 9, 0.16) 100%),
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--edition-deep) 82%, transparent) 0%,
+      color-mix(in srgb, var(--edition-deep) 56%, transparent) 46%,
+      color-mix(in srgb, var(--edition-sky) 30%, transparent) 100%),
     repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px),
-    radial-gradient(circle at 70% 45%, transparent 0 28%, rgba(4, 6, 9, 0.32) 86%);
+    radial-gradient(circle at 70% 45%, transparent 0 28%, color-mix(in srgb, var(--edition-deep) 46%, transparent) 86%);
 }
 
 .terminal-shell {
@@ -203,7 +210,11 @@ a {
   border: 5px solid var(--game-ink);
   color: var(--game-ink);
   background:
-    linear-gradient(112deg, #ffd64a 0 62%, rgba(255, 255, 255, 0.42) 62.2% 64%, transparent 64.2%),
+    linear-gradient(112deg,
+      color-mix(in srgb, var(--edition-banner) 88%, #fff) 0 54%,
+      var(--edition-banner) 54% 62%,
+      color-mix(in srgb, var(--accent-bright) 58%, #fff) 62.2% 64%,
+      transparent 64.2%),
     var(--paper);
   box-shadow:
     0 0 0 4px var(--paper),
@@ -218,7 +229,7 @@ a {
   right: 0;
   left: 0;
   height: 7px;
-  background: repeating-linear-gradient(90deg, #c92f36 0 28px, var(--game-ink) 28px 36px);
+  background: repeating-linear-gradient(90deg, var(--accent) 0 28px, var(--game-ink) 28px 36px);
   content: "";
 }
 
@@ -229,7 +240,7 @@ a {
 .release-kicker {
   display: block;
   margin-bottom: 0.45rem;
-  color: #101510;
+  color: var(--game-ink);
   font-size: clamp(0.625rem, 0.696vw, 0.72rem);
   font-weight: 900;
   line-height: 1.5;
@@ -244,17 +255,17 @@ a {
   letter-spacing: -0.06em;
   text-shadow:
     3px 0 var(--game-ink), -3px 0 var(--game-ink), 0 3px var(--game-ink), 0 -3px var(--game-ink),
-    6px 6px 0 #2f58a0;
+    6px 6px 0 var(--accent);
 }
 
 .release-copy h1 span {
-  color: #d8323a;
+  color: var(--accent);
 }
 
 .release-copy p {
   max-width: 680px;
   margin: 0.7rem 0 0;
-  color: #101510;
+  color: var(--game-ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.78rem, 0.984vw, 0.936rem);
   font-weight: 800;
@@ -283,7 +294,7 @@ a {
   min-width: 0;
   padding: 0.65rem;
   color: var(--paper);
-  background: #263127;
+  background: color-mix(in srgb, var(--edition-deep) 84%, var(--game-ink));
   text-decoration: none;
 }
 
@@ -386,7 +397,7 @@ a {
   border: 5px solid var(--game-ink);
   color: var(--game-ink);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.64), transparent var(--window-light-reach)),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 72%, #fff) 0, transparent var(--window-light-reach)),
     var(--paper);
   box-shadow:
     0 0 0 4px var(--paper),
@@ -444,7 +455,7 @@ a {
 .menu-window > button:focus-visible,
 .menu-window > button.is-selected {
   color: var(--game-ink);
-  background: color-mix(in srgb, var(--accent-soft) 28%, var(--paper));
+  background: color-mix(in srgb, var(--accent-soft) 64%, var(--paper));
   box-shadow: inset 5px 0 0 var(--accent);
 }
 
@@ -511,26 +522,35 @@ a {
 }
 
 .inline-option button {
+  --edition-swatch: var(--accent);
+  --edition-swatch-ink: #fff;
   min-width: 34px;
   min-height: 30px;
-  border: 2px solid transparent;
-  color: var(--game-mid);
-  background: transparent;
+  border: 2px solid color-mix(in srgb, var(--edition-swatch) 64%, var(--game-ink));
+  color: var(--game-ink);
+  background: color-mix(in srgb, var(--edition-swatch) 22%, var(--paper));
   cursor: pointer;
 }
+
+.inline-option button:nth-child(1) { --edition-swatch: #d52f3a; }
+.inline-option button:nth-child(2) { --edition-swatch: #2357c7; }
+.inline-option button:nth-child(3) { --edition-swatch: #ffcf24; --edition-swatch-ink: #2b2305; }
 
 .inline-option button:hover,
 .inline-option button:focus-visible,
 .inline-option button.is-active {
   border-color: var(--game-ink);
-  color: var(--game-ink);
-  background: var(--game-pale);
+  color: var(--edition-swatch-ink);
+  background: var(--edition-swatch);
+  box-shadow: 3px 3px 0 var(--game-ink);
 }
 
 .detail-window {
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(248, 242, 216, 0.96) 0 63%, rgba(248, 242, 216, 0.8) 100%);
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--paper) 92%, #fff) 0 58%,
+      color-mix(in srgb, var(--accent-soft) 54%, var(--paper)) 100%);
 }
 
 .detail-ambience {

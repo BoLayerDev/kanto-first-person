@@ -274,7 +274,7 @@ a {
 
 .release-core {
   width: clamp(58px, 5.5vw, 76px);
-  background: linear-gradient(to bottom, #d8323a 0 44%, #11160f 44% 56%, #fff 56% 100%);
+  background: var(--release-ball-image) center / 130% 130% no-repeat;
 }
 
 .release-status {
@@ -351,13 +351,12 @@ a {
 
 .split-core.release-core {
   border: 0;
-  background: linear-gradient(to bottom, #d8323a 0 44%, #11160f 44% 56%, #fff 56% 100%);
+  background: var(--release-ball-image) center / 130% 130% no-repeat;
   box-shadow: none;
 }
 
 .split-core.release-core span {
-  border-color: #11160f;
-  background: #fff;
+  display: none;
 }
 
 .alpha-chip {

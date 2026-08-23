@@ -350,6 +350,7 @@ test('makes Red, Blue, and Yellow visually distinct across the full terminal', a
         paper: appStyle.getPropertyValue('--paper').trim(),
         ink: appStyle.getPropertyValue('--game-ink').trim(),
         banner: getComputedStyle(document.querySelector<HTMLElement>('.release-banner')!).backgroundImage,
+        ball: getComputedStyle(document.querySelector<HTMLElement>('.release-core')!).backgroundImage,
         window: getComputedStyle(document.querySelector<HTMLElement>('.pixel-window')!).boxShadow,
         treatment: getComputedStyle(document.querySelector<HTMLElement>('.screen-treatment')!).backgroundImage,
         selection: getComputedStyle(document.querySelector<HTMLElement>('.menu-window > button.is-selected')!).backgroundColor,
@@ -359,7 +360,11 @@ test('makes Red, Blue, and Yellow visually distinct across the full terminal', a
     await page.screenshot({ path: testInfo.outputPath(`edition-${edition.toLowerCase()}-1440.png`), fullPage: true })
   }
 
-  for (const property of ['accent', 'paper', 'ink', 'banner', 'window', 'treatment', 'selection']) {
+  expect(samples[0].ball).toContain('ultra-ball-2d.png')
+  expect(samples[1].ball).toContain('master-ball-2d.png')
+  expect(samples[2].ball).toContain('great-ball-2d.png')
+
+  for (const property of ['accent', 'paper', 'ink', 'banner', 'ball', 'window', 'treatment', 'selection']) {
     expect(new Set(samples.map((sample) => sample[property])).size, `${property} must change in every edition`).toBe(3)
   }
 })
@@ -411,19 +416,18 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
       ball: style('.release-core').backgroundImage,
       ballBorder: style('.release-core').borderWidth,
       ballShadow: style('.release-core').boxShadow,
-      centerRing: style('.release-core span').borderColor,
-      centerFill: style('.release-core span').backgroundColor,
+      ballSize: style('.release-core').backgroundSize,
+      centerDisplay: style('.release-core span').display,
     }
   })
   expect(bannerPalette.kicker).toBe('rgb(38, 12, 20)')
   expect(bannerPalette.paragraph).toBe('rgb(38, 12, 20)')
   expect(bannerPalette.titleAccent).toBe('rgb(213, 47, 58)')
-  expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
-  expect(bannerPalette.ball).toContain('rgb(255, 255, 255)')
+  expect(bannerPalette.ball).toContain('ultra-ball-2d.png')
   expect(bannerPalette.ballBorder).toBe('0px')
   expect(bannerPalette.ballShadow).toBe('none')
-  expect(bannerPalette.centerRing).toBe('rgb(17, 22, 15)')
-  expect(bannerPalette.centerFill).toBe('rgb(255, 255, 255)')
+  expect(bannerPalette.ballSize).toBe('130% 130%')
+  expect(bannerPalette.centerDisplay).toBe('none')
 
   const routes = ['features', 'activity', 'guide', 'support', 'rebuild', 'github']
   for (const [index, route] of routes.entries()) {

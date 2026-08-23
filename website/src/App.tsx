@@ -10,6 +10,11 @@ const MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'S
 const WorldCanvas = lazy(() => import('./scene/WorldCanvas'))
 const MENU_SLUGS = ['home', 'features', 'activity', 'guide', 'support', 'rebuild', 'github'] as const
 const AMBIENCE_MODES = ['lab', 'route', 'research', 'mist', 'signal', 'evolution', 'stars'] as const
+const RELEASE_BALL_ASSETS: Record<Edition, string> = {
+  red: 'ultra-ball-2d.png',
+  blue: 'master-ball-2d.png',
+  yellow: 'great-ball-2d.png',
+}
 
 type MenuItem = {
   label: string
@@ -1241,6 +1246,7 @@ export function App() {
     '--edition-grass': palette.grass,
     '--edition-stone': palette.stone,
     '--edition-signal': palette.signal,
+    '--release-ball-image': `url("${import.meta.env.BASE_URL}balls/${RELEASE_BALL_ASSETS[edition]}")`,
   } as CSSProperties
 
   return (

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
@@ -213,7 +213,6 @@ function Timestamp({ date, now }: { date: string, now: number }) {
       <button
         type="button"
         className="timestamp-trigger"
-        title={exact}
         aria-label={`${relative}. ${exact}`}
         aria-expanded={open}
         onClick={() => setOpen((current) => !current)}
@@ -237,17 +236,41 @@ function activityState(entry: ActivityEntry, index: number, now: number) {
 
 function ActivityMeta({ entry, index, now }: { entry: ActivityEntry, index: number, now: number }) {
   const state = activityState(entry, index, now)
+  const [open, setOpen] = useState(false)
+  const exact = exactTime(entry.date)
+  const relative = relativeTime(entry.date, now)
+  const exactTimeId = useId()
 
   return (
-    <div className="activity-meta">
-      <span className={`activity-state is-${state.toLowerCase()}`}>{state}</span>
-      <Timestamp date={entry.date} now={now} />
-      {entry.ci ? (
-        <a className="activity-ci" href={entry.ci.runUrl} target="_blank" rel="noreferrer">
-          CI {durationLabel(entry.ci.durationSeconds)} ↗
-        </a>
-      ) : null}
-    </div>
+    <>
+      <div
+        className="activity-meta"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false)
+        }}
+      >
+        <span className={`activity-state is-${state.toLowerCase()}`}>{state}</span>
+        <button
+          type="button"
+          className="activity-timestamp-trigger"
+          aria-label={`${relative}. ${exact}`}
+          aria-controls={exactTimeId}
+          aria-expanded={open}
+          onClick={() => setOpen((current) => !current)}
+        >
+          <time dateTime={entry.date}>{relative}</time>
+        </button>
+        {entry.ci ? (
+          <a className="activity-ci" href={entry.ci.runUrl} target="_blank" rel="noreferrer">
+            CI {durationLabel(entry.ci.durationSeconds)} ↗
+          </a>
+        ) : null}
+      </div>
+      <div className="activity-exact-time" id={exactTimeId} hidden={!open}>
+        <span>EXACT COMMIT TIME</span>
+        <time dateTime={entry.date}>{exact}</time>
+      </div>
+    </>
   )
 }
 
@@ -444,6 +467,11 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
         </div>
         <span className="live-signal"><i /> WORK CONTINUES</span>
       </div>
+      {newResearch ? (
+        <div className="research-discovery" role="status">
+          <i aria-hidden="true" /><span>NEW RESEARCH DISCOVERED</span><b>#{status.shortSha}</b>
+        </div>
+      ) : null}
       <ol>
         {updates.map((update, index) => (
           <li
@@ -466,11 +494,6 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
         </span>
         <a href="#activity">OPEN FULL LOG ▶</a>
       </div>
-      {newResearch ? (
-        <div className="research-discovery" role="status">
-          <i aria-hidden="true" /><span>NEW RESEARCH DISCOVERED</span><b>#{status.shortSha}</b>
-        </div>
-      ) : null}
     </section>
   )
 }

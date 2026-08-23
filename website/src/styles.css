@@ -603,14 +603,14 @@ a {
 
 .pokedex-scan {
   position: absolute;
-  z-index: 3;
+  z-index: 0;
   top: 44px;
   bottom: 0;
   left: -18%;
-  width: 18%;
+  width: 10%;
   background:
-    repeating-linear-gradient(0deg, transparent 0 4px, rgba(216, 58, 58, 0.26) 4px 7px),
-    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.62), var(--accent), transparent);
+    repeating-linear-gradient(0deg, transparent 0 4px, rgba(216, 58, 58, 0.12) 4px 7px),
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), rgba(216, 58, 58, 0.22), transparent);
   content: "";
   opacity: 0;
   mix-blend-mode: multiply;
@@ -1298,6 +1298,8 @@ a {
 
 .activity-meta {
   display: flex;
+  grid-column: 2;
+  grid-row: 1;
   min-width: 0;
   align-items: center;
   justify-content: flex-end;
@@ -1308,11 +1310,6 @@ a {
   font-size: clamp(0.34rem, 0.42vw, 0.42rem);
   font-weight: 900;
   white-space: nowrap;
-}
-
-.activity-meta .timestamp-tooltip {
-  right: 0;
-  left: auto;
 }
 
 .activity-state,
@@ -1351,8 +1348,66 @@ a {
   background: var(--accent);
 }
 
+.activity-timestamp-trigger {
+  display: inline-flex;
+  min-width: 0;
+  min-height: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  color: var(--game-mid);
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.activity-timestamp-trigger:hover,
+.activity-timestamp-trigger:focus-visible,
+.activity-timestamp-trigger[aria-expanded="true"] {
+  color: var(--paper);
+  background: var(--game-ink);
+  outline: 0;
+}
+
+.activity-exact-time {
+  display: flex;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 2px solid var(--game-ink);
+  color: var(--paper);
+  background: var(--game-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.activity-exact-time[hidden] {
+  display: none;
+}
+
+.activity-exact-time span {
+  color: var(--game-pale);
+  font-size: 0.5rem;
+}
+
+.activity-exact-time time {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
 .activity-log {
   position: relative;
+  container-name: research-log;
+  container-type: inline-size;
   border: 4px solid var(--game-ink);
   color: var(--game-ink);
   background: color-mix(in srgb, var(--paper) 92%, var(--accent-soft));
@@ -1428,6 +1483,8 @@ a {
 
 .activity-entry-main {
   display: grid;
+  grid-column: 1;
+  grid-row: 1;
   grid-template-columns: minmax(90px, 0.38fr) minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.65rem;
@@ -1462,6 +1519,7 @@ a {
 }
 
 .activity-log .timestamp-trigger,
+.activity-timestamp-trigger,
 .activity-log code {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -1495,21 +1553,44 @@ a {
   animation: count-lock 850ms steps(8, end) both;
 }
 
+@container research-log (max-width: 620px) {
+  .activity-log li {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-entry-main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .activity-meta {
+    grid-column: 1;
+    grid-row: 2;
+    justify-content: flex-start;
+    padding: 0.2rem 0.7rem;
+    border-top: 2px solid var(--game-pale);
+    border-left: 0;
+  }
+
+  .activity-exact-time {
+    grid-column: 1;
+    grid-row: 3;
+  }
+}
+
 .research-discovery {
-  position: absolute;
-  z-index: 4;
-  top: 0.55rem;
-  right: 0.7rem;
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 0.45rem;
   min-height: 34px;
   padding: 0.35rem 0.5rem;
-  border: 2px solid var(--paper);
+  border-bottom: 2px solid var(--game-ink);
   color: var(--paper);
   background: var(--accent);
-  box-shadow: 4px 4px 0 var(--game-ink);
+  box-shadow: none;
   font-size: clamp(0.3rem, 0.38vw, 0.38rem);
   animation: discovery-banner 2.7s steps(8, end) both;
   pointer-events: none;
@@ -2854,8 +2935,8 @@ a {
 
 @keyframes pokedex-panel-scan {
   0% { left: -18%; opacity: 0; }
-  12% { opacity: 0.78; }
-  82% { opacity: 0.62; }
+  12% { opacity: 0.22; }
+  82% { opacity: 0.16; }
   100% { left: 104%; opacity: 0; }
 }
 
@@ -2912,9 +2993,9 @@ a {
 }
 
 @keyframes discovery-banner {
-  0% { opacity: 0; transform: translateY(-6px); }
-  10%, 78% { opacity: 1; transform: translateY(0); }
-  100% { opacity: 0; transform: translateY(-4px); }
+  0% { opacity: 0; }
+  10%, 78% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 @keyframes badge-unlock {
@@ -3570,11 +3651,7 @@ a {
 
 @media (max-width: 560px) {
   .research-discovery {
-    position: relative;
-    top: auto;
-    right: auto;
     grid-template-columns: auto 1fr;
-    margin: 0.6rem;
   }
 
   .research-discovery b {

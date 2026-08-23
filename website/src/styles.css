@@ -3545,6 +3545,10 @@ a {
     font-size: 0.672rem;
   }
 
+  .home-vitals b {
+    font-size: 0.72rem;
+  }
+
   .trainer-clock {
     grid-template-columns: 1fr;
   }
@@ -3583,12 +3587,15 @@ a {
   }
 
   .dev-stats dt,
-  .dev-stats dd,
   .dev-stats > header div span,
   .dev-stats-signal,
   .quest-log-heading span,
   .dev-stats > footer {
     font-size: 0.6rem;
+  }
+
+  .dev-stats dd {
+    font-size: 0.72rem;
   }
 
   .dev-stats > header div b,
@@ -3614,7 +3621,7 @@ a {
   .quest-log a > b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     white-space: normal;
   }
 
@@ -3622,10 +3629,13 @@ a {
     white-space: normal;
   }
 
-  .trainer-clock small,
+  .trainer-clock small {
+    font-size: 0.6rem;
+  }
+
   .trainer-clock b,
   .trainer-clock time {
-    font-size: 0.6rem;
+    font-size: 0.72rem;
   }
 
   .activity-header,
@@ -3648,7 +3658,7 @@ a {
   .activity-log li b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     white-space: normal;
   }
 
@@ -3731,7 +3741,7 @@ a {
   .archive-ledger li b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.66rem;
+    font-size: 0.72rem;
     white-space: normal;
   }
 
@@ -3863,7 +3873,7 @@ a {
   }
 
   .mission-card b {
-    font-size: 0.66rem;
+    font-size: 0.72rem;
   }
 
   .release-journey a {

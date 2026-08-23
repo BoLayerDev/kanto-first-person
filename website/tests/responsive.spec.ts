@@ -703,6 +703,22 @@ test('uses readable type for live data and pixel type for game labels', async ({
   expect(roles.display.every(({ family }) => family.includes('Press Start 2P'))).toBe(true)
   expect(roles.readable.every(({ family }) => family.includes('ui-monospace'))).toBe(true)
   expect(Math.min(...roles.readable.map(({ size }) => size))).toBeGreaterThanOrEqual(11)
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobileReadableSizes = await page.evaluate(() => [
+    '.home-vitals b',
+    '.trainer-clock b',
+    '.mission-card b',
+    '.proof-drop > a > b',
+    '.dev-stats dd',
+    '.quest-log a > b',
+    '.activity-log li b',
+  ].map((selector) => {
+    const element = document.querySelector(selector)
+    if (!element) throw new Error(`Missing mobile typography target: ${selector}`)
+    return Number.parseFloat(getComputedStyle(element).fontSize)
+  }))
+  expect(Math.min(...mobileReadableSizes)).toBeGreaterThanOrEqual(11)
 })
 
 test('shows the complete verified project history in the Research Log', async ({ page }) => {

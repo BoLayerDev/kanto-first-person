@@ -276,11 +276,6 @@ const devStats = {
   labRuntimeSeconds,
   mergedPullRequests: pullRequests.length,
   medianPullRequestSeconds: median(deliveryTimes),
-  aiUsage: {
-    state: 'unavailable',
-    label: 'NOT TRACKED',
-    note: 'Codex task token usage is private and is not exported to this public GitHub site.',
-  },
 }
 
 if (process.env.SITE_REQUIRE_VERIFIED_CI === 'true') {

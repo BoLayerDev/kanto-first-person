@@ -128,11 +128,6 @@ test('generates a complete offline GitHub status snapshot', async () => {
       labRuntimeSeconds: 105,
       mergedPullRequests: 1,
       medianPullRequestSeconds: 300,
-      aiUsage: {
-        state: 'unavailable',
-        label: 'NOT TRACKED',
-        note: 'Codex task token usage is private and is not exported to this public GitHub site.',
-      },
     })
     assert.deepEqual(status.pullRequests[0], {
       number: 12,

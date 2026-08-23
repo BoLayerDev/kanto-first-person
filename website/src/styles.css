@@ -1073,7 +1073,7 @@ a {
 
 .dev-stats dl {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
   margin: 0;
   background: var(--game-pale);
@@ -1107,26 +1107,6 @@ a {
   color: var(--accent);
   font-size: clamp(0.43rem, 0.56vw, 0.56rem);
   line-height: 1.4;
-}
-
-.dev-stats .token-stat {
-  cursor: help;
-  background: repeating-linear-gradient(
-    -45deg,
-    var(--paper-dark),
-    var(--paper-dark) 8px,
-    color-mix(in srgb, var(--game-pale) 28%, var(--paper-dark)) 8px,
-    color-mix(in srgb, var(--game-pale) 28%, var(--paper-dark)) 16px
-  );
-}
-
-.dev-stats .token-stat dd {
-  overflow: visible;
-  color: var(--game-mid);
-  font-size: clamp(0.38rem, 0.46vw, 0.46rem);
-  letter-spacing: 0;
-  text-overflow: clip;
-  white-space: normal;
 }
 
 .quest-log-heading {
@@ -3067,7 +3047,15 @@ a {
 
 @media (min-width: 901px) and (max-width: 1100px) {
   .dev-stats dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .dev-stats dl > div {
+    grid-column: span 2;
+  }
+
+  .dev-stats dl > div:nth-last-child(-n + 2) {
+    grid-column: span 3;
   }
 }
 
@@ -3209,7 +3197,15 @@ a {
   }
 
   .dev-stats dl {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .dev-stats dl > div {
+    grid-column: span 2;
+  }
+
+  .dev-stats dl > div:nth-last-child(-n + 2) {
+    grid-column: span 3;
   }
 
   .milestone-deck > div:last-child {
@@ -3409,6 +3405,15 @@ a {
 
   .dev-stats dl {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dev-stats dl > div,
+  .dev-stats dl > div:nth-last-child(-n + 2) {
+    grid-column: auto;
+  }
+
+  .dev-stats dl > div:last-child {
+    grid-column: 1 / -1;
   }
 
   .dev-stats dt,

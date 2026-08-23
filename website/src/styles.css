@@ -254,7 +254,7 @@ a {
 .release-copy p {
   max-width: 680px;
   margin: 0.7rem 0 0;
-  color: var(--game-ink);
+  color: #0b100b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.78rem, 0.984vw, 0.936rem);
   font-weight: 800;
@@ -266,7 +266,7 @@ a {
   max-width: 680px;
   margin-top: 0.35rem;
   overflow: hidden;
-  color: #283125;
+  color: #67161c;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.6rem, 0.648vw, 0.672rem);
   font-weight: 900;

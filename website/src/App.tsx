@@ -15,6 +15,7 @@ const RELEASE_BALL_ASSETS: Record<Edition, string> = {
   blue: 'master-ball-2d.png',
   yellow: 'great-ball-2d.png',
 }
+const YELLOW_SWITCH_CUE = 'audio/yellow-switch.mp3'
 const ACTIVITY_SCOPE_LABELS: Record<ActivityScope, string> = {
   mod: 'MOD BUILD',
   site: 'SITE LAB',
@@ -1113,7 +1114,33 @@ function OptionsMenu({
   const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setEdition = useJourneyStore((state) => state.setEdition)
   const menuButtons = useRef<Array<HTMLButtonElement | null>>([])
+  const yellowCue = useRef<HTMLAudioElement | null>(null)
   const item = MENU_ITEMS[menuIndex]
+
+  useEffect(() => {
+    const audio = new Audio(`${import.meta.env.BASE_URL}${YELLOW_SWITCH_CUE}`)
+    audio.preload = 'auto'
+    audio.volume = 0.65
+    audio.load()
+    yellowCue.current = audio
+
+    return () => {
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
+      yellowCue.current = null
+    }
+  }, [])
+
+  const selectEdition = useCallback((nextEdition: Edition) => {
+    if (nextEdition === edition) return
+    if (nextEdition === 'yellow' && yellowCue.current) {
+      yellowCue.current.pause()
+      yellowCue.current.currentTime = 0
+      void yellowCue.current.play().catch(() => undefined)
+    }
+    setEdition(nextEdition)
+  }, [edition, setEdition])
 
   const navigateToMenu = (index: number) => {
     setMenuIndex(index)
@@ -1141,11 +1168,11 @@ function OptionsMenu({
       } else if (['arrowleft', 'a'].includes(key)) {
         event.preventDefault()
         const index = EDITIONS.indexOf(edition)
-        setEdition(EDITIONS[(index - 1 + EDITIONS.length) % EDITIONS.length])
+        selectEdition(EDITIONS[(index - 1 + EDITIONS.length) % EDITIONS.length])
       } else if (['arrowright', 'd'].includes(key)) {
         event.preventDefault()
         const index = EDITIONS.indexOf(edition)
-        setEdition(EDITIONS[(index + 1) % EDITIONS.length])
+        selectEdition(EDITIONS[(index + 1) % EDITIONS.length])
       } else if (['enter', ' ', 'z'].includes(key)) {
         if (isAnchor || (event.target instanceof HTMLButtonElement && !isMenuButton && key !== 'z')) return
         event.preventDefault()
@@ -1158,7 +1185,7 @@ function OptionsMenu({
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [edition, menuIndex, setEdition, setMenuIndex])
+  }, [edition, menuIndex, selectEdition, setMenuIndex])
 
   return (
     <main className="terminal-shell">
@@ -1189,7 +1216,7 @@ function OptionsMenu({
                   type="button"
                   className={edition === value ? 'is-active' : ''}
                   aria-pressed={edition === value}
-                  onClick={() => setEdition(value)}
+                  onClick={() => selectEdition(value)}
                   key={value}
                 >
                   {value.slice(0, 1).toUpperCase()}

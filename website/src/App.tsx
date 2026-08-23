@@ -230,6 +230,44 @@ function Timestamp({ date, now }: { date: string, now: number }) {
   )
 }
 
+function InfoTip({ label, text }: { label: string, text: string }) {
+  const [open, setOpen] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const tooltipId = useId()
+
+  return (
+    <span
+      className={`info-tip${open ? ' is-open' : ''}`}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          setFocused(false)
+          setOpen(false)
+        }
+      }}
+    >
+      <button
+        type="button"
+        className="info-tip-trigger"
+        aria-label={`Explain ${label}`}
+        aria-describedby={tooltipId}
+        aria-expanded={open || focused}
+        aria-controls={tooltipId}
+        onFocus={() => setFocused(true)}
+        onClick={() => setOpen((current) => !current)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            setOpen(false)
+            event.currentTarget.blur()
+          }
+        }}
+      >
+        ?
+      </button>
+      <span className="info-tip-tooltip" id={tooltipId} role="tooltip">{text}</span>
+    </span>
+  )
+}
+
 function activityState(entry: ActivityEntry, index: number, now: number) {
   if (index === 0) return 'LIVE'
   const entryDate = new Date(entry.date)
@@ -360,20 +398,34 @@ function ReleaseJourney({ status }: { status: ProjectStatus }) {
 function WeeklyOakReport({ status }: { status: ProjectStatus }) {
   const counts = status.weeklyReport.counts
   const entries = [
-    ['NEW MOVES', counts.features],
-    ['BUGS FIXED', counts.fixes],
-    ['SPEED UPS', counts.performance],
-    ['LAB CHECKS', counts.tests],
-    ['FIELD NOTES', counts.documentation],
-    ['MILESTONES', counts.milestones],
+    ['NEW MOVES', counts.features, 'New features. GitHub commits marked feat: count here. This shows how many new capabilities entered the project this week.'],
+    ['BUGS FIXED', counts.fixes, 'Bug repairs. GitHub commits marked fix: count here. This shows how many verified corrections landed this week.'],
+    ['SPEED UPS', counts.performance, 'Performance improvements. GitHub commits marked perf: count here. This tracks work that makes the mod or its tools faster and more efficient.'],
+    ['LAB CHECKS', counts.tests, 'Automated tests and CI checks. GitHub commits marked test: or ci: count here. This tracks work that catches regressions.'],
+    ['FIELD NOTES', counts.documentation, 'Guides and technical records. GitHub commits marked docs: count here. This tracks documentation and release instructions.'],
+    ['MILESTONES', counts.milestones, 'Major refactors and release, device, compatibility, or architecture checkpoints. This shows the big project stages reached this week.'],
   ] as const
 
   return (
     <section className="weekly-report" aria-labelledby="weekly-report-title">
       <header><span>LAST SEVEN DAYS</span><b id="weekly-report-title">PROFESSOR OAK REPORT</b></header>
-      <div className="weekly-report-total"><b>{status.weeklyReport.total}</b><span>VERIFIED COMMITS</span></div>
+      <div className="weekly-report-total">
+        <b>{status.weeklyReport.total}</b>
+        <span className="weekly-report-total-label">
+          VERIFIED COMMITS
+          <InfoTip
+            label="VERIFIED COMMITS"
+            text="Every commit recorded on the v2-rewrite branch during the last seven days, including merges and work that does not fit a category below."
+          />
+        </span>
+      </div>
       <dl>
-        {entries.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+        {entries.map(([label, value, description]) => (
+          <div key={label}>
+            <dt><span>{label}</span><InfoTip label={label} text={description} /></dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
       </dl>
     </section>
   )

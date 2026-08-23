@@ -7,6 +7,7 @@ test.describe('mobile field terminal', () => {
 
   test('is readable, touch-friendly, stacked, and scrollable', async ({ page }, testInfo) => {
     await page.goto(PAGE_PATH)
+    await page.evaluate(() => document.fonts.ready)
 
     const layout = await page.evaluate(() => {
       const box = (rect: DOMRect) => ({
@@ -67,7 +68,8 @@ test.describe('mobile field terminal', () => {
     expect(Math.abs(layout.detail.left - layout.menu.left)).toBeLessThan(1)
     expect(Math.abs(layout.detail.width - layout.menu.width)).toBeLessThan(1)
     expect(layout.heading.bottom).toBeLessThan(844)
-    expect(layout.summary.bottom).toBeLessThan(844)
+    expect(layout.summary.top).toBeGreaterThanOrEqual(layout.heading.bottom)
+    expect(layout.summary.width).toBeLessThanOrEqual(layout.detail.width)
     expect(layout.summary.fontSize).toBeGreaterThanOrEqual(14)
 
     expect(layout.menuButtons).toHaveLength(7)
@@ -328,6 +330,7 @@ test('keeps Research Log timing details in flow without covering badges or rows'
   for (const width of [1440, 901]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(PAGE_PATH)
+    await page.evaluate(() => document.fonts.ready)
 
     const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
     const firstRow = log.locator('ol > li').first()

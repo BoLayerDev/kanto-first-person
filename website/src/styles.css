@@ -699,6 +699,8 @@ a {
 
 .trainer-clock-label {
   display: grid;
+  min-width: 0;
+  overflow: hidden;
   place-items: center;
   padding: 0.55rem 0.7rem;
   color: var(--accent-soft);
@@ -736,6 +738,7 @@ a {
 
 .trainer-clock small {
   display: block;
+  overflow: hidden;
   margin-bottom: 0.25rem;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -743,6 +746,8 @@ a {
   font-weight: 900;
   line-height: 1.35;
   letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .trainer-clock b,

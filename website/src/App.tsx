@@ -1120,7 +1120,7 @@ function OptionsMenu({
   useEffect(() => {
     const audio = new Audio(`${import.meta.env.BASE_URL}${YELLOW_SWITCH_CUE}`)
     audio.preload = 'auto'
-    audio.volume = 0.65
+    audio.volume = Math.min(1, 0.65 * 1.5)
     audio.load()
     yellowCue.current = audio
 

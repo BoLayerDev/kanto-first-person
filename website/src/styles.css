@@ -1,7 +1,9 @@
 :root {
   color: #172017;
   background: #080b0d;
-  font-family: "Press Start 2P", monospace;
+  --font-display: "Press Start 2P", monospace;
+  --font-readable: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: var(--font-display);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --paper: #f8f2d8;
@@ -713,7 +715,11 @@ a {
 
 .home-vitals b {
   overflow: hidden;
-  font-size: clamp(0.5rem, 0.624vw, 0.624rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.01em;
   line-height: 1.45;
   text-overflow: ellipsis;
 }
@@ -785,7 +791,11 @@ a {
 .trainer-clock b,
 .trainer-clock time {
   overflow: hidden;
-  font-size: clamp(0.5rem, 0.624vw, 0.624rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.01em;
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -902,8 +912,11 @@ a {
 .mission-card.is-blocked > span { color: #9d3a35; }
 .mission-card b {
   overflow-wrap: anywhere;
-  font-size: clamp(0.516rem, 0.672vw, 0.672rem);
-  line-height: 1.55;
+  font-family: var(--font-readable);
+  font-size: clamp(0.72rem, 0.816vw, 0.816rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1.45;
 }
 .mission-card small {
   color: var(--game-mid);
@@ -1115,7 +1128,13 @@ a {
 .proof-drop > a:hover,
 .proof-drop > a:focus-visible { color: var(--paper); background: var(--accent); }
 .proof-kind { color: var(--accent); font-size: 0.5rem; }
-.proof-drop > a > b { font-size: clamp(0.66rem, 0.96vw, 0.96rem); line-height: 1.45; }
+.proof-drop > a > b {
+  font-family: var(--font-readable);
+  font-size: clamp(0.82rem, 1.02vw, 1.02rem);
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+}
 .proof-drop dl { padding: 0; }
 .proof-drop dd {
   overflow: hidden;
@@ -1230,7 +1249,11 @@ a {
 
 .dev-stats dd {
   color: var(--accent);
-  font-size: clamp(0.516rem, 0.672vw, 0.672rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.01em;
   line-height: 1.4;
 }
 
@@ -1291,7 +1314,10 @@ a {
 
 .quest-log a > b {
   overflow: hidden;
-  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1617,7 +1643,10 @@ a {
 
 .activity-log li b {
   overflow: hidden;
-  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2106,7 +2135,10 @@ a {
 
 .archive-ledger li b {
   overflow: hidden;
-  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;

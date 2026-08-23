@@ -33,12 +33,23 @@ const LEFT_VERTICAL_SLOTS = [-0.91, -0.61, -0.31, 0, 0.31, 0.62, 0.92] as const
 const RIGHT_VERTICAL_SLOTS = [-0.86, -0.56, -0.26, 0.04, 0.34, 0.64, 0.94] as const
 const LEFT_EDGE_SLOTS = [0.9, 0.97, 0.84, 0.94, 0.86, 0.98, 0.89] as const
 const RIGHT_EDGE_SLOTS = [0.92, 0.98, 0.85, 0.96, 0.88, 0.99, 0.9] as const
-const FORWARD_FACING_PATTERN = [true, true, false, false] as const
-const FORWARD_OFFSETS = [
-  [-0.24, 0.12, -0.16],
-  [0.2, -0.1, 0.13],
-  [-0.14, -0.16, 0.2],
-  [0.27, 0.08, -0.11],
+const LEFT_ORIENTATION_PROFILES = [
+  { facesViewer: true, yaw: -0.18, pitch: 0.12, roll: -0.24 },
+  { facesViewer: false, yaw: 0.98, pitch: -0.2, roll: 0.42 },
+  { facesViewer: false, yaw: -1.18, pitch: 0.3, roll: -0.32 },
+  { facesViewer: false, yaw: 0.82, pitch: 0.42, roll: 0.56 },
+  { facesViewer: true, yaw: 0.22, pitch: -0.16, roll: 0.28 },
+  { facesViewer: false, yaw: -1.04, pitch: -0.45, roll: -0.5 },
+  { facesViewer: false, yaw: 0.92, pitch: 0.22, roll: 0.38 },
+] as const
+const RIGHT_ORIENTATION_PROFILES = [
+  { facesViewer: true, yaw: 0.18, pitch: -0.1, roll: 0.2 },
+  { facesViewer: false, yaw: -0.94, pitch: 0.24, roll: -0.38 },
+  { facesViewer: false, yaw: 1.14, pitch: -0.28, roll: 0.46 },
+  { facesViewer: true, yaw: -0.22, pitch: 0.15, roll: -0.27 },
+  { facesViewer: false, yaw: 0.86, pitch: 0.38, roll: 0.52 },
+  { facesViewer: false, yaw: -1.08, pitch: -0.34, roll: -0.44 },
+  { facesViewer: true, yaw: 0.24, pitch: -0.12, roll: 0.31 },
 ] as const
 const POKEBALL_RED = '#e43b3f'
 const POKEBALL_WHITE = '#f5f1df'
@@ -52,7 +63,6 @@ type BallTransform = {
   scale: number
   phase: number
   speed: number
-  direction: number
   facesViewer: boolean
 }
 
@@ -108,25 +118,15 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
       screenY * halfHeight,
       11 - distance,
     ]
-    const facesViewer = FORWARD_FACING_PATTERN[index % FORWARD_FACING_PATTERN.length]
-    let rotation: [number, number, number]
-
-    if (facesViewer) {
-      const offsets = FORWARD_OFFSETS[Math.floor(index / FORWARD_FACING_PATTERN.length) % FORWARD_OFFSETS.length]
-      ballPosition.fromArray(position)
-      viewDirection.copy(cameraPosition).sub(ballPosition).normalize()
-      facingQuaternion.setFromUnitVectors(localForward, viewDirection)
-      offsetQuaternion.setFromEuler(new Euler(offsets[1], offsets[0], offsets[2]))
-      composedQuaternion.copy(facingQuaternion).multiply(offsetQuaternion)
-      composedRotation.setFromQuaternion(composedQuaternion)
-      rotation = [composedRotation.x, composedRotation.y, composedRotation.z]
-    } else {
-      rotation = [
-        (random() - 0.5) * 0.65,
-        (random() - 0.5) * 0.9,
-        (random() - 0.5) * 0.48,
-      ]
-    }
+    const orientationProfiles = side === -1 ? LEFT_ORIENTATION_PROFILES : RIGHT_ORIENTATION_PROFILES
+    const orientation = orientationProfiles[sideIndex % orientationProfiles.length]
+    ballPosition.fromArray(position)
+    viewDirection.copy(cameraPosition).sub(ballPosition).normalize()
+    facingQuaternion.setFromUnitVectors(localForward, viewDirection)
+    offsetQuaternion.setFromEuler(new Euler(orientation.pitch, orientation.yaw, orientation.roll))
+    composedQuaternion.copy(facingQuaternion).multiply(offsetQuaternion)
+    composedRotation.setFromQuaternion(composedQuaternion)
+    const rotation: [number, number, number] = [composedRotation.x, composedRotation.y, composedRotation.z]
 
     return {
       side,
@@ -136,8 +136,7 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
       scale: halfHeight * 0.105 * scaleTier,
       phase: random() * Math.PI * 2,
       speed: 0.045 + random() * 0.075,
-      direction: random() > 0.5 ? 1 : -1,
-      facesViewer,
+      facesViewer: orientation.facesViewer,
     }
   })
 }
@@ -249,13 +248,17 @@ export function createKantoWorld({
     lastTime = time
     layout.forEach((ball, index) => {
       const drift = quality === 'high' && !reducedMotion ? Math.sin(time * 0.42 + ball.phase) * 0.18 : 0
-      const spin = quality === 'high' && !reducedMotion ? time * ball.speed * ball.direction : 0
-      const facingWobble = ball.facesViewer ? Math.sin(time * 0.34 + ball.phase) * 0.045 : 0
+      const sway = quality === 'high' && !reducedMotion
+        ? Math.sin(time * (0.28 + ball.speed * 2) + ball.phase)
+        : 0
+      const rollSway = quality === 'high' && !reducedMotion
+        ? Math.cos(time * (0.24 + ball.speed) + ball.phase) * 0.08
+        : 0
       scratchPosition.set(ball.position[0], ball.position[1] + drift, ball.position[2])
       scratchRotation.set(
-        ball.rotation[0] + (ball.facesViewer ? facingWobble * 0.6 : spin * 0.34),
-        ball.rotation[1] + (ball.facesViewer ? facingWobble : spin),
-        ball.rotation[2] + (ball.facesViewer ? spin * 0.22 : spin * 0.18),
+        ball.rotation[0] + sway * (ball.facesViewer ? 0.025 : 0.08),
+        ball.rotation[1] + sway * (ball.facesViewer ? 0.04 : 0.12),
+        ball.rotation[2] + rollSway,
       )
       scratchQuaternion.setFromEuler(scratchRotation)
       scratchScale.setScalar(ball.scale)
@@ -292,7 +295,10 @@ export function createKantoWorld({
   host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
   host.dataset.ballLayout = 'expanded-side-zones'
   host.dataset.ballScaleProfile = 'small-medium-weighted'
+  host.dataset.orientationLayout = 'varied-side-profiles'
   host.dataset.forwardFacingCount = String(layout.filter((ball) => ball.facesViewer).length)
+  host.dataset.leftForwardFacingCount = String(layout.filter((ball) => ball.side === -1 && ball.facesViewer).length)
+  host.dataset.rightForwardFacingCount = String(layout.filter((ball) => ball.side === 1 && ball.facesViewer).length)
   host.dataset.minVerticalGap = Math.min(leftLayout.gap, rightLayout.gap).toFixed(2)
   host.dataset.minVerticalSpan = Math.min(leftLayout.span, rightLayout.span).toFixed(2)
 

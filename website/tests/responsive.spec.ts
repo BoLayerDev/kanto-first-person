@@ -414,7 +414,7 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(clock).toContainText('LATEST CI TIME')
   await expect(clock).toContainText('50S')
   await expect(clock).toContainText('DEPLOYED')
-  await expect(clock).toContainText('7-DAY COMMITS')
+  await expect(clock).toContainText('COMMITS / 7 DAYS')
 
   const latest = log.locator('ol > li').first()
   await expect(latest).toContainText('LIVE')
@@ -524,7 +524,7 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   await expect(journey).toContainText('PACKAGE SIGNED')
   await expect(journey).toContainText('RELEASED')
 
-  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('VERIFIED COMMITS')
+  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('COMMITS / LAST 7 DAYS')
   const proof = page.getByRole('region', { name: 'PROOF DROP' })
   await expect(proof).toContainText('BUILD')
   await expect(proof).toContainText('COMMIT')
@@ -604,6 +604,12 @@ test('explains every Professor Oak report term with hover, focus, and touch help
   await expect(tips).toHaveCount(7)
 
   const newMoves = report.getByRole('button', { name: 'Explain NEW MOVES' })
+  const desktopTipSize = await newMoves.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    return { height: box.height, width: box.width }
+  })
+  expect(desktopTipSize.width).toBeLessThanOrEqual(24)
+  expect(desktopTipSize.height).toBeLessThanOrEqual(24)
   await newMoves.hover()
   await expect(report.getByRole('tooltip').filter({ hasText: 'GitHub commits marked feat: count here.' })).toBeVisible()
   await page.mouse.move(0, 0)
@@ -616,6 +622,12 @@ test('explains every Professor Oak report term with hover, focus, and touch help
   await page.setViewportSize({ width: 390, height: 844 })
   await report.scrollIntoViewIfNeeded()
   await speedUps.click()
+  const mobileTipSize = await speedUps.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    return { height: box.height, width: box.width }
+  })
+  expect(mobileTipSize.width).toBeGreaterThanOrEqual(44)
+  expect(mobileTipSize.height).toBeGreaterThanOrEqual(44)
   await expect(speedUps).toHaveAttribute('aria-expanded', 'true')
   const touchTooltip = report.getByRole('tooltip').filter({ hasText: 'GitHub commits marked perf: count here.' })
   await expect(touchTooltip).toBeVisible()
@@ -778,7 +790,7 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
   const vitals = page.locator('[aria-label="Complete development totals"]')
   await expect(vitals.getByText('110', { exact: true })).toBeVisible()
-  await expect(vitals.getByText('VERIFIED COMMITS')).toBeVisible()
+  await expect(vitals.getByText('COMMITS / ALL TIME')).toBeVisible()
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
   const rewriteDate = vitals.getByLabel('Rewrite began 2026-08-21')

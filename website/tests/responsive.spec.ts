@@ -670,6 +670,41 @@ test('keeps all visible interface text at the site-wide legibility floor', async
   }
 })
 
+test('uses readable type for live data and pixel type for game labels', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const roles = await page.evaluate(() => {
+    const stylesFor = (selector: string) => {
+      const element = document.querySelector(selector)
+      if (!element) throw new Error(`Missing typography target: ${selector}`)
+      const style = getComputedStyle(element)
+      return { family: style.fontFamily, size: Number.parseFloat(style.fontSize) }
+    }
+
+    return {
+      display: [
+        stylesFor('.menu-window > button'),
+        stylesFor('.mission-board > header b'),
+        stylesFor('.release-journey b'),
+      ],
+      readable: [
+        stylesFor('.home-vitals b'),
+        stylesFor('.trainer-clock b'),
+        stylesFor('.mission-card b'),
+        stylesFor('.proof-drop > a > b'),
+        stylesFor('.dev-stats dd'),
+        stylesFor('.quest-log a > b'),
+        stylesFor('.activity-log li b'),
+      ],
+    }
+  })
+
+  expect(roles.display.every(({ family }) => family.includes('Press Start 2P'))).toBe(true)
+  expect(roles.readable.every(({ family }) => family.includes('ui-monospace'))).toBe(true)
+  expect(Math.min(...roles.readable.map(({ size }) => size))).toBeGreaterThanOrEqual(11)
+})
+
 test('shows the complete verified project history in the Research Log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)

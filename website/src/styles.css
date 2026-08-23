@@ -426,7 +426,7 @@ a {
 .menu-window {
   display: flex;
   flex-direction: column;
-  padding: 0 0.8rem 0.8rem;
+  padding: 0.7rem 0.8rem 0.8rem;
 }
 
 .menu-window > button {
@@ -452,8 +452,32 @@ a {
 .menu-window > button:focus-visible,
 .menu-window > button.is-selected {
   color: var(--game-ink);
-  background:
-    repeating-linear-gradient(90deg, color-mix(in srgb, var(--accent-soft) 48%, transparent) 0 4px, transparent 4px 8px);
+  background: color-mix(in srgb, var(--accent-soft) 28%, var(--paper));
+  box-shadow: inset 5px 0 0 var(--accent);
+}
+
+.menu-window > button::after {
+  position: absolute;
+  z-index: 0;
+  top: 0.55rem;
+  right: 0.45rem;
+  bottom: 0.55rem;
+  width: clamp(24px, 10%, 42px);
+  background: repeating-linear-gradient(90deg, var(--accent) 0 4px, transparent 4px 8px);
+  content: "";
+  opacity: 0;
+  pointer-events: none;
+}
+
+.menu-window > button:hover::after,
+.menu-window > button:focus-visible::after,
+.menu-window > button.is-selected::after {
+  opacity: 0.34;
+}
+
+.menu-window > button > * {
+  position: relative;
+  z-index: 1;
 }
 
 .menu-cursor {
@@ -509,12 +533,6 @@ a {
   border-color: var(--game-ink);
   color: var(--game-ink);
   background: var(--game-pale);
-}
-
-.inline-option .quality-toggle {
-  min-width: 112px;
-  border-color: transparent;
-  font-size: 0.576rem;
 }
 
 .detail-window {
@@ -3229,7 +3247,7 @@ a {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-content: start;
     min-height: 0;
-    padding: 0 0.65rem 0.75rem;
+    padding: 0.65rem 0.65rem 0.75rem;
   }
 
   .menu-window .window-label,
@@ -3264,11 +3282,6 @@ a {
   .inline-option button {
     min-width: 48px;
     min-height: 48px;
-    font-size: 0.75rem;
-  }
-
-  .inline-option .quality-toggle {
-    min-width: 132px;
     font-size: 0.75rem;
   }
 

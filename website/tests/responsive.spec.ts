@@ -168,10 +168,27 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(layout.canvas.height).toBe(900)
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-scene-mode', 'pokeballs-only')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-menu-reactive', 'false')
-  const qualityToggle = page.locator('.quality-toggle')
-  if (await qualityToggle.getAttribute('aria-label') === 'Effects quality low') {
-    await qualityToggle.click()
-  }
+  await expect(page.locator('.menu-window .window-label')).toHaveCount(0)
+  await expect(page.locator('.quality-toggle')).toHaveCount(0)
+  await expect(page.getByText('EFFECTS', { exact: true })).toHaveCount(0)
+  const menuTreatment = await page.locator('.menu-window > button.is-selected').evaluate((button) => {
+    const buttonBox = button.getBoundingClientRect()
+    const label = button.querySelector('span:last-child')!
+    const labelRange = document.createRange()
+    labelRange.selectNodeContents(label)
+    const labelBox = labelRange.getBoundingClientRect()
+    const menuBox = button.parentElement!.getBoundingClientRect()
+    const bars = getComputedStyle(button, '::after')
+    return {
+      barsLeft: buttonBox.right - Number.parseFloat(bars.right) - Number.parseFloat(bars.width),
+      barsOpacity: Number.parseFloat(bars.opacity),
+      labelRight: labelBox.right,
+      menuTopGap: buttonBox.top - menuBox.top,
+    }
+  })
+  expect(menuTreatment.labelRight).toBeLessThan(menuTreatment.barsLeft)
+  expect(menuTreatment.barsOpacity).toBeLessThanOrEqual(0.34)
+  expect(menuTreatment.menuTopGap).toBeLessThanOrEqual(24)
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '7')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'expanded-side-zones')
@@ -186,10 +203,6 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-span')),
   )).toBeGreaterThanOrEqual(1.5)
-  await qualityToggle.click()
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '8')
-  await qualityToggle.click()
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1440.png'), fullPage: true })
 
   await page.setViewportSize({ width: 1920, height: 1080 })
@@ -211,6 +224,8 @@ test.describe('desktop motion system', () => {
 
     await expect(page.locator('.loader-ball').first()).toBeVisible()
     await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-world-ready', 'true')
+    await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
+    await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '5')
     await expect(page.locator('.load-status-chip')).toHaveCount(0)
 
     const detail = page.locator('.detail-window')

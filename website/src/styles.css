@@ -84,7 +84,7 @@ a {
   padding: 2rem;
   color: var(--paper);
   background: #111622;
-  font-size: 0.58rem;
+  font-size: 0.696rem;
   line-height: 1.7;
   text-align: center;
 }
@@ -94,7 +94,7 @@ a {
   place-items: center;
   gap: 0.75rem;
   color: var(--paper);
-  font-size: 0.48rem;
+  font-size: 0.576rem;
   line-height: 1.6;
 }
 
@@ -141,7 +141,7 @@ a {
   display: grid;
   grid-template-columns: auto 1fr;
   justify-items: start;
-  font-size: 0.38rem;
+  font-size: 0.5rem;
 }
 
 .load-status-chip .loader-ball {
@@ -226,7 +226,7 @@ a {
   display: block;
   margin-bottom: 0.45rem;
   color: #7b2b25;
-  font-size: clamp(0.4rem, 0.54vw, 0.54rem);
+  font-size: clamp(0.5rem, 0.648vw, 0.648rem);
   line-height: 1.5;
   letter-spacing: 0.08em;
 }
@@ -234,7 +234,7 @@ a {
 .release-copy h1 {
   margin: 0;
   color: #fff;
-  font-size: clamp(1.45rem, 3.15vw, 3.15rem);
+  font-size: clamp(1.74rem, 3.78vw, 3.78rem);
   line-height: 0.95;
   letter-spacing: -0.06em;
   text-shadow:
@@ -251,7 +251,7 @@ a {
   margin: 0.7rem 0 0;
   color: #4c563f;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.65rem, 0.82vw, 0.78rem);
+  font-size: clamp(0.78rem, 0.984vw, 0.936rem);
   font-weight: 800;
   line-height: 1.4;
 }
@@ -263,7 +263,7 @@ a {
   overflow: hidden;
   color: #5e4936;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.42rem, 0.48vw, 0.5rem);
+  font-size: clamp(0.504rem, 0.576vw, 0.6rem);
   font-weight: 900;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -305,12 +305,12 @@ a {
 .release-status span {
   margin-bottom: 0.45rem;
   color: var(--game-pale);
-  font-size: clamp(0.34rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
 }
 
 .release-status b {
   overflow: hidden;
-  font-size: clamp(0.42rem, 0.54vw, 0.56rem);
+  font-size: clamp(0.504rem, 0.648vw, 0.672rem);
   line-height: 1.45;
   text-overflow: ellipsis;
 }
@@ -319,7 +319,7 @@ a {
   position: absolute;
   top: 0.55rem;
   right: 0.55rem;
-  font-size: 0.6rem;
+  font-size: 0.72rem;
   font-style: normal;
 }
 
@@ -356,7 +356,7 @@ a {
   border: 2px solid rgba(255, 255, 255, 0.42);
   color: var(--paper);
   background: rgba(4, 6, 9, 0.58);
-  font-size: clamp(0.45rem, 0.65vw, 0.58rem);
+  font-size: clamp(0.54rem, 0.78vw, 0.696rem);
   backdrop-filter: blur(10px);
 }
 
@@ -407,7 +407,7 @@ a {
   padding: 1rem 1.2rem 0.7rem;
   border-bottom: 3px double var(--game-mid);
   color: var(--game-mid);
-  font-size: clamp(0.43rem, 0.58vw, 0.54rem);
+  font-size: clamp(0.516rem, 0.696vw, 0.648rem);
   line-height: 1.5;
   letter-spacing: 0.06em;
 }
@@ -431,7 +431,7 @@ a {
   border: 0;
   color: var(--game-mid);
   background: transparent;
-  font-size: clamp(0.52rem, 0.82vw, 0.78rem);
+  font-size: clamp(0.624rem, 0.984vw, 0.936rem);
   line-height: 1.45;
   text-align: left;
   cursor: pointer;
@@ -475,7 +475,7 @@ a {
   min-height: 45px;
   padding: 0.4rem 0.75rem;
   color: var(--game-mid);
-  font-size: clamp(0.45rem, 0.62vw, 0.57rem);
+  font-size: clamp(0.54rem, 0.744vw, 0.684rem);
 }
 
 .inline-option > div {
@@ -503,7 +503,7 @@ a {
 .inline-option .quality-toggle {
   min-width: 112px;
   border-color: transparent;
-  font-size: 0.48rem;
+  font-size: 0.576rem;
 }
 
 .detail-window {
@@ -633,7 +633,7 @@ a {
   max-width: 800px;
   margin: 0 0 1.1rem;
   color: var(--game-ink);
-  font-size: clamp(1.15rem, 2.8vw, 2.7rem);
+  font-size: clamp(1.38rem, 3.36vw, 3.24rem);
   line-height: 1.28;
   letter-spacing: -0.035em;
   text-wrap: balance;
@@ -644,7 +644,7 @@ a {
   margin: 0 0 clamp(1.3rem, 3vh, 2.3rem);
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.9rem, 1.25vw, 1.12rem);
+  font-size: clamp(1.08rem, 1.5vw, 1.344rem);
   font-weight: 700;
   line-height: 1.65;
 }
@@ -675,7 +675,7 @@ a {
   overflow: visible;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.48rem, 0.52vw, 0.54rem);
+  font-size: clamp(0.576rem, 0.624vw, 0.648rem);
   font-weight: 900;
   line-height: 1.4;
   letter-spacing: 0.04em;
@@ -683,7 +683,7 @@ a {
 
 .home-vitals b {
   overflow: hidden;
-  font-size: clamp(0.4rem, 0.52vw, 0.52rem);
+  font-size: clamp(0.5rem, 0.624vw, 0.624rem);
   line-height: 1.45;
   text-overflow: ellipsis;
 }
@@ -702,7 +702,7 @@ a {
   place-items: center;
   padding: 0.55rem 0.7rem;
   color: var(--accent-soft);
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
   line-height: 1.4;
   writing-mode: vertical-rl;
   transform: rotate(180deg);
@@ -739,7 +739,7 @@ a {
   margin-bottom: 0.25rem;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.36rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   font-weight: 900;
   line-height: 1.35;
   letter-spacing: 0.03em;
@@ -748,7 +748,7 @@ a {
 .trainer-clock b,
 .trainer-clock time {
   overflow: hidden;
-  font-size: clamp(0.4rem, 0.52vw, 0.52rem);
+  font-size: clamp(0.5rem, 0.624vw, 0.624rem);
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -800,7 +800,7 @@ a {
 .release-journey > header > span {
   margin-bottom: 0.25rem;
   color: var(--game-pale);
-  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  font-size: clamp(0.5rem, 0.456vw, 0.5rem);
   line-height: 1.4;
 }
 
@@ -808,7 +808,7 @@ a {
 .release-journey > header div b,
 .weekly-report > header b,
 .proof-drop > header b {
-  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+  font-size: clamp(0.6rem, 0.84vw, 0.84rem);
   line-height: 1.4;
 }
 
@@ -817,7 +817,7 @@ a {
   align-items: center;
   gap: 0.45rem;
   color: var(--accent-soft);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   white-space: nowrap;
 }
 
@@ -857,7 +857,7 @@ a {
 
 .mission-card > span,
 .mission-card small {
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
   line-height: 1.45;
 }
 
@@ -865,7 +865,7 @@ a {
 .mission-card.is-blocked > span { color: #9d3a35; }
 .mission-card b {
   overflow-wrap: anywhere;
-  font-size: clamp(0.43rem, 0.56vw, 0.56rem);
+  font-size: clamp(0.516rem, 0.672vw, 0.672rem);
   line-height: 1.55;
 }
 .mission-card small {
@@ -910,11 +910,11 @@ a {
   place-items: center;
   border: 3px solid currentColor;
   border-radius: 50%;
-  font-size: 0.42rem;
+  font-size: 0.504rem;
   font-style: normal;
 }
-.release-journey b { font-size: clamp(0.34rem, 0.45vw, 0.45rem); line-height: 1.4; }
-.release-journey a > span { font-size: clamp(0.3rem, 0.38vw, 0.38rem); }
+.release-journey b { font-size: clamp(0.5rem, 0.54vw, 0.54rem); line-height: 1.4; }
+.release-journey a > span { font-size: clamp(0.5rem, 0.456vw, 0.5rem); }
 .release-journey .is-complete a { color: #347345; background: #e5edc9; }
 .release-journey .is-active a { color: var(--accent); }
 .release-journey .is-blocked a { color: #9d3a35; background: #eee0cd; }
@@ -935,7 +935,7 @@ a {
 .weekly-report-total b {
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 1.2rem;
+  font-size: 1.44rem;
   font-variant-numeric: tabular-nums;
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -943,7 +943,7 @@ a {
 .weekly-report-total span {
   color: #3f4d3b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.56rem;
+  font-size: 0.672rem;
   font-weight: 800;
 }
 .weekly-report dl,
@@ -968,11 +968,11 @@ a {
 .proof-drop dt,
 .proof-drop dd { margin: 0; }
 .weekly-report dt,
-.proof-drop dt { color: var(--game-mid); font-size: clamp(0.3rem, 0.38vw, 0.38rem); line-height: 1.4; }
+.proof-drop dt { color: var(--game-mid); font-size: clamp(0.5rem, 0.456vw, 0.5rem); line-height: 1.4; }
 .weekly-report dt {
   color: #3f4d3b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.01em;
   line-height: 1.25;
@@ -980,7 +980,7 @@ a {
 .weekly-report dd {
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-size: clamp(1.02rem, 1.2vw, 1.2rem);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -989,19 +989,19 @@ a {
 .proof-drop > a { display: grid; gap: 0.55rem; padding: 0.75rem; color: var(--game-ink); text-decoration: none; }
 .proof-drop > a:hover,
 .proof-drop > a:focus-visible { color: var(--paper); background: var(--accent); }
-.proof-kind { color: var(--accent); font-size: 0.4rem; }
-.proof-drop > a > b { font-size: clamp(0.55rem, 0.8vw, 0.8rem); line-height: 1.45; }
+.proof-kind { color: var(--accent); font-size: 0.5rem; }
+.proof-drop > a > b { font-size: clamp(0.66rem, 0.96vw, 0.96rem); line-height: 1.45; }
 .proof-drop dl { padding: 0; }
 .proof-drop dd {
   overflow: hidden;
   margin-top: 0.3rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.43rem, 0.52vw, 0.52rem);
+  font-size: clamp(0.516rem, 0.624vw, 0.624rem);
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.proof-drop small { color: var(--game-mid); font-size: 0.38rem; }
+.proof-drop small { color: var(--game-mid); font-size: 0.5rem; }
 .proof-drop > a:hover .proof-kind,
 .proof-drop > a:hover small,
 .proof-drop > a:focus-visible .proof-kind,
@@ -1044,13 +1044,13 @@ a {
 .quest-log-heading span {
   margin-bottom: 0.25rem;
   color: var(--game-pale);
-  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  font-size: clamp(0.5rem, 0.456vw, 0.5rem);
   line-height: 1.4;
 }
 
 .dev-stats > header div b,
 .quest-log-heading b {
-  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+  font-size: clamp(0.6rem, 0.84vw, 0.84rem);
   line-height: 1.4;
 }
 
@@ -1059,7 +1059,7 @@ a {
   align-items: center;
   gap: 0.45rem;
   color: var(--accent-soft);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   white-space: nowrap;
 }
 
@@ -1097,7 +1097,7 @@ a {
   margin-bottom: 0.35rem;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.34rem, 0.4vw, 0.4rem);
+  font-size: clamp(0.5rem, 0.48vw, 0.5rem);
   font-weight: 900;
   line-height: 1.35;
   letter-spacing: 0.03em;
@@ -1105,7 +1105,7 @@ a {
 
 .dev-stats dd {
   color: var(--accent);
-  font-size: clamp(0.43rem, 0.56vw, 0.56rem);
+  font-size: clamp(0.516rem, 0.672vw, 0.672rem);
   line-height: 1.4;
 }
 
@@ -1154,7 +1154,7 @@ a {
 .quest-log a > span {
   color: var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.4rem, 0.48vw, 0.48rem);
+  font-size: clamp(0.5rem, 0.576vw, 0.576rem);
   font-weight: 900;
   letter-spacing: 0.03em;
 }
@@ -1166,7 +1166,7 @@ a {
 
 .quest-log a > b {
   overflow: hidden;
-  font-size: clamp(0.38rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1175,7 +1175,7 @@ a {
 .quest-log a > small {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.4rem, 0.46vw, 0.46rem);
+  font-size: clamp(0.5rem, 0.552vw, 0.552rem);
   font-weight: 800;
   letter-spacing: 0.03em;
   white-space: nowrap;
@@ -1191,7 +1191,7 @@ a {
 .quest-log .quest-duration {
   min-width: 6.5ch;
   color: var(--accent);
-  font-size: clamp(0.62rem, 0.72vw, 0.72rem);
+  font-size: clamp(0.744rem, 0.864vw, 0.864rem);
   font-variant-numeric: tabular-nums;
   font-weight: 900;
   letter-spacing: 0.04em;
@@ -1210,7 +1210,7 @@ a {
   border-top: 3px solid var(--game-ink);
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.38rem, 0.45vw, 0.45rem);
+  font-size: clamp(0.5rem, 0.54vw, 0.54rem);
   font-weight: 900;
   line-height: 1.45;
 }
@@ -1258,7 +1258,7 @@ a {
   background: var(--game-ink);
   box-shadow: 3px 3px 0 var(--accent);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.62rem;
+  font-size: 0.744rem;
   font-weight: 800;
   line-height: 1.4;
   opacity: 0;
@@ -1287,7 +1287,7 @@ a {
   padding: 0.25rem 0.6rem;
   border-left: 2px solid var(--game-pale);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.34rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   font-weight: 900;
   white-space: nowrap;
 }
@@ -1363,7 +1363,7 @@ a {
   color: var(--paper);
   background: var(--game-ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.62rem;
+  font-size: 0.744rem;
   font-weight: 800;
   line-height: 1.4;
   white-space: normal;
@@ -1375,7 +1375,7 @@ a {
 
 .activity-exact-time span {
   color: var(--game-pale);
-  font-size: 0.5rem;
+  font-size: 0.6rem;
 }
 
 .activity-exact-time time {
@@ -1416,11 +1416,11 @@ a {
 .activity-header > div span {
   margin-bottom: 0.3rem;
   color: var(--game-pale);
-  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  font-size: clamp(0.5rem, 0.456vw, 0.5rem);
 }
 
 .activity-header > div b {
-  font-size: clamp(0.5rem, 0.7vw, 0.7rem);
+  font-size: clamp(0.6rem, 0.84vw, 0.84rem);
 }
 
 .live-signal {
@@ -1428,7 +1428,7 @@ a {
   align-items: center;
   gap: 0.45rem;
   color: var(--accent-soft);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   white-space: nowrap;
 }
 
@@ -1481,7 +1481,7 @@ a {
 
 .activity-type {
   color: var(--accent);
-  font-size: clamp(0.32rem, 0.43vw, 0.43rem);
+  font-size: clamp(0.5rem, 0.516vw, 0.516rem);
   line-height: 1.35;
 }
 
@@ -1492,7 +1492,7 @@ a {
 
 .activity-log li b {
   overflow: hidden;
-  font-size: clamp(0.38rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1503,7 +1503,7 @@ a {
 .activity-log code {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.42rem, 0.52vw, 0.52rem);
+  font-size: clamp(0.504rem, 0.624vw, 0.624rem);
   font-weight: 900;
 }
 
@@ -1513,7 +1513,7 @@ a {
 }
 
 .activity-footer {
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.4;
 }
 
@@ -1525,7 +1525,7 @@ a {
   display: inline-block;
   min-width: 3ch;
   color: var(--accent);
-  font-size: 0.62rem;
+  font-size: 0.744rem;
   font-weight: 900;
 }
 
@@ -1571,7 +1571,7 @@ a {
   color: var(--paper);
   background: var(--accent);
   box-shadow: none;
-  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  font-size: clamp(0.5rem, 0.456vw, 0.5rem);
   animation: discovery-banner 2.7s steps(8, end) both;
   pointer-events: none;
 }
@@ -1584,7 +1584,7 @@ a {
 }
 
 .research-discovery b {
-  font-size: 0.42rem;
+  font-size: 0.504rem;
 }
 
 .activity-footer a {
@@ -1628,7 +1628,7 @@ a {
 
 .archive-vitals b {
   color: var(--accent);
-  font-size: clamp(0.75rem, 1.2vw, 1.15rem);
+  font-size: clamp(0.9rem, 1.44vw, 1.38rem);
   line-height: 1.35;
   white-space: nowrap;
 }
@@ -1636,7 +1636,7 @@ a {
 .archive-vitals span {
   margin-top: 0.45rem;
   color: var(--game-mid);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.45;
 }
 
@@ -1674,7 +1674,7 @@ a {
 .milestone-header div span,
 .milestone-header > span {
   color: var(--game-pale);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
 }
 
 .milestone-header div span {
@@ -1682,7 +1682,7 @@ a {
 }
 
 .milestone-header div b {
-  font-size: clamp(0.55rem, 0.76vw, 0.76rem);
+  font-size: clamp(0.66rem, 0.912vw, 0.912rem);
 }
 
 .milestone-deck > div:last-child {
@@ -1722,7 +1722,7 @@ a {
   aspect-ratio: 1;
   border: 3px solid currentColor;
   border-radius: 50%;
-  font-size: 0.42rem;
+  font-size: 0.504rem;
   font-style: normal;
 }
 
@@ -1732,7 +1732,7 @@ a {
   align-self: center;
   max-width: 100%;
   color: var(--accent);
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
   line-height: 1.4;
 }
 
@@ -1745,7 +1745,7 @@ a {
   grid-column: 1 / -1;
   grid-row: 2;
   margin-top: 0.65rem;
-  font-size: clamp(0.42rem, 0.54vw, 0.54rem);
+  font-size: clamp(0.504rem, 0.648vw, 0.648rem);
   line-height: 1.5;
 }
 
@@ -1756,7 +1756,7 @@ a {
   padding-top: 0.65rem;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.4rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   font-weight: 900;
 }
 
@@ -1804,7 +1804,7 @@ a {
   gap: 1rem;
   padding: 0.65rem 0.8rem;
   color: var(--paper);
-  font-size: clamp(0.34rem, 0.46vw, 0.46rem);
+  font-size: clamp(0.5rem, 0.552vw, 0.552rem);
   line-height: 1.5;
 }
 
@@ -1833,7 +1833,7 @@ a {
   padding: 0.7rem 0.8rem;
   color: var(--paper);
   background: var(--game-ink);
-  font-size: clamp(0.42rem, 0.56vw, 0.56rem);
+  font-size: clamp(0.504rem, 0.672vw, 0.672rem);
 }
 
 .archive-types > div {
@@ -1850,12 +1850,12 @@ a {
   min-height: 38px;
   padding: 0.35rem 0.55rem;
   border: 2px solid var(--game-mid);
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
 }
 
 .archive-types i {
   color: var(--accent);
-  font-size: 0.68rem;
+  font-size: 0.816rem;
   font-style: normal;
 }
 
@@ -1869,7 +1869,7 @@ a {
   padding: 0.7rem 0.8rem;
   color: var(--paper);
   background: var(--game-ink);
-  font-size: clamp(0.42rem, 0.56vw, 0.56rem);
+  font-size: clamp(0.504rem, 0.672vw, 0.672rem);
 }
 
 .archive-filters > div {
@@ -1886,7 +1886,7 @@ a {
   color: var(--game-mid);
   background: var(--paper);
   font: inherit;
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
   cursor: pointer;
 }
 
@@ -1921,7 +1921,7 @@ a {
 .archive-ledger-header div span,
 .archive-ledger-header > span {
   color: var(--game-pale);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
 }
 
 .archive-ledger-header div span {
@@ -1929,7 +1929,7 @@ a {
 }
 
 .archive-ledger-header div b {
-  font-size: clamp(0.55rem, 0.75vw, 0.75rem);
+  font-size: clamp(0.66rem, 0.9vw, 0.9rem);
 }
 
 .archive-ledger ol {
@@ -1968,7 +1968,7 @@ a {
 .archive-number,
 .archive-entry-type {
   color: var(--accent);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.4;
 }
 
@@ -1981,7 +1981,7 @@ a {
 
 .archive-ledger li b {
   overflow: hidden;
-  font-size: clamp(0.38rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1992,7 +1992,7 @@ a {
   overflow: hidden;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.4rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   font-weight: 900;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2011,7 +2011,7 @@ a {
   gap: 1rem;
   padding: 0.9rem 0;
   border-bottom: 2px dotted var(--game-pale);
-  font-size: clamp(0.48rem, 0.72vw, 0.64rem);
+  font-size: clamp(0.576rem, 0.864vw, 0.768rem);
   line-height: 1.6;
 }
 
@@ -2032,7 +2032,7 @@ a {
   border: 3px solid var(--game-ink);
   color: var(--game-ink);
   background: color-mix(in srgb, var(--accent-soft) 58%, var(--paper));
-  font-size: clamp(0.43rem, 0.66vw, 0.56rem);
+  font-size: clamp(0.516rem, 0.792vw, 0.672rem);
   line-height: 1.6;
 }
 
@@ -2053,12 +2053,12 @@ a {
 
 .feature-list span {
   color: var(--accent);
-  font-size: 0.52rem;
+  font-size: 0.624rem;
 }
 
 .feature-list b {
   overflow-wrap: anywhere;
-  font-size: clamp(0.5rem, 0.72vw, 0.64rem);
+  font-size: clamp(0.6rem, 0.864vw, 0.768rem);
 }
 
 .feature-list small {
@@ -2067,7 +2067,7 @@ a {
   white-space: normal;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.78rem, 1vw, 0.95rem);
+  font-size: clamp(0.936rem, 1.2vw, 1.14rem);
   font-weight: 700;
   line-height: 1.4;
 }
@@ -2081,7 +2081,7 @@ a {
 
 .warning-box b {
   display: block;
-  font-size: 0.61rem;
+  font-size: 0.732rem;
   line-height: 1.55;
 }
 
@@ -2111,13 +2111,13 @@ a {
 
 .install-steps b {
   color: var(--accent);
-  font-size: 0.52rem;
+  font-size: 0.624rem;
 }
 
 .install-steps span {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.88rem;
+  font-size: 1.056rem;
   font-weight: 700;
 }
 
@@ -2136,7 +2136,7 @@ a {
   padding: 0.8rem 0.55rem;
   border-bottom: 2px dotted var(--game-pale);
   color: var(--game-ink);
-  font-size: clamp(0.45rem, 0.68vw, 0.6rem);
+  font-size: clamp(0.54rem, 0.816vw, 0.72rem);
   line-height: 1.5;
   text-decoration: none;
 }
@@ -2161,7 +2161,7 @@ a {
   border: 4px solid var(--game-ink);
   color: var(--accent);
   background: var(--game-pale);
-  font-size: 1.35rem;
+  font-size: 1.62rem;
   box-shadow: 7px 7px 0 var(--game-ink);
 }
 
@@ -2208,14 +2208,14 @@ a {
   display: block;
   margin-bottom: 0.65rem;
   color: var(--accent-soft);
-  font-size: clamp(0.4rem, 0.52vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.624vw, 0.6rem);
   letter-spacing: 0.08em;
 }
 
 .rewrite-callout > b {
   display: block;
   max-width: 18ch;
-  font-size: clamp(1rem, 1.8vw, 1.65rem);
+  font-size: clamp(1.2rem, 2.16vw, 1.98rem);
   line-height: 1.28;
 }
 
@@ -2224,7 +2224,7 @@ a {
   margin: 0.85rem 0 0;
   color: rgba(248, 242, 216, 0.8);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.8rem;
+  font-size: 0.96rem;
   font-weight: 700;
   line-height: 1.55;
 }
@@ -2279,12 +2279,12 @@ a {
 
 .evolution-scan-header div span {
   color: var(--accent-soft);
-  font-size: clamp(0.36rem, 0.46vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.552vw, 0.528rem);
   letter-spacing: 0.08em;
 }
 
 .evolution-scan-header div b {
-  font-size: clamp(0.62rem, 0.9vw, 0.86rem);
+  font-size: clamp(0.744rem, 1.08vw, 1.032rem);
   line-height: 1.45;
 }
 
@@ -2294,7 +2294,7 @@ a {
   gap: 0.5rem;
   padding: 0.5rem 0.6rem;
   border: 2px solid rgba(248, 242, 216, 0.4);
-  font-size: clamp(0.32rem, 0.4vw, 0.4rem);
+  font-size: clamp(0.5rem, 0.48vw, 0.5rem);
   line-height: 1.45;
   white-space: nowrap;
 }
@@ -2346,14 +2346,14 @@ a {
 .system-form > header span,
 .system-form > header em {
   color: var(--accent-soft);
-  font-size: clamp(0.3rem, 0.38vw, 0.38rem);
+  font-size: clamp(0.5rem, 0.456vw, 0.5rem);
   font-style: normal;
   line-height: 1.45;
 }
 
 .system-form > header b {
   overflow: hidden;
-  font-size: clamp(0.42rem, 0.56vw, 0.54rem);
+  font-size: clamp(0.504rem, 0.672vw, 0.648rem);
   line-height: 1.45;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2403,14 +2403,14 @@ a {
 .system-node span {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.38rem, 0.45vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.54vw, 0.528rem);
   font-weight: 900;
   line-height: 1.3;
 }
 
 .system-node b {
   overflow-wrap: anywhere;
-  font-size: clamp(0.38rem, 0.48vw, 0.48rem);
+  font-size: clamp(0.5rem, 0.576vw, 0.576rem);
   line-height: 1.45;
 }
 
@@ -2474,7 +2474,7 @@ a {
   left: 0;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.28rem, 0.34vw, 0.34rem);
+  font-size: clamp(0.5rem, 0.408vw, 0.5rem);
   font-style: normal;
   font-weight: 900;
   line-height: 1.3;
@@ -2502,14 +2502,14 @@ a {
 .system-readout small {
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.34rem, 0.4vw, 0.4rem);
+  font-size: clamp(0.5rem, 0.48vw, 0.5rem);
   font-weight: 900;
 }
 
 .system-readout b {
   overflow: hidden;
   color: var(--form-signal);
-  font-size: clamp(0.34rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.4;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2522,7 +2522,7 @@ a {
   flex-direction: column;
   gap: 0.45rem;
   color: var(--game-mid);
-  font-size: 0.32rem;
+  font-size: 0.5rem;
   letter-spacing: 0.06em;
 }
 
@@ -2554,7 +2554,7 @@ a {
 .evolution-pulse i::after { inset: -24px; animation-delay: -1.2s; }
 
 .evolution-pulse i b {
-  font-size: 1rem;
+  font-size: 1.2rem;
   filter: drop-shadow(2px 2px 0 var(--game-ink));
 }
 
@@ -2570,7 +2570,7 @@ a {
   border-top: 4px solid var(--game-ink);
   color: var(--paper);
   background: var(--game-ink);
-  font-size: clamp(0.34rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.5;
 }
 
@@ -2595,7 +2595,7 @@ a {
 
 .evolution-scan > figcaption > b {
   color: var(--accent-soft);
-  font-size: 0.36rem;
+  font-size: 0.5rem;
 }
 
 .field-media {
@@ -2630,7 +2630,7 @@ a {
   padding: 0.45rem 0.55rem;
   color: var(--paper);
   background: var(--game-ink);
-  font-size: clamp(0.32rem, 0.42vw, 0.42rem);
+  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
   line-height: 1.4;
 }
 
@@ -2639,7 +2639,7 @@ a {
   justify-content: space-between;
   gap: 1rem;
   padding: 0.8rem 0.25rem 0;
-  font-size: clamp(0.4rem, 0.5vw, 0.5rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.6rem);
   line-height: 1.5;
 }
 
@@ -2668,17 +2668,17 @@ a {
   border: 4px solid var(--game-ink);
   color: var(--accent);
   background: var(--paper);
-  font-size: 1.1rem;
+  font-size: 1.32rem;
 }
 
 .capture-lock > span:not(.capture-icon) {
   color: var(--accent);
-  font-size: clamp(0.34rem, 0.44vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.528vw, 0.528rem);
 }
 
 .capture-lock b {
   margin-top: 0.6rem;
-  font-size: clamp(0.5rem, 0.66vw, 0.66rem);
+  font-size: clamp(0.6rem, 0.792vw, 0.792rem);
   line-height: 1.5;
 }
 
@@ -2686,7 +2686,7 @@ a {
   margin: 0.7rem 0;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -2695,7 +2695,7 @@ a {
   display: inline-flex;
   align-items: center;
   min-height: 48px;
-  font-size: clamp(0.36rem, 0.46vw, 0.46rem);
+  font-size: clamp(0.5rem, 0.552vw, 0.552rem);
   line-height: 1.5;
 }
 
@@ -2718,14 +2718,14 @@ a {
 
 .rebuild-vitals b {
   color: var(--accent);
-  font-size: clamp(1rem, 1.8vw, 1.5rem);
+  font-size: clamp(1.2rem, 2.16vw, 1.8rem);
   line-height: 1;
 }
 
 .rebuild-vitals span {
   margin-top: 0.55rem;
   color: var(--game-mid);
-  font-size: clamp(0.36rem, 0.48vw, 0.46rem);
+  font-size: clamp(0.5rem, 0.576vw, 0.552rem);
   line-height: 1.5;
 }
 
@@ -2745,7 +2745,7 @@ a {
   min-height: 54px;
   color: var(--paper);
   background: var(--game-ink);
-  font-size: clamp(0.38rem, 0.5vw, 0.48rem);
+  font-size: clamp(0.5rem, 0.6vw, 0.576rem);
 }
 
 .upgrade-grid-title span:first-child { color: #e9897f; }
@@ -2755,7 +2755,7 @@ a {
   min-height: 58px;
   border-top: 2px dotted var(--game-pale);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.63rem, 0.78vw, 0.76rem);
+  font-size: clamp(0.756rem, 0.936vw, 0.912rem);
   font-weight: 800;
   line-height: 1.4;
 }
@@ -2777,7 +2777,7 @@ a {
   border-left: 2px solid var(--game-pale);
   color: var(--game-mid);
   font-family: "Press Start 2P", monospace;
-  font-size: clamp(0.34rem, 0.46vw, 0.44rem);
+  font-size: clamp(0.5rem, 0.552vw, 0.528rem);
 }
 
 .upgrade-row > span:last-child {
@@ -2804,7 +2804,7 @@ a {
 
 .world-upgrades b {
   display: block;
-  font-size: clamp(0.52rem, 0.72vw, 0.68rem);
+  font-size: clamp(0.624rem, 0.864vw, 0.816rem);
   line-height: 1.55;
 }
 
@@ -2812,7 +2812,7 @@ a {
   margin: 0.75rem 0 0;
   color: var(--game-mid);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.78rem;
+  font-size: 0.936rem;
   font-weight: 700;
   line-height: 1.5;
 }
@@ -2826,7 +2826,7 @@ a {
 }
 
 .rebuild-promise b {
-  font-size: clamp(0.58rem, 0.86vw, 0.82rem);
+  font-size: clamp(0.696rem, 1.032vw, 0.984rem);
   line-height: 1.65;
 }
 
@@ -2839,7 +2839,7 @@ a {
   border: 4px solid var(--game-ink);
   color: var(--paper);
   background: var(--game-ink);
-  font-size: 0.58rem;
+  font-size: 0.696rem;
   line-height: 1.5;
   text-decoration: none;
   box-shadow: 6px 6px 0 var(--accent);
@@ -2880,20 +2880,20 @@ a {
   color: #fff;
   background: rgba(255, 255, 255, 0.08);
   font: inherit;
-  font-size: 0.42rem;
+  font-size: 0.504rem;
   text-align: center;
   box-shadow: 0 3px 0 rgba(255, 255, 255, 0.24);
 }
 
 .control-strip span {
-  font-size: 0.4rem;
+  font-size: 0.5rem;
 }
 
 .control-strip p {
   margin: 0 0 0 auto;
   color: rgba(255, 255, 255, 0.42);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.68rem;
+  font-size: 0.816rem;
   font-weight: 700;
   line-height: 1.35;
   text-align: right;
@@ -3027,12 +3027,12 @@ a {
   }
 
   .release-copy h1 {
-    font-size: clamp(1.85rem, 2.8vw, 2.5rem);
+    font-size: clamp(2.22rem, 3.36vw, 3rem);
   }
 
   .release-copy p {
     margin-top: 0.4rem;
-    font-size: 0.65rem;
+    font-size: 0.78rem;
     line-height: 1.3;
   }
 
@@ -3046,6 +3046,10 @@ a {
 }
 
 @media (min-width: 901px) and (max-width: 1100px) {
+  .archive-vitals > div {
+    padding: 0.75rem 0.45rem;
+  }
+
   .dev-stats dl {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
@@ -3119,14 +3123,14 @@ a {
   }
 
   .window-label {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .menu-window > button {
     grid-template-columns: 22px minmax(0, 1fr);
     min-height: 64px;
     padding: 0.7rem 0.55rem;
-    font-size: clamp(0.6875rem, 1.55vw, 0.78rem);
+    font-size: clamp(0.825rem, 1.86vw, 0.936rem);
     line-height: 1.55;
   }
 
@@ -3138,18 +3142,18 @@ a {
   .inline-option {
     min-height: 58px;
     padding: 0.3rem 0.55rem;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .inline-option button {
     min-width: 48px;
     min-height: 48px;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .inline-option .quality-toggle {
     min-width: 132px;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .detail-window {
@@ -3164,7 +3168,7 @@ a {
 
   .stat-row {
     grid-template-columns: minmax(88px, 0.35fr) 1fr;
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .alpha-notice,
@@ -3172,12 +3176,12 @@ a {
   .feature-list span,
   .install-steps b,
   .detail-links a {
-    font-size: 0.625rem;
+    font-size: 0.75rem;
   }
 
   .warning-box b,
   .launch-button {
-    font-size: 0.6875rem;
+    font-size: 0.825rem;
   }
 
   .detail-links a {
@@ -3262,7 +3266,7 @@ a {
   }
 
   .release-copy h1 {
-    font-size: clamp(1.25rem, 7.5vw, 1.7rem);
+    font-size: clamp(1.5rem, 9vw, 2.04rem);
   }
 
   .release-copy p {
@@ -3271,12 +3275,12 @@ a {
 
   .github-sync-note {
     margin-top: 0.35rem;
-    font-size: 0.38rem;
+    font-size: 0.5rem;
   }
 
   .release-kicker {
     margin-bottom: 0.35rem;
-    font-size: 0.42rem;
+    font-size: 0.504rem;
   }
 
   .release-status {
@@ -3289,11 +3293,11 @@ a {
 
   .release-status span {
     margin-bottom: 0.3rem;
-    font-size: 0.34rem;
+    font-size: 0.5rem;
   }
 
   .release-status b {
-    font-size: 0.38rem;
+    font-size: 0.5rem;
   }
 
   .release-status i {
@@ -3323,7 +3327,7 @@ a {
     min-height: 48px;
     padding-right: 0.4rem;
     padding-left: 0.4rem;
-    font-size: 0.6875rem;
+    font-size: 0.825rem;
   }
 
   .detail-window {
@@ -3335,7 +3339,7 @@ a {
   }
 
   .detail-copy h2 {
-    font-size: 1.2rem;
+    font-size: 1.44rem;
   }
 
   .evolution-scan-header {
@@ -3376,7 +3380,7 @@ a {
 
   .home-vitals small,
   .home-vitals b {
-    font-size: 0.56rem;
+    font-size: 0.672rem;
   }
 
   .trainer-clock {
@@ -3386,7 +3390,7 @@ a {
   .trainer-clock-label {
     min-height: 38px;
     padding: 0.35rem 0.6rem;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     transform: none;
     writing-mode: horizontal-tb;
   }
@@ -3422,12 +3426,12 @@ a {
   .dev-stats-signal,
   .quest-log-heading span,
   .dev-stats > footer {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .dev-stats > header div b,
   .quest-log-heading b {
-    font-size: 0.65rem;
+    font-size: 0.78rem;
   }
 
   .quest-log a {
@@ -3438,17 +3442,17 @@ a {
 
   .quest-log a > span,
   .quest-log a > small {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .quest-log .quest-duration {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
   }
 
   .quest-log a > b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.55rem;
+    font-size: 0.66rem;
     white-space: normal;
   }
 
@@ -3459,7 +3463,7 @@ a {
   .trainer-clock small,
   .trainer-clock b,
   .trainer-clock time {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .activity-header,
@@ -3482,7 +3486,7 @@ a {
   .activity-log li b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.55rem;
+    font-size: 0.66rem;
     white-space: normal;
   }
 
@@ -3491,11 +3495,11 @@ a {
   .activity-header > div span,
   .live-signal,
   .activity-footer {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .activity-header > div b {
-    font-size: 0.65rem;
+    font-size: 0.78rem;
   }
 
   .activity-meta {
@@ -3504,7 +3508,7 @@ a {
     padding: 0.2rem 0.7rem;
     border-top: 2px solid var(--game-pale);
     border-left: 0;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .activity-meta .timestamp-tooltip {
@@ -3513,14 +3517,14 @@ a {
   }
 
   .archive-vitals b {
-    font-size: 0.9rem;
+    font-size: 1.08rem;
   }
 
   .archive-vitals span,
   .archive-types span,
   .archive-ledger-header div span,
   .archive-ledger-header > span {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .archive-ledger-header {
@@ -3559,20 +3563,20 @@ a {
 
   .archive-number,
   .archive-entry-type {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .archive-ledger li b {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 0.55rem;
+    font-size: 0.66rem;
     white-space: normal;
   }
 
   .archive-author {
     grid-column: 1 / -1;
     grid-row: 3;
-    font-size: 0.52rem;
+    font-size: 0.624rem;
   }
 
   .field-media figcaption {
@@ -3617,15 +3621,15 @@ a {
   }
 
   .control-strip kbd {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .control-strip span {
-    font-size: 0.55rem;
+    font-size: 0.66rem;
   }
 
   .control-strip p {
-    font-size: 0.75rem;
+    font-size: 0.9rem;
     line-height: 1.45;
   }
 }
@@ -3686,18 +3690,18 @@ a {
   .release-journey a > span,
   .release-journey b,
   .archive-filters button {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .mission-board > header div b,
   .release-journey > header div b,
   .weekly-report > header b,
   .proof-drop > header b {
-    font-size: 0.65rem;
+    font-size: 0.78rem;
   }
 
   .mission-card b {
-    font-size: 0.55rem;
+    font-size: 0.66rem;
   }
 
   .release-journey a {
@@ -3711,15 +3715,15 @@ a {
   .proof-drop dt,
   .proof-drop small,
   .weekly-report-total span {
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .weekly-report dt {
-    font-size: 10px;
+    font-size: 12px;
   }
 
   .proof-drop dd {
-    font-size: 0.55rem;
+    font-size: 0.66rem;
   }
 
   .feature-list {

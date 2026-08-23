@@ -533,6 +533,36 @@ test('keeps private metric references out of automatic GitHub history', async ({
   await expect(page.locator('body')).toContainText('Clean up public development stats')
 })
 
+test('keeps all visible interface text at the site-wide legibility floor', async ({ page }) => {
+  const routes = ['', 'features', 'activity', 'guide', 'support', 'rebuild', 'github']
+
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+
+    for (const route of routes) {
+      await page.goto(`${PAGE_PATH}${route ? `#${route}` : ''}`)
+      const smallestFont = await page.evaluate(() => {
+        const sizes: number[] = []
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+
+        while ((node = walker.nextNode())) {
+          if (!node.textContent?.trim()) continue
+          const element = node.parentElement
+          if (!element || !element.getClientRects().length) continue
+          const style = getComputedStyle(element)
+          if (style.visibility === 'hidden' || style.display === 'none') continue
+          sizes.push(Number.parseFloat(style.fontSize))
+        }
+
+        return Math.min(...sizes)
+      })
+
+      expect(smallestFont, `${route || 'home'} text at ${width}px`).toBeGreaterThanOrEqual(8)
+    }
+  }
+})
+
 test('shows the complete verified project history in the Research Log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)

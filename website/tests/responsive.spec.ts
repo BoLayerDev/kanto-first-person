@@ -894,6 +894,10 @@ test('keeps Field Features text inside the panel at narrow widths', async ({ pag
     const list = page.locator('.feature-list')
     const fit = await list.evaluate((element) => ({
       clipped: element.scrollWidth > element.clientWidth + 1,
+      rowBorders: [...element.querySelectorAll<HTMLElement>('.feature-list-row')].map((row) => ({
+        childrenWithBorders: [...row.children].filter((child) => getComputedStyle(child).borderBottomWidth !== '0px').length,
+        rowBorder: getComputedStyle(row).borderBottomWidth,
+      })),
       rows: [...element.querySelectorAll<HTMLElement>('b, small')].map((item) => ({
         text: item.textContent,
         clipped: item.scrollWidth > item.clientWidth + 1,
@@ -902,6 +906,11 @@ test('keeps Field Features text inside the panel at narrow widths', async ({ pag
     }))
 
     expect(fit.clipped, `feature list must fit at ${width}px`).toBe(false)
+    expect(fit.rowBorders).toHaveLength(4)
+    for (const border of fit.rowBorders) {
+      expect(border.rowBorder).toBe('2px')
+      expect(border.childrenWithBorders).toBe(0)
+    }
     for (const row of fit.rows) {
       expect(row.clipped, `${row.text} must fit at ${width}px`).toBe(false)
       expect(row.wraps, `${row.text} must wrap at ${width}px`).toBe(true)

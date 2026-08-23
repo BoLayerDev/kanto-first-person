@@ -940,10 +940,18 @@ function MenuDetail({
     return (
       <>
         <div className="feature-list">
-          <span>01</span><b>INTERIORS</b><small>Walls, ceilings, windows, doors, and light</small>
-          <span>02</span><b>OPEN WORLD</b><small>Terrain aprons, trees, mountains, and horizons</small>
-          <span>03</span><b>ATMOSPHERE</b><small>Clouds, rain, storms, fog, stars, and particles</small>
-          <span>04</span><b>CAVES</b><small>Uneven roofs, pools, stone columns, and sconces</small>
+          <div className="feature-list-row">
+            <span>01</span><b>INTERIORS</b><small>Walls, ceilings, windows, doors, and light</small>
+          </div>
+          <div className="feature-list-row">
+            <span>02</span><b>OPEN WORLD</b><small>Terrain aprons, trees, mountains, and horizons</small>
+          </div>
+          <div className="feature-list-row">
+            <span>03</span><b>ATMOSPHERE</b><small>Clouds, rain, storms, fog, stars, and particles</small>
+          </div>
+          <div className="feature-list-row">
+            <span>04</span><b>CAVES</b><small>Uneven roofs, pools, stone columns, and sconces</small>
+          </div>
         </div>
         <DetailLinks>
           <a href={`${BRANCH}/docs/feature-parity.md`} target="_blank" rel="noreferrer">FULL FEATURE LEDGER <span>↗</span></a>

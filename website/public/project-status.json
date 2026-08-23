@@ -3,34 +3,12 @@
   "version": "2.0.0-alpha.1",
   "experimental": true,
   "branch": "v2-rewrite",
-  "commit": "5e8544ff992e7d92d73b379a56ed7333cf955a93",
-  "shortSha": "5e8544f",
-  "commitMessage": "Merge pull request #11 from BoLayerDev/feat/trainer-clock",
-  "commitUrl": "https://github.com/BoLayerDev/kanto-first-person/commit/5e8544ff992e7d92d73b379a56ed7333cf955a93",
-  "generatedAt": "2026-08-22T20:38:26.548Z",
+  "commit": "191ede225a4c2cbbf5e787fb189f4e25bbbfd219",
+  "shortSha": "191ede2",
+  "commitMessage": "docs(release): record current host release status",
+  "commitUrl": "https://github.com/BoLayerDev/kanto-first-person/commit/191ede225a4c2cbbf5e787fb189f4e25bbbfd219",
+  "generatedAt": "2026-08-23T10:20:51.555Z",
   "activity": [
-    {
-      "sha": "5e8544ff992e7d92d73b379a56ed7333cf955a93",
-      "shortSha": "5e8544f",
-      "message": "Merge pull request #11 from BoLayerDev/feat/trainer-clock",
-      "date": "2026-08-22T14:25:58-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5e8544ff992e7d92d73b379a56ed7333cf955a93",
-      "ci": {
-        "durationSeconds": 50,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596660170"
-      }
-    },
-    {
-      "sha": "93ecce96199b3f0d134fe04d9e371a8620575630",
-      "shortSha": "93ecce9",
-      "message": "feat(website): add automatic trainer clock",
-      "date": "2026-08-22T14:22:07-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/93ecce96199b3f0d134fe04d9e371a8620575630"
-    },
     {
       "sha": "191ede225a4c2cbbf5e787fb189f4e25bbbfd219",
       "shortSha": "191ede2",
@@ -38,268 +16,18 @@
       "date": "2026-08-22T14:18:29-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/191ede225a4c2cbbf5e787fb189f4e25bbbfd219",
       "ci": {
+        "runId": "32596299098",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596299098"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596299098",
+        "startedAt": "2026-08-22T20:18:31Z",
+        "completedAt": "2026-08-22T20:19:11Z",
+        "passed": 0,
+        "total": 0
       }
-    },
-    {
-      "sha": "127ea198256b484982bfb9027745835452d048db",
-      "shortSha": "127ea19",
-      "message": "Merge pull request #10 from BoLayerDev/fix/rewrite-start-date",
-      "date": "2026-08-22T14:08:56-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/127ea198256b484982bfb9027745835452d048db",
-      "ci": {
-        "durationSeconds": 45,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32595828338"
-      }
-    },
-    {
-      "sha": "bdbc96825b420d82ea030b4d0ca633b99bc6b6cc",
-      "shortSha": "bdbc968",
-      "message": "fix(website): show verified rewrite start date",
-      "date": "2026-08-22T14:07:58-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/bdbc96825b420d82ea030b4d0ca633b99bc6b6cc"
-    },
-    {
-      "sha": "f8823eecf9a96a6946578223345140b01926cecb",
-      "shortSha": "f8823ee",
-      "message": "Merge pull request #9 from BoLayerDev/fix/milestone-badge-overlap",
-      "date": "2026-08-22T14:04:00-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f8823eecf9a96a6946578223345140b01926cecb",
-      "ci": {
-        "durationSeconds": 51,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32595583090"
-      }
-    },
-    {
-      "sha": "42218f4a0e789cdffd0d7c68d31d4d68d082d023",
-      "shortSha": "42218f4",
-      "message": "fix(website): prevent field badge overlap",
-      "date": "2026-08-22T14:02:53-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/42218f4a0e789cdffd0d7c68d31d4d68d082d023"
-    },
-    {
-      "sha": "e4fec6792cd9bfad28270860c44a9ab080aaa4b9",
-      "shortSha": "e4fec67",
-      "message": "Merge pull request #8 from BoLayerDev/fix/research-date-card",
-      "date": "2026-08-22T13:54:47-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e4fec6792cd9bfad28270860c44a9ab080aaa4b9",
-      "ci": {
-        "durationSeconds": 39,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32595117088"
-      }
-    },
-    {
-      "sha": "71610b5c8cb182c2ebe1e4dc35b5da72c8b1412f",
-      "shortSha": "71610b5",
-      "message": "fix(website): repair research start date card",
-      "date": "2026-08-22T13:53:45-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/71610b5c8cb182c2ebe1e4dc35b5da72c8b1412f"
-    },
-    {
-      "sha": "b808e64fb24d986ad0663a9d7b3ecec3608b84c1",
-      "shortSha": "b808e64",
-      "message": "Merge pull request #7 from BoLayerDev/fix/activity-graphic-text",
-      "date": "2026-08-22T13:49:08-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b808e64fb24d986ad0663a9d7b3ecec3608b84c1",
-      "ci": {
-        "durationSeconds": 49,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32594837236"
-      }
-    },
-    {
-      "sha": "10e43386b25b62474040bd07bc6c546c66551adb",
-      "shortSha": "10e4338",
-      "message": "fix(website): fit activity graphic labels",
-      "date": "2026-08-22T13:48:13-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/10e43386b25b62474040bd07bc6c546c66551adb"
-    },
-    {
-      "sha": "2ac54f56d744d091d1d8a7a61fafc5b59b5ab664",
-      "shortSha": "2ac54f5",
-      "message": "Merge pull request #6 from BoLayerDev/fix/rebuild-evolution-scan",
-      "date": "2026-08-22T13:43:48-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2ac54f56d744d091d1d8a7a61fafc5b59b5ab664",
-      "ci": {
-        "durationSeconds": 47,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32594576794"
-      }
-    },
-    {
-      "sha": "9d7596e97a4b2e1da1a7269f248e8cf3b2f1eaa5",
-      "shortSha": "9d7596e",
-      "message": "feat(website): replace rewrite concept drawings",
-      "date": "2026-08-22T13:42:38-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9d7596e97a4b2e1da1a7269f248e8cf3b2f1eaa5"
-    },
-    {
-      "sha": "a67a0626e61a772823713d82425b61890c2761f9",
-      "shortSha": "a67a062",
-      "message": "Merge pull request #5 from BoLayerDev/fix/mobile-fold-spacing",
-      "date": "2026-08-22T13:35:36-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a67a0626e61a772823713d82425b61890c2761f9",
-      "ci": {
-        "durationSeconds": 43,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32594164949"
-      }
-    },
-    {
-      "sha": "31ae0739d69080c696153a1edb2f16b8ebc4cbb1",
-      "shortSha": "31ae073",
-      "message": "fix(website): add mobile fold spacing reserve",
-      "date": "2026-08-22T13:34:35-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/31ae0739d69080c696153a1edb2f16b8ebc4cbb1"
-    },
-    {
-      "sha": "b5e923b4ca9bdeae0881dae50428ec5466cda439",
-      "shortSha": "b5e923b",
-      "message": "Merge pull request #4 from BoLayerDev/fix/home-vitals-labels",
-      "date": "2026-08-22T13:31:58-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b5e923b4ca9bdeae0881dae50428ec5466cda439",
-      "ci": {
-        "durationSeconds": 39,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32593986533"
-      }
-    },
-    {
-      "sha": "f39cec1ba5a089497f4eb0f2efbbbd01a4777245",
-      "shortSha": "f39cec1",
-      "message": "test(website): stabilize responsive route checks",
-      "date": "2026-08-22T13:30:43-06:00",
-      "author": "Bo Layer",
-      "type": "LAB VERIFIED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f39cec1ba5a089497f4eb0f2efbbbd01a4777245"
-    },
-    {
-      "sha": "a0356e24aef2ba64fbbad70fa8cdb46164076331",
-      "shortSha": "a0356e2",
-      "message": "fix(website): keep mobile summary above fold",
-      "date": "2026-08-22T13:28:46-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a0356e24aef2ba64fbbad70fa8cdb46164076331"
-    },
-    {
-      "sha": "d70711325d8cc6991065843153518bf16c782357",
-      "shortSha": "d707113",
-      "message": "fix(website): prevent vital label clipping",
-      "date": "2026-08-22T13:25:18-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d70711325d8cc6991065843153518bf16c782357"
-    },
-    {
-      "sha": "b6f8103c24c310079e82f263bae4cc2d636db966",
-      "shortSha": "b6f8103",
-      "message": "Merge pull request #3 from BoLayerDev/fix/desktop-control-labels",
-      "date": "2026-08-22T13:19:16-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b6f8103c24c310079e82f263bae4cc2d636db966",
-      "ci": {
-        "durationSeconds": 41,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32593362468"
-      }
-    },
-    {
-      "sha": "d1f0ad957a1b648d798c586dfda030d300d9ea6d",
-      "shortSha": "d1f0ad9",
-      "message": "test(website): make desktop focus order explicit",
-      "date": "2026-08-22T13:18:14-06:00",
-      "author": "Bo Layer",
-      "type": "LAB VERIFIED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d1f0ad957a1b648d798c586dfda030d300d9ea6d"
-    },
-    {
-      "sha": "bcb844790c803553fe4a4274eaed84511ab06cbe",
-      "shortSha": "bcb8447",
-      "message": "feat(website): derive milestones automatically",
-      "date": "2026-08-22T13:15:50-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/bcb844790c803553fe4a4274eaed84511ab06cbe"
-    },
-    {
-      "sha": "e60b61553c79a5882667dec9a5b81b58df36f481",
-      "shortSha": "e60b615",
-      "message": "feat(website): archive complete verified history",
-      "date": "2026-08-22T13:08:03-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e60b61553c79a5882667dec9a5b81b58df36f481"
-    },
-    {
-      "sha": "e19bdfa3af33c02dc1b518ef29bf41f03a68f7e2",
-      "shortSha": "e19bdfa",
-      "message": "feat(website): showcase verified project progress",
-      "date": "2026-08-22T12:55:59-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e19bdfa3af33c02dc1b518ef29bf41f03a68f7e2"
-    },
-    {
-      "sha": "b02134a930544f4d573f51d02683465d1d37a199",
-      "shortSha": "b02134a",
-      "message": "feat(website): sync public status from GitHub",
-      "date": "2026-08-22T12:45:19-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b02134a930544f4d573f51d02683465d1d37a199"
-    },
-    {
-      "sha": "5cdbca8a50c05c9809d0ebde0e836948d0297004",
-      "shortSha": "5cdbca8",
-      "message": "feat(website): add next-gen rebuild tour",
-      "date": "2026-08-22T12:37:53-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5cdbca8a50c05c9809d0ebde0e836948d0297004"
-    },
-    {
-      "sha": "f04c3835f4573c06d8b21eeeae60062ee8cbe78d",
-      "shortSha": "f04c383",
-      "message": "feat(website): add verified coming-soon banner",
-      "date": "2026-08-22T12:33:50-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f04c3835f4573c06d8b21eeeae60062ee8cbe78d"
-    },
-    {
-      "sha": "8240f4efcd2a2185c7420ab80d38ef88bdedafff",
-      "shortSha": "8240f4e",
-      "message": "fix(website): use standard desktop controls",
-      "date": "2026-08-22T12:30:09-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/8240f4efcd2a2185c7420ab80d38ef88bdedafff"
     },
     {
       "sha": "79b385131d3628f405ad264a01973c479991fc43",
@@ -308,10 +36,17 @@
       "date": "2026-08-22T05:49:22-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43",
       "ci": {
+        "runId": "32571329500",
         "durationSeconds": 39,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500",
+        "startedAt": "2026-08-22T11:49:44Z",
+        "completedAt": "2026-08-22T11:50:23Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -321,10 +56,17 @@
       "date": "2026-08-22T05:20:50-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/cfc045bec72c2ceecd558b24bcd643c8e0b720dc",
       "ci": {
+        "runId": "32570167507",
         "durationSeconds": 58,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32570167507",
+        "startedAt": "2026-08-22T11:23:56Z",
+        "completedAt": "2026-08-22T11:24:54Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -334,6 +76,8 @@
       "date": "2026-08-22T05:10:27-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6682cc4369a4e9536ec7cd243922fc71dcdbad50"
     },
     {
@@ -343,6 +87,8 @@
       "date": "2026-08-22T04:29:43-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/136d67c4802450e20fb2d64ae024a7af3194a385"
     },
     {
@@ -352,6 +98,8 @@
       "date": "2026-08-22T04:24:04-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/719acbfe9250062fbe97546df03819d82fa824b2"
     },
     {
@@ -361,6 +109,8 @@
       "date": "2026-08-22T04:20:09-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d54933db7efc1854ecdf0aa981932d7725ebca1b"
     },
     {
@@ -370,6 +120,8 @@
       "date": "2026-08-22T04:11:00-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f1939259b5b9b5bc3af8938ab0f54651d5087303"
     },
     {
@@ -379,6 +131,8 @@
       "date": "2026-08-22T03:59:52-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c5936f96468830cd560243d1746c511b8820e9cc"
     },
     {
@@ -388,6 +142,8 @@
       "date": "2026-08-22T03:55:18-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/71a3b039fb5423a9cf107aa37e4bdfb6703dc8e9"
     },
     {
@@ -397,6 +153,8 @@
       "date": "2026-08-22T03:47:39-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b964789169902b33b34d246e03e699fe1f149f31"
     },
     {
@@ -406,6 +164,8 @@
       "date": "2026-08-22T03:38:30-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dce1662613143804d143968a261e37f6f6984c7b"
     },
     {
@@ -415,6 +175,8 @@
       "date": "2026-08-22T03:30:54-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/029259ce10c856b0d3409a3c47512f9490bde6bb"
     },
     {
@@ -424,6 +186,8 @@
       "date": "2026-08-22T03:30:37-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/017f61145aea066a91738017912efcf9192e6448"
     },
     {
@@ -433,10 +197,17 @@
       "date": "2026-08-22T03:21:24-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e5b43cbded65db5a784de10f9c56349859bf9aae",
       "ci": {
+        "runId": "32564763152",
         "durationSeconds": 38,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32564763152"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32564763152",
+        "startedAt": "2026-08-22T09:22:20Z",
+        "completedAt": "2026-08-22T09:22:58Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -446,29 +217,9 @@
       "date": "2026-08-22T03:21:24-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9179caf32649dbb253529c2a38ae227dce6b5d5b"
-    },
-    {
-      "sha": "929011e99439014ab10c67c552cd9921d82e4167",
-      "shortSha": "929011e",
-      "message": "fix(website): align keyboard focus with selection",
-      "date": "2026-08-22T03:02:27-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/929011e99439014ab10c67c552cd9921d82e4167",
-      "ci": {
-        "durationSeconds": 41,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32563887973"
-      }
-    },
-    {
-      "sha": "575ca114cd6f9804b6ee94b3236c5791cf3fae35",
-      "shortSha": "575ca11",
-      "message": "fix(website): make mobile terminal readable",
-      "date": "2026-08-22T03:02:27-06:00",
-      "author": "Bo Layer",
-      "type": "HP RESTORED",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/575ca114cd6f9804b6ee94b3236c5791cf3fae35"
     },
     {
       "sha": "1d8a51a5189641b59b7a28ec3dd007313df89754",
@@ -477,10 +228,17 @@
       "date": "2026-08-22T02:38:27-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/1d8a51a5189641b59b7a28ec3dd007313df89754",
       "ci": {
+        "runId": "32562831612",
         "durationSeconds": 49,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32562831612"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32562831612",
+        "startedAt": "2026-08-22T08:38:54Z",
+        "completedAt": "2026-08-22T08:39:43Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -490,10 +248,17 @@
       "date": "2026-08-22T02:09:22-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0683051a9ade567df8f5a5a73a2693646274e578",
       "ci": {
+        "runId": "32561890609",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32561890609",
+        "startedAt": "2026-08-22T08:17:26Z",
+        "completedAt": "2026-08-22T08:18:06Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -503,6 +268,8 @@
       "date": "2026-08-22T02:09:16-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f509a370c13f24a13cef37981ec7b859407a4f4c"
     },
     {
@@ -512,6 +279,8 @@
       "date": "2026-08-22T02:09:16-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/63b7e1baa3ed5a49c46d8e6c165491de8b2f9a64"
     },
     {
@@ -521,6 +290,8 @@
       "date": "2026-08-22T02:09:16-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0719894d1d90bf8d05b7c0ed678509022093b4aa"
     },
     {
@@ -530,6 +301,8 @@
       "date": "2026-08-22T02:09:16-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/7bb4b09a845b936ca10541f6a27a1b42bab5eeae"
     },
     {
@@ -539,68 +312,18 @@
       "date": "2026-08-22T01:38:37-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3e5a19f15cb8dfdcca7044e236533c5b22d8710f",
       "ci": {
+        "runId": "32560143863",
         "durationSeconds": 62,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32560143863"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32560143863",
+        "startedAt": "2026-08-22T07:38:42Z",
+        "completedAt": "2026-08-22T07:39:44Z",
+        "passed": 0,
+        "total": 0
       }
-    },
-    {
-      "sha": "dec53c15fdc32285afae0313c8bbe7e8615b2def",
-      "shortSha": "dec53c1",
-      "message": "Merge pull request #2 from BoLayerDev/feature/gen1-options-terminal",
-      "date": "2026-08-22T01:37:08-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dec53c15fdc32285afae0313c8bbe7e8615b2def",
-      "ci": {
-        "durationSeconds": 31,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32560074293"
-      }
-    },
-    {
-      "sha": "2f8cea8c513f9dbed68975d3553e1cecabc1bce7",
-      "shortSha": "2f8cea8",
-      "message": "feat: reduce site to Gen 1 options terminal",
-      "date": "2026-08-22T01:35:17-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2f8cea8c513f9dbed68975d3553e1cecabc1bce7"
-    },
-    {
-      "sha": "6e6c78ba9e70fa85d43c954d684a603253422e9d",
-      "shortSha": "6e6c78b",
-      "message": "docs: record Pages publication",
-      "date": "2026-08-22T01:13:43-06:00",
-      "author": "Bo Layer",
-      "type": "FIELD NOTES",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6e6c78ba9e70fa85d43c954d684a603253422e9d",
-      "ci": {
-        "durationSeconds": 41,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32559039125"
-      }
-    },
-    {
-      "sha": "59abbd8b0dbfe7d81cf399a85eceddceb2568fd1",
-      "shortSha": "59abbd8",
-      "message": "Merge pull request #1 from BoLayerDev/feature/kanto-field-terminal",
-      "date": "2026-08-22T01:11:45-06:00",
-      "author": "Bo Layer",
-      "type": "RESEARCH UPDATE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/59abbd8b0dbfe7d81cf399a85eceddceb2568fd1",
-      "ci": {
-        "durationSeconds": 44,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558954047"
-      }
-    },
-    {
-      "sha": "dd752d0ea3c5a7ec610b2b030ca71484ecac7788",
-      "shortSha": "dd752d0",
-      "message": "feat: add interactive Kanto field terminal",
-      "date": "2026-08-22T01:10:22-06:00",
-      "author": "Bo Layer",
-      "type": "NEW MOVE",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dd752d0ea3c5a7ec610b2b030ca71484ecac7788"
     },
     {
       "sha": "422b12a36b5b299c2e43f9948e809896a5f0194d",
@@ -609,10 +332,17 @@
       "date": "2026-08-22T01:07:15-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/422b12a36b5b299c2e43f9948e809896a5f0194d",
       "ci": {
+        "runId": "32558816040",
         "durationSeconds": 35,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558816040"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558816040",
+        "startedAt": "2026-08-22T07:08:38Z",
+        "completedAt": "2026-08-22T07:09:13Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -622,10 +352,17 @@
       "date": "2026-08-22T00:48:25-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/af8610cc2ddd7bb4049c26ca7673c8d0a5319351",
       "ci": {
+        "runId": "32558047311",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32558047311",
+        "startedAt": "2026-08-22T06:51:28Z",
+        "completedAt": "2026-08-22T06:52:08Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -635,6 +372,8 @@
       "date": "2026-08-22T00:31:17-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f4973918e31e4bec1dbe860028e7c6d59011b3be"
     },
     {
@@ -644,6 +383,8 @@
       "date": "2026-08-22T00:30:43-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ee84d1beb9fe65cc82b075714c0ad472f94e9a7e"
     },
     {
@@ -653,6 +394,8 @@
       "date": "2026-08-22T00:21:50-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d301c779478e524c2e35dbeafa7347ae35103ba5"
     },
     {
@@ -662,6 +405,8 @@
       "date": "2026-08-22T00:16:28-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/f23424b4d5713fa94292465f03684af97fd1625a"
     },
     {
@@ -671,6 +416,8 @@
       "date": "2026-08-21T23:08:45-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/eecffd9adbef3d03b58daaef51c0f76e4dc10445"
     },
     {
@@ -680,10 +427,17 @@
       "date": "2026-08-21T22:37:33-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3b21b584816ecd2f6a557678eadb83d28df526a0",
       "ci": {
+        "runId": "32552195982",
         "durationSeconds": 35,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32552195982"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32552195982",
+        "startedAt": "2026-08-22T04:37:38Z",
+        "completedAt": "2026-08-22T04:38:13Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -693,10 +447,17 @@
       "date": "2026-08-21T22:29:44-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5581c700c7058c2d5c059773c5e1d38a28834c8e",
       "ci": {
+        "runId": "32551846026",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32551846026"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32551846026",
+        "startedAt": "2026-08-22T04:29:48Z",
+        "completedAt": "2026-08-22T04:30:28Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -706,10 +467,17 @@
       "date": "2026-08-21T22:23:50-06:00",
       "author": "Bo Layer",
       "type": "HP RESTORED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/6b45a77695fbf2854afa8e10c660f46e9deb7bc9",
       "ci": {
+        "runId": "32551599336",
         "durationSeconds": 37,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32551599336"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32551599336",
+        "startedAt": "2026-08-22T04:24:04Z",
+        "completedAt": "2026-08-22T04:24:41Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -719,10 +487,17 @@
       "date": "2026-08-21T22:09:07-06:00",
       "author": "Bo Layer",
       "type": "NEW MOVE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/4acb605b5fc3a07295fa8c8777d733ce69fa466a",
       "ci": {
+        "runId": "32550950844",
         "durationSeconds": 41,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550950844"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550950844",
+        "startedAt": "2026-08-22T04:09:38Z",
+        "completedAt": "2026-08-22T04:10:19Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -732,10 +507,17 @@
       "date": "2026-08-21T22:04:14-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/06a8b0ec4495fb81f36474b8e8707081e4ae65b9",
       "ci": {
+        "runId": "32550711471",
         "durationSeconds": 38,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550711471"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550711471",
+        "startedAt": "2026-08-22T04:04:21Z",
+        "completedAt": "2026-08-22T04:04:59Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -745,6 +527,8 @@
       "date": "2026-08-21T22:00:19-06:00",
       "author": "Bo Layer",
       "type": "NEW MOVE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c5d40d9cec38be36759f3b3b6baf109cdc74ccf1"
     },
     {
@@ -754,10 +538,17 @@
       "date": "2026-08-21T21:55:19-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a5dfdaf6efad44ae577bdd986b0654015b85c40e",
       "ci": {
+        "runId": "32550299631",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550299631"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550299631",
+        "startedAt": "2026-08-22T03:55:24Z",
+        "completedAt": "2026-08-22T03:56:04Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -767,10 +558,17 @@
       "date": "2026-08-21T21:51:07-06:00",
       "author": "Bo Layer",
       "type": "NEW MOVE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/47e4161e122996b7bf7cc9111a9c7045c72b1a57",
       "ci": {
+        "runId": "32550107407",
         "durationSeconds": 33,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550107407"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32550107407",
+        "startedAt": "2026-08-22T03:51:12Z",
+        "completedAt": "2026-08-22T03:51:45Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -780,10 +578,17 @@
       "date": "2026-08-21T21:47:18-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/3043c0b4b91856e734cd4c640f1a5e45d0e58397",
       "ci": {
+        "runId": "32549933669",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549933669"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549933669",
+        "startedAt": "2026-08-22T03:47:23Z",
+        "completedAt": "2026-08-22T03:48:03Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -793,10 +598,17 @@
       "date": "2026-08-21T21:32:54-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/52a11b9ab6b969fc7f0a0497b083e2962812eaa9",
       "ci": {
+        "runId": "32549279058",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549279058"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549279058",
+        "startedAt": "2026-08-22T03:32:58Z",
+        "completedAt": "2026-08-22T03:33:38Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -806,10 +618,17 @@
       "date": "2026-08-21T21:30:44-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/7fbdb7fac82ecf64b502f732481f33d073406bd1",
       "ci": {
+        "runId": "32549178127",
         "durationSeconds": 36,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549178127"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32549178127",
+        "startedAt": "2026-08-22T03:30:49Z",
+        "completedAt": "2026-08-22T03:31:25Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -819,10 +638,17 @@
       "date": "2026-08-21T21:20:37-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/aa4be77bf7e066e7560c3b8f80f91848ca9c1046",
       "ci": {
+        "runId": "32548709275",
         "durationSeconds": 33,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32548709275"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32548709275",
+        "startedAt": "2026-08-22T03:20:42Z",
+        "completedAt": "2026-08-22T03:21:15Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -832,10 +658,17 @@
       "date": "2026-08-21T21:07:04-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ee5b735f125dc27d07090e839344121aea6f0407",
       "ci": {
+        "runId": "32548233602",
         "durationSeconds": 36,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32548233602"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32548233602",
+        "startedAt": "2026-08-22T03:10:10Z",
+        "completedAt": "2026-08-22T03:10:46Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -845,6 +678,8 @@
       "date": "2026-08-21T21:05:19-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/05a0418ba9da8f5639253f53e045d189d61e1e4b"
     },
     {
@@ -854,6 +689,8 @@
       "date": "2026-08-21T21:01:35-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/218974fd4e1d9dc9e6c2650db98df467ff57adaa"
     },
     {
@@ -863,6 +700,8 @@
       "date": "2026-08-21T21:00:00-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/bb8b7df32ea7477536a6c96614c952635e6aa9d5"
     },
     {
@@ -872,6 +711,8 @@
       "date": "2026-08-21T20:58:24-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/b5ca9fa1a194c54b7d8182e8ebed8a7ae1b38468"
     },
     {
@@ -881,6 +722,8 @@
       "date": "2026-08-21T20:57:03-06:00",
       "author": "Bo Layer",
       "type": "SPEED +1",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/e07416f05fd312fc68b352b34e8088248a070b06"
     },
     {
@@ -890,10 +733,17 @@
       "date": "2026-08-21T19:28:02-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9630fd430346938abbec516a2296dca25ae63670",
       "ci": {
+        "runId": "32547530977",
         "durationSeconds": 35,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32547530977"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32547530977",
+        "startedAt": "2026-08-22T02:54:53Z",
+        "completedAt": "2026-08-22T02:55:28Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -903,10 +753,17 @@
       "date": "2026-08-21T19:11:43-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/28b45c36cf8668a63ed1ca440051e8997b5863d8",
       "ci": {
+        "runId": "32542712740",
         "durationSeconds": 41,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32542712740"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32542712740",
+        "startedAt": "2026-08-22T01:11:48Z",
+        "completedAt": "2026-08-22T01:12:29Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -916,10 +773,17 @@
       "date": "2026-08-21T19:06:43-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/9c1a08948658a2518eed67b54d03faf020ba5ab5",
       "ci": {
+        "runId": "32542465438",
         "durationSeconds": 42,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32542465438"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32542465438",
+        "startedAt": "2026-08-22T01:06:52Z",
+        "completedAt": "2026-08-22T01:07:34Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -929,10 +793,17 @@
       "date": "2026-08-21T18:36:54-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/ff5b0e82f7af9d326ad9e48a40f7aef907427a96",
       "ci": {
+        "runId": "32541035948",
         "durationSeconds": 42,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32541035948"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32541035948",
+        "startedAt": "2026-08-22T00:39:26Z",
+        "completedAt": "2026-08-22T00:40:08Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -942,6 +813,8 @@
       "date": "2026-08-21T18:25:24-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a7e7a83deb6e3f91db1e7d18e39402d9d1e6ec16"
     },
     {
@@ -951,10 +824,17 @@
       "date": "2026-08-21T18:15:08-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2f717ece6801abb24d0cb13d53fdc276351c432c",
       "ci": {
+        "runId": "32539720102",
         "durationSeconds": 40,
-        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32539720102"
+        "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32539720102",
+        "startedAt": "2026-08-22T00:15:12Z",
+        "completedAt": "2026-08-22T00:15:52Z",
+        "passed": 0,
+        "total": 0
       }
     },
     {
@@ -964,6 +844,8 @@
       "date": "2026-08-21T18:13:00-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": true,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c146fb3324d94370e764b1d2701491986248d7f8"
     },
     {
@@ -973,6 +855,8 @@
       "date": "2026-08-21T18:12:50-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/876b260aab054fd84159a8fc2189825d7bba07b8"
     },
     {
@@ -982,6 +866,8 @@
       "date": "2026-08-21T18:12:26-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/d5bf1bb4d2a55fbe7fb180c4f65aaa5aa19b6dff"
     },
     {
@@ -991,6 +877,8 @@
       "date": "2026-08-21T18:11:21-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/c71a64aa4becf011ce9342b329d882b72e2b729d"
     },
     {
@@ -1000,6 +888,8 @@
       "date": "2026-08-21T18:10:21-06:00",
       "author": "Bo Layer",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": true,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a50d38c342adfde34565d0a6150ab37ff78bbad6"
     },
     {
@@ -1009,6 +899,8 @@
       "date": "2026-08-21T18:10:00-06:00",
       "author": "Bo Layer",
       "type": "LAB VERIFIED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a7d2b8cfe678f83414f91e24e8629aa5348e7006"
     },
     {
@@ -1018,6 +910,8 @@
       "date": "2026-08-21T17:59:58-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/1a1141a755797b0349e775a0c8e30e4f83c5af04"
     },
     {
@@ -1027,6 +921,8 @@
       "date": "2026-08-21T17:06:40-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/828b34e8c240f763c0ea867d302aa6475580b60e"
     },
     {
@@ -1036,6 +932,8 @@
       "date": "2026-08-21T17:05:34-06:00",
       "author": "Bo Layer",
       "type": "EVOLVED",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/568ef6994fa9cb8daae5fc0853bab6b589b961f2"
     },
     {
@@ -1045,6 +943,8 @@
       "date": "2026-08-21T16:44:12-06:00",
       "author": "Bo Layer",
       "type": "FIELD NOTES",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/eba16dc3739a2191cc1879ea1a3b372cec46ba9c"
     },
     {
@@ -1054,6 +954,8 @@
       "date": "2026-08-21T16:42:07-06:00",
       "author": "Bo Layer",
       "type": "NEW MOVE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/0f453187210d3d388a02196affee413994df1a77"
     },
     {
@@ -1063,6 +965,8 @@
       "date": "2026-08-08T16:41:54+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/94d0151be839f02fea4a35ab1c3df41fbaddc6c1"
     },
     {
@@ -1072,6 +976,8 @@
       "date": "2026-08-08T07:02:28+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/78e6e2a2e3443cad0125b1c753d4c9f2a3cc2cb6"
     },
     {
@@ -1081,6 +987,8 @@
       "date": "2026-08-07T20:06:04+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/fa1426f06691dacb3df54a1904e0e520260baf89"
     },
     {
@@ -1090,6 +998,8 @@
       "date": "2026-08-07T19:57:26+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/dc6583d97bfecad4a816f98a49f0f3984e0a8dd9"
     },
     {
@@ -1099,6 +1009,8 @@
       "date": "2026-08-06T12:05:58+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/62012933ac9fd49051d55bb37b78cef1f1c63681"
     },
     {
@@ -1108,6 +1020,8 @@
       "date": "2026-08-06T12:04:42+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/a77a2744952141fb2dd06ca34cf580cef8b1cc39"
     },
     {
@@ -1117,6 +1031,8 @@
       "date": "2026-08-05T22:06:18+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/2ca513f64ed7bb408bf23a037ec6f625460a2197"
     },
     {
@@ -1126,6 +1042,8 @@
       "date": "2026-08-05T22:01:38+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/711c4433c483e445226ec14f4b5b3fd192b48950"
     },
     {
@@ -1135,6 +1053,8 @@
       "date": "2026-08-04T12:09:25+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/898f2aaa875536ac1935049dfa5ea1d391e36528"
     },
     {
@@ -1144,6 +1064,8 @@
       "date": "2026-08-03T20:59:24+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/5638965a1988413647e053c1c459943a13048fed"
     },
     {
@@ -1153,116 +1075,191 @@
       "date": "2026-08-03T20:52:34+01:00",
       "author": "mrmushrooms11",
       "type": "RESEARCH UPDATE",
+      "scope": "mod",
+      "isMerge": false,
       "url": "https://github.com/BoLayerDev/kanto-first-person/commit/140bcc7ce8dfc8398ef94f3fe7f020ddd4c69aee"
     }
   ],
+  "missions": [
+    {
+      "slot": "NOW",
+      "title": "Complete live device acceptance",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/device-test-guide.md",
+      "source": "roadmap",
+      "updatedAt": "2026-08-23T10:20:51.555Z"
+    },
+    {
+      "slot": "NEXT",
+      "title": "Advance the next evidence-locked release gate",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/ROADMAP.md",
+      "source": "roadmap",
+      "updatedAt": "2026-08-23T10:20:51.555Z"
+    },
+    {
+      "slot": "BLOCKED",
+      "title": "Live acceptance and a signed KFP package are still required",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/known-limitations.md",
+      "source": "roadmap",
+      "updatedAt": "2026-08-23T10:20:51.555Z"
+    }
+  ],
+  "releaseJourney": [
+    {
+      "id": "rewrite",
+      "label": "REWRITE",
+      "state": "active",
+      "summary": "The 2.0 alpha source rewrite is active.",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite"
+    },
+    {
+      "id": "host",
+      "label": "HOST READY",
+      "state": "active",
+      "summary": "Battle Art release proof exists. Live acceptance is still open.",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-evidence/host-release-delta-2026-08-22.json"
+    },
+    {
+      "id": "device",
+      "label": "DEVICE TESTED",
+      "state": "pending",
+      "summary": "Live GPU and in-game acceptance are open.",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/device-test-guide.md"
+    },
+    {
+      "id": "package",
+      "label": "PACKAGE SIGNED",
+      "state": "pending",
+      "summary": "No signed player package is published.",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-process.md"
+    },
+    {
+      "id": "release",
+      "label": "RELEASED",
+      "state": "pending",
+      "summary": "KFP 2.0 is not released.",
+      "url": "https://github.com/BoLayerDev/kanto-first-person/releases"
+    }
+  ],
+  "weeklyReport": {
+    "startedAt": "2026-08-16T10:20:51.555Z",
+    "endedAt": "2026-08-23T10:20:51.555Z",
+    "total": 63,
+    "counts": {
+      "features": 4,
+      "fixes": 12,
+      "performance": 8,
+      "tests": 9,
+      "documentation": 22,
+      "milestones": 4
+    },
+    "scopes": {
+      "mod": {
+        "total": 63,
+        "counts": {
+          "features": 4,
+          "fixes": 12,
+          "performance": 8,
+          "tests": 9,
+          "documentation": 22,
+          "milestones": 4
+        }
+      },
+      "site": {
+        "total": 0,
+        "counts": {
+          "features": 0,
+          "fixes": 0,
+          "performance": 0,
+          "tests": 0,
+          "documentation": 0,
+          "milestones": 0
+        }
+      },
+      "ops": {
+        "total": 0,
+        "counts": {
+          "features": 0,
+          "fixes": 0,
+          "performance": 0,
+          "tests": 0,
+          "documentation": 0,
+          "milestones": 0
+        }
+      }
+    },
+    "mergeCommitsExcluded": true
+  },
+  "proof": {
+    "tier": "benchmark",
+    "kind": "BENCHMARK PROOF",
+    "label": "ROM-FREE BENCHMARKS PASS",
+    "version": "2.0.0-alpha.1",
+    "commit": "191ede2",
+    "capturedAt": "2026-08-22T06:29:19Z",
+    "environment": "GEN1RECOMP v0.2.19",
+    "url": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-evidence/gen1recomp-2026-08-22.json"
+  },
+  "receipt": {
+    "id": "OAK-191EDE2-32596299098",
+    "issuedAt": "2026-08-22T20:19:11Z",
+    "rows": [
+      {
+        "id": "source",
+        "label": "SOURCE LOCK",
+        "value": "COMMIT 191EDE2",
+        "detail": "V2-REWRITE SOURCE",
+        "state": "VERIFIED",
+        "url": "https://github.com/BoLayerDev/kanto-first-person/commit/191ede225a4c2cbbf5e787fb189f4e25bbbfd219"
+      },
+      {
+        "id": "lab",
+        "label": "MOD LAB SCAN",
+        "value": "11/11 CHECKS PASSED",
+        "detail": "MOD COMMIT CHECKS · 40S",
+        "state": "PASSED",
+        "url": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596299098"
+      },
+      {
+        "id": "history",
+        "label": "MOD HISTORY",
+        "value": "63 VERIFIED COMMITS",
+        "detail": "2 ACTIVE FIELD DAYS",
+        "state": "TRACKED",
+        "url": "https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite"
+      },
+      {
+        "id": "package",
+        "label": "PLAYER PACKAGE",
+        "value": "NOT RELEASED",
+        "detail": "RELEASE GATES STILL OPEN",
+        "state": "WAITING",
+        "url": "https://github.com/BoLayerDev/kanto-first-person/releases"
+      }
+    ]
+  },
   "devStats": {
     "rewriteStartedAt": "2026-08-21T16:42:07-06:00",
     "activeDays": 2,
-    "successfulLabRuns": 39,
-    "labRuntimeSeconds": 1611,
-    "mergedPullRequests": 11,
-    "medianPullRequestSeconds": 59
-  },
-  "pullRequests": [
-    {
-      "number": 11,
-      "title": "feat(website): add automatic Trainer Clock",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/11",
-      "createdAt": "2026-08-22T20:22:56Z",
-      "mergedAt": "2026-08-22T20:25:58Z",
-      "deliverySeconds": 182
-    },
-    {
-      "number": 10,
-      "title": "fix(website): show verified rewrite start date",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/10",
-      "createdAt": "2026-08-22T20:08:09Z",
-      "mergedAt": "2026-08-22T20:08:57Z",
-      "deliverySeconds": 48
-    },
-    {
-      "number": 9,
-      "title": "fix(website): prevent field badge overlap",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/9",
-      "createdAt": "2026-08-22T20:03:04Z",
-      "mergedAt": "2026-08-22T20:04:01Z",
-      "deliverySeconds": 57
-    },
-    {
-      "number": 8,
-      "title": "fix(website): repair research start date card",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/8",
-      "createdAt": "2026-08-22T19:53:55Z",
-      "mergedAt": "2026-08-22T19:54:47Z",
-      "deliverySeconds": 52
-    },
-    {
-      "number": 7,
-      "title": "fix(website): fit activity graphic labels",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/7",
-      "createdAt": "2026-08-22T19:48:22Z",
-      "mergedAt": "2026-08-22T19:49:09Z",
-      "deliverySeconds": 47
-    },
-    {
-      "number": 6,
-      "title": "feat(website): replace rewrite concept drawings",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/6",
-      "createdAt": "2026-08-22T19:42:49Z",
-      "mergedAt": "2026-08-22T19:43:48Z",
-      "deliverySeconds": 59
-    },
-    {
-      "number": 5,
-      "title": "fix(website): add mobile fold spacing reserve",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/5",
-      "createdAt": "2026-08-22T19:34:44Z",
-      "mergedAt": "2026-08-22T19:35:36Z",
-      "deliverySeconds": 52
-    },
-    {
-      "number": 4,
-      "title": "fix(website): prevent vital label clipping",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/4",
-      "createdAt": "2026-08-22T19:25:35Z",
-      "mergedAt": "2026-08-22T19:31:58Z",
-      "deliverySeconds": 383
-    },
-    {
-      "number": 3,
-      "title": "feat(website): launch the Kanto progress terminal",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/3",
-      "createdAt": "2026-08-22T19:16:18Z",
-      "mergedAt": "2026-08-22T19:19:17Z",
-      "deliverySeconds": 179
-    },
-    {
-      "number": 2,
-      "title": "Reduce website to a Gen 1 options terminal",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/2",
-      "createdAt": "2026-08-22T07:35:31Z",
-      "mergedAt": "2026-08-22T07:37:08Z",
-      "deliverySeconds": 97
-    },
-    {
-      "number": 1,
-      "title": "Add interactive Kanto field terminal",
-      "url": "https://github.com/BoLayerDev/kanto-first-person/pull/1",
-      "createdAt": "2026-08-22T07:10:39Z",
-      "mergedAt": "2026-08-22T07:11:45Z",
-      "deliverySeconds": 66
+    "successfulLabRuns": 26,
+    "labRuntimeSeconds": 1050,
+    "mergedPullRequests": 0,
+    "medianPullRequestSeconds": 0,
+    "scopeCommits": {
+      "mod": 63,
+      "site": 0,
+      "ops": 0
     }
-  ],
+  },
+  "pullRequests": [],
   "ci": {
     "state": "success",
-    "runId": "32596660170",
-    "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596660170",
+    "runId": "32596299098",
+    "runUrl": "https://github.com/BoLayerDev/kanto-first-person/actions/runs/32596299098",
     "passed": 11,
     "total": 11,
-    "startedAt": "2026-08-22T20:26:00Z",
-    "completedAt": "2026-08-22T20:26:50Z",
-    "durationSeconds": 50
+    "startedAt": "2026-08-22T20:18:31Z",
+    "completedAt": "2026-08-22T20:19:11Z",
+    "durationSeconds": 40
   },
   "release": {
     "available": false,

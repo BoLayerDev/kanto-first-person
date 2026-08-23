@@ -106,7 +106,7 @@ test.describe('mobile field terminal', () => {
     await page.keyboard.press('Tab')
     await expect(page.getByRole('link', { name: /BUILD 11\/11 PASS/ })).toBeFocused()
     await page.keyboard.press('Tab')
-    await expect(page.getByRole('link', { name: /SOURCE 5e8544f/ })).toBeFocused()
+    await expect(page.getByRole('link', { name: /MOD SOURCE [0-9a-f]{7}/i })).toBeFocused()
     await page.keyboard.press('Tab')
     await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
 
@@ -403,10 +403,10 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   const banner = page.getByRole('region', { name: 'COMING SOON' })
   await expect(banner).toContainText('2.0.0-alpha.1')
   await expect(banner).toContainText('11/11 PASS')
-  await expect(banner).toContainText('5e8544f')
+  await expect(banner).toContainText(/MOD SOURCE[0-9a-f]{7}/i)
   await expect(banner).toContainText('NOT RELEASED')
   await expect(banner.getByText(/SYNCED /)).toHaveCount(0)
-  await expect(banner.getByRole('link', { name: /SOURCE 5e8544f/ })).toHaveAttribute('href', /commit\/5e8544f/)
+  await expect(banner.getByRole('link', { name: /MOD SOURCE [0-9a-f]{7}/i })).toHaveAttribute('href', /commit\/[0-9a-f]{40}$/i)
   const bannerPalette = await banner.evaluate((element) => {
     const style = (selector: string) => getComputedStyle(element.querySelector(selector)!)
     return {
@@ -444,16 +444,19 @@ test('shows verified work as a game-style research log on the homepage', async (
   const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
   await expect(log).toBeVisible()
   await expect(log).toContainText('WORK CONTINUES')
-  await expect(log).toContainText('MOD BUILD')
+  await expect(log).toContainText('VERIFIED MOD UPDATES')
+  await expect(log).not.toContainText('SITE LAB')
+  await expect(log).not.toContainText('PROJECT OPS')
   await expect(log.locator('ol > li')).toHaveCount(4)
   await expect(log.locator('.activity-entry-main').first()).toHaveAttribute('href', /\/commit\//)
   await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
 
   const clock = page.getByRole('region', { name: 'Trainer Clock' })
-  await expect(clock).toContainText('LAST UPDATE')
-  await expect(clock).toContainText('LATEST CI TIME')
-  await expect(clock).toContainText('DEPLOYED')
-  await expect(clock).toContainText('LAST 7 DAYS')
+  await expect(clock).toContainText('LAST MOD UPDATE')
+  await expect(clock).toContainText('MOD CI TIME')
+  await expect(clock).toContainText('MOD VERIFIED')
+  await expect(clock).toContainText('MOD / LAST 7 DAYS')
+  await expect(clock).not.toContainText('DEPLOYED')
   await expect(clock).not.toContainText('COMMITS / 7 DAYS')
 
   const latest = log.locator('ol > li').first()
@@ -570,11 +573,14 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   const oakReport = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
   await expect(oakReport).toContainText('LAST 7 DAYS')
   await expect(oakReport).toContainText('MERGES EXCLUDED')
-  await expect(oakReport.getByRole('button', { name: 'MOD BUILD', exact: true })).toHaveAttribute('aria-pressed', 'true')
+  await expect(oakReport).toContainText('MOD WORK')
+  await expect(oakReport).not.toContainText('SITE LAB')
+  await expect(oakReport).not.toContainText('PROJECT OPS')
   const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
   await expect(receipt).toContainText('SOURCE LOCK')
-  await expect(receipt).toContainText('LAB SCAN')
-  await expect(receipt).toContainText('STATUS FILE')
+  await expect(receipt).toContainText('MOD LAB SCAN')
+  await expect(receipt).toContainText('MOD HISTORY')
+  await expect(receipt).not.toContainText('STATUS FILE')
   await expect(receipt).toContainText('PLAYER PACKAGE')
   await expect(receipt).toContainText('NO PUBLIC API CALLS')
   await expect(receipt.getByRole('link')).toHaveCount(5)
@@ -743,21 +749,20 @@ test('shows clear project time and automatic delivery timing without claiming wo
   await expect(stats).toContainText('MOD COMMITS')
   await expect(stats).toContainText('ACTIVE DAYS')
   await expect(stats).toContainText('MERGED TASKS')
-  await expect(stats).toContainText('TOTAL CI TIME')
-  await expect(stats).toContainText('26M 51S')
+  await expect(stats).toContainText('TOTAL MOD CI')
   await expect(stats.locator('dl > div')).toHaveCount(5)
   await expect(stats).toContainText('NOT HANDS-ON HOURS')
+  await expect(stats).not.toContainText(/website|site lab|project ops/i)
 
   const quests = stats.locator('.quest-log > li')
-  await expect(quests).toHaveCount(3)
-  await expect(quests.first()).toContainText('QUEST #11')
-  await expect(quests.first()).toContainText('AUTO DELIVERY 3M 2S')
-  await expect(quests.first().getByRole('link')).toHaveAttribute('href', /pull\/11$/)
+  await expect(quests).toHaveCount(1)
+  await expect(quests.first()).toContainText('NO MERGED MOD TASKS RECORDED')
 
   await page.goto(`${PAGE_PATH}#activity`)
   const fullStats = page.getByRole('region', { name: 'VERIFIED PROJECT STATS' })
   await expect(fullStats).toContainText('COMPLETE MERGED TASK HISTORY')
-  await expect(fullStats.locator('.quest-log > li')).toHaveCount(11)
+  await expect(fullStats.locator('.quest-log > li')).toHaveCount(1)
+  await expect(fullStats).not.toContainText(/website|site lab|project ops/i)
 })
 
 test('keeps private metric references out of automatic GitHub history', async ({ page }) => {
@@ -769,7 +774,7 @@ test('keeps private metric references out of automatic GitHub history', async ({
     const status = await response.json()
     status.commitMessage = sourceLabel
     status.activity[0].message = `fix(website): ${sourceLabel}`
-    status.pullRequests[0].title = `fix(website): ${sourceLabel}`
+    status.pullRequests = []
     status.missions = [{
       slot: 'NOW',
       title: sourceLabel,
@@ -839,7 +844,7 @@ test('uses readable type for live data and pixel type for game labels', async ({
         stylesFor('.mission-card b'),
         stylesFor('.receipt-paper li strong'),
         stylesFor('.dev-stats dd'),
-        stylesFor('.quest-log a > b'),
+        stylesFor('.quest-empty span'),
         stylesFor('.activity-log li b'),
       ],
     }
@@ -856,7 +861,7 @@ test('uses readable type for live data and pixel type for game labels', async ({
     '.mission-card b',
     '.receipt-paper li strong',
     '.dev-stats dd',
-    '.quest-log a > b',
+    '.quest-empty span',
     '.activity-log li b',
   ].map((selector) => {
     const element = document.querySelector(selector)
@@ -876,8 +881,10 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(menuButtons.nth(2)).toContainText('RESEARCH LOG')
   await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
   const vitals = page.locator('[aria-label="Complete development totals"]')
-  await expect(vitals.getByText('110', { exact: true })).toBeVisible()
-  await expect(vitals.getByText('FULL REPO HISTORY')).toBeVisible()
+  const modHistoryCount = Number(await vitals.locator('div').first().locator('b').textContent())
+  expect(modHistoryCount).toBeGreaterThan(20)
+  await expect(vitals.getByText('MOD HISTORY')).toBeVisible()
+  await expect(vitals).not.toContainText('FULL REPO HISTORY')
   await expect(vitals).not.toContainText('COMMITS / ALL TIME')
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
@@ -891,10 +898,9 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(milestones.getByRole('link')).toHaveCount(6)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
-  await page.getByRole('button', { name: 'ALL WORK', exact: true }).click()
-  await expect(ledger.locator('ol > li')).toHaveCount(110)
-  await expect(ledger.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
-  await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
+  await expect(ledger.locator('ol > li')).toHaveCount(modHistoryCount)
+  await expect(ledger.locator('.archive-author')).toHaveCount(modHistoryCount)
+  await expect(ledger).not.toContainText(/SITE LAB|PROJECT OPS|feat\(website\)|fix\(website\)|fix\(site\)/i)
   await expect(ledger.locator('ol > li').first()).toContainText('LIVE')
   await expect(ledger).toContainText('ARCHIVED')
   const historyStatuses = await ledger.locator('.activity-state').allTextContents()
@@ -911,7 +917,6 @@ test('filters the Research Log by verified work type', async ({ page }) => {
   await page.goto(`${PAGE_PATH}#activity`)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
-  await page.getByRole('button', { name: 'ALL WORK', exact: true }).click()
   await expect.poll(() => ledger.locator('ol > li').count()).toBeGreaterThan(20)
   const allCount = await ledger.locator('ol > li').count()
   expect(allCount).toBeGreaterThan(0)
@@ -1182,7 +1187,7 @@ test('uses standard desktop open and back keys', async ({ page }) => {
   await buildLink.focus()
   await expect(buildLink).toBeFocused()
   await page.keyboard.press('Tab')
-  await expect(page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /^SOURCE / })).toBeFocused()
+  await expect(page.getByRole('region', { name: 'COMING SOON' }).getByRole('link', { name: /^MOD SOURCE / })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('button', { name: 'KANTO FIRST PERSON' })).toBeFocused()
   await page.keyboard.press('ArrowDown')

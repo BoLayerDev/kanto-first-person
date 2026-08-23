@@ -67,27 +67,28 @@ function changedFiles(sha) {
 }
 
 function activityScope(message, files = []) {
+  const normalizedMessage = clean(message)
   const normalizedFiles = Array.isArray(files)
     ? files.map((name) => clean(name).replaceAll('\\', '/')).filter(Boolean)
     : []
-  const modPath = /^(?:main\.lua|manifest\.json|mod\.toml|src\/|companion\/|assets\/|tests\/|tools\/)/i
-  if (normalizedFiles.some((name) => modPath.test(name))) return 'mod'
-  if (normalizedFiles.some((name) => name.startsWith('website/'))) return 'site'
+  const coreModPath = /^(?:main\.lua|manifest\.json|mod\.toml|src\/|companion\/|assets\/|tests\/)/i
+  const hasWebsiteFiles = normalizedFiles.some((name) => name.startsWith('website/'))
+  const hasCoreModFiles = normalizedFiles.some((name) => coreModPath.test(name))
+  if (hasWebsiteFiles && !hasCoreModFiles) return 'site'
+  if (hasCoreModFiles) return 'mod'
 
-  const conventionalScope = clean(message).match(/^[a-z]+\(([^)]+)\):/i)?.[1]?.toLowerCase() || ''
+  const conventionalScope = normalizedMessage.match(/^[a-z]+\(([^)]+)\):/i)?.[1]?.toLowerCase() || ''
   if (/\b(?:website|site|pages|frontend|ui)\b/.test(conventionalScope)) return 'site'
-  if (/\b(?:ci|docs?|release|build|deploy|workflow|meta|repo)\b/.test(conventionalScope)) return 'ops'
-  if (/^(?:docs|ci|build|chore)(?:\([^)]+\))?:/i.test(clean(message))) return 'ops'
+  if (/\b(?:github pages|pages publication|website)\b/i.test(normalizedMessage)) return 'site'
   return 'mod'
 }
 
 const repository = clean(process.env.SITE_REPOSITORY, manifest.github)
 const branch = clean(process.env.SITE_SOURCE_BRANCH, git('branch', '--show-current') || 'v2-rewrite')
-const commit = clean(process.env.SITE_SOURCE_SHA, git('rev-parse', 'HEAD'))
-const shortSha = commit ? commit.slice(0, 7) : 'UNKNOWN'
-const commitMessage = publicWorkLabel(
+const deploymentCommit = clean(process.env.SITE_SOURCE_SHA, git('rev-parse', 'HEAD'))
+const deploymentCommitMessage = publicWorkLabel(
   process.env.SITE_COMMIT_MESSAGE,
-  git('show', '-s', '--format=%s', commit || 'HEAD') || 'Source status unavailable',
+  git('show', '-s', '--format=%s', deploymentCommit || 'HEAD') || 'Source status unavailable',
 )
 const repositoryUrl = `https://github.com/${repository}`
 const token = clean(process.env.GITHUB_TOKEN)
@@ -101,7 +102,7 @@ if (activityOverride) {
     activity = []
   }
 } else {
-  const records = git('log', '--format=%H%x1f%P%x1f%cI%x1f%an%x1f%s', commit || 'HEAD').split('\n').filter(Boolean)
+  const records = git('log', '--format=%H%x1f%P%x1f%cI%x1f%an%x1f%s', deploymentCommit || 'HEAD').split('\n').filter(Boolean)
   activity = records.map((record) => {
     const [sha, parents, date, author, message] = record.split('\x1f')
     const files = changedFiles(sha)
@@ -233,15 +234,25 @@ if (completedCiRuns.length) {
     const durationSeconds = elapsedSeconds(run.run_started_at, run.updated_at)
     if (!durationSeconds) continue
     successfulRuns.set(run.head_sha, {
+      runId: String(run.id),
       durationSeconds,
       runUrl: run.html_url,
+      startedAt: run.run_started_at,
+      completedAt: run.updated_at,
+      passed: Number(run.passed) || 0,
+      total: Number(run.total) || 0,
     })
   }
 
-  if (ciHeadSha === commit && ciDurationSeconds && !successfulRuns.has(commit)) {
-    successfulRuns.set(commit, {
+  if (ciHeadSha === deploymentCommit && ciDurationSeconds && !successfulRuns.has(deploymentCommit)) {
+    successfulRuns.set(deploymentCommit, {
+      runId: ciRunId,
       durationSeconds: ciDurationSeconds,
       runUrl: ciRunUrl,
+      startedAt: ciStartedAt,
+      completedAt: ciCompletedAt,
+      passed,
+      total,
     })
   }
 
@@ -249,11 +260,51 @@ if (completedCiRuns.length) {
     const run = successfulRuns.get(entry.sha)
     return run ? { ...entry, ci: run } : entry
   })
-} else if (ciHeadSha === commit && ciDurationSeconds) {
-  activity = activity.map((entry) => entry.sha === commit
-    ? { ...entry, ci: { durationSeconds: ciDurationSeconds, runUrl: ciRunUrl } }
+} else if (ciHeadSha === deploymentCommit && ciDurationSeconds) {
+  activity = activity.map((entry) => entry.sha === deploymentCommit
+    ? {
+      ...entry,
+      ci: {
+        runId: ciRunId,
+        durationSeconds: ciDurationSeconds,
+        runUrl: ciRunUrl,
+        startedAt: ciStartedAt,
+        completedAt: ciCompletedAt,
+        passed,
+        total,
+      },
+    }
     : entry)
 }
+
+const activityScopeBySha = new Map(activity.map((entry) => [entry.sha, entry.scope]))
+activity = activity.filter((entry) => entry.scope === 'mod')
+const latestModEntry = activity[0]
+const commit = latestModEntry?.sha || deploymentCommit
+const shortSha = commit ? commit.slice(0, 7) : 'UNKNOWN'
+const commitMessage = publicWorkLabel(latestModEntry?.message, deploymentCommitMessage)
+
+const latestModCiEntry = activity.find((entry) => entry.ci)
+const publicCiRunId = clean(latestModCiEntry?.ci?.runId)
+const publicCiRunUrl = clean(latestModCiEntry?.ci?.runUrl, `${repositoryUrl}/actions/workflows/ci.yml`)
+const publicCiStartedAt = clean(latestModCiEntry?.ci?.startedAt)
+const publicCiCompletedAt = clean(latestModCiEntry?.ci?.completedAt)
+const publicCiDurationSeconds = Number(latestModCiEntry?.ci?.durationSeconds) || 0
+let publicCiPassed = Number(latestModCiEntry?.ci?.passed) || 0
+let publicCiTotal = Number(latestModCiEntry?.ci?.total) || 0
+
+if (publicCiRunId === ciRunId && latestModCiEntry?.sha === ciHeadSha) {
+  publicCiPassed = passed
+  publicCiTotal = total
+} else if (publicCiRunId && token && !publicCiTotal) {
+  const result = await github(`/actions/runs/${encodeURIComponent(publicCiRunId)}/jobs?per_page=100`)
+  const jobs = Array.isArray(result?.jobs) ? result.jobs : []
+  publicCiTotal = jobs.length
+  publicCiPassed = jobs.filter((job) => job.conclusion === 'success').length
+}
+const publicCiSuccess = Boolean(
+  publicCiRunId && publicCiTotal > 0 && publicCiPassed === publicCiTotal,
+)
 
 const pullsOverride = parseJsonArray(clean(process.env.SITE_PULL_REQUESTS_JSON))
 const pullRecords = pullsOverride ?? (token
@@ -261,16 +312,20 @@ const pullRecords = pullsOverride ?? (token
   : [])
 const pullRequests = pullRecords
   .filter((pull) => pull.merged_at && pull.created_at)
-  .map((pull) => ({
-    number: Number(pull.number),
-    title: publicWorkLabel(pull.title, `Pull request #${pull.number}`),
-    url: clean(pull.html_url, `${repositoryUrl}/pull/${pull.number}`),
-    createdAt: pull.created_at,
-    mergedAt: pull.merged_at,
-    deliverySeconds: elapsedSeconds(pull.created_at, pull.merged_at),
-    scope: activityScope(pull.title),
-  }))
+  .map((pull) => {
+    const scope = activityScopeBySha.get(clean(pull.merge_commit_sha)) || activityScope(pull.title)
+    return {
+      number: Number(pull.number),
+      title: publicWorkLabel(pull.title, `Pull request #${pull.number}`),
+      url: clean(pull.html_url, `${repositoryUrl}/pull/${pull.number}`),
+      createdAt: pull.created_at,
+      mergedAt: pull.merged_at,
+      deliverySeconds: elapsedSeconds(pull.created_at, pull.merged_at),
+      scope,
+    }
+  })
   .filter((pull) => Number.isFinite(pull.number) && pull.deliverySeconds > 0)
+  .filter((pull) => pull.scope === 'mod')
   .sort((left, right) => Date.parse(right.mergedAt) - Date.parse(left.mergedAt))
 
 const issuesOverride = parseJsonArray(clean(process.env.SITE_ISSUES_JSON))
@@ -287,7 +342,12 @@ function issueLabels(issue) {
 function issueForSlot(slot) {
   const expected = [`mission:${slot.toLowerCase()}`, `status:${slot.toLowerCase()}`]
   return openIssues
-    .filter((issue) => issueLabels(issue).some((label) => expected.includes(label.replace(/\s+/g, ''))))
+    .filter((issue) => {
+      const labels = issueLabels(issue).map((label) => label.replace(/\s+/g, ''))
+      const isMission = labels.some((label) => expected.includes(label))
+      const isMod = labels.some((label) => ['mod', 'scope:mod', 'work:mod'].includes(label))
+      return isMission && isMod
+    })
     .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at))[0]
 }
 
@@ -312,7 +372,10 @@ const rewriteStartSha = '0f453187210d3d388a02196affee413994df1a77'
 const rewriteStartIndex = activity.findIndex((entry) => entry.sha === rewriteStartSha)
 const rewriteActivity = rewriteStartIndex >= 0 ? activity.slice(0, rewriteStartIndex + 1) : activity
 const rewriteStartedAt = rewriteStartIndex >= 0 ? activity[rewriteStartIndex].date : ''
-const successfulCiRuns = completedCiRuns.filter((run) => run.conclusion === 'success')
+const modCommitShas = new Set(activity.map((entry) => entry.sha))
+const successfulCiRuns = completedCiRuns.filter(
+  (run) => run.conclusion === 'success' && modCommitShas.has(run.head_sha),
+)
 const labRuntimeSeconds = successfulCiRuns.reduce(
   (totalSeconds, run) => totalSeconds + elapsedSeconds(run.run_started_at, run.updated_at),
   0,
@@ -321,8 +384,8 @@ const deliveryTimes = pullRequests.map((pull) => pull.deliverySeconds)
 const verifiedRewriteActivity = rewriteActivity.filter((entry) => !entry.isMerge)
 const scopeCommits = {
   mod: verifiedRewriteActivity.filter((entry) => entry.scope === 'mod').length,
-  site: verifiedRewriteActivity.filter((entry) => entry.scope === 'site').length,
-  ops: verifiedRewriteActivity.filter((entry) => entry.scope === 'ops').length,
+  site: 0,
+  ops: 0,
 }
 const devStats = {
   rewriteStartedAt,
@@ -337,7 +400,7 @@ const devStats = {
 if (process.env.SITE_REQUIRE_VERIFIED_CI === 'true') {
   const verified = ciConclusion === 'success'
     && ciRunId
-    && ciHeadSha === commit
+    && ciHeadSha === deploymentCommit
     && total > 0
     && passed === total
   if (!verified) {
@@ -568,12 +631,12 @@ const deviceResultUrl = deviceEvidenceName
 const ciProof = {
   tier: 'ci',
   kind: 'CI RUN',
-  label: ciConclusion === 'success' && total > 0 ? `${passed}/${total} CHECKS PASSED` : 'CHECK CI EVIDENCE',
+  label: publicCiSuccess ? `${publicCiPassed}/${publicCiTotal} CHECKS PASSED` : 'CHECK CI EVIDENCE',
   version: clean(manifest.version, 'UNKNOWN'),
   commit: shortSha,
-  capturedAt: clean(ciCompletedAt, generatedAt),
+  capturedAt: clean(publicCiCompletedAt, latestModEntry?.date || generatedAt),
   environment: 'GITHUB ACTIONS',
-  url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
+  url: publicCiRunUrl,
 }
 const proof = deviceAccepted ? {
   tier: 'device',
@@ -595,15 +658,11 @@ const proof = deviceAccepted ? {
   url: benchmarkEvidenceUrl,
 } : ciProof)
 
-const deployRunId = clean(process.env.SITE_DEPLOY_RUN_ID)
-const deployRunUrl = clean(
-  process.env.SITE_DEPLOY_RUN_URL,
-  deployRunId ? `${repositoryUrl}/actions/runs/${deployRunId}` : `${repositoryUrl}/actions/workflows/pages.yml`,
-)
-const sourceVerified = ciConclusion === 'success' && ciHeadSha === commit && total > 0 && passed === total
+const sourceVerified = publicCiSuccess && latestModCiEntry?.sha === commit
+const receiptIssuedAt = clean(publicCiCompletedAt, latestModEntry?.date || generatedAt)
 const receipt = {
-  id: `OAK-${shortSha.toUpperCase()}-${ciRunId || 'LOCAL'}`,
-  issuedAt: generatedAt,
+  id: `OAK-${shortSha.toUpperCase()}-${publicCiRunId || 'LOCAL'}`,
+  issuedAt: receiptIssuedAt,
   rows: [
     {
       id: 'source',
@@ -615,19 +674,19 @@ const receipt = {
     },
     {
       id: 'lab',
-      label: 'LAB SCAN',
-      value: ciConclusion === 'success' && total > 0 ? `${passed}/${total} CHECKS PASSED` : 'CHECK CI EVIDENCE',
-      detail: `GITHUB ACTIONS · ${compactDuration(ciDurationSeconds)}`,
-      state: ciConclusion === 'success' && total > 0 && passed === total ? 'PASSED' : 'CHECK',
-      url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
+      label: 'MOD LAB SCAN',
+      value: publicCiSuccess ? `${publicCiPassed}/${publicCiTotal} CHECKS PASSED` : 'CHECK CI EVIDENCE',
+      detail: `MOD COMMIT CHECKS · ${compactDuration(publicCiDurationSeconds)}`,
+      state: publicCiSuccess ? 'PASSED' : 'CHECK',
+      url: publicCiRunUrl,
     },
     {
-      id: 'snapshot',
-      label: 'STATUS FILE',
-      value: `FILED ${generatedAt.slice(0, 10)}`,
-      detail: 'STATIC PROJECT-STATUS.JSON',
-      state: 'AUTO',
-      url: deployRunUrl,
+      id: 'history',
+      label: 'MOD HISTORY',
+      value: `${scopeCommits.mod} VERIFIED COMMITS`,
+      detail: `${devStats.activeDays} ACTIVE FIELD DAYS`,
+      state: 'TRACKED',
+      url: `${repositoryUrl}/commits/${branch}`,
     },
     {
       id: 'package',
@@ -659,14 +718,14 @@ const status = {
   devStats,
   pullRequests,
   ci: {
-    state: ciConclusion === 'success' ? 'success' : 'unknown',
-    runId: ciRunId,
-    runUrl: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
-    passed,
-    total,
-    startedAt: ciStartedAt,
-    completedAt: ciCompletedAt,
-    durationSeconds: ciDurationSeconds,
+    state: publicCiSuccess ? 'success' : 'unknown',
+    runId: publicCiRunId,
+    runUrl: publicCiRunUrl,
+    passed: publicCiPassed,
+    total: publicCiTotal,
+    startedAt: publicCiStartedAt,
+    completedAt: publicCiCompletedAt,
+    durationSeconds: publicCiDurationSeconds,
   },
   release,
 }

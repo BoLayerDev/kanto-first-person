@@ -427,7 +427,15 @@ export function useProjectStatus() {
       .then((value: unknown) => {
         const normalized = normalizeProjectStatus(value)
         if (active && isProjectStatus(normalized)) {
-          setStatus({ ...FALLBACK_PROJECT_STATUS, ...normalized })
+          setStatus({
+            ...FALLBACK_PROJECT_STATUS,
+            ...normalized,
+            missions: normalized.missions ?? FALLBACK_PROJECT_STATUS.missions,
+            releaseJourney: normalized.releaseJourney ?? FALLBACK_PROJECT_STATUS.releaseJourney,
+            weeklyReport: normalized.weeklyReport ?? FALLBACK_PROJECT_STATUS.weeklyReport,
+            proof: normalized.proof ?? FALLBACK_PROJECT_STATUS.proof,
+            receipt: normalized.receipt ?? FALLBACK_PROJECT_STATUS.receipt,
+          })
         }
       })
       .catch(() => undefined)

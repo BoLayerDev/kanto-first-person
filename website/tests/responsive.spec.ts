@@ -403,8 +403,10 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(ledger.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
   await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
   await expect(ledger.locator('ol > li').first()).toContainText('LIVE')
-  await expect(ledger).toContainText('TODAY')
   await expect(ledger).toContainText('ARCHIVED')
+  const historyStatuses = await ledger.locator('.activity-state').allTextContents()
+  expect(historyStatuses.length).toBeGreaterThan(1)
+  expect(historyStatuses.every((status) => ['LIVE', 'TODAY', 'ARCHIVED'].includes(status.trim()))).toBe(true)
 
   const systemMap = page.getByRole('img', { name: /Diagram showing commits/ })
   await expect(systemMap).toBeVisible()

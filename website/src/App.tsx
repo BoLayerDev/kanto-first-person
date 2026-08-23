@@ -1228,8 +1228,19 @@ export function App() {
     '--accent': palette.accent,
     '--accent-bright': palette.accentBright,
     '--accent-soft': palette.accentSoft,
-    '--ink': palette.ink,
-    '--panel': palette.panel,
+    '--game-ink': palette.ink,
+    '--paper': palette.panel,
+    '--paper-dark': palette.panelDark,
+    '--game-mid': palette.mid,
+    '--game-pale': palette.pale,
+    '--edition-banner': palette.banner,
+    '--edition-deep': palette.skyTop,
+    '--edition-sky': palette.skyHorizon,
+    '--edition-fog': palette.fog,
+    '--edition-ground': palette.ground,
+    '--edition-grass': palette.grass,
+    '--edition-stone': palette.stone,
+    '--edition-signal': palette.signal,
   } as CSSProperties
 
   return (

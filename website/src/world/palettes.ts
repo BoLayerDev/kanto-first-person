@@ -8,6 +8,10 @@ export type WorldPalette = {
   accentSoft: string
   ink: string
   panel: string
+  panelDark: string
+  mid: string
+  pale: string
+  banner: string
   skyTop: string
   skyHorizon: string
   fog: string
@@ -21,13 +25,17 @@ export const PALETTES: Record<Edition, WorldPalette> = {
   red: {
     name: 'RED / GOLDEN HOUR',
     fieldNote: 'Warm route light, drifting embers, and long mountain shadows.',
-    accent: '#d83a3a',
-    accentBright: '#ff7465',
-    accentSoft: '#ffd0b5',
-    ink: '#1b1014',
-    panel: '#f7e8cd',
-    skyTop: '#4b3f91',
-    skyHorizon: '#ff9f55',
+    accent: '#d52f3a',
+    accentBright: '#ff8474',
+    accentSoft: '#ffc0ae',
+    ink: '#260c14',
+    panel: '#fff0e3',
+    panelDark: '#e8aba4',
+    mid: '#713642',
+    pale: '#d99b9d',
+    banner: '#ff8a73',
+    skyTop: '#541522',
+    skyHorizon: '#ed5e4b',
     fog: '#bd6b57',
     ground: '#9b6341',
     grass: '#55733b',
@@ -37,13 +45,17 @@ export const PALETTES: Record<Edition, WorldPalette> = {
   blue: {
     name: 'BLUE / STORM WATCH',
     fieldNote: 'Cold rain, deep fog, and charged clouds over the route.',
-    accent: '#3157a4',
-    accentBright: '#68b9ff',
-    accentSoft: '#bde9ff',
-    ink: '#09131f',
-    panel: '#e8f5fa',
-    skyTop: '#071b42',
-    skyHorizon: '#356e9e',
+    accent: '#2357c7',
+    accentBright: '#72c8ff',
+    accentSoft: '#addcff',
+    ink: '#071c36',
+    panel: '#e6f4ff',
+    panelDark: '#9fc9e8',
+    mid: '#315b7d',
+    pale: '#8dbbda',
+    banner: '#66b8f2',
+    skyTop: '#071e52',
+    skyHorizon: '#2b78b8',
     fog: '#1f4a68',
     ground: '#3d5860',
     grass: '#315c58',
@@ -53,13 +65,17 @@ export const PALETTES: Record<Edition, WorldPalette> = {
   yellow: {
     name: 'YELLOW / ELECTRIC DAWN',
     fieldNote: 'Bright haze, electric sparks, and a fast-rising sun.',
-    accent: '#d9a900',
-    accentBright: '#ffe45b',
-    accentSoft: '#fff1a6',
-    ink: '#171509',
-    panel: '#fff8cf',
-    skyTop: '#327b9f',
-    skyHorizon: '#ffd96b',
+    accent: '#d48b00',
+    accentBright: '#ffe054',
+    accentSoft: '#ffe991',
+    ink: '#2b2305',
+    panel: '#fff7b8',
+    panelDark: '#e1c54a',
+    mid: '#685719',
+    pale: '#cfb94d',
+    banner: '#ffdc3f',
+    skyTop: '#594300',
+    skyHorizon: '#ffcc2e',
     fog: '#91a56e',
     ground: '#9c7941',
     grass: '#608447',

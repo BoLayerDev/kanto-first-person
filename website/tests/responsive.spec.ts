@@ -333,6 +333,37 @@ test.describe('desktop motion system', () => {
   })
 })
 
+test('makes Red, Blue, and Yellow visually distinct across the full terminal', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const editions = ['R', 'B', 'Y'] as const
+  const samples: Array<Record<string, string>> = []
+
+  for (const edition of editions) {
+    await page.getByRole('button', { name: edition, exact: true }).click()
+    const sample = await page.evaluate(() => {
+      const app = document.querySelector<HTMLElement>('.app')!
+      const appStyle = getComputedStyle(app)
+      return {
+        accent: appStyle.getPropertyValue('--accent').trim(),
+        paper: appStyle.getPropertyValue('--paper').trim(),
+        ink: appStyle.getPropertyValue('--game-ink').trim(),
+        banner: getComputedStyle(document.querySelector<HTMLElement>('.release-banner')!).backgroundImage,
+        window: getComputedStyle(document.querySelector<HTMLElement>('.pixel-window')!).boxShadow,
+        treatment: getComputedStyle(document.querySelector<HTMLElement>('.screen-treatment')!).backgroundImage,
+        selection: getComputedStyle(document.querySelector<HTMLElement>('.menu-window > button.is-selected')!).backgroundColor,
+      }
+    })
+    samples.push(sample)
+    await page.screenshot({ path: testInfo.outputPath(`edition-${edition.toLowerCase()}-1440.png`), fullPage: true })
+  }
+
+  for (const property of ['accent', 'paper', 'ink', 'banner', 'window', 'treatment', 'selection']) {
+    expect(new Set(samples.map((sample) => sample[property])).size, `${property} must change in every edition`).toBe(3)
+  }
+})
+
 test('keeps the home vital labels fully visible', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
@@ -384,9 +415,9 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
       centerFill: style('.release-core span').backgroundColor,
     }
   })
-  expect(bannerPalette.kicker).toBe('rgb(16, 21, 16)')
-  expect(bannerPalette.paragraph).toBe('rgb(16, 21, 16)')
-  expect(bannerPalette.titleAccent).toBe('rgb(216, 50, 58)')
+  expect(bannerPalette.kicker).toBe('rgb(38, 12, 20)')
+  expect(bannerPalette.paragraph).toBe('rgb(38, 12, 20)')
+  expect(bannerPalette.titleAccent).toBe('rgb(213, 47, 58)')
   expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(255, 255, 255)')
   expect(bannerPalette.ballBorder).toBe('0px')

@@ -389,12 +389,13 @@ a {
 }
 
 .pixel-window {
+  --window-light-reach: 59%;
   position: relative;
   min-height: 0;
   border: 5px solid var(--game-ink);
   color: var(--game-ink);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.64), transparent 42%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.64), transparent var(--window-light-reach)),
     var(--paper);
   box-shadow:
     0 0 0 4px var(--paper),

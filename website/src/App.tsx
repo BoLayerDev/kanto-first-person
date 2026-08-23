@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
+import { useProjectStatus, type ActivityScope, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
 
@@ -14,6 +14,11 @@ const RELEASE_BALL_ASSETS: Record<Edition, string> = {
   red: 'ultra-ball-2d.png',
   blue: 'master-ball-2d.png',
   yellow: 'great-ball-2d.png',
+}
+const ACTIVITY_SCOPE_LABELS: Record<ActivityScope, string> = {
+  mod: 'MOD BUILD',
+  site: 'SITE LAB',
+  ops: 'PROJECT OPS',
 }
 
 type MenuItem = {
@@ -370,7 +375,7 @@ function MissionBoard({ status }: { status: ProjectStatus }) {
           >
             <span>{mission.slot}</span>
             <b>{activityTitle(mission.title)}</b>
-            <small>{mission.source === 'issue' ? 'LABELED GITHUB ISSUE' : 'VERIFIED GITHUB FALLBACK'} ↗</small>
+            <small>{mission.source === 'issue' ? 'LABELED GITHUB ISSUE' : 'VERIFIED ROADMAP'} ↗</small>
           </a>
         ))}
       </div>
@@ -401,7 +406,9 @@ function ReleaseJourney({ status }: { status: ProjectStatus }) {
 }
 
 function WeeklyOakReport({ status }: { status: ProjectStatus }) {
-  const counts = status.weeklyReport.counts
+  const [scope, setScope] = useState<ActivityScope>('mod')
+  const scopedReport = status.weeklyReport.scopes[scope]
+  const counts = scopedReport.counts
   const entries = [
     ['NEW MOVES', counts.features, 'New features. GitHub commits marked feat: count here. This shows how many new capabilities entered the project this week.'],
     ['BUGS FIXED', counts.fixes, 'Bug repairs. GitHub commits marked fix: count here. This shows how many verified corrections landed this week.'],
@@ -413,14 +420,27 @@ function WeeklyOakReport({ status }: { status: ProjectStatus }) {
 
   return (
     <section className="weekly-report" aria-labelledby="weekly-report-title">
-      <header><span>LAST SEVEN DAYS</span><b id="weekly-report-title">PROFESSOR OAK REPORT</b></header>
+      <header><span>LAST SEVEN DAYS // MERGES EXCLUDED</span><b id="weekly-report-title">PROFESSOR OAK REPORT</b></header>
+      <div className="scope-switch" role="group" aria-label="Professor Oak report work stream">
+        {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
+          <button
+            type="button"
+            className={scope === value ? 'is-active' : ''}
+            aria-pressed={scope === value}
+            onClick={() => setScope(value)}
+            key={value}
+          >
+            {ACTIVITY_SCOPE_LABELS[value]}
+          </button>
+        ))}
+      </div>
       <div className="weekly-report-total">
-        <b>{status.weeklyReport.total}</b>
+        <b>{scopedReport.total}</b>
         <span className="weekly-report-total-label">
-          LAST 7 DAYS
+          {ACTIVITY_SCOPE_LABELS[scope]} / LAST 7 DAYS
           <InfoTip
-            label="LAST 7 DAYS"
-            text="Every commit recorded on the v2-rewrite branch during the last seven days, including merges and work that does not fit a category below."
+            label={`${ACTIVITY_SCOPE_LABELS[scope]} LAST 7 DAYS`}
+            text={`Verified ${ACTIVITY_SCOPE_LABELS[scope].toLowerCase()} commits from the last seven days. Merge commits are preserved in the complete log but excluded from these progress totals.`}
           />
         </span>
       </div>
@@ -447,6 +467,11 @@ function OakLabReceipt({ status }: { status: ProjectStatus }) {
         <span className="receipt-signal"><i aria-hidden="true" /> VERIFIED DATA</span>
       </header>
       <div className="receipt-paper">
+        <a className={`proof-lead is-${status.proof.tier}`} href={status.proof.url} target="_blank" rel="noreferrer">
+          <span>{status.proof.kind}</span>
+          <b>{status.proof.label}</b>
+          <small>{status.proof.environment} · {status.proof.commit} ↗</small>
+        </a>
         <div className="receipt-meta">
           <span>RECEIPT {status.receipt.id}</span>
           <time dateTime={status.receipt.issuedAt}>{exactTime(status.receipt.issuedAt)}</time>
@@ -485,17 +510,17 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
       <header>
         <div>
           <span>OAK LAB // SAVE FILE</span>
-          <b id={complete ? 'dev-stats-full-title' : 'dev-stats-title'}>VERIFIED DEV STATS</b>
+          <b id={complete ? 'dev-stats-full-title' : 'dev-stats-title'}>VERIFIED PROJECT STATS</b>
         </div>
         <span className="dev-stats-signal"><i aria-hidden="true" /> AUTO SYNC</span>
       </header>
 
       <dl>
         <div><dt>PROJECT AGE</dt><dd>{longDurationLabel(projectAgeSeconds)}</dd></div>
+        <div><dt>MOD COMMITS</dt><dd>{status.devStats.scopeCommits.mod}</dd></div>
         <div><dt>ACTIVE DAYS</dt><dd>{status.devStats.activeDays}</dd></div>
         <div><dt>MERGED TASKS</dt><dd>{status.devStats.mergedPullRequests}</dd></div>
         <div><dt>TOTAL CI TIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
-        <div><dt>MEDIAN PR TIME</dt><dd>{longDurationLabel(status.devStats.medianPullRequestSeconds)}</dd></div>
       </dl>
 
       <div className="quest-log-heading">
@@ -509,14 +534,14 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
               <span>QUEST #{String(task.number).padStart(2, '0')}</span>
               <b>{taskTitle(task.title)}</b>
               <small className="quest-timing">
-                PR TIME <strong className="quest-duration">{longDurationLabel(task.deliverySeconds)}</strong>
+                AUTO DELIVERY <strong className="quest-duration">{longDurationLabel(task.deliverySeconds)}</strong>
               </small>
             </a>
           </li>
         ))}
       </ol>
       <footer>
-        <span>CI TIME = GITHUB ACTIONS WALL TIME. PR TIME = OPEN TO MERGE.</span>
+        <span>CI TIME = GITHUB ACTIONS WALL TIME. AUTO DELIVERY = PR OPENED TO MERGED.</span>
         <span>NOT HANDS-ON HOURS.</span>
       </footer>
     </section>
@@ -524,9 +549,12 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
 }
 
 function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, newResearch?: boolean }) {
-  const updates = status.activity.slice(0, 4)
+  const [scope, setScope] = useState<ActivityScope>('mod')
+  const scopedActivity = status.activity.filter((entry) => entry.scope === scope && !entry.isMerge)
+  const updates = scopedActivity.slice(0, 4)
   const now = useLiveNow()
-  const displayedCount = useCountUp(status.activity.length, newResearch)
+  const scopedDiscovery = newResearch && status.activity[0]?.scope === scope && !status.activity[0]?.isMerge
+  const displayedCount = useCountUp(scopedActivity.length, newResearch)
 
   return (
     <section className="activity-log" aria-labelledby="activity-title">
@@ -542,10 +570,23 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
           <i aria-hidden="true" /><span>NEW RESEARCH DISCOVERED</span><b>#{status.shortSha}</b>
         </div>
       ) : null}
+      <div className="scope-switch activity-scope-switch" role="group" aria-label="Research Log work stream">
+        {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
+          <button
+            type="button"
+            className={scope === value ? 'is-active' : ''}
+            aria-pressed={scope === value}
+            onClick={() => setScope(value)}
+            key={value}
+          >
+            {ACTIVITY_SCOPE_LABELS[value]}
+          </button>
+        ))}
+      </div>
       <ol>
         {updates.map((update, index) => (
           <li
-            className={index === 0 && newResearch ? 'is-discovered' : ''}
+            className={index === 0 && scopedDiscovery ? 'is-discovered' : ''}
             key={update.sha}
             style={{ '--log-index': index } as CSSProperties}
           >
@@ -560,7 +601,7 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
       </ol>
       <div className="activity-footer">
         <span className={newResearch ? 'is-counting' : ''}>
-          <strong>{displayedCount}</strong> VERIFIED FIELD UPDATES LOADED
+          <strong>{displayedCount}</strong> VERIFIED {ACTIVITY_SCOPE_LABELS[scope]} UPDATES
         </span>
         <a href="#activity">OPEN FULL LOG ▶</a>
       </div>
@@ -683,8 +724,10 @@ function RewriteDetail() {
         <figure>
           <div className="media-frame">
             <img
-              src={`${import.meta.env.BASE_URL}og-kanto-rebuild.png`}
+              src={`${import.meta.env.BASE_URL}og-kanto-rebuild-page.webp`}
               alt="Original pixel-art concept of a first-person route leading toward a wide mountain region"
+              width="1200"
+              height="632"
               loading="lazy"
             />
             <span>CONCEPT ART // NOT GAMEPLAY</span>
@@ -761,6 +804,7 @@ function ResearchArchive({
 }) {
   const now = useLiveNow()
   const [activityFilter, setActivityFilter] = useState('all')
+  const [scopeFilter, setScopeFilter] = useState<ActivityScope | 'all'>('mod')
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
   const rewriteStart = status.activity.find((entry) => entry.sha === REWRITE_START_COMMIT)
@@ -798,9 +842,10 @@ function ResearchArchive({
     if (entry.type === 'FIELD NOTES') return 'documentation'
     return 'other'
   }
-  const filteredActivity = activityFilter === 'all'
-    ? status.activity
-    : status.activity.filter((entry) => activityCategory(entry) === activityFilter)
+  const filteredActivity = status.activity.filter((entry) => (
+    (scopeFilter === 'all' || entry.scope === scopeFilter)
+    && (activityFilter === 'all' || activityCategory(entry) === activityFilter)
+  ))
 
   useEffect(() => {
     if (!unlockNewest) return
@@ -871,6 +916,27 @@ function ResearchArchive({
 
       <section className="archive-filters" aria-labelledby="archive-filters-title">
         <b id="archive-filters-title">FILTER THE RESEARCH LOG</b>
+        <div role="group" aria-label="Research Log work streams">
+          <button
+            type="button"
+            className={scopeFilter === 'all' ? 'is-active' : ''}
+            aria-pressed={scopeFilter === 'all'}
+            onClick={() => setScopeFilter('all')}
+          >
+            ALL WORK
+          </button>
+          {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
+            <button
+              type="button"
+              className={scopeFilter === value ? 'is-active' : ''}
+              aria-pressed={scopeFilter === value}
+              onClick={() => setScopeFilter(value)}
+              key={value}
+            >
+              {ACTIVITY_SCOPE_LABELS[value]}
+            </button>
+          ))}
+        </div>
         <div role="group" aria-label="Research Log filters">
           {filterOptions.map(([value, label]) => (
             <button
@@ -898,7 +964,7 @@ function ResearchArchive({
                 <span className="archive-number">#{String(status.activity.length - status.activity.indexOf(entry)).padStart(3, '0')}</span>
                 <span className="archive-entry-type">{entry.type}</span>
                 <b>{activityTitle(entry.message)}</b>
-                <span className="archive-author">{entry.author}</span>
+                <span className="archive-author">{ACTIVITY_SCOPE_LABELS[entry.scope]} · {entry.author}</span>
                 <code>{entry.shortSha}</code>
               </a>
               <ActivityMeta entry={entry} index={index} now={now} />
@@ -1179,8 +1245,29 @@ export function App() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const limitedDevice = navigator.hardwareConcurrency !== undefined && navigator.hardwareConcurrency <= 4
-    if (reducedMotion.matches || limitedDevice) setQuality('low')
+    const network = (navigator as Navigator & {
+      connection?: { saveData?: boolean; addEventListener?: (type: string, listener: () => void) => void; removeEventListener?: (type: string, listener: () => void) => void }
+      deviceMemory?: number
+    }).connection
+    const deviceMemory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
+    const updateQuality = () => {
+      const narrowViewport = window.innerWidth <= 720
+      const limitedDevice = navigator.hardwareConcurrency !== undefined
+        && navigator.hardwareConcurrency <= 4
+        && window.innerWidth < 1100
+      const limitedMemory = deviceMemory !== undefined && deviceMemory <= 2
+      const dataSaver = network?.saveData === true
+      setQuality(reducedMotion.matches || narrowViewport || limitedDevice || limitedMemory || dataSaver ? 'low' : 'high')
+    }
+    updateQuality()
+    reducedMotion.addEventListener('change', updateQuality)
+    network?.addEventListener?.('change', updateQuality)
+    window.addEventListener('resize', updateQuality)
+    return () => {
+      reducedMotion.removeEventListener('change', updateQuality)
+      network?.removeEventListener?.('change', updateQuality)
+      window.removeEventListener('resize', updateQuality)
+    }
   }, [setQuality])
 
   useEffect(() => {

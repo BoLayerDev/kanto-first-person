@@ -42,7 +42,10 @@ export default function WorldCanvas({ onReady }: WorldCanvasProps) {
 
     let renderer: WebGLRenderer
     try {
-      renderer = new WebGLRenderer({ antialias: false, powerPreference: 'high-performance' })
+      renderer = new WebGLRenderer({
+        antialias: false,
+        powerPreference: quality === 'high' ? 'high-performance' : 'low-power',
+      })
     } catch {
       setError(true)
       readyRef.current?.()

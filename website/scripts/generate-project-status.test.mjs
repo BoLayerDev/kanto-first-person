@@ -44,7 +44,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
       title: 'Capture live route evidence',
       html_url: 'https://github.com/BoLayerDev/kanto-first-person/issues/31',
       updated_at: '2026-08-22T11:59:00Z',
-      labels: [{ name: 'status:now' }],
+      labels: [{ name: 'mission:now' }],
     },
   ]
 
@@ -102,7 +102,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
       updatedAt: '2026-08-22T11:59:00Z',
     })
     assert.equal(status.missions[1].slot, 'NEXT')
-    assert.equal(status.missions[1].source, 'github')
+    assert.equal(status.missions[1].source, 'roadmap')
     assert.equal(status.releaseJourney.length, 5)
     assert.equal(status.releaseJourney[0].state, 'active')
     assert.deepEqual(status.weeklyReport.counts, {
@@ -114,14 +114,21 @@ test('generates a complete offline GitHub status snapshot', async () => {
       milestones: 0,
     })
     assert.equal(status.weeklyReport.total, 1)
+    assert.deepEqual(status.weeklyReport.scopes, {
+      mod: { total: 0, counts: { features: 0, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
+      site: { total: 1, counts: { features: 1, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
+      ops: { total: 0, counts: { features: 0, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
+    })
+    assert.equal(status.weeklyReport.mergeCommitsExcluded, true)
     assert.deepEqual(status.proof, {
-      kind: 'CI RUN',
-      label: '11/11 CHECKS PASSED',
+      tier: 'benchmark',
+      kind: 'BENCHMARK PROOF',
+      label: 'ROM-FREE BENCHMARKS PASS',
       version: '2.0.0-alpha.1',
       commit: '1234567',
-      capturedAt: '2026-08-22T12:00:00Z',
-      environment: 'GITHUB ACTIONS',
-      url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
+      capturedAt: '2026-08-22T06:29:19Z',
+      environment: 'GEN1RECOMP v0.2.19',
+      url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-evidence/gen1recomp-2026-08-22.json',
     })
     assert.equal(status.receipt.id, 'OAK-1234567-42')
     assert.equal(status.receipt.issuedAt, '2026-08-22T12:00:00Z')
@@ -135,6 +142,8 @@ test('generates a complete offline GitHub status snapshot', async () => {
     assert.deepEqual(status.activity[0], {
       ...activity[0],
       message: 'fix(website): Clean up public development stats',
+      scope: 'site',
+      isMerge: false,
       ci: status.activity[0].ci,
     })
     assert.deepEqual(status.devStats, {
@@ -144,6 +153,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
       labRuntimeSeconds: 105,
       mergedPullRequests: 1,
       medianPullRequestSeconds: 300,
+      scopeCommits: { mod: 0, site: 1, ops: 0 },
     })
     assert.deepEqual(status.pullRequests[0], {
       number: 12,
@@ -152,6 +162,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
       createdAt: '2026-08-22T11:55:00Z',
       mergedAt: '2026-08-22T12:00:00Z',
       deliverySeconds: 300,
+      scope: 'site',
     })
     assert.doesNotMatch(JSON.stringify(status), new RegExp(privateMetricLabel, 'i'))
     assert.match(status.commitUrl, new RegExp(sourceSha))

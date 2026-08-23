@@ -444,23 +444,20 @@ test('shows verified work as a game-style research log on the homepage', async (
   const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
   await expect(log).toBeVisible()
   await expect(log).toContainText('WORK CONTINUES')
-  await expect(log).toContainText('FIELD NOTES')
-  await expect(log).toContainText('NEW MOVE')
-  await expect(log).toContainText('RESEARCH UPDATE')
-  await expect(log.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
+  await expect(log).toContainText('MOD BUILD')
+  await expect(log.locator('ol > li')).toHaveCount(4)
+  await expect(log.locator('.activity-entry-main').first()).toHaveAttribute('href', /\/commit\//)
   await expect(log.getByRole('link', { name: /OPEN FULL LOG/ })).toHaveAttribute('href', '#activity')
 
   const clock = page.getByRole('region', { name: 'Trainer Clock' })
   await expect(clock).toContainText('LAST UPDATE')
   await expect(clock).toContainText('LATEST CI TIME')
-  await expect(clock).toContainText('50S')
   await expect(clock).toContainText('DEPLOYED')
   await expect(clock).toContainText('LAST 7 DAYS')
   await expect(clock).not.toContainText('COMMITS / 7 DAYS')
 
   const latest = log.locator('ol > li').first()
   await expect(latest).toContainText('LIVE')
-  await expect(latest).toContainText('CI 50S')
   const timestamp = latest.getByRole('button', { name: /ago|just now/i })
   await expect(timestamp).not.toHaveAttribute('title')
   await expect(timestamp).toHaveAttribute('aria-label', /2026/)
@@ -570,14 +567,17 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   await expect(journey).toContainText('PACKAGE SIGNED')
   await expect(journey).toContainText('RELEASED')
 
-  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('LAST 7 DAYS')
+  const oakReport = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
+  await expect(oakReport).toContainText('LAST 7 DAYS')
+  await expect(oakReport).toContainText('MERGES EXCLUDED')
+  await expect(oakReport.getByRole('button', { name: 'MOD BUILD', exact: true })).toHaveAttribute('aria-pressed', 'true')
   const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
   await expect(receipt).toContainText('SOURCE LOCK')
   await expect(receipt).toContainText('LAB SCAN')
   await expect(receipt).toContainText('STATUS FILE')
   await expect(receipt).toContainText('PLAYER PACKAGE')
   await expect(receipt).toContainText('NO PUBLIC API CALLS')
-  await expect(receipt.getByRole('link')).toHaveCount(4)
+  await expect(receipt.getByRole('link')).toHaveCount(5)
   expect(publicGithubApiRequests).toEqual([])
 })
 
@@ -734,29 +734,28 @@ test('explains every Professor Oak report term with hover, focus, and touch help
   await report.screenshot({ path: testInfo.outputPath('oak-report-info-tip-mobile.png') })
 })
 
-test('shows automatic project time and PR task timing without claiming work hours', async ({ page }) => {
+test('shows clear project time and automatic delivery timing without claiming work hours', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
 
-  const stats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+  const stats = page.getByRole('region', { name: 'VERIFIED PROJECT STATS' })
   await expect(stats).toContainText('PROJECT AGE')
+  await expect(stats).toContainText('MOD COMMITS')
   await expect(stats).toContainText('ACTIVE DAYS')
   await expect(stats).toContainText('MERGED TASKS')
   await expect(stats).toContainText('TOTAL CI TIME')
   await expect(stats).toContainText('26M 51S')
-  await expect(stats).toContainText('MEDIAN PR TIME')
-  await expect(stats).toContainText('59S')
   await expect(stats.locator('dl > div')).toHaveCount(5)
   await expect(stats).toContainText('NOT HANDS-ON HOURS')
 
   const quests = stats.locator('.quest-log > li')
   await expect(quests).toHaveCount(3)
   await expect(quests.first()).toContainText('QUEST #11')
-  await expect(quests.first()).toContainText('PR TIME 3M 2S')
+  await expect(quests.first()).toContainText('AUTO DELIVERY 3M 2S')
   await expect(quests.first().getByRole('link')).toHaveAttribute('href', /pull\/11$/)
 
   await page.goto(`${PAGE_PATH}#activity`)
-  const fullStats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+  const fullStats = page.getByRole('region', { name: 'VERIFIED PROJECT STATS' })
   await expect(fullStats).toContainText('COMPLETE MERGED TASK HISTORY')
   await expect(fullStats.locator('.quest-log > li')).toHaveCount(11)
 })
@@ -892,6 +891,7 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(milestones.getByRole('link')).toHaveCount(6)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
+  await page.getByRole('button', { name: 'ALL WORK', exact: true }).click()
   await expect(ledger.locator('ol > li')).toHaveCount(110)
   await expect(ledger.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
   await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
@@ -911,6 +911,7 @@ test('filters the Research Log by verified work type', async ({ page }) => {
   await page.goto(`${PAGE_PATH}#activity`)
 
   const ledger = page.getByRole('region', { name: 'COMPLETE VERIFIED HISTORY' })
+  await page.getByRole('button', { name: 'ALL WORK', exact: true }).click()
   await expect.poll(() => ledger.locator('ol > li').count()).toBeGreaterThan(20)
   const allCount = await ledger.locator('ol > li').count()
   expect(allCount).toBeGreaterThan(0)
@@ -1001,7 +1002,7 @@ test('keeps the dev stats save file readable at desktop and mobile widths', asyn
     await page.setViewportSize({ width, height: 900 })
     await page.goto(PAGE_PATH)
 
-    const stats = page.getByRole('region', { name: 'VERIFIED DEV STATS' })
+    const stats = page.getByRole('region', { name: 'VERIFIED PROJECT STATS' })
     await expect(stats).toBeVisible()
     const fit = await stats.evaluate((element) => ({
       clipped: element.scrollWidth > element.clientWidth + 1,

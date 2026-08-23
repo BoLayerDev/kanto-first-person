@@ -567,7 +567,6 @@ function ReleaseBanner({ status }: { status: ProjectStatus }) {
   const buildLabel = status.ci.state === 'success' && status.ci.total > 0
     ? `${status.ci.passed}/${status.ci.total} PASS`
     : 'CHECK CI'
-  const syncDate = status.generatedAt.slice(0, 10)
   const packageCard = status.release.available ? (
     <a href={status.release.url} target="_blank" rel="noreferrer">
       <span>PACKAGE</span><b>{status.release.label}</b><i aria-hidden="true">↗</i>
@@ -583,9 +582,6 @@ function ReleaseBanner({ status }: { status: ProjectStatus }) {
         <span className="release-kicker">KANTO FIRST PERSON // TRAINERS, STAND BY</span>
         <h1 id="site-title"><span>COMING</span> SOON</h1>
         <p>{status.version} tracks the verified GitHub branch. Real-game acceptance and the signed public package are still in progress.</p>
-        <span className="github-sync-note">
-          SYNCED {syncDate} · {publicWorkTitle(status.commitMessage)}
-        </span>
       </div>
       <div className="release-status" aria-label="Current release status">
         <a href={status.ci.runUrl} target="_blank" rel="noreferrer">

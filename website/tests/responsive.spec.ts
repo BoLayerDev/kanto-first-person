@@ -369,24 +369,28 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner).toContainText('11/11 PASS')
   await expect(banner).toContainText('5e8544f')
   await expect(banner).toContainText('NOT RELEASED')
-  await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
+  await expect(banner.getByText(/SYNCED /)).toHaveCount(0)
   await expect(banner.getByRole('link', { name: /SOURCE 5e8544f/ })).toHaveAttribute('href', /commit\/5e8544f/)
   const bannerPalette = await banner.evaluate((element) => {
     const style = (selector: string) => getComputedStyle(element.querySelector(selector)!)
     return {
       kicker: style('.release-kicker').color,
       paragraph: style('.release-copy p').color,
-      sync: style('.github-sync-note').color,
       titleAccent: style('.release-copy h1 span').color,
       ball: style('.release-core').backgroundImage,
+      ballShadow: style('.release-core').boxShadow,
+      centerRing: style('.release-core span').borderColor,
+      centerFill: style('.release-core span').backgroundColor,
     }
   })
-  expect(bannerPalette.kicker).toBe('rgb(122, 25, 29)')
-  expect(bannerPalette.paragraph).toBe('rgb(11, 16, 11)')
-  expect(bannerPalette.sync).toBe('rgb(103, 22, 28)')
+  expect(bannerPalette.kicker).toBe('rgb(16, 21, 16)')
+  expect(bannerPalette.paragraph).toBe('rgb(16, 21, 16)')
   expect(bannerPalette.titleAccent).toBe('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
-  expect(bannerPalette.ball).toContain('rgb(255, 253, 242)')
+  expect(bannerPalette.ball).toContain('rgb(255, 255, 255)')
+  expect(bannerPalette.ballShadow).toBe('none')
+  expect(bannerPalette.centerRing).toBe('rgb(255, 255, 255)')
+  expect(bannerPalette.centerFill).toBe('rgb(17, 22, 15)')
 
   const routes = ['features', 'activity', 'guide', 'support', 'rebuild', 'github']
   for (const [index, route] of routes.entries()) {

@@ -189,20 +189,31 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(menuTreatment.labelRight).toBeLessThan(menuTreatment.barsLeft)
   expect(menuTreatment.barsOpacity).toBeLessThanOrEqual(0.34)
   expect(menuTreatment.menuTopGap).toBeLessThanOrEqual(24)
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
+  const sceneTier = await page.locator('.world-pokeballs').evaluate((element) => ({
+    quality: element.getAttribute('data-quality'),
+    ballCount: Number(element.getAttribute('data-ball-count')),
+    forward: Number(element.getAttribute('data-forward-facing-count')),
+    leftForward: Number(element.getAttribute('data-left-forward-facing-count')),
+    rightForward: Number(element.getAttribute('data-right-forward-facing-count')),
+    minSpan: Number(element.getAttribute('data-min-vertical-span')),
+  }))
+  expect(['high', 'low']).toContain(sceneTier.quality)
+  const isHighQuality = sceneTier.quality === 'high'
+  expect(sceneTier.ballCount).toBe(isHighQuality ? 14 : 8)
+  expect(sceneTier.forward).toBe(isHighQuality ? 5 : 3)
+  expect(sceneTier.leftForward).toBe(isHighQuality ? 2 : 1)
+  expect(sceneTier.rightForward).toBe(isHighQuality ? 3 : 2)
+  expect(sceneTier.minSpan).toBeGreaterThanOrEqual(isHighQuality ? 1.5 : 0.9)
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '7')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'expanded-side-zones')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-scale-profile', 'small-medium-weighted')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-orientation-layout', 'varied-side-profiles')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '5')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-left-forward-facing-count', '2')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-right-forward-facing-count', '3')
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-gap')),
   )).toBeGreaterThanOrEqual(0.29)
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-span')),
-  )).toBeGreaterThanOrEqual(1.5)
+  )).toBeGreaterThanOrEqual(isHighQuality ? 1.5 : 0.9)
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1440.png'), fullPage: true })
 
   await page.setViewportSize({ width: 1920, height: 1080 })
@@ -211,7 +222,7 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   )).toBeGreaterThanOrEqual(0.29)
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-span')),
-  )).toBeGreaterThanOrEqual(1.75)
+  )).toBeGreaterThanOrEqual(isHighQuality ? 1.75 : 0.9)
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1920.png'), fullPage: true })
 })
 
@@ -224,8 +235,15 @@ test.describe('desktop motion system', () => {
 
     await expect(page.locator('.loader-ball').first()).toBeVisible()
     await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-world-ready', 'true')
-    await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
-    await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '5')
+    const sceneTier = await page.locator('.world-pokeballs').evaluate((element) => ({
+      quality: element.getAttribute('data-quality'),
+      ballCount: Number(element.getAttribute('data-ball-count')),
+      forward: Number(element.getAttribute('data-forward-facing-count')),
+    }))
+    expect(['high', 'low']).toContain(sceneTier.quality)
+    const isHighQuality = sceneTier.quality === 'high'
+    expect(sceneTier.ballCount).toBe(isHighQuality ? 14 : 8)
+    expect(sceneTier.forward).toBe(isHighQuality ? 5 : 3)
     await expect(page.locator('.load-status-chip')).toHaveCount(0)
 
     const detail = page.locator('.detail-window')

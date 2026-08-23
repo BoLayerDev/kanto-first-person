@@ -94,8 +94,14 @@ function DetailLinks({ children }: { children: ReactNode }) {
   return <div className="detail-links">{children}</div>
 }
 
+function publicWorkTitle(value: string) {
+  const title = value.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+  const privateMetric = /\b(?:ai|codex|llm)[\s-]+tokens?\b|\btokens?[\s-]+(?:usage|count|counts)\b/i
+  return privateMetric.test(title) ? 'Clean up public development stats' : title
+}
+
 function activityTitle(message: string) {
-  return message.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+  return publicWorkTitle(message)
 }
 
 type ActivityEntry = ProjectStatus['activity'][number]
@@ -168,7 +174,7 @@ function longDurationLabel(seconds = 0) {
 }
 
 function taskTitle(title: string) {
-  return title.replace(/^[a-z]+(?:\([^)]+\))?:\s*/i, '')
+  return publicWorkTitle(title)
 }
 
 function useCountUp(target: number, active: boolean) {
@@ -509,7 +515,7 @@ function ReleaseBanner({ status }: { status: ProjectStatus }) {
         <h1 id="site-title"><span>COMING</span> SOON</h1>
         <p>{status.version} tracks the verified GitHub branch. Real-game acceptance and the signed public package are still in progress.</p>
         <span className="github-sync-note">
-          SYNCED {syncDate} · {status.commitMessage}
+          SYNCED {syncDate} · {publicWorkTitle(status.commitMessage)}
         </span>
       </div>
       <div className="release-status" aria-label="Current release status">

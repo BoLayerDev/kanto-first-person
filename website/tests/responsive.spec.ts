@@ -311,12 +311,88 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(latest).toContainText('LIVE')
   await expect(latest).toContainText('CI 50S')
   const timestamp = latest.getByRole('button', { name: /ago|just now/i })
-  await expect(timestamp).toHaveAttribute('title', /2026/)
+  await expect(timestamp).not.toHaveAttribute('title')
+  await expect(timestamp).toHaveAttribute('aria-label', /2026/)
   await timestamp.focus()
-  await expect(latest.getByRole('tooltip')).toBeVisible()
+  await expect(latest.locator('.activity-exact-time')).toBeHidden()
   await timestamp.click()
   await expect(timestamp).toHaveAttribute('aria-expanded', 'true')
-  await expect(latest.getByRole('tooltip')).toHaveCSS('opacity', '1')
+  await expect(latest.locator('.activity-exact-time')).toBeVisible()
+  await expect(latest.locator('.activity-exact-time')).toContainText('EXACT COMMIT TIME')
+  await expect(latest.locator('.activity-exact-time')).toContainText(/2026/)
+})
+
+test('keeps Research Log timing details in flow without covering badges or rows', async ({ page }, testInfo) => {
+  await page.addInitScript(() => window.localStorage.removeItem('kfp-last-research-commit'))
+
+  for (const width of [1440, 901]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(PAGE_PATH)
+
+    const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
+    const firstRow = log.locator('ol > li').first()
+    const nextRow = log.locator('ol > li').nth(1)
+    const timestamp = firstRow.getByRole('button', { name: /ago|just now/i })
+    await timestamp.click()
+
+    const discovery = log.locator('.research-discovery')
+    await expect(discovery).toHaveCount(1)
+    const discoveryMetrics = await log.evaluate((section) => {
+      const header = section.querySelector('.activity-header')!.getBoundingClientRect()
+      const alert = section.querySelector('.research-discovery')!.getBoundingClientRect()
+      const first = section.querySelector('ol > li')!.getBoundingClientRect()
+      return {
+        alertTop: alert.top,
+        alertBottom: alert.bottom,
+        firstTop: first.top,
+        headerBottom: header.bottom,
+      }
+    })
+    expect(discoveryMetrics.alertTop).toBeGreaterThanOrEqual(discoveryMetrics.headerBottom - 1)
+    expect(discoveryMetrics.firstTop).toBeGreaterThanOrEqual(discoveryMetrics.alertBottom - 1)
+
+    const metrics = await firstRow.evaluate((row, next) => {
+      const box = (selector: string) => {
+        const rect = (row.querySelector(selector) as HTMLElement).getBoundingClientRect()
+        return { top: rect.top, right: rect.right, bottom: rect.bottom, left: rect.left }
+      }
+      const rowBox = row.getBoundingClientRect()
+      const nextBox = (next as HTMLElement).getBoundingClientRect()
+      return {
+        row: { top: rowBox.top, right: rowBox.right, bottom: rowBox.bottom, left: rowBox.left },
+        nextTop: nextBox.top,
+        main: box('.activity-entry-main'),
+        meta: box('.activity-meta'),
+        exact: box('.activity-exact-time'),
+        state: box('.activity-state'),
+        timestamp: box('.activity-timestamp-trigger'),
+        ci: box('.activity-ci'),
+      }
+    }, await nextRow.elementHandle())
+
+    expect(metrics.exact.top).toBeGreaterThanOrEqual(Math.min(metrics.main.bottom, metrics.meta.bottom) - 1)
+    expect(metrics.exact.left).toBeGreaterThanOrEqual(metrics.row.left)
+    expect(metrics.exact.right).toBeLessThanOrEqual(metrics.row.right)
+    expect(metrics.exact.bottom).toBeLessThanOrEqual(metrics.row.bottom + 1)
+    expect(metrics.nextTop).toBeGreaterThanOrEqual(metrics.row.bottom - 1)
+    expect(metrics.state.right).toBeLessThanOrEqual(metrics.timestamp.left)
+    expect(metrics.timestamp.right).toBeLessThanOrEqual(metrics.ci.left)
+    await expect(firstRow.locator('[title]')).toHaveCount(0)
+
+    const scanLayers = await page.evaluate(() => ({
+      content: Number.parseInt(getComputedStyle(document.querySelector('.detail-copy')!).zIndex, 10),
+      scan: Number.parseInt(getComputedStyle(document.querySelector('.pokedex-scan')!).zIndex, 10),
+    }))
+    expect(scanLayers.scan).toBeLessThan(scanLayers.content)
+
+    if (width === 1440) {
+      await firstRow.evaluate((row) => Promise.all(row.getAnimations().map((animation) => animation.finished)))
+      await page.locator('.pokedex-scan').evaluate(
+        (scan) => Promise.all(scan.getAnimations().map((animation) => animation.finished)),
+      )
+      await log.screenshot({ path: testInfo.outputPath('research-log-no-overlays.png') })
+    }
+  }
 })
 
 test('shows the automatic progress command center on the homepage', async ({ page }) => {
@@ -532,12 +608,19 @@ test('keeps Trainer Clock and commit timing controls readable at desktop and mob
       fit.map(() => ({ clipped: false, pageOverflow: false })),
     )
 
-    const trigger = log.locator('.timestamp-trigger').first()
+    const trigger = log.locator('.activity-timestamp-trigger').first()
     const box = await trigger.evaluate((element) => {
       const rect = element.getBoundingClientRect()
       return { width: rect.width, height: rect.height }
     })
     expect(box.height).toBeGreaterThanOrEqual(48)
+    await trigger.click()
+    await expect(log.locator('.activity-exact-time').first()).toBeVisible()
+    const expandedFit = await log.evaluate((item) => ({
+      clipped: item.scrollWidth > item.clientWidth + 1,
+      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    }))
+    expect(expandedFit).toEqual({ clipped: false, pageOverflow: false })
   }
 })
 

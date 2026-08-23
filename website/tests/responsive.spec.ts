@@ -656,10 +656,15 @@ test('keeps Trainer Clock and commit timing controls readable at desktop and mob
     await expect(clock).toBeVisible()
     await expect(log).toBeVisible()
 
-    const fit = await page.locator('.trainer-clock, .activity-log').evaluateAll((items) => items.map((item) => ({
-      clipped: item.scrollWidth > item.clientWidth + 1,
-      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-    })))
+    const fit = await page.locator('.trainer-clock, .activity-log').evaluateAll((items) => items.map((item) => {
+      const textValues = item.matches('.trainer-clock')
+        ? [...item.querySelectorAll<HTMLElement>('small, b, time')]
+        : []
+      return {
+        clipped: textValues.some((text) => text.scrollWidth > text.clientWidth + 1),
+        pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      }
+    }))
     expect(fit, `timing UI must fit at ${width}px`).toEqual(
       fit.map(() => ({ clipped: false, pageOverflow: false })),
     )

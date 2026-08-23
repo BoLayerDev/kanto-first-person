@@ -418,7 +418,8 @@ test('shows verified work as a game-style research log on the homepage', async (
   await expect(clock).toContainText('LATEST CI TIME')
   await expect(clock).toContainText('50S')
   await expect(clock).toContainText('DEPLOYED')
-  await expect(clock).toContainText('COMMITS / 7 DAYS')
+  await expect(clock).toContainText('LAST 7 DAYS')
+  await expect(clock).not.toContainText('COMMITS / 7 DAYS')
 
   const latest = log.locator('ol > li').first()
   await expect(latest).toContainText('LIVE')
@@ -532,7 +533,7 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   await expect(journey).toContainText('PACKAGE SIGNED')
   await expect(journey).toContainText('RELEASED')
 
-  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('COMMITS / LAST 7 DAYS')
+  await expect(page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })).toContainText('LAST 7 DAYS')
   const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
   await expect(receipt).toContainText('SOURCE LOCK')
   await expect(receipt).toContainText('LAB SCAN')
@@ -840,7 +841,8 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(page.getByRole('heading', { name: 'Every step. No mystery.' })).toBeVisible()
   const vitals = page.locator('[aria-label="Complete development totals"]')
   await expect(vitals.getByText('110', { exact: true })).toBeVisible()
-  await expect(vitals.getByText('COMMITS / ALL TIME')).toBeVisible()
+  await expect(vitals.getByText('FULL REPO HISTORY')).toBeVisible()
+  await expect(vitals).not.toContainText('COMMITS / ALL TIME')
   await expect(vitals.getByText('2', { exact: true })).toBeVisible()
   await expect(vitals.getByText('CONTRIBUTORS')).toBeVisible()
   const rewriteDate = vitals.getByLabel('Rewrite began 2026-08-21')

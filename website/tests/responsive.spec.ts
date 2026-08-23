@@ -232,6 +232,57 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1920.png'), fullPage: true })
 })
 
+test('keeps the canonical KFP banner visible between the menu and version controls', async ({ page }) => {
+  for (const viewport of [
+    { width: 1440, height: 900 },
+    { width: 768, height: 1024 },
+    { width: 390, height: 844 },
+  ]) {
+    await page.setViewportSize(viewport)
+    await page.goto(PAGE_PATH)
+
+    const banner = page.getByRole('img', {
+      name: 'Kanto First Person pixel-art banner showing a room, route, and cave',
+    })
+    await expect(banner).toBeVisible()
+
+    const layout = await page.evaluate(() => {
+      const box = (element: Element) => {
+        const rect = element.getBoundingClientRect()
+        return { bottom: rect.bottom, left: rect.left, right: rect.right, top: rect.top, width: rect.width }
+      }
+      const menu = document.querySelector<HTMLElement>('.menu-window')!
+      const openGitHub = [...menu.querySelectorAll<HTMLButtonElement>(':scope > button')]
+        .find((button) => button.textContent?.includes('OPEN GITHUB'))!
+      const brand = menu.querySelector<HTMLImageElement>('.menu-brand img')!
+      const version = menu.querySelector<HTMLElement>('.inline-option')!
+
+      return {
+        brand: {
+          ...box(brand),
+          complete: brand.complete,
+          naturalHeight: brand.naturalHeight,
+          naturalWidth: brand.naturalWidth,
+        },
+        menu: box(menu),
+        openGitHub: box(openGitHub),
+        pageWidth: document.documentElement.scrollWidth,
+        version: box(version),
+      }
+    })
+
+    expect(layout.brand.complete).toBe(true)
+    expect(layout.brand.naturalWidth).toBe(2172)
+    expect(layout.brand.naturalHeight).toBe(724)
+    expect(layout.brand.top).toBeGreaterThanOrEqual(layout.openGitHub.bottom)
+    expect(layout.brand.bottom).toBeLessThanOrEqual(layout.version.top)
+    expect(layout.brand.left).toBeGreaterThan(layout.menu.left)
+    expect(layout.brand.right).toBeLessThan(layout.menu.right)
+    expect(layout.brand.width).toBeGreaterThanOrEqual(250)
+    expect(layout.pageWidth).toBe(viewport.width)
+  }
+})
+
 test('uses wide desktop space with equal top and bottom insets', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1720, height: 1272 })
   await page.goto(PAGE_PATH)

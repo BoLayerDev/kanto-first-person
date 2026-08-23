@@ -1142,6 +1142,16 @@ function OptionsMenu({
             </button>
           ))}
 
+          <div className="menu-brand">
+            <img
+              src={`${import.meta.env.BASE_URL}kfp-hero-v2.png`}
+              alt="Kanto First Person pixel-art banner showing a room, route, and cave"
+              width="2172"
+              height="724"
+              decoding="async"
+            />
+          </div>
+
           <div className="menu-divider" />
           <div className="inline-option">
             <span>VERSION</span>

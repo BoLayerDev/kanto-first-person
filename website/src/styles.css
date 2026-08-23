@@ -496,6 +496,28 @@ a {
   animation: cursor-nudge 650ms steps(2, end) infinite;
 }
 
+.menu-brand {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  margin: 0.65rem 0.75rem;
+}
+
+.menu-brand img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(100%, 430px);
+  max-height: 100%;
+  border: 3px solid var(--game-ink);
+  object-fit: contain;
+  box-shadow: 5px 5px 0 var(--accent);
+}
+
 .menu-divider {
   position: relative;
   z-index: 1;
@@ -3526,9 +3548,21 @@ a {
   }
 
   .menu-window .window-label,
+  .menu-brand,
   .menu-divider,
   .inline-option {
     grid-column: 1 / -1;
+  }
+
+  .menu-brand {
+    min-height: 0;
+    margin: 0.75rem 0.55rem;
+  }
+
+  .menu-brand img {
+    width: min(100%, 560px);
+    max-width: none;
+    max-height: none;
   }
 
   .window-label {
@@ -3731,6 +3765,10 @@ a {
     padding-right: 0.4rem;
     padding-left: 0.4rem;
     font-size: 0.825rem;
+  }
+
+  .menu-brand img {
+    width: min(100%, 260px);
   }
 
   .detail-window {

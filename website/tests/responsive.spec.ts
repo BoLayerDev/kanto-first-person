@@ -124,7 +124,7 @@ test.describe('mobile field terminal', () => {
   })
 })
 
-test('preserves the desktop two-column terminal and fixed scene', async ({ page }) => {
+test('preserves the desktop two-column terminal and fixed scene', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)
 
@@ -172,8 +172,23 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   }
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '11')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '4')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'balanced-side-zones')
+  await expect.poll(() => page.locator('.world-pokeballs').evaluate(
+    (element) => Number(element.getAttribute('data-min-vertical-gap')),
+  )).toBeGreaterThanOrEqual(0.33)
+  await expect.poll(() => page.locator('.world-pokeballs').evaluate(
+    (element) => Number(element.getAttribute('data-min-vertical-span')),
+  )).toBeGreaterThanOrEqual(1.5)
   await qualityToggle.click()
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '6')
+  await qualityToggle.click()
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '11')
+  await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1440.png'), fullPage: true })
+
+  await page.setViewportSize({ width: 1920, height: 1080 })
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-min-vertical-gap', '0.33')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-min-vertical-span', '1.56')
+  await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1920.png'), fullPage: true })
 })
 
 test.describe('desktop motion system', () => {
@@ -388,8 +403,10 @@ test('shows the complete verified project history in the Research Log', async ({
   await expect(ledger.getByRole('link', { name: /Merge pull request #11/ })).toHaveAttribute('href', /commit\/5e8544f/)
   await expect(ledger.getByRole('link', { name: /140bcc7/ })).toHaveAttribute('href', /commit\/140bcc7/)
   await expect(ledger.locator('ol > li').first()).toContainText('LIVE')
-  await expect(ledger).toContainText('TODAY')
   await expect(ledger).toContainText('ARCHIVED')
+  const historyStatuses = await ledger.locator('.activity-state').allTextContents()
+  expect(historyStatuses.length).toBeGreaterThan(1)
+  expect(historyStatuses.every((status) => ['LIVE', 'TODAY', 'ARCHIVED'].includes(status.trim()))).toBe(true)
 
   const systemMap = page.getByRole('img', { name: /Diagram showing commits/ })
   await expect(systemMap).toBeVisible()

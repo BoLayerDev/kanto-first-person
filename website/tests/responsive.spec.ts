@@ -508,6 +508,31 @@ test('shows automatic project time and PR task timing without claiming work hour
   await expect(fullStats.locator('.quest-log > li')).toHaveCount(11)
 })
 
+test('keeps private metric references out of automatic GitHub history', async ({ page }) => {
+  const privateMetricLabel = ['AI', 'token'].join(' ')
+  const sourceLabel = `Remove ${privateMetricLabel} content from website`
+
+  await page.route('**/project-status.json*', async (route) => {
+    const response = await route.fetch()
+    const status = await response.json()
+    status.commitMessage = sourceLabel
+    status.activity[0].message = `fix(website): ${sourceLabel}`
+    status.pullRequests[0].title = `fix(website): ${sourceLabel}`
+    status.missions = [{
+      slot: 'NOW',
+      title: sourceLabel,
+      url: 'https://github.com/BoLayerDev/kanto-first-person/issues/1',
+      source: 'issue',
+      updatedAt: '2026-08-22T12:00:00Z',
+    }]
+    await route.fulfill({ response, json: status })
+  })
+
+  await page.goto(PAGE_PATH)
+  await expect(page.locator('body')).not.toContainText(new RegExp(privateMetricLabel, 'i'))
+  await expect(page.locator('body')).toContainText('Clean up public development stats')
+})
+
 test('shows the complete verified project history in the Research Log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)

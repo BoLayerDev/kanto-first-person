@@ -27,6 +27,12 @@ function clean(value, fallback = '') {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback
 }
 
+function publicWorkLabel(value, fallback = '') {
+  const label = clean(value, fallback)
+  const privateMetric = /\b(?:ai|codex|llm)[\s-]+tokens?\b|\btokens?[\s-]+(?:usage|count|counts)\b/i
+  return privateMetric.test(label) ? 'fix(website): Clean up public development stats' : label
+}
+
 function elapsedSeconds(startedAt, completedAt) {
   const started = Date.parse(startedAt)
   const completed = Date.parse(completedAt)
@@ -49,7 +55,7 @@ const repository = clean(process.env.SITE_REPOSITORY, manifest.github)
 const branch = clean(process.env.SITE_SOURCE_BRANCH, git('branch', '--show-current') || 'v2-rewrite')
 const commit = clean(process.env.SITE_SOURCE_SHA, git('rev-parse', 'HEAD'))
 const shortSha = commit ? commit.slice(0, 7) : 'UNKNOWN'
-const commitMessage = clean(
+const commitMessage = publicWorkLabel(
   process.env.SITE_COMMIT_MESSAGE,
   git('show', '-s', '--format=%s', commit || 'HEAD') || 'Source status unavailable',
 )
@@ -79,6 +85,11 @@ if (activityOverride) {
     }
   })
 }
+
+activity = activity.map((entry) => ({
+  ...entry,
+  message: publicWorkLabel(entry.message, 'Research update'),
+}))
 
 async function github(pathname) {
   if (!token) return null
@@ -215,7 +226,7 @@ const pullRequests = pullRecords
   .filter((pull) => pull.merged_at && pull.created_at)
   .map((pull) => ({
     number: Number(pull.number),
-    title: clean(pull.title, `Pull request #${pull.number}`),
+    title: publicWorkLabel(pull.title, `Pull request #${pull.number}`),
     url: clean(pull.html_url, `${repositoryUrl}/pull/${pull.number}`),
     createdAt: pull.created_at,
     mergedAt: pull.merged_at,
@@ -246,7 +257,7 @@ function mission(slot, fallbackTitle, fallbackUrl) {
   const issue = issueForSlot(slot)
   return issue ? {
     slot,
-    title: clean(issue.title, `GitHub issue #${issue.number}`),
+    title: publicWorkLabel(issue.title, `GitHub issue #${issue.number}`),
     url: clean(issue.html_url, `${repositoryUrl}/issues/${issue.number}`),
     source: 'issue',
     updatedAt: clean(issue.updated_at, generatedAt),

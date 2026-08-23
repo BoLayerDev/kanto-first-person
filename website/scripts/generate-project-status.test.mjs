@@ -13,10 +13,11 @@ test('generates a complete offline GitHub status snapshot', async () => {
   const temporaryDirectory = await mkdtemp(path.join(os.tmpdir(), 'kfp-status-'))
   const outputPath = path.join(temporaryDirectory, 'project-status.json')
   const sourceSha = '1234567890abcdef1234567890abcdef12345678'
+  const privateMetricLabel = ['AI', 'token'].join(' ')
   const activity = [{
     sha: sourceSha,
     shortSha: '1234567',
-    message: 'feat(world): Open a new route',
+    message: `feat(website): Remove ${privateMetricLabel} content`,
     date: '2026-08-22T12:00:00Z',
     author: 'Test Trainer',
     type: 'NEW MOVE',
@@ -32,7 +33,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
   }]
   const pullRequests = [{
     number: 12,
-    title: 'feat(website): Add verified dev stats',
+    title: `fix(website): Remove ${privateMetricLabel} content`,
     html_url: 'https://github.com/BoLayerDev/kanto-first-person/pull/12',
     created_at: '2026-08-22T11:55:00Z',
     merged_at: '2026-08-22T12:00:00Z',
@@ -61,7 +62,7 @@ test('generates a complete offline GitHub status snapshot', async () => {
         SITE_CI_RUN_ID: '42',
         SITE_CI_RUN_URL: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
         SITE_CI_TOTAL: '11',
-        SITE_COMMIT_MESSAGE: 'Test source state',
+        SITE_COMMIT_MESSAGE: `Remove ${privateMetricLabel} content`,
         SITE_GENERATED_AT: '2026-08-22T12:00:00Z',
         SITE_ISSUES_JSON: JSON.stringify(issues),
         SITE_REPOSITORY: 'BoLayerDev/kanto-first-person',
@@ -120,7 +121,12 @@ test('generates a complete offline GitHub status snapshot', async () => {
       environment: 'GITHUB ACTIONS',
       url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/42',
     })
-    assert.deepEqual(status.activity[0], { ...activity[0], ci: status.activity[0].ci })
+    assert.equal(status.commitMessage, 'fix(website): Clean up public development stats')
+    assert.deepEqual(status.activity[0], {
+      ...activity[0],
+      message: 'fix(website): Clean up public development stats',
+      ci: status.activity[0].ci,
+    })
     assert.deepEqual(status.devStats, {
       rewriteStartedAt: '',
       activeDays: 1,
@@ -131,12 +137,13 @@ test('generates a complete offline GitHub status snapshot', async () => {
     })
     assert.deepEqual(status.pullRequests[0], {
       number: 12,
-      title: 'feat(website): Add verified dev stats',
+      title: 'fix(website): Clean up public development stats',
       url: 'https://github.com/BoLayerDev/kanto-first-person/pull/12',
       createdAt: '2026-08-22T11:55:00Z',
       mergedAt: '2026-08-22T12:00:00Z',
       deliverySeconds: 300,
     })
+    assert.doesNotMatch(JSON.stringify(status), new RegExp(privateMetricLabel, 'i'))
     assert.match(status.commitUrl, new RegExp(sourceSha))
 
     const rejected = spawnSync(process.execPath, [generator], {

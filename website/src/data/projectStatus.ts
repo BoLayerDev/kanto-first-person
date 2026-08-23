@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react'
 
+export type ActivityScope = 'mod' | 'site' | 'ops'
+
+type WeeklyCounts = {
+  features: number
+  fixes: number
+  performance: number
+  tests: number
+  documentation: number
+  milestones: number
+}
+
 export type ProjectStatus = {
   schemaVersion: 1
   version: string
@@ -17,6 +28,8 @@ export type ProjectStatus = {
     date: string
     author: string
     type: string
+    scope: ActivityScope
+    isMerge: boolean
     url: string
     ci?: {
       durationSeconds: number
@@ -27,7 +40,7 @@ export type ProjectStatus = {
     slot: 'NOW' | 'NEXT' | 'BLOCKED'
     title: string
     url: string
-    source: 'issue' | 'github'
+    source: 'issue' | 'roadmap'
     updatedAt: string
   }>
   releaseJourney: Array<{
@@ -41,16 +54,15 @@ export type ProjectStatus = {
     startedAt: string
     endedAt: string
     total: number
-    counts: {
-      features: number
-      fixes: number
-      performance: number
-      tests: number
-      documentation: number
-      milestones: number
-    }
+    counts: WeeklyCounts
+    scopes: Record<ActivityScope, {
+      total: number
+      counts: WeeklyCounts
+    }>
+    mergeCommitsExcluded: boolean
   }
   proof: {
+    tier: 'device' | 'benchmark' | 'ci'
     kind: string
     label: string
     version: string
@@ -78,6 +90,7 @@ export type ProjectStatus = {
     labRuntimeSeconds: number
     mergedPullRequests: number
     medianPullRequestSeconds: number
+    scopeCommits: Record<ActivityScope, number>
   }
   pullRequests: Array<{
     number: number
@@ -86,6 +99,7 @@ export type ProjectStatus = {
     createdAt: string
     mergedAt: string
     deliverySeconds: number
+    scope: ActivityScope
   }>
   ci: {
     state: 'success' | 'unknown'
@@ -131,6 +145,8 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     date,
     author: 'Bo Layer',
     type,
+    scope: /^(?:docs|ci):/i.test(message) ? 'ops' : 'mod',
+    isMerge: false,
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sha}`,
     ...(index === 0 ? {
       ci: {
@@ -144,21 +160,21 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
       slot: 'NOW',
       title: 'Continue the verified 2.0 rewrite',
       url: 'https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite',
-      source: 'github',
+      source: 'roadmap',
       updatedAt: '2026-08-22T11:49:22Z',
     },
     {
       slot: 'NEXT',
       title: 'Complete live device acceptance',
       url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/device-test-guide.md',
-      source: 'github',
+      source: 'roadmap',
       updatedAt: '2026-08-22T11:49:22Z',
     },
     {
       slot: 'BLOCKED',
       title: 'Signed package and compatible Voxel Companion API v1 host release',
       url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/known-limitations.md',
-      source: 'github',
+      source: 'roadmap',
       updatedAt: '2026-08-22T11:49:22Z',
     },
   ],
@@ -174,15 +190,22 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     endedAt: '2026-08-22T11:49:22Z',
     total: 8,
     counts: { features: 0, fixes: 2, performance: 3, tests: 1, documentation: 2, milestones: 0 },
+    scopes: {
+      mod: { total: 5, counts: { features: 0, fixes: 1, performance: 3, tests: 0, documentation: 0, milestones: 0 } },
+      site: { total: 0, counts: { features: 0, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
+      ops: { total: 3, counts: { features: 0, fixes: 1, performance: 0, tests: 1, documentation: 2, milestones: 0 } },
+    },
+    mergeCommitsExcluded: true,
   },
   proof: {
-    kind: 'CI RUN',
-    label: '11/11 CHECKS PASSED',
+    tier: 'benchmark',
+    kind: 'BENCHMARK PROOF',
+    label: 'ROM-FREE BENCHMARKS PASS',
     version: '2.0.0-alpha.1',
     commit: '79b3851',
-    capturedAt: '2026-08-22T11:50:23Z',
-    environment: 'GITHUB ACTIONS',
-    url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
+    capturedAt: '2026-08-22T06:29:19Z',
+    environment: 'GEN1RECOMP v0.2.19',
+    url: 'https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-evidence/gen1recomp-2026-08-22.json',
   },
   receipt: {
     id: 'OAK-79B3851-32571329500',
@@ -201,6 +224,7 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     labRuntimeSeconds: 1611,
     mergedPullRequests: 11,
     medianPullRequestSeconds: 59,
+    scopeCommits: { mod: 5, site: 0, ops: 3 },
   },
   pullRequests: [
     {
@@ -210,6 +234,7 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
       createdAt: '2026-08-22T20:22:56Z',
       mergedAt: '2026-08-22T20:25:58Z',
       deliverySeconds: 182,
+      scope: 'site',
     },
     {
       number: 10,
@@ -218,6 +243,7 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
       createdAt: '2026-08-22T20:08:09Z',
       mergedAt: '2026-08-22T20:08:57Z',
       deliverySeconds: 48,
+      scope: 'site',
     },
   ],
   ci: {
@@ -251,6 +277,8 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
       && typeof entry.message === 'string'
       && typeof entry.author === 'string'
       && typeof entry.type === 'string'
+      && ['mod', 'site', 'ops'].includes(entry.scope)
+      && typeof entry.isMerge === 'boolean'
       && typeof entry.url === 'string'
       && (entry.ci === undefined
         || (typeof entry.ci.durationSeconds === 'number'
@@ -263,8 +291,12 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
       && candidate.releaseJourney.every((gate) => typeof gate.label === 'string'
         && typeof gate.state === 'string'
         && typeof gate.url === 'string')))
-    && (candidate.weeklyReport === undefined || typeof candidate.weeklyReport.total === 'number')
-    && (candidate.proof === undefined || typeof candidate.proof.url === 'string')
+    && (candidate.weeklyReport === undefined || (typeof candidate.weeklyReport.total === 'number'
+      && typeof candidate.weeklyReport.scopes?.mod?.total === 'number'
+      && typeof candidate.weeklyReport.scopes?.site?.total === 'number'
+      && typeof candidate.weeklyReport.scopes?.ops?.total === 'number'))
+    && (candidate.proof === undefined || (typeof candidate.proof.url === 'string'
+      && ['device', 'benchmark', 'ci'].includes(candidate.proof.tier)))
     && (candidate.receipt === undefined || (typeof candidate.receipt.id === 'string'
       && typeof candidate.receipt.issuedAt === 'string'
       && Array.isArray(candidate.receipt.rows)
@@ -280,15 +312,100 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
     && typeof candidate.devStats?.labRuntimeSeconds === 'number'
     && typeof candidate.devStats?.mergedPullRequests === 'number'
     && typeof candidate.devStats?.medianPullRequestSeconds === 'number'
+    && typeof candidate.devStats?.scopeCommits?.mod === 'number'
+    && typeof candidate.devStats?.scopeCommits?.site === 'number'
+    && typeof candidate.devStats?.scopeCommits?.ops === 'number'
     && Array.isArray(candidate.pullRequests)
     && candidate.pullRequests.every((pull) => typeof pull.number === 'number'
       && typeof pull.title === 'string'
       && typeof pull.url === 'string'
       && typeof pull.createdAt === 'string'
       && typeof pull.mergedAt === 'string'
-      && typeof pull.deliverySeconds === 'number')
+      && typeof pull.deliverySeconds === 'number'
+      && ['mod', 'site', 'ops'].includes(pull.scope))
     && typeof candidate.ci?.runUrl === 'string'
     && typeof candidate.release?.available === 'boolean'
+}
+
+function inferredScope(message: string): ActivityScope {
+  const scope = message.match(/^[a-z]+\(([^)]+)\):/i)?.[1]?.toLowerCase() || ''
+  if (/\b(?:website|site|pages|frontend|ui)\b/.test(scope)) return 'site'
+  if (/\b(?:ci|docs?|release|build|deploy|workflow|meta|repo)\b/.test(scope)) return 'ops'
+  if (/^(?:docs|ci|build|chore)(?:\([^)]+\))?:/i.test(message)) return 'ops'
+  return 'mod'
+}
+
+function normalizeProjectStatus(value: unknown): unknown {
+  if (!value || typeof value !== 'object') return value
+  const source = value as Record<string, any>
+  if (!Array.isArray(source.activity)) return value
+
+  const activity = source.activity.map((entry: Record<string, any>) => ({
+    ...entry,
+    scope: ['mod', 'site', 'ops'].includes(entry.scope) ? entry.scope : inferredScope(String(entry.message || '')),
+    isMerge: entry.isMerge === true || /^Merge pull request\b/i.test(String(entry.message || '')),
+  })) as ProjectStatus['activity']
+  const emptyCounts = (): WeeklyCounts => ({
+    features: 0,
+    fixes: 0,
+    performance: 0,
+    tests: 0,
+    documentation: 0,
+    milestones: 0,
+  })
+  const scopes: ProjectStatus['weeklyReport']['scopes'] = {
+    mod: { total: 0, counts: emptyCounts() },
+    site: { total: 0, counts: emptyCounts() },
+    ops: { total: 0, counts: emptyCounts() },
+  }
+  const reportStart = Date.parse(source.weeklyReport?.startedAt || '')
+  for (const entry of activity) {
+    if (entry.isMerge || (Number.isFinite(reportStart) && Date.parse(entry.date) < reportStart)) continue
+    const stream = scopes[entry.scope as ActivityScope]
+    stream.total += 1
+    const type = String(entry.type || '')
+    const category = type === 'NEW MOVE' ? 'features'
+      : type === 'HP RESTORED' ? 'fixes'
+        : type === 'SPEED +1' ? 'performance'
+          : type === 'LAB VERIFIED' ? 'tests'
+            : type === 'FIELD NOTES' ? 'documentation'
+              : type === 'EVOLVED' ? 'milestones' : null
+    if (category) stream.counts[category] += 1
+  }
+  const scopeCommits = activity.reduce((totals: Record<ActivityScope, number>, entry: ProjectStatus['activity'][number]) => {
+    if (!entry.isMerge) totals[entry.scope] += 1
+    return totals
+  }, { mod: 0, site: 0, ops: 0 })
+
+  return {
+    ...source,
+    activity,
+    missions: Array.isArray(source.missions)
+      ? source.missions.map((mission: Record<string, any>) => ({
+        ...mission,
+        source: mission.source === 'issue' ? 'issue' : 'roadmap',
+      }))
+      : source.missions,
+    weeklyReport: source.weeklyReport ? {
+      ...source.weeklyReport,
+      scopes: source.weeklyReport.scopes || scopes,
+      mergeCommitsExcluded: true,
+    } : source.weeklyReport,
+    proof: source.proof ? {
+      ...source.proof,
+      tier: ['device', 'benchmark', 'ci'].includes(source.proof.tier) ? source.proof.tier : 'ci',
+    } : source.proof,
+    devStats: source.devStats ? {
+      ...source.devStats,
+      scopeCommits: source.devStats.scopeCommits || scopeCommits,
+    } : source.devStats,
+    pullRequests: Array.isArray(source.pullRequests)
+      ? source.pullRequests.map((pull: Record<string, any>) => ({
+        ...pull,
+        scope: ['mod', 'site', 'ops'].includes(pull.scope) ? pull.scope : inferredScope(String(pull.title || '')),
+      }))
+      : source.pullRequests,
+  }
 }
 
 export function useProjectStatus() {
@@ -308,8 +425,9 @@ export function useProjectStatus() {
         return response.json()
       })
       .then((value: unknown) => {
-        if (active && isProjectStatus(value)) {
-          setStatus({ ...FALLBACK_PROJECT_STATUS, ...value })
+        const normalized = normalizeProjectStatus(value)
+        if (active && isProjectStatus(normalized)) {
+          setStatus({ ...FALLBACK_PROJECT_STATUS, ...normalized })
         }
       })
       .catch(() => undefined)

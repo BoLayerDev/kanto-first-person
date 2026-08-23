@@ -58,6 +58,29 @@ function activityType(message) {
   return 'RESEARCH UPDATE'
 }
 
+function changedFiles(sha) {
+  if (!sha) return []
+  return git('diff-tree', '--no-commit-id', '--name-only', '-r', '-m', '--first-parent', '--root', sha)
+    .split('\n')
+    .map((name) => name.trim().replaceAll('\\', '/'))
+    .filter(Boolean)
+}
+
+function activityScope(message, files = []) {
+  const normalizedFiles = Array.isArray(files)
+    ? files.map((name) => clean(name).replaceAll('\\', '/')).filter(Boolean)
+    : []
+  const modPath = /^(?:main\.lua|manifest\.json|mod\.toml|src\/|companion\/|assets\/|tests\/|tools\/)/i
+  if (normalizedFiles.some((name) => modPath.test(name))) return 'mod'
+  if (normalizedFiles.some((name) => name.startsWith('website/'))) return 'site'
+
+  const conventionalScope = clean(message).match(/^[a-z]+\(([^)]+)\):/i)?.[1]?.toLowerCase() || ''
+  if (/\b(?:website|site|pages|frontend|ui)\b/.test(conventionalScope)) return 'site'
+  if (/\b(?:ci|docs?|release|build|deploy|workflow|meta|repo)\b/.test(conventionalScope)) return 'ops'
+  if (/^(?:docs|ci|build|chore)(?:\([^)]+\))?:/i.test(clean(message))) return 'ops'
+  return 'mod'
+}
+
 const repository = clean(process.env.SITE_REPOSITORY, manifest.github)
 const branch = clean(process.env.SITE_SOURCE_BRANCH, git('branch', '--show-current') || 'v2-rewrite')
 const commit = clean(process.env.SITE_SOURCE_SHA, git('rev-parse', 'HEAD'))
@@ -78,9 +101,10 @@ if (activityOverride) {
     activity = []
   }
 } else {
-  const records = git('log', '--format=%H%x1f%cI%x1f%an%x1f%s', commit || 'HEAD').split('\n').filter(Boolean)
+  const records = git('log', '--format=%H%x1f%P%x1f%cI%x1f%an%x1f%s', commit || 'HEAD').split('\n').filter(Boolean)
   activity = records.map((record) => {
-    const [sha, date, author, message] = record.split('\x1f')
+    const [sha, parents, date, author, message] = record.split('\x1f')
+    const files = changedFiles(sha)
     return {
       sha,
       shortSha: sha.slice(0, 7),
@@ -88,6 +112,8 @@ if (activityOverride) {
       date,
       author,
       type: activityType(message),
+      scope: activityScope(message, files),
+      isMerge: parents.split(' ').filter(Boolean).length > 1,
       url: `${repositoryUrl}/commit/${sha}`,
     }
   })
@@ -96,6 +122,10 @@ if (activityOverride) {
 activity = activity.map((entry) => ({
   ...entry,
   message: publicWorkLabel(entry.message, 'Research update'),
+  scope: ['mod', 'site', 'ops'].includes(entry.scope)
+    ? entry.scope
+    : activityScope(entry.message, entry.files),
+  isMerge: entry.isMerge === true || /^Merge pull request\b/i.test(clean(entry.message)),
 }))
 
 async function github(pathname) {
@@ -238,6 +268,7 @@ const pullRequests = pullRecords
     createdAt: pull.created_at,
     mergedAt: pull.merged_at,
     deliverySeconds: elapsedSeconds(pull.created_at, pull.merged_at),
+    scope: activityScope(pull.title),
   }))
   .filter((pull) => Number.isFinite(pull.number) && pull.deliverySeconds > 0)
   .sort((left, right) => Date.parse(right.mergedAt) - Date.parse(left.mergedAt))
@@ -254,9 +285,9 @@ function issueLabels(issue) {
 }
 
 function issueForSlot(slot) {
-  const expected = `status:${slot.toLowerCase()}`
+  const expected = [`mission:${slot.toLowerCase()}`, `status:${slot.toLowerCase()}`]
   return openIssues
-    .filter((issue) => issueLabels(issue).some((label) => label.replace(/\s+/g, '') === expected))
+    .filter((issue) => issueLabels(issue).some((label) => expected.includes(label.replace(/\s+/g, ''))))
     .sort((left, right) => Date.parse(right.updated_at) - Date.parse(left.updated_at))[0]
 }
 
@@ -272,7 +303,7 @@ function mission(slot, fallbackTitle, fallbackUrl) {
     slot,
     title: fallbackTitle,
     url: fallbackUrl,
-    source: 'github',
+    source: 'roadmap',
     updatedAt: generatedAt,
   }
 }
@@ -287,6 +318,12 @@ const labRuntimeSeconds = successfulCiRuns.reduce(
   0,
 )
 const deliveryTimes = pullRequests.map((pull) => pull.deliverySeconds)
+const verifiedRewriteActivity = rewriteActivity.filter((entry) => !entry.isMerge)
+const scopeCommits = {
+  mod: verifiedRewriteActivity.filter((entry) => entry.scope === 'mod').length,
+  site: verifiedRewriteActivity.filter((entry) => entry.scope === 'site').length,
+  ops: verifiedRewriteActivity.filter((entry) => entry.scope === 'ops').length,
+}
 const devStats = {
   rewriteStartedAt,
   activeDays: new Set(rewriteActivity.map((entry) => entry.date.slice(0, 10))).size,
@@ -294,6 +331,7 @@ const devStats = {
   labRuntimeSeconds,
   mergedPullRequests: pullRequests.length,
   medianPullRequestSeconds: median(deliveryTimes),
+  scopeCommits,
 }
 
 if (process.env.SITE_REQUIRE_VERIFIED_CI === 'true') {
@@ -332,9 +370,14 @@ if (token) {
 
 let hostEvidence = {}
 let hostEvidenceName = ''
+let benchmarkEvidence = {}
+let benchmarkEvidenceName = ''
+let deviceEvidence = {}
+let deviceEvidenceName = ''
 try {
   const evidenceDirectory = path.join(repositoryRoot, 'docs', 'release-evidence')
-  const evidenceNames = (await readdir(evidenceDirectory))
+  const allEvidenceNames = await readdir(evidenceDirectory)
+  const evidenceNames = allEvidenceNames
     .filter((name) => /^host-release-delta-\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\.json$/i.test(name))
   const evidenceRecords = await Promise.all(evidenceNames.map(async (name) => {
     try {
@@ -348,6 +391,37 @@ try {
     .sort((left, right) => Date.parse(right.value.observed_at || '') - Date.parse(left.value.observed_at || ''))[0]
   hostEvidence = newestEvidence?.value ?? {}
   hostEvidenceName = newestEvidence?.name ?? ''
+
+  const benchmarkNames = allEvidenceNames
+    .filter((name) => /^gen1recomp-\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\.json$/i.test(name))
+  const benchmarkRecords = await Promise.all(benchmarkNames.map(async (name) => {
+    try {
+      return { name, value: JSON.parse(await readFile(path.join(evidenceDirectory, name), 'utf8')) }
+    } catch {
+      return null
+    }
+  }))
+  const newestBenchmark = benchmarkRecords
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(right.value.audited_at || '') - Date.parse(left.value.audited_at || ''))[0]
+  benchmarkEvidence = newestBenchmark?.value ?? {}
+  benchmarkEvidenceName = newestBenchmark?.name ?? ''
+
+  const deviceNames = allEvidenceNames
+    .filter((name) => /^device-result-\d{4}-\d{2}-\d{2}(?:-[a-z0-9-]+)?\.json$/i.test(name))
+  const deviceRecords = await Promise.all(deviceNames.map(async (name) => {
+    try {
+      return { name, value: JSON.parse(await readFile(path.join(evidenceDirectory, name), 'utf8')) }
+    } catch {
+      return null
+    }
+  }))
+  const newestDevice = deviceRecords
+    .filter(Boolean)
+    .sort((left, right) => Date.parse(right.value.observed_at || right.value.captured_at || '')
+      - Date.parse(left.value.observed_at || left.value.captured_at || ''))[0]
+  deviceEvidence = newestDevice?.value ?? {}
+  deviceEvidenceName = newestDevice?.name ?? ''
 } catch {
   hostEvidence = {}
 }
@@ -358,6 +432,7 @@ const hostEvidenceUrl = hostEvidenceName
   : `${repositoryUrl}/blob/${branch}/docs/compatibility.md`
 const deviceEvidenceUrl = `${repositoryUrl}/blob/${branch}/docs/device-test-guide.md`
 const releaseProcessUrl = `${repositoryUrl}/blob/${branch}/docs/release-process.md`
+const roadmapUrl = `${repositoryUrl}/blob/${branch}/ROADMAP.md`
 const compatibleHostReady = hostDecision.released_hosts === true
 const compatibleHostProgress = hostDecision.battle_art_owner_release_evidence_exists === true
 const deviceTested = hostDecision.live_visual_acceptance === true
@@ -366,13 +441,13 @@ const packageSigned = hostDecision.signed_tag === true
 const missions = [
   mission(
     'NOW',
-    activity[0] ? `Verify: ${activity[0].message}` : 'Continue the verified 2.0 rewrite',
-    activity[0]?.url || `${repositoryUrl}/commits/${branch}`,
+    deviceTested ? 'Prepare the signed KFP player package' : 'Complete live device acceptance',
+    deviceTested ? releaseProcessUrl : deviceEvidenceUrl,
   ),
   mission(
     'NEXT',
-    deviceTested ? 'Prepare the signed KFP player package' : 'Complete live device acceptance',
-    deviceTested ? releaseProcessUrl : deviceEvidenceUrl,
+    packageSigned ? 'Publish the verified KFP 2.0 release' : 'Advance the next evidence-locked release gate',
+    packageSigned ? release.url : roadmapUrl,
   ),
   mission(
     'BLOCKED',
@@ -439,18 +514,31 @@ function activityCategory(entry) {
 
 const reportEnd = Date.parse(generatedAt)
 const reportStart = Number.isFinite(reportEnd) ? reportEnd - (7 * 24 * 60 * 60 * 1000) : 0
-const weeklyActivity = activity.filter((entry) => Date.parse(entry.date) >= reportStart)
-const weeklyCounts = {
-  features: 0,
-  fixes: 0,
-  performance: 0,
-  tests: 0,
-  documentation: 0,
-  milestones: 0,
+const weeklyActivity = activity.filter((entry) => Date.parse(entry.date) >= reportStart && !entry.isMerge)
+function emptyWeeklyCounts() {
+  return {
+    features: 0,
+    fixes: 0,
+    performance: 0,
+    tests: 0,
+    documentation: 0,
+    milestones: 0,
+  }
+}
+const weeklyCounts = emptyWeeklyCounts()
+const weeklyScopes = {
+  mod: { total: 0, counts: emptyWeeklyCounts() },
+  site: { total: 0, counts: emptyWeeklyCounts() },
+  ops: { total: 0, counts: emptyWeeklyCounts() },
 }
 for (const entry of weeklyActivity) {
+  const scope = weeklyScopes[entry.scope] ? entry.scope : 'ops'
+  weeklyScopes[scope].total += 1
   const category = activityCategory(entry)
-  if (category) weeklyCounts[category] += 1
+  if (category) {
+    weeklyCounts[category] += 1
+    weeklyScopes[scope].counts[category] += 1
+  }
 }
 
 const weeklyReport = {
@@ -458,9 +546,27 @@ const weeklyReport = {
   endedAt: generatedAt,
   total: weeklyActivity.length,
   counts: weeklyCounts,
+  scopes: weeklyScopes,
+  mergeCommitsExcluded: true,
 }
 
-const proof = {
+const deviceVerdict = clean(
+  deviceEvidence?.verdict,
+  clean(deviceEvidence?.result?.verdict, clean(deviceEvidence?.decision?.verdict)),
+).toLowerCase()
+const deviceAccepted = deviceEvidence?.accepted === true
+  || deviceEvidence?.result?.accepted === true
+  || deviceEvidence?.decision?.accepted === true
+  || ['pass', 'passed', 'accepted', 'verified'].includes(deviceVerdict)
+const benchmarkPassed = clean(benchmarkEvidence?.results?.kfp_benchmarks).toLowerCase() === 'pass'
+const benchmarkEvidenceUrl = benchmarkEvidenceName
+  ? `${repositoryUrl}/blob/${branch}/docs/release-evidence/${benchmarkEvidenceName}`
+  : `${repositoryUrl}/blob/${branch}/docs/benchmark-method.md`
+const deviceResultUrl = deviceEvidenceName
+  ? `${repositoryUrl}/blob/${branch}/docs/release-evidence/${deviceEvidenceName}`
+  : deviceEvidenceUrl
+const ciProof = {
+  tier: 'ci',
   kind: 'CI RUN',
   label: ciConclusion === 'success' && total > 0 ? `${passed}/${total} CHECKS PASSED` : 'CHECK CI EVIDENCE',
   version: clean(manifest.version, 'UNKNOWN'),
@@ -469,6 +575,25 @@ const proof = {
   environment: 'GITHUB ACTIONS',
   url: ciRunUrl || `${repositoryUrl}/actions/workflows/ci.yml`,
 }
+const proof = deviceAccepted ? {
+  tier: 'device',
+  kind: 'DEVICE ACCEPTANCE',
+  label: 'LIVE DEVICE VERIFIED',
+  version: clean(manifest.version, 'UNKNOWN'),
+  commit: shortSha,
+  capturedAt: clean(deviceEvidence?.observed_at, clean(deviceEvidence?.captured_at, generatedAt)),
+  environment: clean(deviceEvidence?.device?.name, clean(deviceEvidence?.environment, 'LIVE DEVICE')),
+  url: deviceResultUrl,
+} : (benchmarkPassed ? {
+  tier: 'benchmark',
+  kind: 'BENCHMARK PROOF',
+  label: 'ROM-FREE BENCHMARKS PASS',
+  version: clean(manifest.version, 'UNKNOWN'),
+  commit: shortSha,
+  capturedAt: clean(benchmarkEvidence?.audited_at, generatedAt),
+  environment: `GEN1RECOMP ${clean(benchmarkEvidence?.targets?.stable_tag, 'AUDIT')}`,
+  url: benchmarkEvidenceUrl,
+} : ciProof)
 
 const deployRunId = clean(process.env.SITE_DEPLOY_RUN_ID)
 const deployRunUrl = clean(

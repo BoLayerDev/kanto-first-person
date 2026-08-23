@@ -289,6 +289,22 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   await expect(banner).toContainText('NOT RELEASED')
   await expect(banner.getByText(/SYNCED 2026-08-22/)).toBeVisible()
   await expect(banner.getByRole('link', { name: /SOURCE 5e8544f/ })).toHaveAttribute('href', /commit\/5e8544f/)
+  const bannerPalette = await banner.evaluate((element) => {
+    const style = (selector: string) => getComputedStyle(element.querySelector(selector)!)
+    return {
+      kicker: style('.release-kicker').color,
+      paragraph: style('.release-copy p').color,
+      sync: style('.github-sync-note').color,
+      titleAccent: style('.release-copy h1 span').color,
+      ball: style('.release-core').backgroundImage,
+    }
+  })
+  expect(bannerPalette.kicker).toBe('rgb(122, 25, 29)')
+  expect(bannerPalette.paragraph).toBe('rgb(23, 32, 23)')
+  expect(bannerPalette.sync).toBe('rgb(40, 49, 37)')
+  expect(bannerPalette.titleAccent).toBe('rgb(216, 50, 58)')
+  expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
+  expect(bannerPalette.ball).toContain('rgb(255, 253, 242)')
 
   const routes = ['features', 'activity', 'guide', 'support', 'rebuild', 'github']
   for (const [index, route] of routes.entries()) {

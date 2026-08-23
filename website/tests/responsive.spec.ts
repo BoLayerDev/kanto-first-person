@@ -176,7 +176,10 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '7')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'expanded-side-zones')
   await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-scale-profile', 'small-medium-weighted')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '8')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-orientation-layout', 'varied-side-profiles')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '5')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-left-forward-facing-count', '2')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-right-forward-facing-count', '3')
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-gap')),
   )).toBeGreaterThanOrEqual(0.29)

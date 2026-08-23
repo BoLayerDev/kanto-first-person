@@ -32,8 +32,13 @@ export type ProjectStatus = {
     isMerge: boolean
     url: string
     ci?: {
+      runId?: string
       durationSeconds: number
       runUrl: string
+      startedAt?: string
+      completedAt?: string
+      passed?: number
+      total?: number
     }
   }>
   missions: Array<{
@@ -75,7 +80,7 @@ export type ProjectStatus = {
     id: string
     issuedAt: string
     rows: Array<{
-      id: 'source' | 'lab' | 'snapshot' | 'package'
+      id: 'source' | 'lab' | 'history' | 'package'
       label: string
       value: string
       detail: string
@@ -145,13 +150,18 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     date,
     author: 'Bo Layer',
     type,
-    scope: /^(?:docs|ci):/i.test(message) ? 'ops' : 'mod',
+    scope: 'mod',
     isMerge: false,
     url: `https://github.com/BoLayerDev/kanto-first-person/commit/${sha}`,
     ...(index === 0 ? {
       ci: {
+        runId: '32571329500',
         durationSeconds: 39,
         runUrl: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500',
+        startedAt: '2026-08-22T11:49:44Z',
+        completedAt: '2026-08-22T11:50:23Z',
+        passed: 11,
+        total: 11,
       },
     } : {}),
   })),
@@ -191,9 +201,9 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     total: 8,
     counts: { features: 0, fixes: 2, performance: 3, tests: 1, documentation: 2, milestones: 0 },
     scopes: {
-      mod: { total: 5, counts: { features: 0, fixes: 1, performance: 3, tests: 0, documentation: 0, milestones: 0 } },
+      mod: { total: 8, counts: { features: 0, fixes: 2, performance: 3, tests: 1, documentation: 2, milestones: 0 } },
       site: { total: 0, counts: { features: 0, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
-      ops: { total: 3, counts: { features: 0, fixes: 1, performance: 0, tests: 1, documentation: 2, milestones: 0 } },
+      ops: { total: 0, counts: { features: 0, fixes: 0, performance: 0, tests: 0, documentation: 0, milestones: 0 } },
     },
     mergeCommitsExcluded: true,
   },
@@ -212,40 +222,21 @@ export const FALLBACK_PROJECT_STATUS: ProjectStatus = {
     issuedAt: '2026-08-22T11:50:23Z',
     rows: [
       { id: 'source', label: 'SOURCE LOCK', value: 'COMMIT 79B3851', detail: 'V2-REWRITE SOURCE', state: 'VERIFIED', url: 'https://github.com/BoLayerDev/kanto-first-person/commit/79b385131d3628f405ad264a01973c479991fc43' },
-      { id: 'lab', label: 'LAB SCAN', value: '11/11 CHECKS PASSED', detail: 'GITHUB ACTIONS · 39S', state: 'PASSED', url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500' },
-      { id: 'snapshot', label: 'STATUS FILE', value: 'FILED 2026-08-22', detail: 'STATIC PROJECT-STATUS.JSON', state: 'AUTO', url: 'https://github.com/BoLayerDev/kanto-first-person/actions/workflows/pages.yml' },
+      { id: 'lab', label: 'MOD LAB SCAN', value: '11/11 CHECKS PASSED', detail: 'MOD COMMIT CHECKS · 39S', state: 'PASSED', url: 'https://github.com/BoLayerDev/kanto-first-person/actions/runs/32571329500' },
+      { id: 'history', label: 'MOD HISTORY', value: '8 VERIFIED COMMITS', detail: '1 ACTIVE FIELD DAY', state: 'TRACKED', url: 'https://github.com/BoLayerDev/kanto-first-person/commits/v2-rewrite' },
       { id: 'package', label: 'PLAYER PACKAGE', value: 'NOT RELEASED', detail: 'RELEASE GATES STILL OPEN', state: 'WAITING', url: 'https://github.com/BoLayerDev/kanto-first-person/releases' },
     ],
   },
   devStats: {
     rewriteStartedAt: '2026-08-21T16:42:07-06:00',
-    activeDays: 2,
-    successfulLabRuns: 39,
-    labRuntimeSeconds: 1611,
-    mergedPullRequests: 11,
-    medianPullRequestSeconds: 59,
-    scopeCommits: { mod: 5, site: 0, ops: 3 },
+    activeDays: 1,
+    successfulLabRuns: 1,
+    labRuntimeSeconds: 39,
+    mergedPullRequests: 0,
+    medianPullRequestSeconds: 0,
+    scopeCommits: { mod: 8, site: 0, ops: 0 },
   },
-  pullRequests: [
-    {
-      number: 11,
-      title: 'feat(website): add automatic Trainer Clock',
-      url: 'https://github.com/BoLayerDev/kanto-first-person/pull/11',
-      createdAt: '2026-08-22T20:22:56Z',
-      mergedAt: '2026-08-22T20:25:58Z',
-      deliverySeconds: 182,
-      scope: 'site',
-    },
-    {
-      number: 10,
-      title: 'fix(website): show verified rewrite start date',
-      url: 'https://github.com/BoLayerDev/kanto-first-person/pull/10',
-      createdAt: '2026-08-22T20:08:09Z',
-      mergedAt: '2026-08-22T20:08:57Z',
-      deliverySeconds: 48,
-      scope: 'site',
-    },
-  ],
+  pullRequests: [],
   ci: {
     state: 'success',
     runId: '32571329500',
@@ -330,8 +321,7 @@ function isProjectStatus(value: unknown): value is ProjectStatus {
 function inferredScope(message: string): ActivityScope {
   const scope = message.match(/^[a-z]+\(([^)]+)\):/i)?.[1]?.toLowerCase() || ''
   if (/\b(?:website|site|pages|frontend|ui)\b/.test(scope)) return 'site'
-  if (/\b(?:ci|docs?|release|build|deploy|workflow|meta|repo)\b/.test(scope)) return 'ops'
-  if (/^(?:docs|ci|build|chore)(?:\([^)]+\))?:/i.test(message)) return 'ops'
+  if (/\b(?:github pages|pages publication|website)\b/i.test(message)) return 'site'
   return 'mod'
 }
 
@@ -340,11 +330,14 @@ function normalizeProjectStatus(value: unknown): unknown {
   const source = value as Record<string, any>
   if (!Array.isArray(source.activity)) return value
 
-  const activity = source.activity.map((entry: Record<string, any>) => ({
-    ...entry,
-    scope: ['mod', 'site', 'ops'].includes(entry.scope) ? entry.scope : inferredScope(String(entry.message || '')),
-    isMerge: entry.isMerge === true || /^Merge pull request\b/i.test(String(entry.message || '')),
-  })) as ProjectStatus['activity']
+  const activity = source.activity.map((entry: Record<string, any>) => {
+    const inferred = inferredScope(String(entry.message || ''))
+    return {
+      ...entry,
+      scope: entry.scope === 'site' || inferred === 'site' ? 'site' : 'mod',
+      isMerge: entry.isMerge === true || /^Merge pull request\b/i.test(String(entry.message || '')),
+    }
+  }).filter((entry: Record<string, any>) => entry.scope === 'mod') as ProjectStatus['activity']
   const emptyCounts = (): WeeklyCounts => ({
     features: 0,
     fixes: 0,
@@ -388,7 +381,9 @@ function normalizeProjectStatus(value: unknown): unknown {
       : source.missions,
     weeklyReport: source.weeklyReport ? {
       ...source.weeklyReport,
-      scopes: source.weeklyReport.scopes || scopes,
+      total: scopes.mod.total,
+      counts: scopes.mod.counts,
+      scopes,
       mergeCommitsExcluded: true,
     } : source.weeklyReport,
     proof: source.proof ? {
@@ -402,8 +397,8 @@ function normalizeProjectStatus(value: unknown): unknown {
     pullRequests: Array.isArray(source.pullRequests)
       ? source.pullRequests.map((pull: Record<string, any>) => ({
         ...pull,
-        scope: ['mod', 'site', 'ops'].includes(pull.scope) ? pull.scope : inferredScope(String(pull.title || '')),
-      }))
+        scope: pull.scope === 'site' || inferredScope(String(pull.title || '')) === 'site' ? 'site' : 'mod',
+      })).filter((pull: Record<string, any>) => pull.scope === 'mod')
       : source.pullRequests,
   }
 }

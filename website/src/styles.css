@@ -1498,6 +1498,21 @@ a {
   border-top: 2px dotted var(--game-pale);
 }
 
+.quest-empty {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  padding: 0.45rem 0.75rem;
+}
+
+.quest-empty span {
+  color: var(--game-mid);
+  font-family: var(--font-readable);
+  font-size: clamp(0.7rem, 0.744vw, 0.744rem);
+  font-weight: 800;
+  line-height: 1.45;
+}
+
 .quest-log a {
   display: grid;
   grid-template-columns: minmax(82px, 0.22fr) minmax(0, 1fr) auto;

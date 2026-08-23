@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { useProjectStatus, type ActivityScope, type ProjectStatus } from './data/projectStatus'
+import { useProjectStatus, type ProjectStatus } from './data/projectStatus'
 import { useJourneyStore } from './state/journey'
 import { PALETTES, type Edition } from './world/palettes'
 
@@ -16,11 +16,6 @@ const RELEASE_BALL_ASSETS: Record<Edition, string> = {
   yellow: 'great-ball-2d.png',
 }
 const YELLOW_SWITCH_CUE = 'audio/yellow-switch.mp3'
-const ACTIVITY_SCOPE_LABELS: Record<ActivityScope, string> = {
-  mod: 'MOD BUILD',
-  site: 'SITE LAB',
-  ops: 'PROJECT OPS',
-}
 
 type MenuItem = {
   label: string
@@ -49,7 +44,7 @@ const MENU_ITEMS: MenuItem[] = [
     eyebrow: 'OAK LAB / COMPLETE HISTORY',
     title: 'Every step. No mystery.',
     summary:
-      'Every verified commit on the release branch lives here. New work joins the log automatically after the complete CI lab scan passes.',
+      'Every verified mod and mod-support commit lives here. Website-only work is excluded. New mod work joins the log after CI passes.',
   },
   {
     label: 'TRAINER GUIDE',
@@ -126,17 +121,6 @@ function useLiveNow() {
   }, [])
 
   return now
-}
-
-function useDeploymentTime(fallback: string) {
-  const [deployedAt, setDeployedAt] = useState(fallback)
-
-  useEffect(() => {
-    const parsed = Date.parse(document.lastModified)
-    if (Number.isFinite(parsed)) setDeployedAt(new Date(parsed).toISOString())
-  }, [fallback])
-
-  return deployedAt
 }
 
 function relativeTime(date: string, now: number) {
@@ -332,26 +316,28 @@ function ActivityMeta({ entry, index, now }: { entry: ActivityEntry, index: numb
 function TrainerClock({ status }: { status: ProjectStatus }) {
   const now = useLiveNow()
   const lastUpdate = status.activity[0]?.date ?? status.generatedAt
-  const deployedAt = useDeploymentTime(status.generatedAt)
+  const lastVerified = status.ci.completedAt ?? lastUpdate
   const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000)
-  const weeklyActivity = status.activity.filter((entry) => Date.parse(entry.date) >= sevenDaysAgo).length
+  const weeklyActivity = status.activity.filter(
+    (entry) => !entry.isMerge && Date.parse(entry.date) >= sevenDaysAgo,
+  ).length
 
   return (
     <section className="trainer-clock" aria-label="Trainer Clock">
       <span className="trainer-clock-label">TRAINER CLOCK</span>
       <div>
-        <span><small>LAST UPDATE</small><Timestamp date={lastUpdate} now={now} /></span>
+        <span><small>LAST MOD UPDATE</small><Timestamp date={lastUpdate} now={now} /></span>
         <a
           href={status.ci.runUrl}
           target="_blank"
           rel="noreferrer"
-          title="Run time of the latest successful GitHub Actions check"
+          title="Run time of the latest successful mod commit check"
         >
-          <small>LATEST CI TIME</small><b>{durationLabel(status.ci.durationSeconds)}</b>
+          <small>MOD CI TIME</small><b>{durationLabel(status.ci.durationSeconds)}</b>
         </a>
-        <span><small>DEPLOYED</small><Timestamp date={deployedAt} now={now} /></span>
-        <span title="Commits on v2-rewrite during the last seven days">
-          <small>LAST 7 DAYS</small><b>{weeklyActivity}</b>
+        <span><small>MOD VERIFIED</small><Timestamp date={lastVerified} now={now} /></span>
+        <span title="Mod and mod-support commits on v2-rewrite during the last seven days. Website and merge commits are excluded.">
+          <small>MOD / LAST 7 DAYS</small><b>{weeklyActivity}</b>
         </span>
       </div>
     </section>
@@ -407,8 +393,7 @@ function ReleaseJourney({ status }: { status: ProjectStatus }) {
 }
 
 function WeeklyOakReport({ status }: { status: ProjectStatus }) {
-  const [scope, setScope] = useState<ActivityScope>('mod')
-  const scopedReport = status.weeklyReport.scopes[scope]
+  const scopedReport = status.weeklyReport.scopes.mod
   const counts = scopedReport.counts
   const entries = [
     ['NEW MOVES', counts.features, 'New features. GitHub commits marked feat: count here. This shows how many new capabilities entered the project this week.'],
@@ -422,26 +407,13 @@ function WeeklyOakReport({ status }: { status: ProjectStatus }) {
   return (
     <section className="weekly-report" aria-labelledby="weekly-report-title">
       <header><span>LAST SEVEN DAYS // MERGES EXCLUDED</span><b id="weekly-report-title">PROFESSOR OAK REPORT</b></header>
-      <div className="scope-switch" role="group" aria-label="Professor Oak report work stream">
-        {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
-          <button
-            type="button"
-            className={scope === value ? 'is-active' : ''}
-            aria-pressed={scope === value}
-            onClick={() => setScope(value)}
-            key={value}
-          >
-            {ACTIVITY_SCOPE_LABELS[value]}
-          </button>
-        ))}
-      </div>
       <div className="weekly-report-total">
         <b>{scopedReport.total}</b>
         <span className="weekly-report-total-label">
-          {ACTIVITY_SCOPE_LABELS[scope]} / LAST 7 DAYS
+          MOD WORK / LAST 7 DAYS
           <InfoTip
-            label={`${ACTIVITY_SCOPE_LABELS[scope]} LAST 7 DAYS`}
-            text={`Verified ${ACTIVITY_SCOPE_LABELS[scope].toLowerCase()} commits from the last seven days. Merge commits are preserved in the complete log but excluded from these progress totals.`}
+            label="MOD WORK LAST 7 DAYS"
+            text="Verified mod source, tests, tools, documentation, CI, compatibility, and release work from the last seven days. Website-only commits and merge commits are excluded."
           />
         </span>
       </div>
@@ -521,7 +493,7 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         <div><dt>MOD COMMITS</dt><dd>{status.devStats.scopeCommits.mod}</dd></div>
         <div><dt>ACTIVE DAYS</dt><dd>{status.devStats.activeDays}</dd></div>
         <div><dt>MERGED TASKS</dt><dd>{status.devStats.mergedPullRequests}</dd></div>
-        <div><dt>TOTAL CI TIME</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
+        <div><dt>TOTAL MOD CI</dt><dd>{longDurationLabel(status.devStats.labRuntimeSeconds)}</dd></div>
       </dl>
 
       <div className="quest-log-heading">
@@ -529,7 +501,7 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
         <b>PR QUEST LOG</b>
       </div>
       <ol className="quest-log">
-        {tasks.map((task) => (
+        {tasks.length ? tasks.map((task) => (
           <li key={task.number}>
             <a href={task.url} target="_blank" rel="noreferrer">
               <span>QUEST #{String(task.number).padStart(2, '0')}</span>
@@ -539,10 +511,10 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
               </small>
             </a>
           </li>
-        ))}
+        )) : <li className="quest-empty"><span>NO MERGED MOD TASKS RECORDED</span></li>}
       </ol>
       <footer>
-        <span>CI TIME = GITHUB ACTIONS WALL TIME. AUTO DELIVERY = PR OPENED TO MERGED.</span>
+        <span>MOD CI = GITHUB ACTIONS WALL TIME FOR MOD COMMITS. AUTO DELIVERY = MOD PR OPENED TO MERGED.</span>
         <span>NOT HANDS-ON HOURS.</span>
       </footer>
     </section>
@@ -550,11 +522,10 @@ function DevStats({ status, complete = false }: { status: ProjectStatus, complet
 }
 
 function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, newResearch?: boolean }) {
-  const [scope, setScope] = useState<ActivityScope>('mod')
-  const scopedActivity = status.activity.filter((entry) => entry.scope === scope && !entry.isMerge)
+  const scopedActivity = status.activity.filter((entry) => !entry.isMerge)
   const updates = scopedActivity.slice(0, 4)
   const now = useLiveNow()
-  const scopedDiscovery = newResearch && status.activity[0]?.scope === scope && !status.activity[0]?.isMerge
+  const scopedDiscovery = newResearch && !status.activity[0]?.isMerge
   const displayedCount = useCountUp(scopedActivity.length, newResearch)
 
   return (
@@ -571,19 +542,6 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
           <i aria-hidden="true" /><span>NEW RESEARCH DISCOVERED</span><b>#{status.shortSha}</b>
         </div>
       ) : null}
-      <div className="scope-switch activity-scope-switch" role="group" aria-label="Research Log work stream">
-        {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
-          <button
-            type="button"
-            className={scope === value ? 'is-active' : ''}
-            aria-pressed={scope === value}
-            onClick={() => setScope(value)}
-            key={value}
-          >
-            {ACTIVITY_SCOPE_LABELS[value]}
-          </button>
-        ))}
-      </div>
       <ol>
         {updates.map((update, index) => (
           <li
@@ -602,7 +560,7 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
       </ol>
       <div className="activity-footer">
         <span className={newResearch ? 'is-counting' : ''}>
-          <strong>{displayedCount}</strong> VERIFIED {ACTIVITY_SCOPE_LABELS[scope]} UPDATES
+          <strong>{displayedCount}</strong> VERIFIED MOD UPDATES
         </span>
         <a href="#activity">OPEN FULL LOG ▶</a>
       </div>
@@ -639,10 +597,10 @@ function ReleaseBanner({ status, edition }: { status: ProjectStatus; edition: Ed
       </div>
       <div className="release-status" aria-label="Current release status">
         <a href={status.ci.runUrl} target="_blank" rel="noreferrer">
-          <span>BUILD</span><b>{buildLabel}</b><i aria-hidden="true">↗</i>
+          <span>MOD BUILD</span><b>{buildLabel}</b><i aria-hidden="true">↗</i>
         </a>
         <a href={status.commitUrl} target="_blank" rel="noreferrer">
-          <span>SOURCE</span><b>{status.shortSha}</b><i aria-hidden="true">↗</i>
+          <span>MOD SOURCE</span><b>{status.shortSha}</b><i aria-hidden="true">↗</i>
         </a>
         {packageCard}
       </div>
@@ -805,7 +763,6 @@ function ResearchArchive({
 }) {
   const now = useLiveNow()
   const [activityFilter, setActivityFilter] = useState('all')
-  const [scopeFilter, setScopeFilter] = useState<ActivityScope | 'all'>('mod')
   const contributors = new Set(status.activity.map((entry) => entry.author)).size
   const activeDays = new Set(status.activity.map((entry) => entry.date.slice(0, 10))).size
   const rewriteStart = status.activity.find((entry) => entry.sha === REWRITE_START_COMMIT)
@@ -844,8 +801,7 @@ function ResearchArchive({
     return 'other'
   }
   const filteredActivity = status.activity.filter((entry) => (
-    (scopeFilter === 'all' || entry.scope === scopeFilter)
-    && (activityFilter === 'all' || activityCategory(entry) === activityFilter)
+    activityFilter === 'all' || activityCategory(entry) === activityFilter
   ))
 
   useEffect(() => {
@@ -858,7 +814,7 @@ function ResearchArchive({
     <div className="archive-page">
       <TrainerClock status={status} />
       <div className="archive-vitals" aria-label="Complete development totals">
-        <div title="All commits in the complete repository history"><b>{status.activity.length}</b><span>FULL REPO HISTORY</span></div>
+        <div title="Verified mod and mod-support commits. Website-only commits are excluded."><b>{status.activity.length}</b><span>MOD HISTORY</span></div>
         <div><b>{activeDays}</b><span>ACTIVE FIELD DAYS</span></div>
         <div><b>{contributors}</b><span>CONTRIBUTORS</span></div>
         <div className="archive-date-vital">
@@ -917,27 +873,6 @@ function ResearchArchive({
 
       <section className="archive-filters" aria-labelledby="archive-filters-title">
         <b id="archive-filters-title">FILTER THE RESEARCH LOG</b>
-        <div role="group" aria-label="Research Log work streams">
-          <button
-            type="button"
-            className={scopeFilter === 'all' ? 'is-active' : ''}
-            aria-pressed={scopeFilter === 'all'}
-            onClick={() => setScopeFilter('all')}
-          >
-            ALL WORK
-          </button>
-          {(Object.keys(ACTIVITY_SCOPE_LABELS) as ActivityScope[]).map((value) => (
-            <button
-              type="button"
-              className={scopeFilter === value ? 'is-active' : ''}
-              aria-pressed={scopeFilter === value}
-              onClick={() => setScopeFilter(value)}
-              key={value}
-            >
-              {ACTIVITY_SCOPE_LABELS[value]}
-            </button>
-          ))}
-        </div>
         <div role="group" aria-label="Research Log filters">
           {filterOptions.map(([value, label]) => (
             <button
@@ -965,7 +900,7 @@ function ResearchArchive({
                 <span className="archive-number">#{String(status.activity.length - status.activity.indexOf(entry)).padStart(3, '0')}</span>
                 <span className="archive-entry-type">{entry.type}</span>
                 <b>{activityTitle(entry.message)}</b>
-                <span className="archive-author">{ACTIVITY_SCOPE_LABELS[entry.scope]} · {entry.author}</span>
+                <span className="archive-author">MOD WORK · {entry.author}</span>
                 <code>{entry.shortSha}</code>
               </a>
               <ActivityMeta entry={entry} index={index} now={now} />
@@ -975,7 +910,7 @@ function ResearchArchive({
       </section>
 
       <DetailLinks>
-        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">VERIFY THE FULL LOG ON GITHUB <span>↗</span></a>
+        <a href={`${REPO}/commits/${status.branch}`} target="_blank" rel="noreferrer">VERIFY THE MOD LOG ON GITHUB <span>↗</span></a>
       </DetailLinks>
     </div>
   )
@@ -999,7 +934,7 @@ function MenuDetail({
       <>
         <div className="home-vitals">
           <span><small>VERSION</small><b>{status.version.toUpperCase()}</b></span>
-          <span><small>LAB SCAN</small><b>{status.ci.passed}/{status.ci.total} PASS</b></span>
+          <span><small>MOD LAB SCAN</small><b>{status.ci.passed}/{status.ci.total} PASS</b></span>
           <span><small>TARGET</small><b>RED · BLUE · YELLOW</b></span>
         </div>
         <TrainerClock status={status} />

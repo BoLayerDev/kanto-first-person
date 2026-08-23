@@ -346,6 +346,42 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   await expect(proof).toContainText('TEST RIG')
 })
 
+test('keeps Professor Oak report labels and totals clearly separated', async ({ page }, testInfo) => {
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(PAGE_PATH)
+
+    const report = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
+    const cells = await report.locator('dl > div').evaluateAll((items) => items.map((item) => {
+      const label = item.querySelector('dt') as HTMLElement
+      const value = item.querySelector('dd') as HTMLElement
+      const labelBox = label.getBoundingClientRect()
+      const valueBox = value.getBoundingClientRect()
+      const valueStyle = getComputedStyle(value)
+      return {
+        clipped: item.scrollWidth > item.clientWidth + 1 || item.scrollHeight > item.clientHeight + 1,
+        fontFamily: valueStyle.fontFamily,
+        fontSize: Number.parseFloat(valueStyle.fontSize),
+        gap: valueBox.top - labelBox.bottom,
+        height: item.getBoundingClientRect().height,
+      }
+    }))
+
+    expect(cells).toHaveLength(6)
+    for (const cell of cells) {
+      expect(cell.clipped).toBe(false)
+      expect(cell.fontFamily).toContain('monospace')
+      expect(cell.fontSize).toBeGreaterThanOrEqual(13.5)
+      expect(cell.gap).toBeGreaterThanOrEqual(5)
+      expect(cell.height).toBeGreaterThanOrEqual(58)
+    }
+
+    if (width === 901) {
+      await report.screenshot({ path: testInfo.outputPath('oak-report-legibility.png') })
+    }
+  }
+})
+
 test('shows automatic project time and PR task timing without claiming work hours', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(PAGE_PATH)

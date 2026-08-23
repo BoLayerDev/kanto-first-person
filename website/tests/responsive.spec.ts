@@ -229,6 +229,49 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1920.png'), fullPage: true })
 })
 
+test('uses wide desktop space with equal top and bottom insets', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1720, height: 1272 })
+  await page.goto(PAGE_PATH)
+  await page.evaluate(() => document.fonts.ready)
+
+  const layout = await page.evaluate(() => {
+    const shell = document.querySelector<HTMLElement>('.terminal-shell')!.getBoundingClientRect()
+    const banner = document.querySelector<HTMLElement>('.release-banner')!.getBoundingClientRect()
+    const menu = document.querySelector<HTMLElement>('.menu-window')!.getBoundingClientRect()
+    const detail = document.querySelector<HTMLElement>('.detail-window')!.getBoundingClientRect()
+    const footer = document.querySelector<HTMLElement>('.control-strip')!.getBoundingClientRect()
+    const detailCopy = document.querySelector<HTMLElement>('.detail-copy')!
+
+    return {
+      viewport: { height: innerHeight, width: innerWidth },
+      shell: { left: shell.left, right: shell.right, width: shell.width },
+      banner: { left: banner.left, right: banner.right, top: banner.top },
+      menu: { right: menu.right, width: menu.width },
+      detail: {
+        clientHeight: detailCopy.clientHeight,
+        left: detail.left,
+        scrollHeight: detailCopy.scrollHeight,
+        width: detail.width,
+      },
+      footerBottomInset: innerHeight - footer.bottom,
+      documentWidth: document.documentElement.scrollWidth,
+    }
+  })
+
+  expect(layout.shell.width).toBeGreaterThanOrEqual(1659)
+  expect(layout.banner.left).toBeLessThanOrEqual(64)
+  expect(layout.viewport.width - layout.banner.right).toBeLessThanOrEqual(64)
+  expect(Math.abs(layout.banner.top - layout.footerBottomInset)).toBeLessThanOrEqual(1)
+  expect(layout.banner.top).toBeLessThanOrEqual(20)
+  expect(layout.menu.width).toBeGreaterThanOrEqual(540)
+  expect(layout.detail.width).toBeGreaterThanOrEqual(950)
+  expect(layout.menu.right).toBeLessThan(layout.detail.left)
+  expect(layout.detail.scrollHeight).toBeGreaterThan(layout.detail.clientHeight)
+  expect(layout.documentWidth).toBe(layout.viewport.width)
+
+  await page.screenshot({ path: testInfo.outputPath('expanded-terminal-1720.png'), fullPage: true })
+})
+
 test.describe('desktop motion system', () => {
   test.use({ viewport: { width: 1440, height: 900 }, reducedMotion: 'no-preference' })
 

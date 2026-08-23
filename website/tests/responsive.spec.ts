@@ -382,8 +382,8 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
     }
   })
   expect(bannerPalette.kicker).toBe('rgb(122, 25, 29)')
-  expect(bannerPalette.paragraph).toBe('rgb(23, 32, 23)')
-  expect(bannerPalette.sync).toBe('rgb(40, 49, 37)')
+  expect(bannerPalette.paragraph).toBe('rgb(11, 16, 11)')
+  expect(bannerPalette.sync).toBe('rgb(103, 22, 28)')
   expect(bannerPalette.titleAccent).toBe('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(255, 253, 242)')

@@ -129,6 +129,7 @@ export default function WorldCanvas({ onReady }: WorldCanvasProps) {
       className={`world-canvas world-pokeballs${error ? ' has-error' : ''}`}
       data-scene-mode="pokeballs-only"
       data-menu-reactive="false"
+      data-quality={quality}
       aria-hidden="true"
     >
       {error ? <div className="webgl-fallback">3D preview unavailable. All menu options remain available.</div> : null}

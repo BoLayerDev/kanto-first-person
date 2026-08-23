@@ -1013,7 +1013,6 @@ function OptionsMenu({
   const quality = useJourneyStore((state) => state.quality)
   const setMenuIndex = useJourneyStore((state) => state.setMenuIndex)
   const setEdition = useJourneyStore((state) => state.setEdition)
-  const setQuality = useJourneyStore((state) => state.setQuality)
   const menuButtons = useRef<Array<HTMLButtonElement | null>>([])
   const item = MENU_ITEMS[menuIndex]
 
@@ -1068,7 +1067,6 @@ function OptionsMenu({
 
       <div className="terminal-grid">
         <nav className="menu-window pixel-window" aria-label="Main options">
-          <div className="window-label">OPTIONS</div>
           {MENU_ITEMS.map((menuItem, index) => (
             <button
               type="button"
@@ -1099,17 +1097,6 @@ function OptionsMenu({
                 </button>
               ))}
             </div>
-          </div>
-          <div className="inline-option">
-            <span>EFFECTS</span>
-            <button
-              type="button"
-              className="quality-toggle"
-              onClick={() => setQuality(quality === 'high' ? 'low' : 'high')}
-              aria-label={`Effects quality ${quality}`}
-            >
-              ◀ {quality.toUpperCase()} ▶
-            </button>
           </div>
         </nav>
 

@@ -172,24 +172,30 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   if (await qualityToggle.getAttribute('aria-label') === 'Effects quality low') {
     await qualityToggle.click()
   }
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '11')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '4')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'balanced-side-zones')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-size-variants', '7')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-layout', 'expanded-side-zones')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-scale-profile', 'small-medium-weighted')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-forward-facing-count', '8')
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-gap')),
-  )).toBeGreaterThanOrEqual(0.33)
+  )).toBeGreaterThanOrEqual(0.29)
   await expect.poll(() => page.locator('.world-pokeballs').evaluate(
     (element) => Number(element.getAttribute('data-min-vertical-span')),
   )).toBeGreaterThanOrEqual(1.5)
   await qualityToggle.click()
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '6')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '8')
   await qualityToggle.click()
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '11')
+  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-ball-count', '14')
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1440.png'), fullPage: true })
 
   await page.setViewportSize({ width: 1920, height: 1080 })
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-min-vertical-gap', '0.33')
-  await expect(page.locator('.world-pokeballs')).toHaveAttribute('data-min-vertical-span', '1.56')
+  await expect.poll(() => page.locator('.world-pokeballs').evaluate(
+    (element) => Number(element.getAttribute('data-min-vertical-gap')),
+  )).toBeGreaterThanOrEqual(0.29)
+  await expect.poll(() => page.locator('.world-pokeballs').evaluate(
+    (element) => Number(element.getAttribute('data-min-vertical-span')),
+  )).toBeGreaterThanOrEqual(1.75)
   await page.screenshot({ path: testInfo.outputPath('pokeball-spacing-1920.png'), fullPage: true })
 })
 

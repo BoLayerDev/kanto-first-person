@@ -446,14 +446,18 @@ test('keeps Professor Oak report labels and totals clearly separated', async ({ 
     })
     const cells = await report.locator('dl > div').evaluateAll((items) => items.map((item) => {
       const label = item.querySelector('dt') as HTMLElement
+      const labelText = label.querySelector(':scope > span') as HTMLElement
       const value = item.querySelector('dd') as HTMLElement
       const labelBox = label.getBoundingClientRect()
       const valueBox = value.getBoundingClientRect()
       const labelStyle = getComputedStyle(label)
       const valueStyle = getComputedStyle(value)
       return {
-        clipped: item.scrollWidth > item.clientWidth + 1 || item.scrollHeight > item.clientHeight + 1,
-        label: label.textContent?.trim(),
+        clipped: labelText.scrollWidth > labelText.clientWidth + 1
+          || labelText.scrollHeight > labelText.clientHeight + 1
+          || value.scrollWidth > value.clientWidth + 1
+          || value.scrollHeight > value.clientHeight + 1,
+        label: labelText.textContent?.trim(),
         labelFontFamily: labelStyle.fontFamily,
         labelFontSize: Number.parseFloat(labelStyle.fontSize),
         fontFamily: valueStyle.fontFamily,
@@ -488,6 +492,45 @@ test('keeps Professor Oak report labels and totals clearly separated', async ({ 
       await report.screenshot({ path: testInfo.outputPath('oak-report-legibility.png') })
     }
   }
+})
+
+test('explains every Professor Oak report term with hover, focus, and touch help', async ({ page }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto(PAGE_PATH)
+
+  const report = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
+  const tips = report.getByRole('button', { name: /^Explain / })
+  await expect(tips).toHaveCount(7)
+
+  const newMoves = report.getByRole('button', { name: 'Explain NEW MOVES' })
+  await newMoves.hover()
+  await expect(report.getByRole('tooltip').filter({ hasText: 'GitHub commits marked feat: count here.' })).toBeVisible()
+  await page.mouse.move(0, 0)
+
+  const speedUps = report.getByRole('button', { name: 'Explain SPEED UPS' })
+  await speedUps.focus()
+  await expect(report.getByRole('tooltip').filter({ hasText: 'GitHub commits marked perf: count here.' })).toBeVisible()
+  await expect(speedUps).toHaveAttribute('aria-expanded', 'true')
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await report.scrollIntoViewIfNeeded()
+  await speedUps.click()
+  await expect(speedUps).toHaveAttribute('aria-expanded', 'true')
+  const touchTooltip = report.getByRole('tooltip').filter({ hasText: 'GitHub commits marked perf: count here.' })
+  await expect(touchTooltip).toBeVisible()
+  const fit = await touchTooltip.evaluate((element) => {
+    const box = element.getBoundingClientRect()
+    return {
+      left: box.left,
+      right: box.right,
+      viewport: document.documentElement.clientWidth,
+      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+    }
+  })
+  expect(fit.left).toBeGreaterThanOrEqual(0)
+  expect(fit.right).toBeLessThanOrEqual(fit.viewport)
+  expect(fit.pageOverflow).toBe(false)
+  await report.screenshot({ path: testInfo.outputPath('oak-report-info-tip-mobile.png') })
 })
 
 test('shows automatic project time and PR task timing without claiming work hours', async ({ page }) => {

@@ -947,11 +947,17 @@ a {
   font-weight: 900;
   letter-spacing: 0.02em;
 }
-.weekly-report-total span {
+.weekly-report-total > span {
   color: #3f4d3b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 0.672rem;
   font-weight: 800;
+}
+.weekly-report-total-label {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
 }
 .weekly-report dl,
 .proof-drop dl {
@@ -977,6 +983,11 @@ a {
 .weekly-report dt,
 .proof-drop dt { color: var(--game-mid); font-size: clamp(0.5rem, 0.456vw, 0.5rem); line-height: 1.4; }
 .weekly-report dt {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
   color: #3f4d3b;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: 12px;
@@ -992,6 +1003,83 @@ a {
   font-weight: 900;
   letter-spacing: 0.02em;
   line-height: 1;
+}
+.info-tip {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--game-mid);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.info-tip-trigger {
+  display: grid;
+  width: 32px;
+  min-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  color: inherit;
+  background: var(--paper-dark);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--game-mid) 38%, transparent);
+  font: 900 0.78rem/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  cursor: help;
+}
+.info-tip-trigger:hover,
+.info-tip-trigger:focus-visible,
+.info-tip.is-open .info-tip-trigger {
+  border-color: var(--accent);
+  color: var(--paper);
+  background: var(--accent);
+}
+.info-tip-trigger:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+.info-tip-trigger:focus-visible {
+  outline: 3px solid var(--game-ink);
+  outline-offset: 2px;
+}
+.info-tip-tooltip {
+  position: absolute;
+  z-index: 40;
+  bottom: calc(100% + 0.45rem);
+  left: 0;
+  width: min(280px, calc(100vw - 2rem));
+  padding: 0.65rem 0.7rem;
+  border: 2px solid var(--paper);
+  color: var(--paper);
+  background: var(--game-ink);
+  box-shadow: 4px 4px 0 var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.744rem;
+  font-weight: 800;
+  line-height: 1.55;
+  opacity: 0;
+  pointer-events: none;
+  text-align: left;
+  transform: translateY(4px);
+  transition: opacity 100ms linear, transform 100ms linear;
+  visibility: hidden;
+  white-space: normal;
+}
+.weekly-report dl > div:nth-child(even) .info-tip-tooltip {
+  right: 0;
+  left: auto;
+}
+.weekly-report-total .info-tip-tooltip {
+  top: calc(100% + 0.45rem);
+  bottom: auto;
+}
+.info-tip:hover .info-tip-tooltip,
+.info-tip:focus-within .info-tip-tooltip,
+.info-tip.is-open .info-tip-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+  visibility: visible;
 }
 .proof-drop > a { display: grid; gap: 0.55rem; padding: 0.75rem; color: var(--game-ink); text-decoration: none; }
 .proof-drop > a:hover,
@@ -3074,6 +3162,10 @@ a {
   .dev-stats dl > div:nth-last-child(-n + 2) {
     grid-column: span 3;
   }
+
+  .progress-proof-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 900px) {
@@ -3727,12 +3819,38 @@ a {
 
   .proof-drop dt,
   .proof-drop small,
-  .weekly-report-total span {
+  .weekly-report-total > span {
     font-size: 0.6rem;
   }
 
   .weekly-report dt {
     font-size: 12px;
+  }
+
+  .info-tip-trigger {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+    min-height: 48px;
+  }
+
+  .info-tip-tooltip,
+  .weekly-report dl > div:nth-child(even) .info-tip-tooltip,
+  .weekly-report-total .info-tip-tooltip {
+    position: fixed;
+    top: 50%;
+    right: 1rem;
+    bottom: auto;
+    left: 1rem;
+    width: auto;
+    max-width: none;
+    transform: translateY(calc(-50% + 4px));
+  }
+
+  .info-tip:hover .info-tip-tooltip,
+  .info-tip:focus-within .info-tip-tooltip,
+  .info-tip.is-open .info-tip-tooltip {
+    transform: translateY(-50%);
   }
 
   .proof-drop dd {

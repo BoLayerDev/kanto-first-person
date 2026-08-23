@@ -570,7 +570,7 @@ test('shows the automatic progress command center on the homepage', async ({ pag
   const oakReport = page.getByRole('region', { name: 'PROFESSOR OAK REPORT' })
   await expect(oakReport).toContainText('LAST 7 DAYS')
   await expect(oakReport).toContainText('MERGES EXCLUDED')
-  await expect(oakReport.getByRole('button', { name: 'MOD BUILD' })).toHaveAttribute('aria-pressed', 'true')
+  await expect(oakReport.getByRole('button', { name: 'MOD BUILD', exact: true })).toHaveAttribute('aria-pressed', 'true')
   const receipt = page.getByRole('region', { name: 'OAK LAB RECEIPT' })
   await expect(receipt).toContainText('SOURCE LOCK')
   await expect(receipt).toContainText('LAB SCAN')

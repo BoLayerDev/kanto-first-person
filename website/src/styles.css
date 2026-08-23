@@ -214,7 +214,7 @@ a {
   right: 0;
   left: 0;
   height: 7px;
-  background: repeating-linear-gradient(90deg, var(--accent) 0 28px, var(--game-ink) 28px 36px);
+  background: repeating-linear-gradient(90deg, #c92f36 0 28px, var(--game-ink) 28px 36px);
   content: "";
 }
 
@@ -225,8 +225,9 @@ a {
 .release-kicker {
   display: block;
   margin-bottom: 0.45rem;
-  color: #7b2b25;
-  font-size: clamp(0.5rem, 0.648vw, 0.648rem);
+  color: #7a191d;
+  font-size: clamp(0.625rem, 0.696vw, 0.72rem);
+  font-weight: 900;
   line-height: 1.5;
   letter-spacing: 0.08em;
 }
@@ -243,13 +244,13 @@ a {
 }
 
 .release-copy h1 span {
-  color: var(--accent);
+  color: #d8323a;
 }
 
 .release-copy p {
   max-width: 680px;
   margin: 0.7rem 0 0;
-  color: #4c563f;
+  color: var(--game-ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   font-size: clamp(0.78rem, 0.984vw, 0.936rem);
   font-weight: 800;
@@ -261,9 +262,9 @@ a {
   max-width: 680px;
   margin-top: 0.35rem;
   overflow: hidden;
-  color: #5e4936;
+  color: #283125;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: clamp(0.504rem, 0.576vw, 0.6rem);
+  font-size: clamp(0.6rem, 0.648vw, 0.672rem);
   font-weight: 900;
   line-height: 1.4;
   text-overflow: ellipsis;
@@ -272,7 +273,7 @@ a {
 
 .release-core {
   width: clamp(58px, 5.5vw, 76px);
-  background: linear-gradient(#e7473f 0 44%, #101510 44% 56%, var(--paper) 56%);
+  background: linear-gradient(#d8323a 0 44%, #11160f 44% 56%, #fffdf2 56%);
 }
 
 .release-status {
@@ -305,12 +306,12 @@ a {
 .release-status span {
   margin-bottom: 0.45rem;
   color: var(--game-pale);
-  font-size: clamp(0.5rem, 0.504vw, 0.504rem);
+  font-size: clamp(0.6rem, 0.624vw, 0.648rem);
 }
 
 .release-status b {
   overflow: hidden;
-  font-size: clamp(0.504rem, 0.648vw, 0.672rem);
+  font-size: clamp(0.65rem, 0.72vw, 0.75rem);
   line-height: 1.45;
   text-overflow: ellipsis;
 }
@@ -345,6 +346,16 @@ a {
   border-radius: 50%;
   background: var(--paper);
   transform: translate(-50%, -50%);
+}
+
+.split-core.release-core {
+  background: linear-gradient(#d8323a 0 44%, #11160f 44% 56%, #fffdf2 56%);
+  box-shadow: 0 0 0 3px #fffdf2, 0 0 30px rgba(216, 50, 58, 0.36);
+}
+
+.split-core.release-core span {
+  border-color: #11160f;
+  background: #fffdf2;
 }
 
 .alpha-chip {
@@ -3365,7 +3376,7 @@ a {
 
   .release-banner {
     gap: 0.65rem;
-    padding: 0.75rem 0.65rem 0.6rem;
+    padding: 0.65rem 0.65rem 0.35rem;
     border-width: 4px;
     box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--accent), 7px 9px 0 rgba(0, 0, 0, 0.3);
   }
@@ -3380,12 +3391,12 @@ a {
 
   .github-sync-note {
     margin-top: 0.35rem;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
   }
 
   .release-kicker {
     margin-bottom: 0.35rem;
-    font-size: 0.504rem;
+    font-size: 0.625rem;
   }
 
   .release-status {

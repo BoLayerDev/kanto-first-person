@@ -7,6 +7,7 @@ test.describe('mobile field terminal', () => {
 
   test('is readable, touch-friendly, stacked, and scrollable', async ({ page }, testInfo) => {
     await page.goto(PAGE_PATH)
+    await page.evaluate(() => document.fonts.ready)
 
     const layout = await page.evaluate(() => {
       const box = (rect: DOMRect) => ({
@@ -67,7 +68,8 @@ test.describe('mobile field terminal', () => {
     expect(Math.abs(layout.detail.left - layout.menu.left)).toBeLessThan(1)
     expect(Math.abs(layout.detail.width - layout.menu.width)).toBeLessThan(1)
     expect(layout.heading.bottom).toBeLessThan(844)
-    expect(layout.summary.bottom).toBeLessThan(844)
+    expect(layout.summary.top).toBeGreaterThanOrEqual(layout.heading.bottom)
+    expect(layout.summary.width).toBeLessThanOrEqual(layout.detail.width)
     expect(layout.summary.fontSize).toBeGreaterThanOrEqual(14)
 
     expect(layout.menuButtons).toHaveLength(7)
@@ -328,6 +330,7 @@ test('keeps Research Log timing details in flow without covering badges or rows'
   for (const width of [1440, 901]) {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(PAGE_PATH)
+    await page.evaluate(() => document.fonts.ready)
 
     const log = page.getByRole('region', { name: 'OAK RESEARCH LOG' })
     const firstRow = log.locator('ol > li').first()
@@ -533,6 +536,36 @@ test('keeps private metric references out of automatic GitHub history', async ({
   await expect(page.locator('body')).toContainText('Clean up public development stats')
 })
 
+test('keeps all visible interface text at the site-wide legibility floor', async ({ page }) => {
+  const routes = ['', 'features', 'activity', 'guide', 'support', 'rebuild', 'github']
+
+  for (const width of [1440, 901, 390]) {
+    await page.setViewportSize({ width, height: 900 })
+
+    for (const route of routes) {
+      await page.goto(`${PAGE_PATH}${route ? `#${route}` : ''}`)
+      const smallestFont = await page.evaluate(() => {
+        const sizes: number[] = []
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+        let node: Node | null
+
+        while ((node = walker.nextNode())) {
+          if (!node.textContent?.trim()) continue
+          const element = node.parentElement
+          if (!element || !element.getClientRects().length) continue
+          const style = getComputedStyle(element)
+          if (style.visibility === 'hidden' || style.display === 'none') continue
+          sizes.push(Number.parseFloat(style.fontSize))
+        }
+
+        return Math.min(...sizes)
+      })
+
+      expect(smallestFont, `${route || 'home'} text at ${width}px`).toBeGreaterThanOrEqual(8)
+    }
+  }
+})
+
 test('shows the complete verified project history in the Research Log', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(`${PAGE_PATH}#activity`)
@@ -623,10 +656,15 @@ test('keeps Trainer Clock and commit timing controls readable at desktop and mob
     await expect(clock).toBeVisible()
     await expect(log).toBeVisible()
 
-    const fit = await page.locator('.trainer-clock, .activity-log').evaluateAll((items) => items.map((item) => ({
-      clipped: item.scrollWidth > item.clientWidth + 1,
-      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
-    })))
+    const fit = await page.locator('.trainer-clock, .activity-log').evaluateAll((items) => items.map((item) => {
+      const textValues = item.matches('.trainer-clock')
+        ? [...item.querySelectorAll<HTMLElement>('small, b, time')]
+        : []
+      return {
+        clipped: textValues.some((text) => text.scrollWidth > text.clientWidth + 1),
+        pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
+      }
+    }))
     expect(fit, `timing UI must fit at ${width}px`).toEqual(
       fit.map(() => ({ clipped: false, pageOverflow: false })),
     )

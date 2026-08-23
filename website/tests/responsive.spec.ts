@@ -189,6 +189,9 @@ test('preserves the desktop two-column terminal and fixed scene', async ({ page 
   expect(menuTreatment.labelRight).toBeLessThan(menuTreatment.barsLeft)
   expect(menuTreatment.barsOpacity).toBeLessThanOrEqual(0.34)
   expect(menuTreatment.menuTopGap).toBeLessThanOrEqual(24)
+  await expect.poll(() => page.locator('.pixel-window').first().evaluate(
+    (element) => getComputedStyle(element).getPropertyValue('--window-light-reach').trim(),
+  )).toBe('59%')
   const sceneTier = await page.locator('.world-pokeballs').evaluate((element) => ({
     quality: element.getAttribute('data-quality'),
     ballCount: Number(element.getAttribute('data-ball-count')),

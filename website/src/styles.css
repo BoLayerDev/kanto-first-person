@@ -339,6 +339,7 @@ a {
 }
 
 .split-core.release-core {
+  border: 0;
   background: linear-gradient(#d8323a 0 44%, #11160f 44% 56%, #fff 56%);
   box-shadow: none;
 }

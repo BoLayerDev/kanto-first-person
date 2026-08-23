@@ -378,6 +378,7 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
       paragraph: style('.release-copy p').color,
       titleAccent: style('.release-copy h1 span').color,
       ball: style('.release-core').backgroundImage,
+      ballBorder: style('.release-core').borderWidth,
       ballShadow: style('.release-core').boxShadow,
       centerRing: style('.release-core span').borderColor,
       centerFill: style('.release-core span').backgroundColor,
@@ -388,6 +389,7 @@ test('keeps the verified coming-soon status above every menu page', async ({ pag
   expect(bannerPalette.titleAccent).toBe('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(216, 50, 58)')
   expect(bannerPalette.ball).toContain('rgb(255, 255, 255)')
+  expect(bannerPalette.ballBorder).toBe('0px')
   expect(bannerPalette.ballShadow).toBe('none')
   expect(bannerPalette.centerRing).toBe('rgb(255, 255, 255)')
   expect(bannerPalette.centerFill).toBe('rgb(17, 22, 15)')

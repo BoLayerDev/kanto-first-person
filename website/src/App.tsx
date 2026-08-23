@@ -437,7 +437,7 @@ function WeeklyOakReport({ status }: { status: ProjectStatus }) {
       <div className="weekly-report-total">
         <b>{scopedReport.total}</b>
         <span className="weekly-report-total-label">
-          {ACTIVITY_SCOPE_LABELS[scope]} / 7 DAYS
+          {ACTIVITY_SCOPE_LABELS[scope]} / LAST 7 DAYS
           <InfoTip
             label={`${ACTIVITY_SCOPE_LABELS[scope]} LAST 7 DAYS`}
             text={`Verified ${ACTIVITY_SCOPE_LABELS[scope].toLowerCase()} commits from the last seven days. Merge commits are preserved in the complete log but excluded from these progress totals.`}
@@ -554,7 +554,7 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
   const updates = scopedActivity.slice(0, 4)
   const now = useLiveNow()
   const scopedDiscovery = newResearch && status.activity[0]?.scope === scope && !status.activity[0]?.isMerge
-  const displayedCount = useCountUp(scopedActivity.length, scopedDiscovery)
+  const displayedCount = useCountUp(scopedActivity.length, newResearch)
 
   return (
     <section className="activity-log" aria-labelledby="activity-title">
@@ -600,7 +600,7 @@ function ActivityLog({ status, newResearch = false }: { status: ProjectStatus, n
         ))}
       </ol>
       <div className="activity-footer">
-        <span className={scopedDiscovery ? 'is-counting' : ''}>
+        <span className={newResearch ? 'is-counting' : ''}>
           <strong>{displayedCount}</strong> VERIFIED {ACTIVITY_SCOPE_LABELS[scope]} UPDATES
         </span>
         <a href="#activity">OPEN FULL LOG ▶</a>

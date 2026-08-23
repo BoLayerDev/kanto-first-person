@@ -25,14 +25,21 @@ import {
 import type { QualityTier } from '../state/journey'
 
 const BALL_SEED = 0x151
-const HIGH_QUALITY_BALLS = 11
-const LOW_QUALITY_BALLS = 6
-const BALL_SCALE_TIERS = [0.62, 0.86, 1.12, 1.42] as const
-const BALL_SCALE_PATTERN = [0.62, 0.86, 1.12, 0.62, 0.86, 1.42, 0.62, 1.12, 1.42, 0.86, 0.86] as const
-const LEFT_VERTICAL_SLOTS = [-0.84, -0.5, -0.17, 0.17, 0.5, 0.84] as const
-const RIGHT_VERTICAL_SLOTS = [-0.78, -0.39, 0, 0.39, 0.78] as const
-const LEFT_EDGE_SLOTS = [0.88, 0.96, 0.84, 0.94, 0.86, 0.97] as const
-const RIGHT_EDGE_SLOTS = [0.9, 0.97, 0.84, 0.95, 0.88] as const
+const HIGH_QUALITY_BALLS = 14
+const LOW_QUALITY_BALLS = 8
+const BALL_SCALE_TIERS = [0.52, 0.62, 0.7, 0.82, 0.86, 1.12, 1.42] as const
+const BALL_SCALE_PATTERN = [0.62, 0.86, 1.12, 0.62, 0.86, 1.42, 0.62, 1.12, 1.42, 0.86, 0.86, 0.52, 0.7, 0.82] as const
+const LEFT_VERTICAL_SLOTS = [-0.91, -0.61, -0.31, 0, 0.31, 0.62, 0.92] as const
+const RIGHT_VERTICAL_SLOTS = [-0.86, -0.56, -0.26, 0.04, 0.34, 0.64, 0.94] as const
+const LEFT_EDGE_SLOTS = [0.9, 0.97, 0.84, 0.94, 0.86, 0.98, 0.89] as const
+const RIGHT_EDGE_SLOTS = [0.92, 0.98, 0.85, 0.96, 0.88, 0.99, 0.9] as const
+const FORWARD_FACING_PATTERN = [true, true, false, false] as const
+const FORWARD_OFFSETS = [
+  [-0.24, 0.12, -0.16],
+  [0.2, -0.1, 0.13],
+  [-0.14, -0.16, 0.2],
+  [0.27, 0.08, -0.11],
+] as const
 const POKEBALL_RED = '#e43b3f'
 const POKEBALL_WHITE = '#f5f1df'
 const POKEBALL_BLACK = '#141719'
@@ -46,6 +53,7 @@ type BallTransform = {
   phase: number
   speed: number
   direction: number
+  facesViewer: boolean
 }
 
 export type KantoWorldRuntime = {
@@ -77,6 +85,14 @@ function mulberry32(seed: number) {
 function createBallLayout(count: number, aspect: number): BallTransform[] {
   const random = mulberry32(BALL_SEED)
   const halfFov = MathUtils.degToRad(25)
+  const cameraPosition = new Vector3(0, 0.4, 11)
+  const localForward = new Vector3(0, 0, 1)
+  const ballPosition = new Vector3()
+  const viewDirection = new Vector3()
+  const facingQuaternion = new Quaternion()
+  const offsetQuaternion = new Quaternion()
+  const composedQuaternion = new Quaternion()
+  const composedRotation = new Euler()
 
   return Array.from({ length: count }, (_, index) => {
     const side = index % 2 === 0 ? -1 : 1
@@ -87,23 +103,41 @@ function createBallLayout(count: number, aspect: number): BallTransform[] {
     const distance = 13 + random() * 25
     const halfHeight = Math.tan(halfFov) * distance
     const scaleTier = BALL_SCALE_PATTERN[index % BALL_SCALE_PATTERN.length]
-    return {
-      side,
-      screenY,
-      position: [
-        side * halfHeight * aspect * edgeSlots[sideIndex % edgeSlots.length],
-        screenY * halfHeight,
-        11 - distance,
-      ],
-      rotation: [
+    const position: [number, number, number] = [
+      side * halfHeight * aspect * edgeSlots[sideIndex % edgeSlots.length],
+      screenY * halfHeight,
+      11 - distance,
+    ]
+    const facesViewer = FORWARD_FACING_PATTERN[index % FORWARD_FACING_PATTERN.length]
+    let rotation: [number, number, number]
+
+    if (facesViewer) {
+      const offsets = FORWARD_OFFSETS[Math.floor(index / FORWARD_FACING_PATTERN.length) % FORWARD_OFFSETS.length]
+      ballPosition.fromArray(position)
+      viewDirection.copy(cameraPosition).sub(ballPosition).normalize()
+      facingQuaternion.setFromUnitVectors(localForward, viewDirection)
+      offsetQuaternion.setFromEuler(new Euler(offsets[1], offsets[0], offsets[2]))
+      composedQuaternion.copy(facingQuaternion).multiply(offsetQuaternion)
+      composedRotation.setFromQuaternion(composedQuaternion)
+      rotation = [composedRotation.x, composedRotation.y, composedRotation.z]
+    } else {
+      rotation = [
         (random() - 0.5) * 0.65,
         (random() - 0.5) * 0.9,
         (random() - 0.5) * 0.48,
-      ],
+      ]
+    }
+
+    return {
+      side,
+      screenY,
+      position,
+      rotation,
       scale: halfHeight * 0.105 * scaleTier,
       phase: random() * Math.PI * 2,
       speed: 0.045 + random() * 0.075,
       direction: random() > 0.5 ? 1 : -1,
+      facesViewer,
     }
   })
 }
@@ -174,7 +208,7 @@ export function createKantoWorld({
   atmosphere.frustumCulled = false
   root.add(atmosphere)
 
-  const widthSegments = quality === 'high' ? 22 : 16
+  const widthSegments = quality === 'high' ? 20 : 16
   const heightSegments = quality === 'high' ? 12 : 9
   const radialSegments = quality === 'high' ? 16 : 12
   const topGeometry = new SphereGeometry(1, widthSegments, heightSegments, 0, Math.PI * 2, 0, Math.PI / 2)
@@ -216,11 +250,12 @@ export function createKantoWorld({
     layout.forEach((ball, index) => {
       const drift = quality === 'high' && !reducedMotion ? Math.sin(time * 0.42 + ball.phase) * 0.18 : 0
       const spin = quality === 'high' && !reducedMotion ? time * ball.speed * ball.direction : 0
+      const facingWobble = ball.facesViewer ? Math.sin(time * 0.34 + ball.phase) * 0.045 : 0
       scratchPosition.set(ball.position[0], ball.position[1] + drift, ball.position[2])
       scratchRotation.set(
-        ball.rotation[0] + spin * 0.34,
-        ball.rotation[1] + spin,
-        ball.rotation[2] + spin * 0.18,
+        ball.rotation[0] + (ball.facesViewer ? facingWobble * 0.6 : spin * 0.34),
+        ball.rotation[1] + (ball.facesViewer ? facingWobble : spin),
+        ball.rotation[2] + (ball.facesViewer ? spin * 0.22 : spin * 0.18),
       )
       scratchQuaternion.setFromEuler(scratchRotation)
       scratchScale.setScalar(ball.scale)
@@ -255,7 +290,9 @@ export function createKantoWorld({
   const rightLayout = sideGaps(1)
   host.dataset.ballCount = String(count)
   host.dataset.ballSizeVariants = String(BALL_SCALE_TIERS.length)
-  host.dataset.ballLayout = 'balanced-side-zones'
+  host.dataset.ballLayout = 'expanded-side-zones'
+  host.dataset.ballScaleProfile = 'small-medium-weighted'
+  host.dataset.forwardFacingCount = String(layout.filter((ball) => ball.facesViewer).length)
   host.dataset.minVerticalGap = Math.min(leftLayout.gap, rightLayout.gap).toFixed(2)
   host.dataset.minVerticalSpan = Math.min(leftLayout.span, rightLayout.span).toFixed(2)
 

@@ -944,13 +944,32 @@ a {
 }
 .weekly-report dl > div,
 .proof-drop dl > div { min-width: 0; padding: 0.45rem; background: var(--paper); }
+.weekly-report dl > div {
+  display: grid;
+  align-content: center;
+  gap: 0.45rem;
+  min-height: 58px;
+  padding: 0.55rem 0.6rem;
+}
 .weekly-report dt,
 .weekly-report dd,
 .proof-drop dt,
 .proof-drop dd { margin: 0; }
 .weekly-report dt,
 .proof-drop dt { color: var(--game-mid); font-size: clamp(0.3rem, 0.38vw, 0.38rem); line-height: 1.4; }
-.weekly-report dd { margin-top: 0.3rem; color: var(--accent); font-size: 0.65rem; }
+.weekly-report dt {
+  font-size: clamp(0.36rem, 0.44vw, 0.44rem);
+  line-height: 1.5;
+}
+.weekly-report dd {
+  color: var(--accent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: clamp(0.85rem, 1vw, 1rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
 .proof-drop > a { display: grid; gap: 0.55rem; padding: 0.75rem; color: var(--game-ink); text-decoration: none; }
 .proof-drop > a:hover,
 .proof-drop > a:focus-visible { color: var(--paper); background: var(--accent); }

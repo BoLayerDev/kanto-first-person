@@ -50,10 +50,11 @@ return function(T)
   end)
 
   T.test("option schema is unique and retires unsafe legacy rows", function()
-    local rows, seen, vines = Config.optionSchema(), {}, 0
+    local rows, seen, byKey, vines = Config.optionSchema(), {}, {}, 0
     for _, row in ipairs(rows) do
       T.falsy(seen[row.key], "duplicate option key: " .. row.key)
       seen[row.key] = true
+      byKey[row.key] = row
       if row.key == "vines" then vines = vines + 1 end
     end
     T.equal(vines, 1)
@@ -68,6 +69,25 @@ return function(T)
     T.equal(defaults.quality, "AUTO")
     T.equal(defaults.object_shadows, true)
     T.equal(defaults.ledge_leap, false)
+    local description =
+      "KFP ONLY — DOES NOT CHANGE GAME MUSIC, GAME SFX, OR POKÉMON VOICES."
+    local expectedLabels = {
+      kfp_master_volume = "KFP ONLY MASTER",
+      kfp_ambient_volume = "KFP ONLY AMBIENT",
+      kfp_sfx_volume = "KFP ONLY SFX",
+    }
+    for key, label in pairs(expectedLabels) do
+      local row = byKey[key]
+      T.truthy(row, key)
+      T.equal(row.label, label)
+      T.equal(row.type, "number")
+      T.equal(row.default, 100)
+      T.equal(row.min, 0)
+      T.equal(row.max, 100)
+      T.equal(row.step, 1)
+      T.equal(row.description, description)
+      T.equal(row.label:sub(1, 8), "KFP ONLY")
+    end
   end)
 
   T.test("pinned 1.60 evidence accounts for all 53 unique release keys", function()
@@ -165,6 +185,12 @@ return function(T)
     T.equal(snapshot.values.grasssteps, snapshot.grass_steps)
     T.equal(snapshot.values.footsteps, snapshot.footsteps)
     T.equal(snapshot.values.doorsounds, snapshot.door_sound)
+    T.equal(snapshot.kfp_master_volume, 100)
+    T.equal(snapshot.kfp_ambient_volume, 100)
+    T.equal(snapshot.kfp_sfx_volume, 100)
+    T.equal(snapshot.values.kfp_master_volume, 100)
+    T.equal(snapshot.values.kfp_ambient_volume, 100)
+    T.equal(snapshot.values.kfp_sfx_volume, 100)
     T.equal(snapshot, config:snapshot())
     for key, count in pairs(counts) do T.equal(count, 1, key .. " was read more than once") end
 
@@ -325,6 +351,149 @@ return function(T)
     T.equal(changed.contact_shadows, true)
     T.equal(changed.generation, 2)
     T.equal(records.writes, 2)
+  end)
+
+  T.test("KFP gains persist across snapshots and automatic-default restarts", function()
+    local records = storage()
+    local values = {
+      kfp_master_volume = 35,
+      kfp_ambient_volume = 60,
+      kfp_sfx_volume = 85,
+    }
+    local explicit = {
+      kfp_master_volume = true,
+      kfp_ambient_volume = true,
+      kfp_sfx_volume = true,
+    }
+    local first = Config.new({
+      read = makeReader(values, explicit), storage = records,
+    }):snapshot()
+    T.equal(first.kfp_master_volume, 35)
+    T.equal(first.kfp_ambient_volume, 60)
+    T.equal(first.kfp_sfx_volume, 85)
+    T.equal(records.writes, 1)
+
+    local restarted = Config.new({
+      read = makeReader({}), storage = records,
+    }):snapshot()
+    T.equal(restarted.kfp_master_volume, 35)
+    T.equal(restarted.kfp_ambient_volume, 60)
+    T.equal(restarted.kfp_sfx_volume, 85)
+    T.equal(records.writes, 1, "safe stored gains must not rewrite at boot")
+  end)
+
+  T.test("missing and invalid older KFP gains migrate upward to 100", function()
+    local missing = storage({
+      [Config.STORAGE_KEY] = {
+        schema_version = 2,
+        values = { ambient_sound = "LOW" },
+        origins = { ambient_sound = "canonical" },
+      },
+    })
+    local snapshot = Config.new({
+      read = makeReader({}), storage = missing,
+    }):snapshot()
+    T.equal(snapshot.kfp_master_volume, 100)
+    T.equal(snapshot.kfp_ambient_volume, 100)
+    T.equal(snapshot.kfp_sfx_volume, 100)
+    T.equal(missing.records[Config.STORAGE_KEY].values.kfp_master_volume, 100)
+    T.equal(missing.records[Config.STORAGE_KEY].values.kfp_ambient_volume, 100)
+    T.equal(missing.records[Config.STORAGE_KEY].values.kfp_sfx_volume, 100)
+
+    local invalid = storage({
+      [Config.STORAGE_KEY] = {
+        schema_version = 2,
+        values = {
+          kfp_master_volume = "loud",
+          kfp_ambient_volume = -5,
+          kfp_sfx_volume = 101,
+        },
+        origins = {},
+      },
+    })
+    local safe = Config.new({
+      read = makeReader({}), storage = invalid,
+    }):snapshot()
+    T.equal(safe.kfp_master_volume, 100)
+    T.equal(safe.kfp_ambient_volume, 100)
+    T.equal(safe.kfp_sfx_volume, 100)
+  end)
+
+  T.test("framework reset-to-defaults restores all KFP gains to 100", function()
+    local values = {
+      kfp_master_volume = 20,
+      kfp_ambient_volume = 40,
+      kfp_sfx_volume = 60,
+    }
+    local explicit = {
+      kfp_master_volume = true,
+      kfp_ambient_volume = true,
+      kfp_sfx_volume = true,
+    }
+    local records = storage()
+    local config = Config.new({
+      read = makeReader(values, explicit), storage = records,
+    })
+    local before = config:snapshot()
+    T.equal(before.kfp_master_volume, 20)
+    T.equal(before.kfp_ambient_volume, 40)
+    T.equal(before.kfp_sfx_volume, 60)
+
+    values.kfp_master_volume = 100
+    config:refresh("option_changed:kfp_master_volume")
+    values.kfp_ambient_volume = 100
+    config:refresh("option_changed:kfp_ambient_volume")
+    values.kfp_sfx_volume = 100
+    local reset = config:refresh("option_changed:kfp_sfx_volume")
+    T.equal(reset.kfp_master_volume, 100)
+    T.equal(reset.kfp_ambient_volume, 100)
+    T.equal(reset.kfp_sfx_volume, 100)
+    T.equal(records.records[Config.STORAGE_KEY].values.kfp_master_volume, 100)
+    T.equal(records.records[Config.STORAGE_KEY].values.kfp_ambient_volume, 100)
+    T.equal(records.records[Config.STORAGE_KEY].values.kfp_sfx_volume, 100)
+  end)
+
+  T.test("KFP gain changes invalidate audio but not packet hash or cache groups", function()
+    local values = { kfp_master_volume = 100 }
+    local explicit = { kfp_master_volume = true }
+    local config = Config.new({ read = makeReader(values, explicit) })
+    local first = config:snapshot()
+    values.kfp_master_volume = 50
+    local second, invalidated, fields = config:refresh(
+      "option_changed:kfp_master_volume")
+    T.deepEqual(fields, { "kfp_master_volume" })
+    T.deepEqual(invalidated, { audio = true })
+    T.equal(second.group_generation.audio, 2)
+    for _, group in ipairs({
+      "geometry", "lighting", "sky", "weather", "flora", "particles",
+      "camera", "streaming",
+    }) do
+      T.equal(second.group_generation[group], first.group_generation[group], group)
+    end
+  end)
+
+  T.test("KFP gains accept every integer including 12 and reject unsafe input", function()
+    local valid = Config.new({
+      read = makeReader({
+        kfp_master_volume = 0,
+        kfp_ambient_volume = 12,
+        kfp_sfx_volume = 100,
+      }),
+    }):snapshot()
+    T.equal(valid.kfp_master_volume, 0)
+    T.equal(valid.kfp_ambient_volume, 12)
+    T.equal(valid.kfp_sfx_volume, 100)
+
+    local invalid = Config.new({
+      read = makeReader({
+        kfp_master_volume = 101,
+        kfp_ambient_volume = -1,
+        kfp_sfx_volume = 12.5,
+      }),
+    }):snapshot()
+    T.equal(invalid.kfp_master_volume, 100)
+    T.equal(invalid.kfp_ambient_volume, 100)
+    T.equal(invalid.kfp_sfx_volume, 100)
   end)
 
   T.test("feature changes increment only their invalidation groups", function()

@@ -1,0 +1,12 @@
+#!C:/Windows/py.exe -3.14
+import sys
+
+from hooklib import HookFailure, require_supported_python, run_pre_commit
+
+try:
+    require_supported_python()
+    run_pre_commit()
+except HookFailure as error:
+    if not error.reported:
+        print(f"pre-commit: {error}", file=sys.stderr)
+    raise SystemExit(1)

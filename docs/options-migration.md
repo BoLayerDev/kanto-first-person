@@ -35,6 +35,7 @@ engine adapters.
 | `jumpkey`, `jumppad` | preserved as bindings | A binding is a preference. It does not grant movement authority. |
 | any KFP 1.x upgrade | `ledge_leap=false` | Ledge Leap changes gameplay. Alpha builds force it off because no atomic public engine attempt API exists. |
 | `spill`, `lightning`, `fog`, `dof` | normalized values preserved; alpha rows hidden and runtime output disabled | API v1 has no portable light or post-process command. |
+| missing or invalid KFP gain rows | all three gains become `100` | Additive audio controls must not lower an existing user's KFP audio silently. |
 
 An explicit v2 value wins when the injected reader returns `value, true`.
 The second result means that the value is persisted, not an automatic row
@@ -96,6 +97,9 @@ snapshot field shown below.
 | `wind` | `wind` | `wind` |
 | `insects` | `insects` | `insects` |
 | `particles` | `particles` | `particles` |
+| none | `kfp_master_volume` | `kfp_master_volume` |
+| none | `kfp_ambient_volume` | `kfp_ambient_volume` |
+| none | `kfp_sfx_volume` | `kfp_sfx_volume` |
 | `ambience` | `ambience` | `ambient_sound` |
 | `grasssfx` | `grasssfx` | `grass_steps` |
 | `stepsfx` | `stepsfx` | `footsteps` |
@@ -112,6 +116,59 @@ snapshot field shown below.
 `snapshot.values` is a stable compatibility view for feature modules. In that
 view, `shadows` means Contact Shadows only. Object Shadows always use
 `object_shadows`.
+
+## KFP-only audio gains
+
+The option schema adds three numeric rows:
+
+| Visible ManagerState label | Range | Step | Default |
+| --- | ---: | ---: | ---: |
+| KFP ONLY MASTER | 0..100 | 1 | 100 |
+| KFP ONLY AMBIENT | 0..100 | 1 | 100 |
+| KFP ONLY SFX | 0..100 | 1 | 100 |
+
+Each row uses this exact description:
+
+> KFP ONLY — DOES NOT CHANGE GAME MUSIC, GAME SFX, OR POKÉMON VOICES.
+
+The existing Ambient Sound preset remains the base ambient level. Every
+KFP-owned ambient stream uses `base ambient × master × ambient`. Every
+KFP-owned grass, cave, wood, door, and shop-door one-shot uses
+`existing per-shot base × master × KFP SFX`. Percent values become factors in
+the range 0..1. Each factor and final gain is clamped to 0..1.
+
+All integers from 0 through 100 are valid. This matches the supported
+Gen1recomp ManagerState number row, including its 1..100 quantity selector and
+its clamped left/right control. A displayed or persisted value such as 12 is
+the exact percentage that KFP applies after an option change and after a
+restart. The visible labels begin with `KFP ONLY` because the supported menu
+does not display schema descriptions.
+
+Zero is silence. A value of 100 preserves the earlier KFP level. Ambient Sound
+OFF and the Grass Steps, Footsteps, and Door Sound toggles keep their existing
+behavior. KFP does not inspect or control game music, game SFX, Pokémon voice,
+or any host-owned audio handle.
+
+This is an intentional additive option-schema output change. The persistent
+record stays at `config/v2` with schema version 2 because missing fields can be
+migrated safely. Missing or invalid older values become 100 and are then
+stored. Existing scene packets, packet hashes, render cache keys, and golden
+scene outputs do not include these audio-only values.
+
+The public evidence has four separate levels:
+
+- configuration and feature unit tests prove normalization, exact gain math,
+  routing, clamping, defaults, reset, and KFP-off behavior;
+- the App test uses the real composition root, KFP-owned LÖVE source spies,
+  and a collectible host-audio service spy to prove that KFP does not read,
+  write, stop, replace, retain, or scale host music, host SFX, or Pokémon
+  voice;
+- `tools/test_engine_migration.lua` uses the real Loader and the real
+  ManagerState row model. CI runs it at all five exact supported engine pins
+  to prove display, persistence, 12, 0, 100, restart, and the visible
+  `KFP ONLY` boundary; and
+- later live-mix and UX acceptance remain release gates. Headless evidence is
+  not live acceptance.
 
 ## Retired data
 
@@ -183,3 +240,6 @@ config:refresh("option_changed:<row-key>")
 
 This reason makes the new row value authoritative, even when it equals the
 automatic default.
+
+The framework's reset-to-defaults action therefore restores Master KFP
+Volume, Ambient Volume, and KFP SFX Volume to `100/100/100`.

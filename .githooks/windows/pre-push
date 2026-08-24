@@ -1,0 +1,14 @@
+#!C:/Windows/py.exe -3.14
+import sys
+
+from hooklib import HookFailure, require_supported_python, run_pre_push
+
+try:
+    require_supported_python()
+    if len(sys.argv) < 2:
+        raise HookFailure("the remote name argument is missing")
+    run_pre_push(sys.argv[1], sys.stdin)
+except HookFailure as error:
+    if not error.reported:
+        print(f"pre-push: {error}", file=sys.stderr)
+    raise SystemExit(1)

@@ -1,0 +1,15 @@
+#!C:/Windows/py.exe -3.14
+from pathlib import Path
+import sys
+
+from hooklib import HookFailure, require_supported_python, run_commit_msg
+
+try:
+    require_supported_python()
+    if len(sys.argv) != 2:
+        raise HookFailure("the message file argument is missing")
+    run_commit_msg(Path(sys.argv[1]))
+except (HookFailure, OSError, UnicodeError) as error:
+    if not isinstance(error, HookFailure) or not error.reported:
+        print(f"commit-msg: {error}", file=sys.stderr)
+    raise SystemExit(1)

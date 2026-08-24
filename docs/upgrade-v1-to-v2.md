@@ -55,10 +55,22 @@ Do not keep starting the marked host.
 | array-shaped Vine data | Last valid Vine value |
 | `jumpkey`, `jumppad` | Preserved as preferences |
 | Ledge Leap | Forced off in the alpha |
+| missing or invalid KFP audio gains | Master, ambient, and KFP SFX gains are all 100 |
 
 KFP stores the normalized result only in its own `config/v2` save area. It
 does not delete legacy option data. See [KFP 1.x Option
 Migration](options-migration.md) for the complete map.
+
+KFP 2 adds Master KFP Volume, Ambient Volume, and KFP SFX Volume. Each control
+accepts every integer from 0 through 100, steps by 1, and defaults to 100. The
+visible ManagerState labels begin with `KFP ONLY`. The controls change only audio
+sources created and owned by KFP. They do not read, retain, stop, replace, or
+scale game music, game SFX, Pokémon voice, or voxel-host audio handles.
+
+The added rows are an intentional additive option-schema change. They do not
+change the `config/v2` record version. An older record receives 100 for every
+missing or invalid gain, so the upgrade does not lower existing KFP audio.
+The framework reset-to-defaults action restores `100/100/100`.
 
 ## Disable or remove KFP 2
 
@@ -95,12 +107,25 @@ host can run without it.
 
 ## What the public tests prove
 
-`tests/integration/test_migration_safety.lua` runs the real KFP `main.lua`,
-module loader, configuration migration, companion client, and Voxel Companion
-API v1 dispatcher. `tools/test_engine_migration.lua` also runs the exact KFP
-manifest and runtime through the real Gen1recomp Loader. CI runs that check on
-all five pinned engine commits. Both tests use invented, ROM-free host source
-strings.
+The tests use separate evidence levels:
+
+- configuration and feature unit tests prove normalization, exact gain math,
+  routing, clamping, defaults, reset, and KFP-off behavior;
+- `tests/bootstrap/test_app.lua` runs the real KFP composition root with
+  KFP-owned LÖVE source spies and a collectible host-audio service spy. It
+  proves that a gain of 12 applies only to KFP ambient and one-shot sources and
+  that KFP does not read, write, stop, replace, retain, or scale host music,
+  host SFX, or Pokémon voice;
+- `tests/integration/test_migration_safety.lua` runs the real KFP `main.lua`,
+  module loader, configuration migration, companion client, and Voxel
+  Companion API v1 dispatcher; and
+- `tools/test_engine_migration.lua` runs the exact KFP manifest and runtime
+  through the real Gen1recomp Loader and ManagerState row model. CI runs that
+  check on all five pinned engine commits. It proves exact display,
+  persistence, 12, the 0 and 100 boundaries, restart behavior, and the visible
+  `KFP ONLY` labels.
+
+The integration and Loader tests use invented, ROM-free host source strings.
 
 The test proves these KFP-owned facts:
 
@@ -113,13 +138,16 @@ The test proves these KFP-owned facts:
 - option migration writes only the KFP-owned `config/v2` record;
 - `remove` causes no delete action;
 - legacy options and synthetic host files stay unchanged; and
+- the App-level host-audio service spy receives no read, write, stop, replace,
+  retain, or scale action while KFP-owned sources change independently;
 - quit removes KFP registrations, subscriptions, and owned resources;
 - a disabled KFP package is discovered but its entry does not run; and
 - a removed KFP package is not discovered and no KFP state is created.
 
 These tests do not prove an owner host release, its real marker scanner, an
-installed filesystem, or a live engine shutdown. The headless real-Loader
-check cannot replace the final release-candidate test in a clean profile.
+installed filesystem, a live engine shutdown, live mix balance, or live menu
+UX. The headless real-Loader check cannot replace the final release-candidate
+test in a clean profile.
 
 ## Evidence still required for the release gate
 

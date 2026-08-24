@@ -40,8 +40,8 @@ return function(T)
       end,
       setVolume = function(_, key, volume) events[#events + 1] = { "volume", key, volume } end,
       stop = function(_, key) events[#events + 1] = { "stop", key } end,
-      playOneShot = function(_, key, path)
-        events[#events + 1] = { "one", key, path }
+      playOneShot = function(_, key, path, volume)
+        events[#events + 1] = { "one", key, path, volume }
         return true
       end,
     }
@@ -53,6 +53,126 @@ return function(T)
     T.equal(events[1][2], "forest")
     T.truthy(audio:oneShot("grass", config))
     T.equal(events[#events][1], "one")
+  end)
+
+  T.test("all KFP ambient and named one-shots use independent gain products", function()
+    local events = {}
+    local facade = {
+      playStream = function(_, key, path, volume)
+        events[#events + 1] = { "play", key, path, volume }
+        return true
+      end,
+      setVolume = function(_, key, volume)
+        events[#events + 1] = { "volume", key, volume }
+        return true
+      end,
+      stop = function(_, key) events[#events + 1] = { "stop", key } end,
+      playOneShot = function(_, key, path, volume)
+        events[#events + 1] = { "one", key, path, volume }
+        return true
+      end,
+    }
+    local audio = Audio.new({ util = Util, facade = facade })
+    local config = {
+      ambient_sound = "MID",
+      grass_steps = true,
+      footsteps = true,
+      door_sound = true,
+      kfp_master_volume = 50,
+      kfp_ambient_volume = 25,
+      kfp_sfx_volume = 20,
+    }
+    local world = { weather = "clear", tags = { forest = true } }
+    for _ = 1, 20 do audio:update({ dt = 0.1 }, world, config) end
+    local ambient = events[#events]
+    T.equal(ambient[1], "volume")
+    T.equal(ambient[2], "forest")
+    T.near(ambient[3], 0.4 * 0.5 * 0.25, 1e-12)
+
+    local cases = {
+      { "grass", "grass1", 0.5 },
+      { "grass", "grass2", 0.5 },
+      { "cave", "cave_step", 0.45 },
+      { "wood", "wood_step", 0.45 },
+      { "door", "door", 0.55 },
+      { "shop_door", "shop_door", 0.55 },
+    }
+    for _, case in ipairs(cases) do
+      T.truthy(audio:oneShot(case[1], config), case[1])
+      local shot = events[#events]
+      T.equal(shot[1], "one")
+      T.equal(shot[2], case[2])
+      T.near(shot[4], case[3] * 0.5 * 0.2, 1e-12, case[2])
+    end
+  end)
+
+  T.test("KFP gain boundaries clamp and OFF category toggles stay exact", function()
+    local events = {}
+    local facade = {
+      playStream = function(_, key, path, volume)
+        events[#events + 1] = { "play", key, path, volume }
+        return true
+      end,
+      setVolume = function(_, key, volume)
+        events[#events + 1] = { "volume", key, volume }
+        return true
+      end,
+      stop = function(_, key) events[#events + 1] = { "stop", key } end,
+      playOneShot = function(_, key, path, volume)
+        events[#events + 1] = { "one", key, path, volume }
+        return true
+      end,
+    }
+    local world = { weather = "clear", tags = { town = true } }
+    local audio = Audio.new({ util = Util, facade = facade })
+    local loud = {
+      ambient_sound = "HIGH", door_sound = true,
+      kfp_master_volume = 200,
+      kfp_ambient_volume = 200,
+      kfp_sfx_volume = 200,
+    }
+    for _ = 1, 20 do audio:update({ dt = 0.1 }, world, loud) end
+    T.near(events[#events][3], 0.65, 1e-12)
+    T.truthy(audio:oneShot("door", loud))
+    T.near(events[#events][4], 0.55, 1e-12)
+
+    local muted = {
+      ambient_sound = "MID", door_sound = true,
+      kfp_master_volume = 0,
+      kfp_ambient_volume = 100,
+      kfp_sfx_volume = 100,
+    }
+    audio:update({ dt = 0.1 }, world, muted)
+    T.equal(events[#events][3], 0)
+    T.truthy(audio:oneShot("door", muted))
+    T.equal(events[#events][4], 0)
+
+    local invalid = {
+      ambient_sound = "MID", door_sound = true,
+      kfp_master_volume = "invalid",
+      kfp_ambient_volume = 0 / 0,
+      kfp_sfx_volume = {},
+    }
+    audio:update({ dt = 0.1 }, world, invalid)
+    T.near(events[#events][3], 0.4, 1e-12)
+    T.truthy(audio:oneShot("door", invalid))
+    T.near(events[#events][4], 0.55, 1e-12)
+
+    local offEvents = {}
+    local off = Audio.new({
+      util = Util,
+      facade = {
+        playStream = function() offEvents[#offEvents + 1] = "stream"; return true end,
+        playOneShot = function() offEvents[#offEvents + 1] = "shot"; return true end,
+      },
+    })
+    T.truthy(off:update({ dt = 0.1 }, world, { ambient_sound = "OFF" }))
+    T.falsy(off:oneShot("grass", { grass_steps = false }))
+    T.falsy(off:oneShot("cave", { footsteps = false }))
+    T.falsy(off:oneShot("wood", { footsteps = false }))
+    T.falsy(off:oneShot("door", { door_sound = false }))
+    T.falsy(off:oneShot("shop_door", { door_sound = false }))
+    T.equal(#offEvents, 0)
   end)
 
   T.test("audio never reports success when its owned backend cannot play", function()

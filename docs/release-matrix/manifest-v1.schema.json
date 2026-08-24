@@ -1,0 +1,1169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-matrix/manifest-v1.schema.json",
+  "title": "KFP release matrix manifest v1",
+  "description": "ROM-free catalogs and immutable bindings used to expand required release cells.",
+  "$comment": "Native schema validation is structural. Every release gate MUST also call tools.release_matrix.model.validate_manifest to recompute synthetic bindings and the required-cell contract.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "manifest_id",
+    "created_at",
+    "mode",
+    "release_eligible",
+    "candidate",
+    "binding_acquisition",
+    "required_cell_set",
+    "catalogs",
+    "release_policy"
+  ],
+  "properties": {
+    "schema": { "const": "kfp.release-matrix.manifest.v1" },
+    "schema_version": { "const": 1 },
+    "manifest_id": { "$ref": "#/$defs/id" },
+    "created_at": { "$ref": "#/$defs/timestamp" },
+    "mode": { "enum": ["PUBLIC_SYNTHETIC", "PRIVATE_RELEASE"] },
+    "release_eligible": { "type": "boolean" },
+    "candidate": { "$ref": "#/$defs/candidate" },
+    "binding_acquisition": { "$ref": "#/$defs/binding_acquisition" },
+    "required_cell_set": { "$ref": "#/$defs/required_cell_set" },
+    "catalogs": { "$ref": "#/$defs/catalogs" },
+    "release_policy": { "$ref": "#/$defs/release_policy" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "mode": { "const": "PUBLIC_SYNTHETIC" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "release_eligible": { "const": false },
+          "candidate": {
+            "properties": {
+              "runtime_source_commit": { "const": "f84679c70c64ac7ee3380c2f3185c6ae237c6da9" },
+              "runtime_source_tree": { "const": "132490d94e75fe9abd1c268bc1bc896a93e93ff8" },
+              "runtime_content_sha256": { "const": "957f5ae3025adacf4fc4c57c347854814d955e22f174eaa3603957391f370ad6" },
+              "package_kind": { "const": "SYNTHETIC_FIXTURE" },
+              "package_sha256": { "const": "9dbfe518f33edf9c8a8be2a0bea5e0cc37f3cda7da1b3a19a90636362f1e7647" },
+              "adapter_version": { "const": "1.0.0" },
+              "adapter_sha256": { "const": "6f68da1e15edfe54bbbde627acf4e9cebdca02a591c05c6833832506d5c5ca34" }
+            }
+          },
+          "binding_acquisition": {
+            "properties": {
+              "state": { "const": "PUBLIC_SYNTHETIC" },
+              "binding_count": { "const": 52 },
+              "binding_set_sha256": { "const": "ba19faba48c1a463b23ffdc3474225fad85cfe0f9eaac8985508a41fcb90796e" },
+              "acquisition_record_schema": { "const": null },
+              "acquisition_record_sha256": { "const": null }
+            }
+          },
+          "required_cell_set": {
+            "properties": {
+              "manifest_input_sha256": { "const": "9a751514cbd49e160eb9a874850622fac886666c6a8285d6df6be57422a5f7db" },
+              "required_cell_count": { "const": 17820 },
+              "required_cell_ids_sha256": { "const": "e952178256e2a6e00aad0a36feff833bfac2532726d9d3096da4a2453d3c0591" },
+              "required_cells_by_game": {
+                "properties": {
+                  "red": { "const": 5940 },
+                  "blue": { "const": 5940 },
+                  "yellow": { "const": 5940 }
+                }
+              }
+            }
+          },
+          "catalogs": {
+            "properties": {
+              "games": {
+                "prefixItems": [
+                  { "properties": { "id": { "const": "red" }, "adapter_id": { "const": "red-opaque-v1" }, "adapter_sha256": { "const": "16b741d9919f92c6329bc1bc90d9478291e1e10aff045d763379945c2147b48a" } } },
+                  { "properties": { "id": { "const": "blue" }, "adapter_id": { "const": "blue-opaque-v1" }, "adapter_sha256": { "const": "2ee8b7a40eb2fb540d06c7f28dfa273ac406df5cca5fcf0319a2c15824593237" } } },
+                  { "properties": { "id": { "const": "yellow" }, "adapter_id": { "const": "yellow-opaque-v1" }, "adapter_sha256": { "const": "8dad65257bb2a1454d77df778a5885b9a88e9cfeacc9fc6c69b9acb4103dda6e" } } }
+                ]
+              },
+              "hosts": {
+                "prefixItems": [
+                  { "properties": { "id": { "const": "battle-art-1.9.8" }, "version": { "const": "1.9.8" }, "source_commit": { "const": "6586ef5f7a86c1bfefcea931bd6571538c9f8d15" }, "package_sha256": { "const": "28c06d4153087be28891090d2d85d039f7cd81ba69f74c56a069016b3adf58bd" }, "released": { "const": true }, "eligible": { "const": true }, "exclusion_reason": { "const": null } } },
+                  { "properties": { "id": { "const": "dramaless-v2.0.3" }, "version": { "const": "2.0.3" }, "source_commit": { "const": "23750150ae6f939e09f9ac6ca6d80c382ec9997a" }, "package_sha256": { "const": "89f6fa078c78a6f6e34c98074ea50ff4f971eead992f27684b52eae0f4f5a1a2" }, "released": { "const": true }, "eligible": { "const": false }, "exclusion_reason": { "const": "The released package lacks the approved companion runtime" } } }
+                ]
+              },
+              "engines": {
+                "prefixItems": [
+                  { "properties": { "id": { "const": "gen1recomp-v0.2.17" }, "runtime_sha256": { "const": "78fb9161ee49bc5a4bf8eadeba537aad5831253006abf30eb5cb83cb57699408" }, "binding_kind": { "const": "SYNTHETIC_FIXTURE" } } },
+                  { "properties": { "id": { "const": "gen1recomp-v0.2.18" }, "runtime_sha256": { "const": "3d0efef014b8fba68773662a3b5015424c2c3888bc65f08620e7505f272a5aaa" }, "binding_kind": { "const": "SYNTHETIC_FIXTURE" } } },
+                  { "properties": { "id": { "const": "gen1recomp-v0.2.19" }, "runtime_sha256": { "const": "5f1acfc7d2199b0f79f72b2caabfbca924f04456a027691f2f4f191cc201b404" }, "binding_kind": { "const": "SYNTHETIC_FIXTURE" } } },
+                  { "properties": { "id": { "const": "gen1recomp-dev-baseline" }, "runtime_sha256": { "const": "f07e1493e00b6da4eb6048c7e03b5831f650bef5133ad3cf2d2691617ed8a3de" }, "binding_kind": { "const": "SYNTHETIC_FIXTURE" } } },
+                  { "properties": { "id": { "const": "gen1recomp-dev-current" }, "runtime_sha256": { "const": "86e84e35e3b9c9f6ddb1adf22bc6373e775af4b445efdcb3fc23e4e52b9934d5" }, "binding_kind": { "const": "SYNTHETIC_FIXTURE" } } }
+                ]
+              },
+              "platforms": {
+                "prefixItems": [
+                  { "properties": { "id": { "const": "windows" }, "adapter_id": { "const": "windows-v1" }, "adapter_sha256": { "const": "35e2cc3225d324ccad076216a18cdffd9e4e2c740eaab312396e69090fbbfe63" } } },
+                  { "properties": { "id": { "const": "linux-x86-64" }, "adapter_id": { "const": "linux-x86-64-v1" }, "adapter_sha256": { "const": "b597a9b201de8e9763858382cd3e0795e1b83b888e72f3fe9d995d46f55df4d9" } } },
+                  { "properties": { "id": { "const": "linux-arm64" }, "adapter_id": { "const": "linux-arm64-v1" }, "adapter_sha256": { "const": "1ed48cefbe531d0c4211523a05a9cf5ba4c3e3101fd289f41c4c3af3b4fe743b" } } },
+                  { "properties": { "id": { "const": "macos-x86-64" }, "adapter_id": { "const": "macos-x86-64-v1" }, "adapter_sha256": { "const": "bc9aa5b97ffd94c7a8be0063f88b9277970375d3a8b725b7e99ccd1cb7a51bb8" } } },
+                  { "properties": { "id": { "const": "macos-arm64" }, "adapter_id": { "const": "macos-arm64-v1" }, "adapter_sha256": { "const": "ef9339b84ad977a3c3e0bd130b9bef369dc56d61c25b3d15840a4a5811956021" } } },
+                  { "properties": { "id": { "const": "android" }, "adapter_id": { "const": "android-v1" }, "adapter_sha256": { "const": "befad2e817a5f1ea55ea8224da1719e91a7307517f4251fe620bb62d0908de91" } } },
+                  { "properties": { "id": { "const": "ios-love12" }, "adapter_id": { "const": "ios-love12-v1" }, "adapter_sha256": { "const": "fb4669100c83ee29d4ffd12bafe62da2ccb40e2f9691bd4fc1f6507c9364348c" } } },
+                  { "properties": { "id": { "const": "xbox-uwp" }, "adapter_id": { "const": "xbox-uwp-v1" }, "adapter_sha256": { "const": "3a59a50d08f7927026441e1e2e70e03451cf54c836694ba7784eb2253979560a" } } },
+                  { "properties": { "id": { "const": "nintendo-switch" }, "adapter_id": { "const": "nintendo-switch-v1" }, "adapter_sha256": { "const": "b86d85ac1c676ab72f871ec79513f13a25f074fc84f4920b3991eba6d002e9c0" } } },
+                  { "properties": { "id": { "const": "portmaster" }, "adapter_id": { "const": "portmaster-v1" }, "adapter_sha256": { "const": "dc60d9ffc93a6d02ec6363f898aa8a6f3a40a54c85c140be86c9b26b80cde394" } } },
+                  { "properties": { "id": { "const": "anbernic-stock" }, "adapter_id": { "const": "anbernic-stock-v1" }, "adapter_sha256": { "const": "0accd49551d1dc3048944059b29eaa8fcdf58ffa1f1bb4af65c3d586fa84e86f" } } }
+                ]
+              },
+              "host_modes": {
+                "prefixItems": [
+                  { "properties": { "id": { "const": "no-host" }, "fixture_sha256": { "const": "e497fffe1fff86b3cf43be8e0001a3231bd93296cc6d25dee20833258e6485ce" } } },
+                  { "properties": { "id": { "const": "one-host" }, "fixture_sha256": { "const": "e43a9fa32d92453106d7dfd045f342d80a35ba765a516bccb1292690b8a555fb" } } },
+                  { "properties": { "id": { "const": "multi-host" }, "fixture_sha256": { "const": "0655588523e9281ef4009a36413dc74b2aab072c7d03a3972af763cb570ce2d1" } } },
+                  { "properties": { "id": { "const": "fault-isolation" }, "fixture_sha256": { "const": "2895a694708f26872b6dd72fcf40c5f158b5cc974918b44031aaa3753ce4b757" } } }
+                ]
+              },
+              "test_points": {
+                "prefixItems": [
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "c8ba85122b3dac594fe5ef3c4c42b3e4ce4ed6f4ffb09303f8011667026a9545" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "7201c7b6e12913dd13d8c5edd1d4ed84e19f3269cb89fe9049dd4395b33b1b41" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "2a2f04c30f76b4876f3134f18e8ece7a2be1dc0021989fe22c1a3258b50be1ba" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "115be82f95615bc0d9259476cdb1f7a61d77b768360034b775d24e081065ba38" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "8f7513e52d79e017b87790fecce28b15c896010ebabdd7c4646349c488b38fd6" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "98132a28fa68d5679d32457d57c190e405cba53604795e82b6825f92d3050b0d" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "4980d13df46618b5eb17e81a23ba9a690e35d80e84a67c31b939c76cecf37061" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "858047bc177445e2117153cb90b7ce88278dda20294021f8750b301f79bad0d6" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "ca7c26ffc9921208faf0bcb5c0a1ad7a25f0ee8a49cab65a5866e6930ff4eef8" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "d965cd9a6614c9ee676bbc79142d9b3a674fb159e7659f1c3b7afeb686e76c24" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "c1a5d7a4af79c6be5c8fde4240ac7117b9727a13c06d82567529233ff7aebea3" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "965ddf772e3ce2517b45beeedafb04bab0580210673d835f3752b8ad4336b22d" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "d32de03d110ceefbbaf3a6588847ae2b98831702facc15b280f789c990103dba" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "536ecbe7070366f073f886fcff104190a5316d8470ad55ea5af8e9d86abd65fd" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "7264445dd1e888ec82b170aa7c7a9486be92e7dd401726286dd24723ac3bf334" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "4ea71ae7673e2eced0d3c70eb96747ee653e22bde61930da052c9355d3872609" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "bf50ac8046d4784ef5eb4cdfd927abbbda5f02b700381c762fd374ada49ad50c" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "e3fbd28a143f2ac789d198f5dab2acde8d1ee80077e1f20829385fc3b5e634b9" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "9343c4f28c11ed4b5f1863e97228b5f789edf2b997497b3bde0f5c9ec6be7c6f" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "ba3c836a44d5b1f6a7f8f29a0d28eff018a7762f54356e0f3a02bedfe3f799c1" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "5b195db0468a3b04dc0a686638ba4cb50a2a030255d10197b7bba45229060021" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "d35da2828946ac94052e4b9dba1dad6ad1f752bdbdb5ab63542edd6e3ae691bc" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "6d39a84e1b17d33dc8e128f398f6984e6c0eef6fb437251e772c3b74e0db28d3" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "7f5fb710c83255e19abf9fd5812e5e703a9645b3ea01e09d57abf8f82dbd0b0b" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "90ce401faae60527152a9f89f88eae31976f2ffd19330e740d948d255f6a257d" } } }] } } },
+                  { "properties": { "required_input_hashes": { "prefixItems": [{ "properties": { "sha256": { "const": "aa1aafaec6336b4aeeb9d155a68519a679cdc5fd5f19e2ed7dd802d4995daf26" } } }] } } }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "mode": { "const": "PRIVATE_RELEASE" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "release_eligible": { "const": true },
+          "candidate": {
+            "properties": {
+              "runtime_content_sha256": { "$ref": "#/$defs/private_hash" },
+              "package_kind": { "const": "RELEASE_CANDIDATE" },
+              "package_sha256": { "$ref": "#/$defs/private_hash" },
+              "adapter_sha256": { "$ref": "#/$defs/private_hash" }
+            }
+          },
+          "binding_acquisition": {
+            "properties": {
+              "state": { "const": "ACQUIRED_PRIVATE" },
+              "binding_count": { "const": 52 },
+              "binding_set_sha256": {
+                "$ref": "#/$defs/private_hash"
+              },
+              "acquisition_record_schema": {
+                "const": "kfp.release-matrix.private-binding-acquisition.v1"
+              },
+              "acquisition_record_sha256": { "$ref": "#/$defs/sha256" }
+            }
+          },
+          "required_cell_set": {
+            "properties": {
+              "required_cell_count": { "const": 17820 },
+              "required_cells_by_game": {
+                "properties": {
+                  "red": { "const": 5940 },
+                  "blue": { "const": 5940 },
+                  "yellow": { "const": 5940 }
+                }
+              }
+            }
+          },
+          "catalogs": {
+            "properties": {
+              "games": {
+                "not": {
+                  "contains": {
+                    "required": ["adapter_sha256"],
+                    "properties": {
+                      "adapter_sha256": {
+                        "not": { "$ref": "#/$defs/private_hash" }
+                      }
+                    }
+                  }
+                }
+              },
+              "hosts": {
+                "prefixItems": [
+                  {
+                    "properties": {
+                      "id": { "const": "battle-art-1.9.8" },
+                      "released": { "const": true },
+                      "eligible": { "const": true },
+                      "exclusion_reason": { "const": null }
+                    }
+                  },
+                  {
+                    "properties": {
+                      "id": { "const": "dramaless-v2.0.3" },
+                      "released": { "const": true },
+                      "eligible": { "const": false },
+                      "exclusion_reason": { "const": "The released package lacks the approved companion runtime" }
+                    }
+                  }
+                ]
+              },
+              "engines": {
+                "not": {
+                  "contains": {
+                    "required": ["runtime_sha256"],
+                    "properties": {
+                      "runtime_sha256": {
+                        "not": { "$ref": "#/$defs/private_hash" }
+                      }
+                    }
+                  }
+                },
+                "contains": {
+                  "required": ["binding_kind"],
+                  "properties": {
+                    "binding_kind": { "const": "PINNED_RUNTIME" }
+                  }
+                },
+                "minContains": 5,
+                "maxContains": 5
+              },
+              "platforms": {
+                "not": {
+                  "contains": {
+                    "required": ["adapter_sha256"],
+                    "properties": {
+                      "adapter_sha256": {
+                        "not": { "$ref": "#/$defs/private_hash" }
+                      }
+                    }
+                  }
+                }
+              },
+              "host_modes": {
+                "not": {
+                  "contains": {
+                    "required": ["fixture_sha256"],
+                    "properties": {
+                      "fixture_sha256": {
+                        "not": { "$ref": "#/$defs/private_hash" }
+                      }
+                    }
+                  }
+                }
+              },
+              "test_points": {
+                "not": {
+                  "contains": {
+                    "required": ["required_input_hashes"],
+                    "properties": {
+                      "required_input_hashes": {
+                        "contains": {
+                          "required": ["sha256"],
+                          "properties": {
+                            "sha256": {
+                              "not": { "$ref": "#/$defs/private_hash" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9 ._+()'/-]*$"
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "private_hash": {
+      "allOf": [
+        { "$ref": "#/$defs/sha256" },
+        {
+          "not": {
+            "enum": [
+              "957f5ae3025adacf4fc4c57c347854814d955e22f174eaa3603957391f370ad6",
+              "9dbfe518f33edf9c8a8be2a0bea5e0cc37f3cda7da1b3a19a90636362f1e7647",
+              "6f68da1e15edfe54bbbde627acf4e9cebdca02a591c05c6833832506d5c5ca34",
+              "16b741d9919f92c6329bc1bc90d9478291e1e10aff045d763379945c2147b48a",
+              "2ee8b7a40eb2fb540d06c7f28dfa273ac406df5cca5fcf0319a2c15824593237",
+              "8dad65257bb2a1454d77df778a5885b9a88e9cfeacc9fc6c69b9acb4103dda6e",
+              "78fb9161ee49bc5a4bf8eadeba537aad5831253006abf30eb5cb83cb57699408",
+              "3d0efef014b8fba68773662a3b5015424c2c3888bc65f08620e7505f272a5aaa",
+              "5f1acfc7d2199b0f79f72b2caabfbca924f04456a027691f2f4f191cc201b404",
+              "f07e1493e00b6da4eb6048c7e03b5831f650bef5133ad3cf2d2691617ed8a3de",
+              "86e84e35e3b9c9f6ddb1adf22bc6373e775af4b445efdcb3fc23e4e52b9934d5",
+              "35e2cc3225d324ccad076216a18cdffd9e4e2c740eaab312396e69090fbbfe63",
+              "b597a9b201de8e9763858382cd3e0795e1b83b888e72f3fe9d995d46f55df4d9",
+              "1ed48cefbe531d0c4211523a05a9cf5ba4c3e3101fd289f41c4c3af3b4fe743b",
+              "bc9aa5b97ffd94c7a8be0063f88b9277970375d3a8b725b7e99ccd1cb7a51bb8",
+              "ef9339b84ad977a3c3e0bd130b9bef369dc56d61c25b3d15840a4a5811956021",
+              "befad2e817a5f1ea55ea8224da1719e91a7307517f4251fe620bb62d0908de91",
+              "fb4669100c83ee29d4ffd12bafe62da2ccb40e2f9691bd4fc1f6507c9364348c",
+              "3a59a50d08f7927026441e1e2e70e03451cf54c836694ba7784eb2253979560a",
+              "b86d85ac1c676ab72f871ec79513f13a25f074fc84f4920b3991eba6d002e9c0",
+              "dc60d9ffc93a6d02ec6363f898aa8a6f3a40a54c85c140be86c9b26b80cde394",
+              "0accd49551d1dc3048944059b29eaa8fcdf58ffa1f1bb4af65c3d586fa84e86f",
+              "e497fffe1fff86b3cf43be8e0001a3231bd93296cc6d25dee20833258e6485ce",
+              "e43a9fa32d92453106d7dfd045f342d80a35ba765a516bccb1292690b8a555fb",
+              "0655588523e9281ef4009a36413dc74b2aab072c7d03a3972af763cb570ce2d1",
+              "2895a694708f26872b6dd72fcf40c5f158b5cc974918b44031aaa3753ce4b757",
+              "c8ba85122b3dac594fe5ef3c4c42b3e4ce4ed6f4ffb09303f8011667026a9545",
+              "7201c7b6e12913dd13d8c5edd1d4ed84e19f3269cb89fe9049dd4395b33b1b41",
+              "2a2f04c30f76b4876f3134f18e8ece7a2be1dc0021989fe22c1a3258b50be1ba",
+              "115be82f95615bc0d9259476cdb1f7a61d77b768360034b775d24e081065ba38",
+              "8f7513e52d79e017b87790fecce28b15c896010ebabdd7c4646349c488b38fd6",
+              "98132a28fa68d5679d32457d57c190e405cba53604795e82b6825f92d3050b0d",
+              "4980d13df46618b5eb17e81a23ba9a690e35d80e84a67c31b939c76cecf37061",
+              "858047bc177445e2117153cb90b7ce88278dda20294021f8750b301f79bad0d6",
+              "ca7c26ffc9921208faf0bcb5c0a1ad7a25f0ee8a49cab65a5866e6930ff4eef8",
+              "d965cd9a6614c9ee676bbc79142d9b3a674fb159e7659f1c3b7afeb686e76c24",
+              "c1a5d7a4af79c6be5c8fde4240ac7117b9727a13c06d82567529233ff7aebea3",
+              "965ddf772e3ce2517b45beeedafb04bab0580210673d835f3752b8ad4336b22d",
+              "d32de03d110ceefbbaf3a6588847ae2b98831702facc15b280f789c990103dba",
+              "536ecbe7070366f073f886fcff104190a5316d8470ad55ea5af8e9d86abd65fd",
+              "7264445dd1e888ec82b170aa7c7a9486be92e7dd401726286dd24723ac3bf334",
+              "4ea71ae7673e2eced0d3c70eb96747ee653e22bde61930da052c9355d3872609",
+              "bf50ac8046d4784ef5eb4cdfd927abbbda5f02b700381c762fd374ada49ad50c",
+              "e3fbd28a143f2ac789d198f5dab2acde8d1ee80077e1f20829385fc3b5e634b9",
+              "9343c4f28c11ed4b5f1863e97228b5f789edf2b997497b3bde0f5c9ec6be7c6f",
+              "ba3c836a44d5b1f6a7f8f29a0d28eff018a7762f54356e0f3a02bedfe3f799c1",
+              "5b195db0468a3b04dc0a686638ba4cb50a2a030255d10197b7bba45229060021",
+              "d35da2828946ac94052e4b9dba1dad6ad1f752bdbdb5ab63542edd6e3ae691bc",
+              "6d39a84e1b17d33dc8e128f398f6984e6c0eef6fb437251e772c3b74e0db28d3",
+              "7f5fb710c83255e19abf9fd5812e5e703a9645b3ea01e09d57abf8f82dbd0b0b",
+              "90ce401faae60527152a9f89f88eae31976f2ffd19330e740d948d255f6a257d",
+              "aa1aafaec6336b4aeeb9d155a68519a679cdc5fd5f19e2ed7dd802d4995daf26"
+            ]
+          }
+        }
+      ]
+    },
+    "commit": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^(?:(?:(?:[0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]|[0-9][1-9][0-9]{2}|[1-9][0-9]{3})-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29))T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^[0-9A-Za-z][0-9A-Za-z.+_-]*$"
+    },
+    "host_mode_id": {
+      "enum": ["no-host", "one-host", "multi-host", "fault-isolation"]
+    },
+    "test_point_id": {
+      "enum": [
+        "environment-binding", "clean-install", "enable-disable",
+        "lifecycle-control", "route-pallet-bedroom", "route-pallet-outdoor",
+        "route-viridian-forest", "route-mt-moon", "route-celadon-mart",
+        "packet-golden", "config-audio", "logs-captures",
+        "performance-native", "uncached-entry", "transitions-100", "soak-30m",
+        "leak-resource", "migration-previous", "rollback-previous",
+        "uninstall-integrity", "package-reproducibility", "privacy-scan",
+        "schema-validation", "cleanup", "human-visual-review",
+        "physical-platform-review"
+      ]
+    },
+    "evidence_kind": {
+      "enum": [
+        "environment-report", "install-report", "state-report",
+        "lifecycle-report", "scene-report", "packet-report", "config-report",
+        "audio-report", "sanitized-log-report", "capture-index",
+        "performance-report", "uncached-report", "transition-report",
+        "soak-report", "resource-report", "migration-report", "rollback-report",
+        "uninstall-report", "reproducibility-report", "privacy-report",
+        "schema-report", "cleanup-report", "visual-review-packet",
+        "manual-verdict", "physical-review-packet"
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "runtime_source_commit",
+        "runtime_source_tree",
+        "runtime_content_sha256",
+        "package_kind",
+        "package_sha256",
+        "adapter_version",
+        "adapter_sha256"
+      ],
+      "properties": {
+        "runtime_source_commit": { "$ref": "#/$defs/commit" },
+        "runtime_source_tree": { "$ref": "#/$defs/commit" },
+        "runtime_content_sha256": { "$ref": "#/$defs/sha256" },
+        "package_kind": { "enum": ["SYNTHETIC_FIXTURE", "RELEASE_CANDIDATE"] },
+        "package_sha256": { "$ref": "#/$defs/sha256" },
+        "adapter_version": {
+          "type": "string",
+          "minLength": 5,
+          "maxLength": 32,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "adapter_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "binding_acquisition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "schema_version",
+        "state",
+        "binding_count",
+        "binding_set_sha256",
+        "acquisition_record_schema",
+        "acquisition_record_sha256"
+      ],
+      "properties": {
+        "schema": { "const": "kfp.release-matrix.binding-acquisition.v1" },
+        "schema_version": { "const": 1 },
+        "state": { "enum": ["PUBLIC_SYNTHETIC", "ACQUIRED_PRIVATE"] },
+        "binding_count": { "const": 52 },
+        "binding_set_sha256": { "$ref": "#/$defs/sha256" },
+        "acquisition_record_schema": {
+          "oneOf": [
+            { "type": "null" },
+            { "const": "kfp.release-matrix.private-binding-acquisition.v1" }
+          ]
+        },
+        "acquisition_record_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256" }
+          ]
+        }
+      }
+    },
+    "required_cell_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema",
+        "schema_version",
+        "manifest_input_sha256",
+        "required_cell_count",
+        "required_cell_ids_sha256",
+        "required_cells_by_game"
+      ],
+      "properties": {
+        "schema": { "const": "kfp.release-matrix.required-cell-set.v1" },
+        "schema_version": { "const": 1 },
+        "manifest_input_sha256": { "$ref": "#/$defs/sha256" },
+        "required_cell_count": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+        "required_cell_ids_sha256": { "$ref": "#/$defs/sha256" },
+        "required_cells_by_game": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["red", "blue", "yellow"],
+          "properties": {
+            "red": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+            "blue": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+            "yellow": { "type": "integer", "minimum": 1, "maximum": 10000000 }
+          }
+        }
+      }
+    },
+    "game": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "adapter_id", "adapter_sha256", "private_input"],
+      "properties": {
+        "id": { "enum": ["red", "blue", "yellow"] },
+        "label": { "$ref": "#/$defs/label" },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_sha256": { "$ref": "#/$defs/sha256" },
+        "private_input": { "const": "OPAQUE_RUNTIME_ONLY" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "version",
+        "source_commit",
+        "package_sha256",
+        "released",
+        "eligible",
+        "exclusion_reason"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/label" },
+        "version": { "$ref": "#/$defs/version" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "package_sha256": { "$ref": "#/$defs/sha256" },
+        "released": { "type": "boolean" },
+        "eligible": { "type": "boolean" },
+        "exclusion_reason": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1, "maxLength": 160 }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "eligible": { "const": true } },
+            "required": ["eligible"]
+          },
+          "then": {
+            "properties": {
+              "released": { "const": true },
+              "exclusion_reason": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "eligible": { "const": false } },
+            "required": ["eligible"]
+          },
+          "then": {
+            "properties": {
+              "exclusion_reason": { "type": "string", "minLength": 1, "maxLength": 160 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "id": { "const": "battle-art-1.9.8" } },
+            "required": ["id"]
+          },
+          "then": {
+            "properties": {
+              "package_sha256": {
+                "const": "28c06d4153087be28891090d2d85d039f7cd81ba69f74c56a069016b3adf58bd"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "version", "source_commit", "runtime_sha256", "binding_kind"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/label" },
+        "version": { "$ref": "#/$defs/version" },
+        "source_commit": { "$ref": "#/$defs/commit" },
+        "runtime_sha256": { "$ref": "#/$defs/sha256" },
+        "binding_kind": { "enum": ["SYNTHETIC_FIXTURE", "PINNED_RUNTIME"] }
+      }
+    },
+    "tier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "enum": ["low", "balanced", "high"] },
+        "label": { "$ref": "#/$defs/label" }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "claimed",
+        "adapter_id",
+        "adapter_sha256",
+        "physical_confirmation_required"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/label" },
+        "claimed": { "const": true },
+        "adapter_id": { "$ref": "#/$defs/id" },
+        "adapter_sha256": { "$ref": "#/$defs/sha256" },
+        "physical_confirmation_required": { "type": "boolean" }
+      }
+    },
+    "host_mode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "fixture_sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/label" },
+        "fixture_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "hash_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "sha256"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "single_contract_binding": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        { "allOf": [{ "$ref": "#/$defs/hash_binding" }, { "properties": { "id": { "const": "contract" } } }] }
+      ],
+      "items": false
+    },
+    "single_route_binding": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        { "allOf": [{ "$ref": "#/$defs/hash_binding" }, { "properties": { "id": { "const": "route" } } }] }
+      ],
+      "items": false
+    },
+    "single_golden_binding": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 1,
+      "prefixItems": [
+        { "allOf": [{ "$ref": "#/$defs/hash_binding" }, { "properties": { "id": { "const": "golden" } } }] }
+      ],
+      "items": false
+    },
+    "point_environment_binding": {
+      "properties": { "id": { "const": "environment-binding" }, "kind": { "const": "environment" }, "label": { "const": "Environment and hash binding" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_clean_install": {
+      "properties": { "id": { "const": "clean-install" }, "kind": { "const": "install" }, "label": { "const": "Clean install state" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_enable_disable": {
+      "properties": { "id": { "const": "enable-disable" }, "kind": { "const": "install" }, "label": { "const": "Enable disable and KFP off state" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_lifecycle_control": {
+      "properties": { "id": { "const": "lifecycle-control" }, "kind": { "const": "lifecycle" }, "label": { "const": "Host and KFP lifecycle control" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_route_pallet_bedroom": {
+      "properties": { "id": { "const": "route-pallet-bedroom" }, "kind": { "const": "route" }, "label": { "const": "Pallet bedroom entry" }, "required_input_hashes": { "$ref": "#/$defs/single_route_binding" } }
+    },
+    "point_route_pallet_outdoor": {
+      "properties": { "id": { "const": "route-pallet-outdoor" }, "kind": { "const": "route" }, "label": { "const": "Pallet outdoor entry" }, "required_input_hashes": { "$ref": "#/$defs/single_route_binding" } }
+    },
+    "point_route_viridian_forest": {
+      "properties": { "id": { "const": "route-viridian-forest" }, "kind": { "const": "route" }, "label": { "const": "Viridian Forest entry" }, "required_input_hashes": { "$ref": "#/$defs/single_route_binding" } }
+    },
+    "point_route_mt_moon": {
+      "properties": { "id": { "const": "route-mt-moon" }, "kind": { "const": "route" }, "label": { "const": "Mt Moon cave entry" }, "required_input_hashes": { "$ref": "#/$defs/single_route_binding" } }
+    },
+    "point_route_celadon_mart": {
+      "properties": { "id": { "const": "route-celadon-mart" }, "kind": { "const": "route" }, "label": { "const": "Celadon Mart entry" }, "required_input_hashes": { "$ref": "#/$defs/single_route_binding" } }
+    },
+    "point_packet_golden": {
+      "properties": { "id": { "const": "packet-golden" }, "kind": { "const": "scene" }, "label": { "const": "Packet and golden comparison" }, "required_input_hashes": { "$ref": "#/$defs/single_golden_binding" } }
+    },
+    "point_config_audio": {
+      "properties": { "id": { "const": "config-audio" }, "kind": { "const": "config" }, "label": { "const": "Config migration and KFP only audio" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_logs_captures": {
+      "properties": { "id": { "const": "logs-captures" }, "kind": { "const": "environment" }, "label": { "const": "Sanitized logs and captures" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_performance_native": {
+      "properties": { "id": { "const": "performance-native" }, "kind": { "const": "performance" }, "label": { "const": "Native performance sampling" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_uncached_entry": {
+      "properties": { "id": { "const": "uncached-entry" }, "kind": { "const": "performance" }, "label": { "const": "Uncached scene entry" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_transitions_100": {
+      "properties": { "id": { "const": "transitions-100" }, "kind": { "const": "transition" }, "label": { "const": "One hundred transitions" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_soak_30m": {
+      "properties": { "id": { "const": "soak-30m" }, "kind": { "const": "soak" }, "label": { "const": "Thirty minute soak" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_leak_resource": {
+      "properties": { "id": { "const": "leak-resource" }, "kind": { "const": "performance" }, "label": { "const": "Leak and resource cleanup" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_migration_previous": {
+      "properties": { "id": { "const": "migration-previous" }, "kind": { "const": "migration" }, "label": { "const": "Migration from previous KFP" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_rollback_previous": {
+      "properties": { "id": { "const": "rollback-previous" }, "kind": { "const": "rollback" }, "label": { "const": "Rollback to previous KFP" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_uninstall_integrity": {
+      "properties": { "id": { "const": "uninstall-integrity" }, "kind": { "const": "uninstall" }, "label": { "const": "Uninstall integrity" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_package_reproducibility": {
+      "properties": { "id": { "const": "package-reproducibility" }, "kind": { "const": "package" }, "label": { "const": "Package and hash reproducibility" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_privacy_scan": {
+      "properties": { "id": { "const": "privacy-scan" }, "kind": { "const": "privacy" }, "label": { "const": "Privacy ROM secret and path scan" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_schema_validation": {
+      "properties": { "id": { "const": "schema-validation" }, "kind": { "const": "schema" }, "label": { "const": "Evidence schema validation" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_cleanup": {
+      "properties": { "id": { "const": "cleanup" }, "kind": { "const": "cleanup" }, "label": { "const": "Process and resource cleanup" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_human_visual_review": {
+      "properties": { "id": { "const": "human-visual-review" }, "kind": { "const": "review" }, "label": { "const": "Fixed visual review packet" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "point_physical_platform_review": {
+      "properties": { "id": { "const": "physical-platform-review" }, "kind": { "const": "review" }, "label": { "const": "Physical platform confirmation" }, "required_input_hashes": { "$ref": "#/$defs/single_contract_binding" } }
+    },
+    "test_point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "kind", "label", "required_input_hashes"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "enum": [
+            "environment",
+            "install",
+            "lifecycle",
+            "route",
+            "scene",
+            "config",
+            "performance",
+            "transition",
+            "soak",
+            "migration",
+            "rollback",
+            "uninstall",
+            "package",
+            "privacy",
+            "schema",
+            "cleanup",
+            "review"
+          ]
+        },
+        "label": { "$ref": "#/$defs/label" },
+        "required_input_hashes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/hash_binding" }
+        }
+      }
+    },
+    "test_class": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "label",
+        "execution",
+        "required",
+        "host_modes",
+        "test_points",
+        "evidence_kinds"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "label": { "$ref": "#/$defs/label" },
+        "execution": { "enum": ["OBJECTIVE", "MANUAL"] },
+        "required": { "const": true },
+        "host_modes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/host_mode_id" }
+        },
+        "test_points": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/test_point_id" }
+        },
+        "evidence_kinds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/evidence_kind" }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "execution": { "const": "MANUAL" } },
+            "required": ["execution"]
+          },
+          "then": {
+            "properties": {
+              "evidence_kinds": {
+                "minItems": 2,
+                "contains": { "const": "manual-verdict" },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "evidence_kinds": {
+                "not": { "contains": { "const": "manual-verdict" } }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "catalogs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "games",
+        "hosts",
+        "engines",
+        "tiers",
+        "platforms",
+        "host_modes",
+        "test_points",
+        "test_classes"
+      ],
+      "properties": {
+        "games": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/game" }, { "properties": { "id": { "const": "red" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/game" }, { "properties": { "id": { "const": "blue" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/game" }, { "properties": { "id": { "const": "yellow" } } }] }
+          ],
+          "items": false
+        },
+        "hosts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/host" }, { "properties": { "id": { "const": "battle-art-1.9.8" }, "label": { "const": "Battle Art 1.9.8" }, "version": { "const": "1.9.8" }, "source_commit": { "const": "6586ef5f7a86c1bfefcea931bd6571538c9f8d15" }, "package_sha256": { "const": "28c06d4153087be28891090d2d85d039f7cd81ba69f74c56a069016b3adf58bd" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/host" }, { "properties": { "id": { "const": "dramaless-v2.0.3" }, "label": { "const": "Dramaless 2.0.3" }, "version": { "const": "2.0.3" }, "source_commit": { "const": "23750150ae6f939e09f9ac6ca6d80c382ec9997a" }, "package_sha256": { "const": "89f6fa078c78a6f6e34c98074ea50ff4f971eead992f27684b52eae0f4f5a1a2" } } }] }
+          ],
+          "items": false,
+          "allOf": [
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "id": { "const": "battle-art-1.9.8" } },
+                "required": ["id"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "id": { "const": "dramaless-v2.0.3" } },
+                "required": ["id"]
+              },
+              "minContains": 1,
+              "maxContains": 1
+            },
+            {
+              "contains": {
+                "type": "object",
+                "properties": { "eligible": { "const": true } },
+                "required": ["eligible"]
+              },
+              "minContains": 1
+            }
+          ]
+        },
+        "engines": {
+          "type": "array",
+          "minItems": 5,
+          "maxItems": 5,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/engine" }, { "properties": { "id": { "const": "gen1recomp-v0.2.17" }, "label": { "const": "Gen1recomp 0.2.17" }, "version": { "const": "0.2.17" }, "source_commit": { "const": "44f4680b24823629489ed5a2adad648d0dceb640" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/engine" }, { "properties": { "id": { "const": "gen1recomp-v0.2.18" }, "label": { "const": "Gen1recomp 0.2.18" }, "version": { "const": "0.2.18" }, "source_commit": { "const": "70d7b6383e2c005857013dc897fd096886b08f0b" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/engine" }, { "properties": { "id": { "const": "gen1recomp-v0.2.19" }, "label": { "const": "Gen1recomp 0.2.19" }, "version": { "const": "0.2.19" }, "source_commit": { "const": "116a6ba450dd65f25c9be150952fc3c27be904c0" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/engine" }, { "properties": { "id": { "const": "gen1recomp-dev-baseline" }, "label": { "const": "Gen1recomp dev baseline" }, "version": { "const": "dev-baseline" }, "source_commit": { "const": "06e06e305bbcefe97c216a31bb25265ffb5e6b18" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/engine" }, { "properties": { "id": { "const": "gen1recomp-dev-current" }, "label": { "const": "Gen1recomp dev current" }, "version": { "const": "dev-current" }, "source_commit": { "const": "478e3bf8ebf7646edfda88320c6472cf32db2e67" } } }] }
+          ],
+          "items": false
+        },
+        "tiers": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/tier" }, { "properties": { "id": { "const": "low" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/tier" }, { "properties": { "id": { "const": "balanced" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/tier" }, { "properties": { "id": { "const": "high" } } }] }
+          ],
+          "items": false
+        },
+        "platforms": {
+          "type": "array",
+          "minItems": 11,
+          "maxItems": 11,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "windows" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "linux-x86-64" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "linux-arm64" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "macos-x86-64" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "macos-arm64" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "android" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "ios-love12" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "xbox-uwp" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "nintendo-switch" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "portmaster" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/platform" }, { "properties": { "id": { "const": "anbernic-stock" } } }] }
+          ],
+          "items": false
+        },
+        "host_modes": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/host_mode" }, { "properties": { "id": { "const": "no-host" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/host_mode" }, { "properties": { "id": { "const": "one-host" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/host_mode" }, { "properties": { "id": { "const": "multi-host" } } }] },
+            { "allOf": [{ "$ref": "#/$defs/host_mode" }, { "properties": { "id": { "const": "fault-isolation" } } }] }
+          ],
+          "items": false
+        },
+        "test_points": {
+          "type": "array",
+          "minItems": 26,
+          "maxItems": 26,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_environment_binding" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_clean_install" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_enable_disable" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_lifecycle_control" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_route_pallet_bedroom" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_route_pallet_outdoor" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_route_viridian_forest" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_route_mt_moon" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_route_celadon_mart" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_packet_golden" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_config_audio" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_logs_captures" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_performance_native" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_uncached_entry" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_transitions_100" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_soak_30m" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_leak_resource" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_migration_previous" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_rollback_previous" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_uninstall_integrity" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_package_reproducibility" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_privacy_scan" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_schema_validation" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_cleanup" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_human_visual_review" }] },
+            { "allOf": [{ "$ref": "#/$defs/test_point" }, { "$ref": "#/$defs/point_physical_platform_review" }] }
+          ],
+          "items": false
+        },
+        "test_classes": {
+          "type": "array",
+          "minItems": 22,
+          "maxItems": 22,
+          "prefixItems": [
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "environment-binding" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host", "one-host"] }, "test_points": { "const": ["environment-binding"] }, "evidence_kinds": { "const": ["environment-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "install-state" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host", "one-host"] }, "test_points": { "const": ["clean-install"] }, "evidence_kinds": { "const": ["install-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "enable-disable-state" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host", "one-host", "multi-host"] }, "test_points": { "const": ["enable-disable"] }, "evidence_kinds": { "const": ["state-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "lifecycle" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host", "one-host", "multi-host", "fault-isolation"] }, "test_points": { "const": ["lifecycle-control"] }, "evidence_kinds": { "const": ["lifecycle-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "route-scene" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["route-pallet-bedroom", "route-pallet-outdoor", "route-viridian-forest", "route-mt-moon", "route-celadon-mart"] }, "evidence_kinds": { "const": ["scene-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "packet-golden" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["packet-golden"] }, "evidence_kinds": { "const": ["packet-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "config-audio" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["config-audio"] }, "evidence_kinds": { "const": ["config-report", "audio-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "logs-captures" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["logs-captures"] }, "evidence_kinds": { "const": ["sanitized-log-report", "capture-index"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "performance-native" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["performance-native"] }, "evidence_kinds": { "const": ["performance-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "uncached-entry" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["uncached-entry"] }, "evidence_kinds": { "const": ["uncached-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "transitions-100" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["transitions-100"] }, "evidence_kinds": { "const": ["transition-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "soak-30m" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["soak-30m"] }, "evidence_kinds": { "const": ["soak-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "leak-resource" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["leak-resource"] }, "evidence_kinds": { "const": ["resource-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "migration" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["migration-previous"] }, "evidence_kinds": { "const": ["migration-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "rollback" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["rollback-previous"] }, "evidence_kinds": { "const": ["rollback-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "uninstall-integrity" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["uninstall-integrity"] }, "evidence_kinds": { "const": ["uninstall-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "package-reproducibility" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host"] }, "test_points": { "const": ["package-reproducibility"] }, "evidence_kinds": { "const": ["reproducibility-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "privacy-scan" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host"] }, "test_points": { "const": ["privacy-scan"] }, "evidence_kinds": { "const": ["privacy-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "schema-validation" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host"] }, "test_points": { "const": ["schema-validation"] }, "evidence_kinds": { "const": ["schema-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "cleanup" }, "execution": { "const": "OBJECTIVE" }, "host_modes": { "const": ["no-host", "one-host", "multi-host", "fault-isolation"] }, "test_points": { "const": ["cleanup"] }, "evidence_kinds": { "const": ["cleanup-report"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "human-visual-review" }, "execution": { "const": "MANUAL" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["human-visual-review"] }, "evidence_kinds": { "const": ["visual-review-packet", "manual-verdict"] } } }] },
+            { "allOf": [{ "$ref": "#/$defs/test_class" }, { "properties": { "id": { "const": "physical-platform-review" }, "execution": { "const": "MANUAL" }, "host_modes": { "const": ["one-host"] }, "test_points": { "const": ["physical-platform-review"] }, "evidence_kinds": { "const": ["physical-review-packet", "manual-verdict"] } } }] }
+          ],
+          "items": false
+        }
+      }
+    },
+    "release_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_games",
+        "required_tiers",
+        "required_engine_ids",
+        "required_platforms",
+        "required_test_classes",
+        "required_host_modes",
+        "non_pass_states_block_release",
+        "missing_cell_state",
+        "manual_cannot_replace_objective",
+        "cross_dimension_evidence"
+      ],
+      "properties": {
+        "required_games": {
+          "type": "array",
+          "minItems": 3,
+          "prefixItems": [{ "const": "red" }, { "const": "blue" }, { "const": "yellow" }],
+          "items": false
+        },
+        "required_tiers": {
+          "type": "array",
+          "minItems": 3,
+          "prefixItems": [{ "const": "low" }, { "const": "balanced" }, { "const": "high" }],
+          "items": false
+        },
+        "required_engine_ids": {
+          "type": "array",
+          "minItems": 5,
+          "prefixItems": [
+            { "const": "gen1recomp-v0.2.17" },
+            { "const": "gen1recomp-v0.2.18" },
+            { "const": "gen1recomp-v0.2.19" },
+            { "const": "gen1recomp-dev-baseline" },
+            { "const": "gen1recomp-dev-current" }
+          ],
+          "items": false
+        },
+        "required_platforms": {
+          "type": "array",
+          "minItems": 11,
+          "prefixItems": [
+            { "const": "windows" },
+            { "const": "linux-x86-64" },
+            { "const": "linux-arm64" },
+            { "const": "macos-x86-64" },
+            { "const": "macos-arm64" },
+            { "const": "android" },
+            { "const": "ios-love12" },
+            { "const": "xbox-uwp" },
+            { "const": "nintendo-switch" },
+            { "const": "portmaster" },
+            { "const": "anbernic-stock" }
+          ],
+          "items": false
+        },
+        "required_test_classes": {
+          "type": "array",
+          "minItems": 22,
+          "prefixItems": [
+            { "const": "environment-binding" },
+            { "const": "install-state" },
+            { "const": "enable-disable-state" },
+            { "const": "lifecycle" },
+            { "const": "route-scene" },
+            { "const": "packet-golden" },
+            { "const": "config-audio" },
+            { "const": "logs-captures" },
+            { "const": "performance-native" },
+            { "const": "uncached-entry" },
+            { "const": "transitions-100" },
+            { "const": "soak-30m" },
+            { "const": "leak-resource" },
+            { "const": "migration" },
+            { "const": "rollback" },
+            { "const": "uninstall-integrity" },
+            { "const": "package-reproducibility" },
+            { "const": "privacy-scan" },
+            { "const": "schema-validation" },
+            { "const": "cleanup" },
+            { "const": "human-visual-review" },
+            { "const": "physical-platform-review" }
+          ],
+          "items": false
+        },
+        "required_host_modes": {
+          "type": "array",
+          "minItems": 4,
+          "prefixItems": [
+            { "const": "no-host" },
+            { "const": "one-host" },
+            { "const": "multi-host" },
+            { "const": "fault-isolation" }
+          ],
+          "items": false
+        },
+        "non_pass_states_block_release": {
+          "type": "array",
+          "minItems": 6,
+          "prefixItems": [
+            { "const": "FAIL" },
+            { "const": "BLOCKED" },
+            { "const": "AMBIGUOUS" },
+            { "const": "MISSING" },
+            { "const": "SKIPPED" },
+            { "const": "NOT_RUN" }
+          ],
+          "items": false
+        },
+        "missing_cell_state": { "const": "BLOCKED" },
+        "manual_cannot_replace_objective": { "const": true },
+        "cross_dimension_evidence": { "const": "REJECT" }
+      }
+    }
+  }
+}

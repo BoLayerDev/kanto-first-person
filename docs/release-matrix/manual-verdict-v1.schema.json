@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-matrix/manual-verdict-v1.schema.json",
+  "title": "KFP release matrix manual verdict v1",
+  "$comment": "Native validation is structural. Exact manual-cell identity, reviewed objective result bytes, review-packet evidence bytes, and review time MUST also pass tools.release_matrix.model.validate_manual_verdict and LedgerStore.inspect_attempt.",
+  "description": "A fixed-packet verdict for irreducible visual or physical review only.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "cell_id",
+    "input_fingerprint",
+    "review_packet_sha256",
+    "objective_result_sha256",
+    "reviewer_id",
+    "reviewed_at",
+    "verdict",
+    "objective_checks_passed",
+    "criteria"
+  ],
+  "properties": {
+    "schema": { "const": "kfp.release-matrix.manual-verdict.v1" },
+    "schema_version": { "const": 1 },
+    "cell_id": {
+      "type": "string",
+      "minLength": 69,
+      "maxLength": 69,
+      "pattern": "^cell-[0-9a-f]{64}$"
+    },
+    "input_fingerprint": { "$ref": "#/$defs/sha256" },
+    "review_packet_sha256": { "$ref": "#/$defs/sha256" },
+    "objective_result_sha256": { "$ref": "#/$defs/sha256" },
+    "reviewer_id": { "$ref": "#/$defs/id" },
+    "reviewed_at": { "$ref": "#/$defs/timestamp" },
+    "verdict": { "enum": ["PASS", "FAIL"] },
+    "objective_checks_passed": { "const": true },
+    "criteria": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^(?:(?:(?:[0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]|[0-9][1-9][0-9]{2}|[1-9][0-9]{3})-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29))T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    }
+  }
+}

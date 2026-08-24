@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-matrix/public-status-v1.schema.json",
+  "title": "KFP deterministic public release-matrix status v1",
+  "$comment": "Native validation enforces the fixed v1 READY totals. A READY status is not release evidence unless tools.release_matrix.model.validate_public_status receives an absolute ledger-root path, opens that root read-only, validates one stable append-only snapshot, and derives every count and digest from the exact manifest-bound records. Caller-built summaries or attestations have no authority. Omitting the ledger root is valid only for deterministic all-MISSING NOT_READY output.",
+  "description": "Public-safe status derived from an absolute read-only ledger-root validation, or the explicit no-ledger all-MISSING NOT_READY state.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "generated_at",
+    "manifest_id",
+    "manifest_sha256",
+    "manifest_input_sha256",
+    "required_cell_ids_sha256",
+    "source_commit",
+    "package_sha256",
+    "ledger_snapshot_sha256",
+    "validated_result_set_sha256",
+    "validated_result_count",
+    "release_eligible",
+    "readiness",
+    "release",
+    "required_cells",
+    "status_counts",
+    "games",
+    "blockers"
+  ],
+  "properties": {
+    "schema": { "const": "kfp.release-matrix.public-status.v1" },
+    "schema_version": { "const": 1 },
+    "generated_at": { "$ref": "#/$defs/timestamp" },
+    "manifest_id": { "$ref": "#/$defs/id" },
+    "manifest_sha256": { "$ref": "#/$defs/sha256" },
+    "manifest_input_sha256": { "$ref": "#/$defs/sha256" },
+    "required_cell_ids_sha256": { "$ref": "#/$defs/sha256" },
+    "source_commit": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "package_sha256": { "$ref": "#/$defs/sha256" },
+    "ledger_snapshot_sha256": { "$ref": "#/$defs/sha256" },
+    "validated_result_set_sha256": { "$ref": "#/$defs/sha256" },
+    "validated_result_count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 17820
+    },
+    "release_eligible": { "type": "boolean" },
+    "readiness": { "enum": ["READY", "NOT_READY"] },
+    "release": { "const": "NOT_RELEASED" },
+    "required_cells": { "const": 17820 },
+    "status_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["PASS", "FAIL", "BLOCKED", "AMBIGUOUS", "MISSING", "SKIPPED", "NOT_RUN"],
+      "properties": {
+        "PASS": { "$ref": "#/$defs/count" },
+        "FAIL": { "$ref": "#/$defs/count" },
+        "BLOCKED": { "$ref": "#/$defs/count" },
+        "AMBIGUOUS": { "$ref": "#/$defs/count" },
+        "MISSING": { "$ref": "#/$defs/count" },
+        "SKIPPED": { "$ref": "#/$defs/count" },
+        "NOT_RUN": { "$ref": "#/$defs/count" }
+      }
+    },
+    "games": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "allOf": [
+            { "$ref": "#/$defs/game_status" },
+            { "properties": { "id": { "const": "red" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/game_status" },
+            { "properties": { "id": { "const": "blue" } } }
+          ]
+        },
+        {
+          "allOf": [
+            { "$ref": "#/$defs/game_status" },
+            { "properties": { "id": { "const": "yellow" } } }
+          ]
+        }
+      ],
+      "items": false
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 256,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "release_eligible": { "const": false } },
+        "required": ["release_eligible"]
+      },
+      "then": {
+        "properties": {
+          "readiness": { "const": "NOT_READY" },
+          "release": { "const": "NOT_RELEASED" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "readiness": { "const": "NOT_READY" } },
+        "required": ["readiness"]
+      },
+      "then": {
+        "properties": {
+          "release": { "const": "NOT_RELEASED" },
+          "blockers": { "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "readiness": { "const": "READY" } },
+        "required": ["readiness"]
+      },
+      "then": {
+        "properties": {
+          "release_eligible": { "const": true },
+          "required_cells": { "const": 17820 },
+          "validated_result_count": { "const": 17820 },
+          "blockers": { "maxItems": 0 },
+          "status_counts": {
+            "properties": {
+              "PASS": { "const": 17820 },
+              "FAIL": { "const": 0 },
+              "BLOCKED": { "const": 0 },
+              "AMBIGUOUS": { "const": 0 },
+              "MISSING": { "const": 0 },
+              "SKIPPED": { "const": 0 },
+              "NOT_RUN": { "const": 0 }
+            }
+          },
+          "games": {
+            "prefixItems": [
+              {
+                "properties": {
+                  "id": { "const": "red" },
+                  "status": { "const": "PASS" },
+                  "required_cells": { "const": 5940 },
+                  "passed_cells": { "const": 5940 }
+                }
+              },
+              {
+                "properties": {
+                  "id": { "const": "blue" },
+                  "status": { "const": "PASS" },
+                  "required_cells": { "const": 5940 },
+                  "passed_cells": { "const": 5940 }
+                }
+              },
+              {
+                "properties": {
+                  "id": { "const": "yellow" },
+                  "status": { "const": "PASS" },
+                  "required_cells": { "const": 5940 },
+                  "passed_cells": { "const": 5940 }
+                }
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "blockers": { "minItems": 1 } },
+        "required": ["blockers"]
+      },
+      "then": {
+        "properties": {
+          "readiness": { "const": "NOT_READY" },
+          "release": { "const": "NOT_RELEASED" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status_counts": {
+            "anyOf": [
+              { "properties": { "FAIL": { "minimum": 1 } }, "required": ["FAIL"] },
+              { "properties": { "BLOCKED": { "minimum": 1 } }, "required": ["BLOCKED"] },
+              { "properties": { "AMBIGUOUS": { "minimum": 1 } }, "required": ["AMBIGUOUS"] },
+              { "properties": { "MISSING": { "minimum": 1 } }, "required": ["MISSING"] },
+              { "properties": { "SKIPPED": { "minimum": 1 } }, "required": ["SKIPPED"] },
+              { "properties": { "NOT_RUN": { "minimum": 1 } }, "required": ["NOT_RUN"] }
+            ]
+          }
+        },
+        "required": ["status_counts"]
+      },
+      "then": {
+        "properties": {
+          "readiness": { "const": "NOT_READY" },
+          "release": { "const": "NOT_RELEASED" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^(?:(?:(?:[0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]|[0-9][1-9][0-9]{2}|[1-9][0-9]{3})-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29))T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "count": { "type": "integer", "minimum": 0, "maximum": 10000000 },
+    "positive_count": { "type": "integer", "minimum": 1, "maximum": 10000000 },
+    "game_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "required_cells", "passed_cells"],
+      "properties": {
+        "id": { "enum": ["red", "blue", "yellow"] },
+        "status": { "enum": ["PASS", "BLOCKED"] },
+        "required_cells": { "$ref": "#/$defs/positive_count" },
+        "passed_cells": { "$ref": "#/$defs/count" }
+      }
+    }
+  }
+}

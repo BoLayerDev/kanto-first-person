@@ -1,0 +1,320 @@
+{
+  "contract_id": "kfp.release-gate-map.v1",
+  "contract_version": "1.0.0",
+  "source_commit": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+  "unknown_gate_policy": "REJECT",
+  "result_match_policy": "ANY_DECLARED_RULE_MATCHES_OR_REJECT",
+  "readiness_scope": "QA_SUBGATE_ONLY",
+  "parent_release_gate": {
+    "path": "docs/prerelease-gates.json",
+    "schema": 1,
+    "release_version": "2.0.0-alpha.1",
+    "tag": "v2.0.0-alpha.1",
+    "approval_field": "approved",
+    "approval_required": true
+  },
+  "release_ready_rule": "ALL_QA_REQUIRED_GATES_PASS_AND_PARENT_PRERELEASE_LEDGER_APPROVED",
+  "gates": [
+    {
+      "gate_id": "alpha.qa-contract.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["control.no-host-fail-closed.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["NO_HOST"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.no-host-fail-closed.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["control.no-host-fail-closed.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["CONTROL"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["NO_HOST"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.authored-scenes.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.quality-low.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.quality-balanced.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["BALANCED"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["BALANCED"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.quality-high.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.battle-art-1.9.8.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.dramaless-released-companion.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "INELIGIBLE",
+      "pass_rule": "RELEASED_ELIGIBLE_HOST_AND_ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["DRAMALESS_SHAPE"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["INELIGIBLE"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": [],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.cleanup-integrity.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["control.no-host-fail-closed.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT", "CONTROL"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["NO_HOST", "BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.public-evidence-privacy.v1",
+      "required": true,
+      "release_blocking": true,
+      "default_status": "BLOCKED",
+      "pass_rule": "ALL_MATCHING_RESULTS_PASS",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["control.no-host-fail-closed.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT", "CONTROL"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["advisory.dense-outdoor-64x64.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        },
+        {
+          "checkpoint_ids": ["scene.indoor.v1", "scene.cave.v1", "scene.forest.v1", "scene.city-lavender.v1", "scene.route-neighbor-edge.v1", "scene.shore.v1", "scene.mountain.v1", "scene.day.v1", "scene.night.v1", "scene.rain.v1", "scene.storm.v1", "scene.battle-supported.v1", "scene.battle-unsupported.v1"],
+          "game_versions": ["RED", "BLUE", "YELLOW"],
+          "host_ids": ["BATTLE_ART_VOXEL_FORK"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["NO_HOST", "BATTLE_ART_VOXEL_FORK"],
+      "cleanup_required": true
+    },
+    {
+      "gate_id": "alpha.dense-stress-advisory.v1",
+      "required": false,
+      "release_blocking": false,
+      "default_status": "ADVISORY",
+      "pass_rule": "ADVISORY_ONLY",
+      "result_rules": [
+        {
+          "checkpoint_ids": ["advisory.dense-outdoor-64x64.v1"],
+          "game_versions": ["SYNTHETIC"],
+          "host_ids": ["NO_HOST"],
+          "qualities": ["LOW", "BALANCED", "HIGH"],
+          "statuses": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"],
+          "evidence_classes": ["SYNTHETIC_CONTRACT"],
+          "private_capture_policy": "REQUIRED_FOR_PRIVATE_EVIDENCE_FORBIDDEN_OTHERWISE"
+        }
+      ],
+      "eligible_host_ids": ["NO_HOST"],
+      "cleanup_required": true
+    }
+  ]
+}

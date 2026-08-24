@@ -1,0 +1,37 @@
+{
+  "checkpoint_id": "camera-bedroom-entry",
+  "cleanup": "PASS",
+  "engine": {
+    "id": "gen1recomp",
+    "label": "Gen1Recomp",
+    "version": "0.2.19"
+  },
+  "evidence": [
+    {
+      "id": "camera-low-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/camera-low/assertion",
+      "sha256": "fc026b92f1b832ce2cf632c9102ace9c02ecca2c4bec3264dc08deb89e12dbb7"
+    }
+  ],
+  "gate_id": "camera",
+  "host": {
+    "eligibility": "ELIGIBLE",
+    "id": "battle-art",
+    "label": "Battle Art",
+    "release": "1.9.8"
+  },
+  "package": {
+    "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+  },
+  "quality": "Low",
+  "result_id": "camera-low-battle-art",
+  "schema": 1,
+  "source": {
+    "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+    "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+  },
+  "status": "PASS",
+  "suite_id": "alpha-quality-synthetic-v1",
+  "summary": "Synthetic Low quality camera contract passed with cleanup complete."
+}

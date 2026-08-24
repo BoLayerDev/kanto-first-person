@@ -1,0 +1,37 @@
+{
+  "checkpoint_id": "companion-dramaless-release",
+  "cleanup": "NOT_APPLICABLE",
+  "engine": {
+    "id": "gen1recomp",
+    "label": "Gen1Recomp",
+    "version": "0.2.19"
+  },
+  "evidence": [
+    {
+      "id": "companion-dramaless-ineligible-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-dramaless-ineligible/assertion",
+      "sha256": "f5bf5181616c8e8043633317949cba978fac5bac5668ca9478eacb7f19f318f8"
+    }
+  ],
+  "gate_id": "companion",
+  "host": {
+    "eligibility": "INELIGIBLE",
+    "id": "dramaless",
+    "label": "Dramaless",
+    "release": "unreleased"
+  },
+  "package": {
+    "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+  },
+  "quality": "High",
+  "result_id": "companion-dramaless-ineligible",
+  "schema": 1,
+  "source": {
+    "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+    "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+  },
+  "status": "INELIGIBLE",
+  "suite_id": "alpha-quality-synthetic-v1",
+  "summary": "Dramaless remains ineligible until a public host release is available."
+}

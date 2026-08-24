@@ -1,0 +1,37 @@
+{
+  "checkpoint_id": "companion-battle-art-contract",
+  "cleanup": "PASS",
+  "engine": {
+    "id": "gen1recomp",
+    "label": "Gen1Recomp",
+    "version": "0.2.19"
+  },
+  "evidence": [
+    {
+      "id": "companion-battle-art-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-battle-art/assertion",
+      "sha256": "b68f4b7ee45928e1e08bd1293ae24991b7865e8316d02149e303898b6ba0c8e3"
+    }
+  ],
+  "gate_id": "companion",
+  "host": {
+    "eligibility": "ELIGIBLE",
+    "id": "battle-art",
+    "label": "Battle Art",
+    "release": "1.9.8"
+  },
+  "package": {
+    "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+  },
+  "quality": "Balanced",
+  "result_id": "companion-battle-art-balanced",
+  "schema": 1,
+  "source": {
+    "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+    "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+  },
+  "status": "PASS",
+  "suite_id": "alpha-quality-synthetic-v1",
+  "summary": "Synthetic Battle Art 1.9.8 companion contract passed with cleanup complete."
+}

@@ -1,0 +1,335 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/qa/runtime-result.schema.json",
+  "$comment": "Semantic validation is mandatory. Every instance MUST also pass tools/validate_qa_contract.py --runtime-result <path>; Draft 2020-12 schema validation alone is insufficient.",
+  "title": "KFP alpha public runtime result",
+  "description": "ROM-free, privacy-safe metadata for one KFP alpha QA checkpoint result.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "result_id",
+    "recorded_at",
+    "source",
+    "engine",
+    "host",
+    "game_version",
+    "quality",
+    "checkpoint_id",
+    "gate_id",
+    "kfp_audio",
+    "status",
+    "evidence_class",
+    "cleanup",
+    "artifacts"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "result_id": { "$ref": "#/$defs/identifier" },
+    "recorded_at": { "$ref": "#/$defs/timestamp" },
+    "source": { "$ref": "#/$defs/source_identity" },
+    "engine": { "$ref": "#/$defs/engine_identity" },
+    "host": { "$ref": "#/$defs/host_identity" },
+    "game_version": { "enum": ["RED", "BLUE", "YELLOW", "SYNTHETIC"] },
+    "quality": { "enum": ["LOW", "BALANCED", "HIGH"] },
+    "checkpoint_id": { "$ref": "#/$defs/checkpoint_id" },
+    "gate_id": { "$ref": "#/$defs/gate_id" },
+    "kfp_audio": { "$ref": "#/$defs/kfp_audio" },
+    "status": { "$ref": "#/$defs/result_status" },
+    "evidence_class": { "$ref": "#/$defs/evidence_class" },
+    "private_capture_sha256": { "$ref": "#/$defs/sha256" },
+    "cleanup": { "$ref": "#/$defs/cleanup" },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/artifact" }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "PASS" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": { "cleanup": { "$ref": "#/$defs/passing_cleanup" } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "host": { "properties": { "host_id": { "const": "NO_HOST" } } } },
+        "required": ["host"]
+      },
+      "then": {
+        "properties": {
+          "host": { "$ref": "#/$defs/no_host_identity" },
+          "game_version": { "const": "SYNTHETIC" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "host": { "properties": { "host_id": { "const": "BATTLE_ART_VOXEL_FORK" } } } },
+        "required": ["host"]
+      },
+      "then": {
+        "properties": { "host": { "$ref": "#/$defs/battle_art_identity" } }
+      }
+    },
+    {
+      "if": {
+        "properties": { "host": { "properties": { "host_id": { "const": "DRAMALESS_SHAPE" } } } },
+        "required": ["host"]
+      },
+      "then": {
+        "properties": {
+          "host": { "$ref": "#/$defs/dramaless_candidate_identity" },
+          "status": { "enum": ["FAIL", "BLOCKED", "NOT_RUN", "INELIGIBLE"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "evidence_class": { "const": "PRIVATE_REDACTED_SUMMARY" } },
+        "required": ["evidence_class"]
+      },
+      "then": {
+        "required": ["private_capture_sha256"],
+        "properties": {
+          "game_version": { "enum": ["RED", "BLUE", "YELLOW"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "evidence_class": { "const": "NATIVE_REDACTED_SUMMARY" } },
+        "required": ["evidence_class"]
+      },
+      "then": {
+        "properties": {
+          "game_version": { "enum": ["RED", "BLUE", "YELLOW"] }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "evidence_class": { "enum": ["SYNTHETIC_CONTRACT", "CONTROL"] } },
+        "required": ["evidence_class"]
+      },
+      "then": {
+        "properties": { "game_version": { "const": "SYNTHETIC" } }
+      }
+    },
+    {
+      "if": { "required": ["private_capture_sha256"] },
+      "then": {
+        "properties": {
+          "evidence_class": { "const": "PRIVATE_REDACTED_SUMMARY" }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^(?!.*(?:ghp_|github_pat_|sk-|akia|private[-_.]?key))[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 32,
+      "pattern": "^(?!.*(?:ghp_|github_pat_|sk-|AKIA|PRIVATE KEY))[^\\r\\n/@\\\\:]+$"
+    },
+    "source_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "package_sha256"],
+      "properties": {
+        "commit": { "$ref": "#/$defs/commit" },
+        "package_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "engine_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version"],
+      "properties": {
+        "version": { "$ref": "#/$defs/version" }
+      }
+    },
+    "host_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host_id", "release", "commit", "package_sha256", "released", "eligibility"],
+      "properties": {
+        "host_id": { "enum": ["NO_HOST", "BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"] },
+        "release": { "$ref": "#/$defs/version" },
+        "commit": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/commit" }
+          ]
+        },
+        "package_sha256": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/sha256" }
+          ]
+        },
+        "released": { "type": "boolean" },
+        "eligibility": { "enum": ["CONTROL_ONLY", "ELIGIBLE", "INELIGIBLE_UNTIL_RELEASED"] }
+      }
+    },
+    "no_host_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host_id", "release", "commit", "package_sha256", "released", "eligibility"],
+      "properties": {
+        "host_id": { "const": "NO_HOST" },
+        "release": { "const": "none" },
+        "commit": { "type": "null" },
+        "package_sha256": { "type": "null" },
+        "released": { "const": false },
+        "eligibility": { "const": "CONTROL_ONLY" }
+      }
+    },
+    "battle_art_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host_id", "release", "commit", "package_sha256", "released", "eligibility"],
+      "properties": {
+        "host_id": { "const": "BATTLE_ART_VOXEL_FORK" },
+        "release": { "const": "1.9.8" },
+        "commit": { "const": "6586ef5f7a86c1bfefcea931bd6571538c9f8d15" },
+        "package_sha256": { "const": "28c06d4153087be28891090d2d85d039f7cd81ba69f74c56a069016b3adf58bd" },
+        "released": { "const": true },
+        "eligibility": { "const": "ELIGIBLE" }
+      }
+    },
+    "dramaless_candidate_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host_id", "release", "commit", "package_sha256", "released", "eligibility"],
+      "properties": {
+        "host_id": { "const": "DRAMALESS_SHAPE" },
+        "release": { "const": "candidate-pr47" },
+        "commit": { "type": "null" },
+        "package_sha256": { "type": "null" },
+        "released": { "const": false },
+        "eligibility": { "const": "INELIGIBLE_UNTIL_RELEASED" }
+      }
+    },
+    "checkpoint_id": {
+      "enum": [
+        "control.no-host-fail-closed.v1",
+        "scene.indoor.v1",
+        "scene.cave.v1",
+        "scene.forest.v1",
+        "scene.city-lavender.v1",
+        "scene.route-neighbor-edge.v1",
+        "scene.shore.v1",
+        "scene.mountain.v1",
+        "scene.day.v1",
+        "scene.night.v1",
+        "scene.rain.v1",
+        "scene.storm.v1",
+        "scene.battle-supported.v1",
+        "scene.battle-unsupported.v1",
+        "advisory.dense-outdoor-64x64.v1"
+      ]
+    },
+    "gate_id": {
+      "enum": [
+        "alpha.qa-contract.v1",
+        "alpha.no-host-fail-closed.v1",
+        "alpha.authored-scenes.v1",
+        "alpha.quality-low.v1",
+        "alpha.quality-balanced.v1",
+        "alpha.quality-high.v1",
+        "alpha.battle-art-1.9.8.v1",
+        "alpha.dramaless-released-companion.v1",
+        "alpha.cleanup-integrity.v1",
+        "alpha.public-evidence-privacy.v1",
+        "alpha.dense-stress-advisory.v1"
+      ]
+    },
+    "kfp_audio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["master_gain", "ambient_gain", "sfx_gain", "ambient_sound", "grass_steps", "footsteps", "door_sound"],
+      "properties": {
+        "master_gain": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ambient_gain": { "type": "number", "minimum": 0, "maximum": 1 },
+        "sfx_gain": { "type": "number", "minimum": 0, "maximum": 1 },
+        "ambient_sound": { "enum": ["OFF", "LOW", "MID", "HIGH"] },
+        "grass_steps": { "type": "boolean" },
+        "footsteps": { "type": "boolean" },
+        "door_sound": { "type": "boolean" }
+      }
+    },
+    "result_status": {
+      "enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN", "INELIGIBLE"]
+    },
+    "evidence_class": {
+      "enum": ["SYNTHETIC_CONTRACT", "NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY", "CONTROL"]
+    },
+    "cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "resources_released", "task_artifacts_removed", "source_trees_unchanged"],
+      "properties": {
+        "status": { "enum": ["PASS", "FAIL", "NOT_RUN"] },
+        "resources_released": { "type": "boolean" },
+        "task_artifacts_removed": { "type": "boolean" },
+        "source_trees_unchanged": { "type": "boolean" }
+      }
+    },
+    "passing_cleanup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "resources_released", "task_artifacts_removed", "source_trees_unchanged"],
+      "properties": {
+        "status": { "const": "PASS" },
+        "resources_released": { "const": true },
+        "task_artifacts_removed": { "const": true },
+        "source_trees_unchanged": { "const": true }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifact_id", "sha256", "byte_count", "media_type", "redacted", "privacy_reviewed"],
+      "properties": {
+        "artifact_id": { "$ref": "#/$defs/identifier" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "byte_count": { "type": "integer", "minimum": 1, "maximum": 1073741824 },
+        "media_type": { "enum": ["application/json", "text/plain", "text/csv"] },
+        "redacted": { "const": true },
+        "privacy_reviewed": { "const": true }
+      }
+    }
+  }
+}

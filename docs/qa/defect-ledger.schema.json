@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/qa/defect-ledger.schema.json",
+  "title": "KFP alpha public defect ledger",
+  "description": "ROM-free, privacy-safe defect metadata with strict lifecycle transitions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "ledger_id", "source_commit", "package_sha256", "defects"],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "ledger_id": { "$ref": "#/$defs/identifier" },
+    "source_commit": { "$ref": "#/$defs/commit" },
+    "package_sha256": { "$ref": "#/$defs/sha256" },
+    "defects": {
+      "type": "array",
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/defect" }
+    }
+  },
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "minLength": 40,
+      "maxLength": 40,
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "identifier": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 64,
+      "pattern": "^(?!.*(?:ghp_|github_pat_|sk-|akia|private[-_.]?key))[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "public_text": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160,
+      "pattern": "^(?!.*(?:[A-Za-z]:[\\\\/]|/(?:home|Users|private|var)/|\\\\\\\\|@|ghp_|github_pat_|sk-|AKIA|BEGIN [A-Z ]+PRIVATE KEY))[^\\r\\n]+$"
+    },
+    "checkpoint_id": {
+      "enum": [
+        "control.no-host-fail-closed.v1",
+        "scene.indoor.v1",
+        "scene.cave.v1",
+        "scene.forest.v1",
+        "scene.city-lavender.v1",
+        "scene.route-neighbor-edge.v1",
+        "scene.shore.v1",
+        "scene.mountain.v1",
+        "scene.day.v1",
+        "scene.night.v1",
+        "scene.rain.v1",
+        "scene.storm.v1",
+        "scene.battle-supported.v1",
+        "scene.battle-unsupported.v1",
+        "advisory.dense-outdoor-64x64.v1"
+      ]
+    },
+    "gate_id": {
+      "enum": [
+        "alpha.qa-contract.v1",
+        "alpha.no-host-fail-closed.v1",
+        "alpha.authored-scenes.v1",
+        "alpha.quality-low.v1",
+        "alpha.quality-balanced.v1",
+        "alpha.quality-high.v1",
+        "alpha.battle-art-1.9.8.v1",
+        "alpha.dramaless-released-companion.v1",
+        "alpha.cleanup-integrity.v1",
+        "alpha.public-evidence-privacy.v1",
+        "alpha.dense-stress-advisory.v1"
+      ]
+    },
+    "evidence_class": {
+      "enum": ["SYNTHETIC_CONTRACT", "NATIVE_REDACTED_SUMMARY", "PRIVATE_REDACTED_SUMMARY", "CONTROL"]
+    },
+    "defect_status": {
+      "enum": ["REPORTED", "TRIAGED", "IN_PROGRESS", "BLOCKED", "FIXED", "VERIFIED", "REOPENED", "CLOSED"]
+    },
+    "defect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defect_id", "title", "gate_id", "checkpoint_id", "severity", "current_status", "evidence_class", "artifact_hashes", "transitions"],
+      "properties": {
+        "defect_id": { "$ref": "#/$defs/identifier" },
+        "title": { "$ref": "#/$defs/public_text" },
+        "gate_id": { "$ref": "#/$defs/gate_id" },
+        "checkpoint_id": { "$ref": "#/$defs/checkpoint_id" },
+        "severity": { "enum": ["S0_RELEASE_BLOCKER", "S1_HIGH", "S2_MEDIUM", "S3_LOW"] },
+        "current_status": { "$ref": "#/$defs/defect_status" },
+        "evidence_class": { "$ref": "#/$defs/evidence_class" },
+        "artifact_hashes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/sha256" }
+        },
+        "transitions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": { "$ref": "#/$defs/transition" }
+        }
+      }
+    },
+    "transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["transition_id", "recorded_at", "from_status", "to_status", "evidence_sha256"],
+      "properties": {
+        "transition_id": { "$ref": "#/$defs/identifier" },
+        "recorded_at": { "$ref": "#/$defs/timestamp" },
+        "from_status": {
+          "oneOf": [
+            { "type": "null" },
+            { "$ref": "#/$defs/defect_status" }
+          ]
+        },
+        "to_status": { "$ref": "#/$defs/defect_status" },
+        "evidence_sha256": { "$ref": "#/$defs/sha256" }
+      },
+      "allOf": [
+        {
+          "oneOf": [
+            { "properties": { "from_status": { "type": "null" }, "to_status": { "const": "REPORTED" } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "REPORTED" }, "to_status": { "const": "TRIAGED" } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "TRIAGED" }, "to_status": { "enum": ["IN_PROGRESS", "BLOCKED", "CLOSED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "IN_PROGRESS" }, "to_status": { "enum": ["BLOCKED", "FIXED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "BLOCKED" }, "to_status": { "enum": ["IN_PROGRESS", "FIXED", "CLOSED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "FIXED" }, "to_status": { "enum": ["VERIFIED", "REOPENED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "VERIFIED" }, "to_status": { "enum": ["CLOSED", "REOPENED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "REOPENED" }, "to_status": { "enum": ["IN_PROGRESS", "BLOCKED", "FIXED"] } }, "required": ["from_status", "to_status"] },
+            { "properties": { "from_status": { "const": "CLOSED" }, "to_status": { "const": "REOPENED" } }, "required": ["from_status", "to_status"] }
+          ]
+        }
+      ]
+    }
+  }
+}

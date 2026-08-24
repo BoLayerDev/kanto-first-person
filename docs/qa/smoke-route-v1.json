@@ -1,0 +1,143 @@
+{
+  "contract_id": "kfp.smoke-route.v1",
+  "contract_version": "1.0.0",
+  "source_commit": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+  "coordinate_policy": "DESCRIPTIVE_SCENE_CLASSES_ONLY",
+  "checkpoints": [
+    {
+      "checkpoint_id": "control.no-host-fail-closed.v1",
+      "order": 1,
+      "scene_class": "No compatible host fail-closed control",
+      "fixture_class": "control",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["NO_HOST"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.indoor.v1",
+      "order": 2,
+      "scene_class": "Indoor authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.cave.v1",
+      "order": 3,
+      "scene_class": "Cave authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.forest.v1",
+      "order": 4,
+      "scene_class": "Forest authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.city-lavender.v1",
+      "order": 5,
+      "scene_class": "Lavender city authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.route-neighbor-edge.v1",
+      "order": 6,
+      "scene_class": "Route neighbor-edge authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.shore.v1",
+      "order": 7,
+      "scene_class": "Shore authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.mountain.v1",
+      "order": 8,
+      "scene_class": "Mountain authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.day.v1",
+      "order": 9,
+      "scene_class": "Day sky authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.night.v1",
+      "order": 10,
+      "scene_class": "Night sky authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.rain.v1",
+      "order": 11,
+      "scene_class": "Rain weather authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.storm.v1",
+      "order": 12,
+      "scene_class": "Storm weather authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.battle-supported.v1",
+      "order": 13,
+      "scene_class": "Battle pass supported authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "scene.battle-unsupported.v1",
+      "order": 14,
+      "scene_class": "Battle pass unsupported authored scene",
+      "fixture_class": "authored-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["BATTLE_ART_VOXEL_FORK", "DRAMALESS_SHAPE"],
+      "release_role": "REQUIRED"
+    },
+    {
+      "checkpoint_id": "advisory.dense-outdoor-64x64.v1",
+      "order": 15,
+      "scene_class": "Dense outdoor advisory stress",
+      "fixture_class": "generated-rom-free-synthetic-v1",
+      "qualities": ["LOW", "BALANCED", "HIGH"],
+      "host_scope": ["NO_HOST"],
+      "release_role": "ADVISORY"
+    }
+  ]
+}

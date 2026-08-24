@@ -62,6 +62,8 @@ package.path = engineRoot .. "/?.lua;" .. engineRoot .. "/?/init.lua;"
   .. package.path
 
 local Loader = assert(loadfile(engineRoot .. "/src/mods/Loader.lua"))()
+local ManagerState = assert(loadfile(
+  engineRoot .. "/src/mods/ManagerState.lua"))()
 local loadChunk = loadstring or load
 
 local function trackedRuntimeFiles()
@@ -179,7 +181,11 @@ return function(mod)
 end
 ]=]
 
-local function optionsSource(kfpEnabled)
+local function optionsSource(kfpEnabled, gains)
+  gains = gains or {}
+  local master = tonumber(gains.master) or 12
+  local ambient = tonumber(gains.ambient) or 0
+  local sfx = tonumber(gains.sfx) or 100
   return ([=[return {
   mods = { DRAMALESS_SHAPE = true, ds_fp_ceiling = %s },
   modOptions = {
@@ -191,16 +197,19 @@ local function optionsSource(kfpEnabled)
       jumpkey = "j",
       jumppad = "x",
       vines = true,
+      kfp_master_volume = %d,
+      kfp_ambient_volume = %d,
+      kfp_sfx_volume = %d,
     },
   },
 }
-]=]):format(kfpEnabled and "true" or "false")
+]=]):format(kfpEnabled and "true" or "false", master, ambient, sfx)
 end
 
 local function makeFiles(options)
   options = options or {}
   local files = {
-    ["options.lua"] = optionsSource(options.enabled ~= false),
+    ["options.lua"] = optionsSource(options.enabled ~= false, options.gains),
     ["mods/DRAMALESS_SHAPE/manifest.json"] = HOST_MANIFEST,
     ["mods/DRAMALESS_SHAPE/main.lua"] = HOST_ENTRY:gsub(
       "__REFUSE_LEGACY__", options.refuseLegacy == false and "false" or "true"
@@ -339,12 +348,76 @@ check(record.values.ledge_key == "j" and record.values.ledge_pad == "x",
   "jump preferences were not preserved")
 check(record.values.ledge_leap == false, "Ledge Leap was not forced off")
 check(record.values.remove == nil, "retired remove option entered v2 state")
+check(record.values.kfp_master_volume == 12,
+  "12 percent KFP master gain was not preserved")
+check(record.values.kfp_ambient_volume == 0,
+  "zero KFP ambient gain was not preserved")
+check(record.values.kfp_sfx_volume == 100,
+  "100 percent KFP SFX gain was not preserved")
 local legacyStored = storedOptions(clean.files).modOptions[KFP_ID]
 check(legacyStored.remove == true, "Loader or KFP deleted retired option data")
 check(legacyStored.shadows == false and legacyStored.fastchunks == false,
   "Loader or KFP changed legacy option data")
 check(legacyStored.jumpkey == "j" and legacyStored.jumppad == "x",
   "Loader or KFP changed saved bindings")
+
+-- Exercise the exact ManagerState row model from the selected engine pin.
+-- Its quantity box can persist every integer 1..100, so KFP must accept the
+-- same values even when a schema step is declared.
+local savedManagerOptions = copy(storedOptions(clean.files))
+local pushed, managerWrites = nil, 0
+local managerGame = {
+  mods = clean.loader,
+  save = { options = savedManagerOptions },
+  stack = {
+    push = function(_, value) pushed = value end,
+  },
+  writeOptions = function() managerWrites = managerWrites + 1 end,
+}
+local manager = ManagerState.new(managerGame)
+local schema = assert(clean.loader.optionSchemas[KFP_ID],
+  "KFP option schema did not reach ManagerState")
+local managerRows = manager:buildOptionRows({ id = KFP_ID }, schema)
+local rowById = {}
+for _, row in ipairs(managerRows) do rowById[row.id] = row end
+for _, key in ipairs({
+  "kfp_master_volume", "kfp_ambient_volume", "kfp_sfx_volume",
+}) do
+  local row = assert(rowById[key], "ManagerState omitted KFP audio row " .. key)
+  check(row.label:sub(1, 8) == "KFP ONLY",
+    "ManagerState KFP-only boundary is not visible for " .. key)
+end
+local masterRow = rowById.kfp_master_volume
+local ambientRow = rowById.kfp_ambient_volume
+local sfxRow = rowById.kfp_sfx_volume
+check(masterRow.value() == "12", "ManagerState did not display 12")
+check(ambientRow.value() == "0", "ManagerState did not display zero")
+check(sfxRow.value() == "100", "ManagerState did not display 100")
+masterRow.step(managerGame, 1)
+check(masterRow.value() == "13", "ManagerState did not step 12 to 13")
+masterRow.step(managerGame, -1)
+check(masterRow.value() == "12", "ManagerState did not step 13 to 12")
+ambientRow.step(managerGame, -1)
+check(ambientRow.value() == "0", "ManagerState did not clamp at zero")
+sfxRow.step(managerGame, 1)
+check(sfxRow.value() == "100", "ManagerState did not clamp at 100")
+masterRow.activate()
+check(pushed and pushed.qty == 12 and pushed.max == 100,
+  "ManagerState quantity box did not start at 12")
+pushed.onDone(37)
+check(masterRow.value() == "37", "ManagerState did not persist integer 37")
+masterRow.activate()
+check(pushed and pushed.qty == 37, "ManagerState did not reopen at 37")
+pushed.onDone(12)
+check(masterRow.value() == "12", "ManagerState did not persist integer 12")
+record = assert(clean.loader.modSave[KFP_ID])["config/v2"]
+check(record.values.kfp_master_volume == 12,
+  "KFP did not apply ManagerState value 12")
+check(record.values.kfp_ambient_volume == 0,
+  "KFP did not keep ManagerState boundary zero")
+check(record.values.kfp_sfx_volume == 100,
+  "KFP did not keep ManagerState boundary 100")
+check(managerWrites >= 4, "ManagerState did not persist audio row changes")
 
 check(clean.loader.hooks:call("core.quit_to_launcher", function() return true end),
   "quit hook did not return the engine result")

@@ -26,6 +26,7 @@ roms/
 .luarocks/
 __pycache__/
 *.pyc
+tests/.artifacts/
 
 # editor and OS noise
 .DS_Store

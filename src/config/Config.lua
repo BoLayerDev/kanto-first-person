@@ -46,6 +46,9 @@ local function choices(...)
   return out
 end
 
+local KFP_AUDIO_DESCRIPTION =
+  "KFP ONLY — DOES NOT CHANGE GAME MUSIC, GAME SFX, OR POKÉMON VOICES."
+
 -- Keys remain stable where v1 did not have a collision. Snapshot fields use
 -- clear names, so feature code does not inherit the old abbreviations.
 local SPECS = {
@@ -153,6 +156,18 @@ local SPECS = {
   { key = "particles", field = "particles", label = "PARTICLES", type = "toggle",
     default = true, groups = { "particles" } },
 
+  { key = "kfp_master_volume", field = "kfp_master_volume",
+    label = "KFP ONLY MASTER", type = "number", default = 100,
+    min = 0, max = 100, step = 1, description = KFP_AUDIO_DESCRIPTION,
+    groups = { "audio" } },
+  { key = "kfp_ambient_volume", field = "kfp_ambient_volume",
+    label = "KFP ONLY AMBIENT", type = "number", default = 100,
+    min = 0, max = 100, step = 1, description = KFP_AUDIO_DESCRIPTION,
+    groups = { "audio" } },
+  { key = "kfp_sfx_volume", field = "kfp_sfx_volume",
+    label = "KFP ONLY SFX", type = "number", default = 100,
+    min = 0, max = 100, step = 1, description = KFP_AUDIO_DESCRIPTION,
+    groups = { "audio" } },
   { key = "ambience", field = "ambient_sound", label = "AMBIENT SOUND",
     type = "choice", default = "MID", choices = choices("OFF", "LOW", "MID", "HIGH"),
     groups = { "audio" } },
@@ -292,8 +307,29 @@ local function choiceValue(spec, value)
   return nil, false
 end
 
+local function numberValue(spec, value)
+  if type(value) ~= "number" and type(value) ~= "string" then
+    return nil, false
+  end
+  local numeric = tonumber(value)
+  if not numeric or numeric ~= numeric
+      or numeric == math.huge or numeric == -math.huge then
+    return nil, false
+  end
+  local minimum = tonumber(spec.min) or 0
+  local maximum = tonumber(spec.max) or minimum
+  local step = tonumber(spec.step) or 1
+  if numeric < minimum or numeric > maximum or step <= 0 then
+    return nil, false
+  end
+  local steps = (numeric - minimum) / step
+  if steps ~= math.floor(steps) then return nil, false end
+  return numeric, true
+end
+
 local function normalize(spec, value)
   if spec.type == "toggle" then return booleanValue(value) end
+  if spec.type == "number" then return numberValue(spec, value) end
   return choiceValue(spec, value)
 end
 
@@ -326,6 +362,9 @@ local function publicSchemaRow(spec)
   }
   if spec.optionGroup then row.group = spec.optionGroup end
   if spec.description then row.description = spec.description end
+  if spec.min ~= nil then row.min = spec.min end
+  if spec.max ~= nil then row.max = spec.max end
+  if spec.step ~= nil then row.step = spec.step end
   if spec.hiddenAlpha then
     -- Gen1recomp retains hidden rows and their stored values. This keeps the
     -- migration contract without presenting controls that have no safe alpha

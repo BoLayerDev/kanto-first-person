@@ -282,6 +282,123 @@ return function(T)
     T.truthy(mod.exports.kfp.status().resources.disposed)
   end)
 
+  T.test("App uses 12 percent only on KFP sources and never retains host audio", function()
+    local previousLove = love
+    local ok, problem = pcall(function()
+      local created = {}
+      love = {
+        audio = {
+          newSource = function(path, sourceType)
+            local source = {
+              path = path,
+              sourceType = sourceType,
+              volume = nil,
+              playing = false,
+              releases = 0,
+            }
+            function source:setLooping(value) self.looping = value end
+            function source:setVolume(value) self.volume = value end
+            function source:play() self.playing = true end
+            function source:stop() self.playing = false end
+            function source:isPlaying() return self.playing end
+            function source:release() self.releases = self.releases + 1 end
+            created[#created + 1] = source
+            return source
+          end,
+        },
+      }
+
+      local function newHostAudioSpy()
+        local audit = {
+          serviceReads = 0,
+          serviceWrites = 0,
+          channelReads = 0,
+          channelWrites = 0,
+          calls = 0,
+        }
+        local weak = setmetatable({}, { __mode = "v" })
+        local channels = {}
+        for index, name in ipairs({ "music", "sfx", "pokemon_voice" }) do
+          local channel = setmetatable({}, {
+            __index = function(_, key)
+              audit.channelReads = audit.channelReads + 1
+              return function()
+                audit.calls = audit.calls + 1
+                return true
+              end
+            end,
+            __newindex = function()
+              audit.channelWrites = audit.channelWrites + 1
+            end,
+          })
+          channels[name] = channel
+          weak[index + 1] = channel
+        end
+        local service = setmetatable({}, {
+          __index = function(_, key)
+            audit.serviceReads = audit.serviceReads + 1
+            return channels[key]
+          end,
+          __newindex = function()
+            audit.serviceWrites = audit.serviceWrites + 1
+          end,
+        })
+        weak[1] = service
+        return service, audit, weak
+      end
+
+      local API = assert(loadfile(T.root .. "/companion/api_v1.lua"))()
+      local dispatcher = newHost(API, "DRAMALESS_SHAPE", "2.0.3")
+      local mod, control = fakeMod(dispatcher:provider())
+      control.options.kfp_master_volume = 12
+      control.options.kfp_ambient_volume = 100
+      control.options.kfp_sfx_volume = 100
+      loadEntry()(mod)
+      control.emit("mods.loaded", {})
+
+      local snapshot = world()
+      local hostAudio, audit, weak = newHostAudioSpy()
+      local services = hostServices(snapshot)
+      services.audio = hostAudio
+      T.truthy(dispatcher:attach(services))
+      T.truthy(dispatcher:start({ world = snapshot }))
+      for _ = 1, 20 do
+        T.truthy(dispatcher:update({ dt = 0.1, playerSpeed = 1 }))
+      end
+
+      T.equal(created[1].sourceType, "stream")
+      T.near(created[1].volume, 0.4 * 0.12, 1e-12)
+      control.emit("world.stepped", {
+        mapId = snapshot.id,
+        x = 0,
+        y = 0,
+      })
+      T.equal(created[2].sourceType, "static")
+      T.near(created[2].volume, 0.45 * 0.12, 1e-12)
+      T.deepEqual(audit, {
+        serviceReads = 0,
+        serviceWrites = 0,
+        channelReads = 0,
+        channelWrites = 0,
+        calls = 0,
+      })
+
+      T.truthy(dispatcher:dispose({}, "host_audio_spy"))
+      for _, source in ipairs(created) do T.equal(source.releases, 1) end
+      services.audio = nil
+      services = nil
+      hostAudio = nil
+      collectgarbage("collect")
+      collectgarbage("collect")
+      for index = 1, 4 do
+        T.equal(weak[index], nil, "KFP retained host audio object " .. index)
+      end
+      T.truthy(control.hook("core.quit_to_launcher")(function() return true end))
+    end)
+    love = previousLove
+    if not ok then error(problem, 0) end
+  end)
+
   T.test("entry owns packaged textures until the scene packet retires", function()
     local previousLove = love
     local ok, problem = pcall(function()

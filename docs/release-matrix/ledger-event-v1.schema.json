@@ -3,7 +3,7 @@
   "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-matrix/ledger-event-v1.schema.json",
   "title": "KFP release matrix ledger event v1",
   "description": "One hash-chained, append-only event inside an immutable cell attempt.",
-  "$comment": "Native validation enforces local sequence and gate shape. Exact cell, attempt, previous-event, event-id, time-order, evidence-byte, and gate-state bindings MUST also pass LedgerStore.inspect_attempt.",
+  "$comment": "Native validation enforces local sequence, gate shape, and evidence-record shape. Authority requires each canonical non-overwriting first-store receipt to match the immutable ledger-root ID, exact embedded evidence binding, and paired raw payload. Missing, legacy, malformed, extra-field, stale, tampered, mismatched, overwritten, or cross-root receipts fail closed. Exact cell, attempt, evidence-binding digest, previous-event, event-id, time-order, evidence-byte, and gate-state bindings MUST also pass LedgerStore.inspect_attempt.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -180,12 +180,59 @@
     "evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "sha256", "bytes"],
+      "required": ["schema", "schema_version", "cell_id", "input_fingerprint", "attempt_id", "gate_id", "kind", "sha256", "bytes", "binding_sha256"],
       "properties": {
+        "schema": { "const": "kfp.release-matrix.evidence-binding.v1" },
+        "schema_version": { "const": 1 },
+        "cell_id": { "$ref": "#/$defs/cell_id" },
+        "input_fingerprint": { "$ref": "#/$defs/sha256" },
+        "attempt_id": { "$ref": "#/$defs/attempt_id" },
+        "gate_id": { "$ref": "#/$defs/id" },
         "kind": { "$ref": "#/$defs/evidence_kind" },
         "sha256": { "$ref": "#/$defs/sha256" },
-        "bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 }
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
+        "binding_sha256": { "$ref": "#/$defs/sha256" }
       }
+    },
+    "receipt_evidence_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "schema_version", "cell_id", "input_fingerprint", "attempt_id", "gate_id", "kind", "sha256", "bytes", "binding_sha256"],
+      "properties": {
+        "schema": { "const": "kfp.release-matrix.evidence-binding.v1" },
+        "schema_version": { "const": 1 },
+        "cell_id": { "$ref": "#/$defs/cell_id" },
+        "input_fingerprint": { "$ref": "#/$defs/sha256" },
+        "attempt_id": { "$ref": "#/$defs/attempt_id" },
+        "gate_id": { "$ref": "#/$defs/id" },
+        "kind": {
+          "anyOf": [
+            { "$ref": "#/$defs/evidence_kind" },
+            { "const": "objective-result" }
+          ]
+        },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 },
+        "binding_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "evidence_receipt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "schema_version", "ledger_root_id", "evidence", "receipt_sha256"],
+      "properties": {
+        "schema": { "const": "kfp.release-matrix.evidence-receipt.v1" },
+        "schema_version": { "const": 1 },
+        "ledger_root_id": { "$ref": "#/$defs/ledger_root_id" },
+        "evidence": { "$ref": "#/$defs/receipt_evidence_binding" },
+        "receipt_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "ledger_root_id": {
+      "type": "string",
+      "minLength": 76,
+      "maxLength": 76,
+      "pattern": "^ledger-root-[0-9a-f]{64}$"
     },
     "evidence_kind": {
       "enum": ["environment-report","install-report","state-report","lifecycle-report","scene-report","packet-report","config-report","audio-report","sanitized-log-report","capture-index","performance-report","uncached-report","transition-report","soak-report","resource-report","migration-report","rollback-report","uninstall-report","reproducibility-report","privacy-report","schema-report","cleanup-report","visual-review-packet","manual-verdict","physical-review-packet"]

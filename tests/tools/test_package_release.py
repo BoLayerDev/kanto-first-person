@@ -4,11 +4,11 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import tempfile
 import unittest
 from unittest import mock
 import zipfile
 
+from tests.tools._scoped_test_directory import ScopedTestDirectory
 
 ROOT = Path(__file__).resolve().parents[2]
 SPEC = importlib.util.spec_from_file_location(
@@ -58,10 +58,11 @@ def approved_records(version="2.0.0", channel="stable"):
     return rights, ledger
 
 
-def run_git(repo, *args):
+def run_git(repo, *args, env=None):
     return subprocess.run(
         ["git", *args],
         cwd=repo,
+        env=env,
         check=True,
         text=True,
         stdout=subprocess.PIPE,
@@ -69,14 +70,56 @@ def run_git(repo, *args):
     ).stdout.strip()
 
 
+def fixture_git_environment(parent):
+    environment = os.environ.copy()
+    global_config = parent / "empty-git-global-config"
+    global_config.write_bytes(b"")
+    environment["GIT_CONFIG_GLOBAL"] = str(global_config)
+    environment["GIT_CONFIG_NOSYSTEM"] = "1"
+    environment.pop("GIT_CONFIG_PARAMETERS", None)
+    environment.pop("GIT_CONFIG_COUNT", None)
+    environment.pop("GIT_TEMPLATE_DIR", None)
+    for name in tuple(environment):
+        if name.startswith("GIT_CONFIG_KEY_") or name.startswith(
+            "GIT_CONFIG_VALUE_"
+        ):
+            environment.pop(name)
+    return environment
+
+
 def create_minimal_runtime_repo(parent):
+    environment = fixture_git_environment(parent)
+    template = parent / "empty-git-template"
+    template.mkdir()
     repo = parent / "repo"
     repo.mkdir()
-    run_git(repo, "init", "--quiet", "--initial-branch=fixture")
-    run_git(repo, "config", "user.name", "Package Test")
-    run_git(repo, "config", "user.email", "package-test@example.invalid")
-    run_git(repo, "config", "core.autocrlf", "false")
-    run_git(repo, "config", "core.eol", "lf")
+    run_git(
+        repo,
+        "init",
+        "--quiet",
+        f"--template={template}",
+        "--initial-branch=fixture",
+        "--shared=false",
+        env=environment,
+    )
+    run_git(
+        repo,
+        "config",
+        "--local",
+        "core.sharedRepository",
+        "false",
+        env=environment,
+    )
+    run_git(repo, "config", "user.name", "Package Test", env=environment)
+    run_git(
+        repo,
+        "config",
+        "user.email",
+        "package-test@example.invalid",
+        env=environment,
+    )
+    run_git(repo, "config", "core.autocrlf", "false", env=environment)
+    run_git(repo, "config", "core.eol", "lf", env=environment)
     (repo / ".gitattributes").write_bytes(b"* text=auto\n")
     (repo / ".gitignore").write_bytes(b"src/ignored.lua\n")
     (repo / "manifest.json").write_bytes(
@@ -85,15 +128,20 @@ def create_minimal_runtime_repo(parent):
     (repo / "LICENSE").write_bytes(b"line one\nline two\n")
     (repo / "src").mkdir()
     (repo / "src" / "Main.lua").write_bytes(b"return true\n")
-    run_git(repo, "add", ".")
+    run_git(repo, "add", ".", env=environment)
     run_git(
         repo,
         "commit",
         "--quiet",
         "-m",
         "test(fixture): create minimal runtime source",
+        env=environment,
     )
-    return repo, run_git(repo, "rev-parse", "HEAD")
+    return (
+        repo,
+        run_git(repo, "rev-parse", "HEAD", env=environment),
+        environment,
+    )
 
 
 def minimal_runtime_constants():
@@ -762,17 +810,121 @@ class ReleaseGateTests(unittest.TestCase):
             "8893010ccbca83da9f41be870c95d57fd97ad1e1e01e02c8ad4782125f3cfdf0",
         )
 
-    def test_clean_commit_copy_ignores_windows_crlf_checkout_conversion(self):
-        with tempfile.TemporaryDirectory() as raw:
+    def test_fixture_git_environment_rejects_all_inherited_configuration(self):
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
-            repo, commit = create_minimal_runtime_repo(root)
-            run_git(repo, "config", "core.autocrlf", "true")
+            inherited_hooks = root / "inherited-hooks"
+            inherited_template = root / "inherited-template"
+            inherited_template_hooks = inherited_template / "hooks"
+            inherited_hooks.mkdir()
+            inherited_template_hooks.mkdir(parents=True)
+
+            hook_bytes = b"#!/bin/sh\nexit 97\n"
+            for hook in (
+                inherited_hooks / "pre-commit",
+                inherited_template_hooks / "pre-commit",
+            ):
+                descriptor = os.open(
+                    hook,
+                    os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                    0o700,
+                )
+                try:
+                    os.write(descriptor, hook_bytes)
+                finally:
+                    os.close(descriptor)
+
+            inherited_global = root / "inherited-global-config"
+            inherited_global.write_text(
+                "[core]\n"
+                "\tsharedRepository = group\n"
+                f"\thooksPath = {inherited_hooks.as_posix()}\n"
+                "[init]\n"
+                f"\ttemplateDir = {inherited_template.as_posix()}\n",
+                encoding="utf-8",
+            )
+            inherited = {
+                "GIT_CONFIG_GLOBAL": str(inherited_global),
+                "GIT_CONFIG_NOSYSTEM": "0",
+                "GIT_CONFIG_PARAMETERS": "malformed",
+                "GIT_CONFIG_COUNT": "3",
+                "GIT_CONFIG_KEY_0": "core.sharedRepository",
+                "GIT_CONFIG_VALUE_0": "group",
+                "GIT_CONFIG_KEY_1": "core.hooksPath",
+                "GIT_CONFIG_VALUE_1": str(inherited_hooks),
+                "GIT_CONFIG_KEY_2": "init.templateDir",
+                "GIT_CONFIG_VALUE_2": str(inherited_template),
+                "GIT_CONFIG_KEY_99": "core.sharedRepository",
+                "GIT_CONFIG_VALUE_99": "group",
+                "GIT_TEMPLATE_DIR": str(inherited_template),
+            }
+            with mock.patch.dict(os.environ, inherited, clear=False):
+                repo, _, environment = create_minimal_runtime_repo(root)
+
+            self.assertEqual(
+                environment["GIT_CONFIG_GLOBAL"],
+                str(root / "empty-git-global-config"),
+            )
+            self.assertEqual(
+                Path(environment["GIT_CONFIG_GLOBAL"]).read_bytes(), b""
+            )
+            self.assertEqual(environment["GIT_CONFIG_NOSYSTEM"], "1")
+            for name in inherited:
+                if name not in ("GIT_CONFIG_GLOBAL", "GIT_CONFIG_NOSYSTEM"):
+                    self.assertNotIn(name, environment)
+
+            configuration = run_git(
+                repo,
+                "config",
+                "--show-origin",
+                "--list",
+                env=environment,
+            ).lower()
+            self.assertNotIn("sharedrepository=group", configuration)
+            self.assertNotIn("core.hookspath", configuration)
+            self.assertNotIn("init.templatedir", configuration)
+            self.assertEqual(
+                run_git(
+                    repo,
+                    "config",
+                    "--local",
+                    "--type=bool",
+                    "--get",
+                    "core.sharedRepository",
+                    env=environment,
+                ),
+                "false",
+            )
+            self.assertFalse((repo / ".git" / "hooks" / "pre-commit").exists())
+
+            (repo / "second.txt").write_text("synthetic\n", encoding="utf-8")
+            run_git(repo, "add", "second.txt", env=environment)
+            run_git(
+                repo,
+                "commit",
+                "--quiet",
+                "-m",
+                "test(fixture): add second synthetic change",
+                env=environment,
+            )
+            self.assertEqual(
+                run_git(repo, "rev-list", "--count", "HEAD", env=environment),
+                "2",
+            )
+
+    def test_clean_commit_copy_ignores_windows_crlf_checkout_conversion(self):
+        with ScopedTestDirectory() as raw:
+            root = Path(raw)
+            repo, commit, environment = create_minimal_runtime_repo(root)
+            run_git(repo, "config", "core.autocrlf", "true", env=environment)
             (repo / "LICENSE").unlink()
-            run_git(repo, "checkout", "--", "LICENSE")
+            run_git(repo, "checkout", "--", "LICENSE", env=environment)
             self.assertEqual(
                 (repo / "LICENSE").read_bytes(), b"line one\r\nline two\r\n"
             )
-            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            self.assertEqual(
+                run_git(repo, "status", "--porcelain", env=environment), ""
+            )
             staging = root / "staging"
             staging.mkdir()
             with minimal_runtime_constants():
@@ -787,15 +939,17 @@ class ReleaseGateTests(unittest.TestCase):
             )
 
     def test_allow_dirty_copy_preserves_worktree_bytes_and_attests_dirty(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
-            repo, _ = create_minimal_runtime_repo(root)
+            repo, _, environment = create_minimal_runtime_repo(root)
             checkout = b"line one\r\nline two\r\n"
-            run_git(repo, "config", "core.autocrlf", "true")
+            run_git(repo, "config", "core.autocrlf", "true", env=environment)
             (repo / "LICENSE").unlink()
-            run_git(repo, "checkout", "--", "LICENSE")
+            run_git(repo, "checkout", "--", "LICENSE", env=environment)
             self.assertEqual((repo / "LICENSE").read_bytes(), checkout)
-            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            self.assertEqual(
+                run_git(repo, "status", "--porcelain", env=environment), ""
+            )
             staging = root / "staging"
             staging.mkdir()
             with minimal_runtime_constants():
@@ -811,7 +965,7 @@ class ReleaseGateTests(unittest.TestCase):
             )
 
     def test_allow_dirty_manifest_rejects_link_or_reparse_path(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
             (root / "manifest.json").write_bytes(
                 b'{"id":"fixture","version":"1.0.0"}\n'
@@ -914,7 +1068,7 @@ class ReleaseGateTests(unittest.TestCase):
                 PACKAGE_RELEASE.validate_relative_path(overlong)
 
     def test_modpkg_runtime_must_match_staging_paths_and_bytes(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
             staging = root / "staging"
             staging.mkdir()
@@ -955,9 +1109,9 @@ class ReleaseGateTests(unittest.TestCase):
                 PACKAGE_RELEASE.verify_modpkg_runtime(duplicate, staging, files)
 
     def test_worktree_copy_rejects_untracked_runtime_files(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
-            repo, _ = create_minimal_runtime_repo(root)
+            repo, _, _ = create_minimal_runtime_repo(root)
             (repo / "src" / "local.lua").write_bytes(b"return false\n")
             with minimal_runtime_constants():
                 with self.assertRaisesRegex(
@@ -966,11 +1120,13 @@ class ReleaseGateTests(unittest.TestCase):
                     PACKAGE_RELEASE.listed_runtime_entries_from_worktree(repo)
 
     def test_worktree_copy_rejects_ignored_runtime_files(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
-            repo, _ = create_minimal_runtime_repo(root)
+            repo, _, environment = create_minimal_runtime_repo(root)
             (repo / "src" / "ignored.lua").write_bytes(b"return false\n")
-            self.assertEqual(run_git(repo, "status", "--porcelain"), "")
+            self.assertEqual(
+                run_git(repo, "status", "--porcelain", env=environment), ""
+            )
             with minimal_runtime_constants():
                 with self.assertRaisesRegex(
                     RuntimeError, "untracked runtime files are not packageable"
@@ -978,9 +1134,9 @@ class ReleaseGateTests(unittest.TestCase):
                     PACKAGE_RELEASE.listed_runtime_entries_from_worktree(repo)
 
     def test_worktree_copy_rejects_missing_tracked_runtime_file(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
-            repo, _ = create_minimal_runtime_repo(root)
+            repo, _, _ = create_minimal_runtime_repo(root)
             (repo / "LICENSE").unlink()
             staging = root / "staging"
             staging.mkdir()
@@ -991,7 +1147,7 @@ class ReleaseGateTests(unittest.TestCase):
                     PACKAGE_RELEASE.copy_runtime(repo, staging)
 
     def test_runtime_content_fingerprint_is_framed_and_order_independent(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
             (root / "a.txt").write_bytes(b"alpha\n")
             (root / "b.txt").write_bytes(b"beta\n")
@@ -1016,7 +1172,7 @@ class ReleaseGateTests(unittest.TestCase):
             )
 
     def test_deterministic_zip_ignores_mtime_and_input_order(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             root = Path(raw)
             (root / "a.txt").write_bytes(b"alpha\n")
             (root / "b.txt").write_bytes(b"beta\n")
@@ -1053,7 +1209,7 @@ class ReleaseGateTests(unittest.TestCase):
             PACKAGE_RELEASE.resolve_epoch(-1, environment)
 
     def test_engine_tools_are_copied_from_the_pinned_commit(self):
-        with tempfile.TemporaryDirectory() as raw:
+        with ScopedTestDirectory() as raw:
             temporary = Path(raw)
             engine = temporary / "source-engine"
             dirty_tool = engine / "tools" / "modkit.py"

@@ -22,6 +22,8 @@ from typing import Any, Iterable, Mapping, Sequence
 MANIFEST_SCHEMA = "kfp.release-matrix.manifest.v1"
 CELL_IDENTITY_SCHEMA = "kfp.release-matrix.cell-identity.v1"
 CELL_RESULT_SCHEMA = "kfp.release-matrix.cell-result.v1"
+EVIDENCE_BINDING_SCHEMA = "kfp.release-matrix.evidence-binding.v1"
+EVIDENCE_RECEIPT_SCHEMA = "kfp.release-matrix.evidence-receipt.v1"
 MANUAL_VERDICT_SCHEMA = "kfp.release-matrix.manual-verdict.v1"
 PUBLIC_STATUS_SCHEMA = "kfp.release-matrix.public-status.v1"
 RESULT_SET_SCHEMA = "kfp.release-matrix.validated-result-set.v1"
@@ -43,6 +45,26 @@ MAX_EVIDENCE_KINDS = 16
 MAX_MANUAL_CRITERIA = 32
 MAX_PUBLIC_BLOCKERS = 256
 MAX_PUBLIC_CELLS = 10_000_000
+
+EVIDENCE_BINDING_FIELDS = (
+    "schema",
+    "schema_version",
+    "cell_id",
+    "input_fingerprint",
+    "attempt_id",
+    "gate_id",
+    "kind",
+    "sha256",
+    "bytes",
+    "binding_sha256",
+)
+EVIDENCE_RECEIPT_FIELDS = (
+    "schema",
+    "schema_version",
+    "ledger_root_id",
+    "evidence",
+    "receipt_sha256",
+)
 
 GAME_IDS = ("red", "blue", "yellow")
 TIER_IDS = ("low", "balanced", "high")
@@ -304,6 +326,7 @@ _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 _COMMIT_RE = re.compile(r"^[0-9a-f]{40}$")
 _CELL_ID_RE = re.compile(r"^cell-[0-9a-f]{64}$")
 _ATTEMPT_ID_RE = re.compile(r"^attempt-[0-9a-f]{64}$")
+_LEDGER_ROOT_ID_RE = re.compile(r"^ledger-root-[0-9a-f]{64}$")
 _RECOVERY_ID_RE = re.compile(r"^recovery-[0-9a-f]{64}$")
 _UTC_RE = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
@@ -427,6 +450,190 @@ def canonical_json_bytes(value: Any) -> bytes:
 
 def sha256_value(value: Any) -> str:
     return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def make_evidence_binding(
+    cell: MatrixCell,
+    attempt_id: str,
+    gate_id: str,
+    kind: str,
+    sha256: str,
+    byte_count: int,
+) -> Mapping[str, Any]:
+    """Create one public-safe binding for a private evidence payload."""
+
+    basis = {
+        "schema": EVIDENCE_BINDING_SCHEMA,
+        "schema_version": SCHEMA_VERSION,
+        "cell_id": cell.cell_id,
+        "input_fingerprint": cell.input_fingerprint,
+        "attempt_id": attempt_id,
+        "gate_id": gate_id,
+        "kind": kind,
+        "sha256": sha256,
+        "bytes": byte_count,
+    }
+    record = {**basis, "binding_sha256": sha256_value(basis)}
+    return validate_evidence_binding(
+        record,
+        cell,
+        attempt_id=attempt_id,
+        gate_id=gate_id,
+    )
+
+
+def validate_evidence_binding(
+    record: Any,
+    cell: MatrixCell,
+    *,
+    attempt_id: str | None = None,
+    gate_id: str | None = None,
+    allowed_gate_ids: Iterable[str] | None = None,
+    path: str = "$",
+) -> Mapping[str, Any]:
+    """Reject evidence that is not bound to the exact cell, attempt, and gate."""
+
+    value = _expect_mapping(record, path)
+    try:
+        _expect_exact_keys(value, EVIDENCE_BINDING_FIELDS, path)
+    except MatrixModelError as exc:
+        raise MatrixModelError("E_EVIDENCE_BINDING_FIELDS", path) from exc
+    if value["schema"] != EVIDENCE_BINDING_SCHEMA:
+        raise MatrixModelError("E_EVIDENCE_BINDING_SCHEMA", f"{path}.schema")
+    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+        raise MatrixModelError(
+            "E_EVIDENCE_BINDING_SCHEMA", f"{path}.schema_version"
+        )
+    checked_cell_id = _expect_string(
+        value["cell_id"],
+        f"{path}.cell_id",
+        pattern=_CELL_ID_RE,
+        minimum=69,
+        maximum=69,
+    )
+    checked_fingerprint = _expect_sha(
+        value["input_fingerprint"], f"{path}.input_fingerprint"
+    )
+    if (
+        checked_cell_id != cell.cell_id
+        or checked_fingerprint != cell.input_fingerprint
+    ):
+        raise MatrixModelError("E_EVIDENCE_BINDING_CELL", path)
+    checked_attempt = _expect_string(
+        value["attempt_id"],
+        f"{path}.attempt_id",
+        pattern=_ATTEMPT_ID_RE,
+        minimum=72,
+        maximum=72,
+    )
+    if attempt_id is not None and checked_attempt != attempt_id:
+        raise MatrixModelError("E_EVIDENCE_BINDING_ATTEMPT", f"{path}.attempt_id")
+    checked_gate = _expect_id(value["gate_id"], f"{path}.gate_id")
+    if gate_id is not None and checked_gate != gate_id:
+        raise MatrixModelError("E_EVIDENCE_BINDING_GATE", f"{path}.gate_id")
+    if allowed_gate_ids is not None and checked_gate not in tuple(allowed_gate_ids):
+        raise MatrixModelError("E_EVIDENCE_BINDING_GATE", f"{path}.gate_id")
+    _expect_id(value["kind"], f"{path}.kind")
+    _expect_sha(value["sha256"], f"{path}.sha256")
+    _expect_int(value["bytes"], f"{path}.bytes", 1, MAX_EVIDENCE_BYTES)
+    checked_binding = _expect_sha(
+        value["binding_sha256"], f"{path}.binding_sha256"
+    )
+    basis = {field: value[field] for field in EVIDENCE_BINDING_FIELDS[:-1]}
+    if checked_binding != sha256_value(basis):
+        raise MatrixModelError("E_EVIDENCE_BINDING_DIGEST", f"{path}.binding_sha256")
+    _assert_canonical_value(value, path)
+    return deepcopy(dict(value))
+
+
+def make_evidence_receipt(
+    evidence: Mapping[str, Any],
+    cell: MatrixCell,
+    ledger_root_id: str,
+    *,
+    attempt_id: str,
+    gate_id: str,
+) -> Mapping[str, Any]:
+    """Bind one first-store evidence record to one immutable ledger root."""
+
+    checked_evidence = validate_evidence_binding(
+        evidence,
+        cell,
+        attempt_id=attempt_id,
+        gate_id=gate_id,
+        path="$.evidence",
+    )
+    checked_root_id = _expect_string(
+        ledger_root_id,
+        "$.ledger_root_id",
+        pattern=_LEDGER_ROOT_ID_RE,
+        minimum=76,
+        maximum=76,
+    )
+    basis = {
+        "schema": EVIDENCE_RECEIPT_SCHEMA,
+        "schema_version": SCHEMA_VERSION,
+        "ledger_root_id": checked_root_id,
+        "evidence": checked_evidence,
+    }
+    return {**basis, "receipt_sha256": sha256_value(basis)}
+
+
+def validate_evidence_receipt(
+    receipt: Any,
+    cell: MatrixCell,
+    ledger_root_id: str,
+    *,
+    attempt_id: str,
+    gate_id: str | None = None,
+    allowed_gate_ids: Iterable[str] | None = None,
+    path: str = "$",
+) -> Mapping[str, Any]:
+    """Reject a receipt not bound to the exact root and evidence record."""
+
+    value = _expect_mapping(receipt, path)
+    if set(value) != set(EVIDENCE_RECEIPT_FIELDS):
+        raise MatrixModelError("E_EVIDENCE_RECEIPT_FIELDS", path)
+    if value["schema"] != EVIDENCE_RECEIPT_SCHEMA:
+        raise MatrixModelError("E_EVIDENCE_RECEIPT_SCHEMA", f"{path}.schema")
+    if type(value["schema_version"]) is not int or value["schema_version"] != 1:
+        raise MatrixModelError(
+            "E_EVIDENCE_RECEIPT_SCHEMA", f"{path}.schema_version"
+        )
+    checked_root_id = _expect_string(
+        value["ledger_root_id"],
+        f"{path}.ledger_root_id",
+        pattern=_LEDGER_ROOT_ID_RE,
+        minimum=76,
+        maximum=76,
+    )
+    if checked_root_id != ledger_root_id:
+        raise MatrixModelError("E_EVIDENCE_RECEIPT_ROOT", f"{path}.ledger_root_id")
+    checked_evidence = validate_evidence_binding(
+        value["evidence"],
+        cell,
+        attempt_id=attempt_id,
+        gate_id=gate_id,
+        allowed_gate_ids=allowed_gate_ids,
+        path=f"{path}.evidence",
+    )
+    checked_digest = _expect_sha(
+        value["receipt_sha256"], f"{path}.receipt_sha256"
+    )
+    basis = {
+        "schema": value["schema"],
+        "schema_version": value["schema_version"],
+        "ledger_root_id": value["ledger_root_id"],
+        "evidence": value["evidence"],
+    }
+    if checked_digest != sha256_value(basis):
+        raise MatrixModelError(
+            "E_EVIDENCE_RECEIPT_DIGEST", f"{path}.receipt_sha256"
+        )
+    _assert_canonical_value(value, path)
+    result = deepcopy(dict(value))
+    result["evidence"] = checked_evidence
+    return result
 
 
 def _expect_mapping(value: Any, path: str) -> Mapping[str, Any]:
@@ -1916,8 +2123,13 @@ def validate_cell_result(result: Any, cell: MatrixCell) -> Mapping[str, Any]:
     evidence_kinds: list[str] = []
     for index, raw_evidence in enumerate(evidence):
         item_path = f"$.evidence[{index}]"
-        item = _expect_mapping(raw_evidence, item_path)
-        _expect_exact_keys(item, ("kind", "sha256", "bytes"), item_path)
+        item = validate_evidence_binding(
+            raw_evidence,
+            cell,
+            attempt_id=value["attempt_id"],
+            allowed_gate_ids=cell.identity["required_gate_ids"],
+            path=item_path,
+        )
         kind = _expect_id(item["kind"], f"{item_path}.kind")
         if kind in evidence_kinds:
             raise MatrixModelError("E_DUPLICATE_EVIDENCE", item_path)
@@ -2290,6 +2502,10 @@ __all__ = [
     "CELL_STATUSES",
     "ENGINE_BINDINGS",
     "ENGINE_IDS",
+    "EVIDENCE_BINDING_FIELDS",
+    "EVIDENCE_BINDING_SCHEMA",
+    "EVIDENCE_RECEIPT_FIELDS",
+    "EVIDENCE_RECEIPT_SCHEMA",
     "EVIDENCE_KIND_IDS",
     "GAME_IDS",
     "HOST_MODE_IDS",
@@ -2323,11 +2539,15 @@ __all__ = [
     "expand_cells",
     "load_manifest",
     "make_attempt_id",
+    "make_evidence_binding",
+    "make_evidence_receipt",
     "sha256_value",
     "strict_json_load",
     "strict_json_loads",
     "synthetic_binding_sha256",
     "validate_cell_result",
+    "validate_evidence_binding",
+    "validate_evidence_receipt",
     "validate_manifest",
     "validate_manual_verdict",
     "validate_public_status",

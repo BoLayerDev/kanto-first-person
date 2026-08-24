@@ -16,6 +16,8 @@ import uuid
 
 from tools.release_matrix.model import (
     CELL_STATUSES,
+    EVIDENCE_BINDING_FIELDS,
+    EVIDENCE_BINDING_SCHEMA,
     MAX_EVIDENCE_BYTES,
     MAX_EVIDENCE_ITEMS,
     MatrixCell,
@@ -25,9 +27,12 @@ from tools.release_matrix.model import (
     canonical_json_bytes,
     expand_cells,
     make_attempt_id,
+    make_evidence_binding,
+    make_evidence_receipt,
     sha256_value,
     strict_json_loads,
     validate_cell_result,
+    validate_evidence_receipt,
     validate_manual_verdict,
 )
 
@@ -44,6 +49,7 @@ STAGING_RECOVERY_REVIEW_SCHEMA = (
 )
 STAGING_RECOVERY_SCHEMA = "kfp.release-matrix.staging-recovery.v1"
 CELL_RECORD_SCHEMA = "kfp.release-matrix.cell-record.v1"
+LEDGER_ROOT_SCHEMA = "kfp.release-matrix.ledger-root.v1"
 SCHEMA_VERSION = 1
 MAX_ATTEMPTS = 999_999
 MAX_EVENT_SEQUENCE = 2_147_483_647
@@ -89,6 +95,10 @@ _EVENT_FILE_RE = re.compile(r"^([0-9]{10})-([0-9a-f]{64})\.json$")
 _EVIDENCE_FILE_RE = re.compile(
     r"^([a-z0-9]+(?:[._-][a-z0-9]+)*)-([0-9a-f]{64})\.blob$"
 )
+_EVIDENCE_RECEIPT_FILE_RE = re.compile(
+    r"^([a-z0-9]+(?:[._-][a-z0-9]+)*)-([0-9a-f]{64})\.receipt\.json$"
+)
+_LEDGER_ROOT_RE = re.compile(r"^ledger-root-[0-9a-f]{64}$")
 _SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 _ID_RE = re.compile(r"^[a-z0-9]+(?:[._-][a-z0-9]+)*$")
 _UTC_RE = re.compile(
@@ -246,7 +256,16 @@ def _exact_entry_names(path: Path, expected: Iterable[str], code: str) -> None:
         raise LedgerAmbiguous(code, str(path))
 
 
-def _evidence_records(value: Any, path: str) -> list[dict[str, Any]]:
+def _evidence_records(
+    value: Any,
+    path: str,
+    *,
+    cell_id: str,
+    input_fingerprint: str,
+    attempt_id: str,
+    gate_id: str | None = None,
+    allowed_gate_ids: Iterable[str] = (),
+) -> list[dict[str, Any]]:
     if type(value) is not list:
         raise LedgerAmbiguous("E_LEDGER_EVIDENCE_TYPE", path)
     if len(value) > MAX_EVIDENCE_ITEMS:
@@ -258,10 +277,31 @@ def _evidence_records(value: Any, path: str) -> list[dict[str, Any]]:
         item = _expect_mapping(raw, "E_LEDGER_EVIDENCE_TYPE", item_path)
         _expect_keys(
             item,
-            ("kind", "sha256", "bytes"),
+            EVIDENCE_BINDING_FIELDS,
             "E_LEDGER_EVIDENCE_FIELDS",
             item_path,
         )
+        if (
+            item["schema"] != EVIDENCE_BINDING_SCHEMA
+            or type(item["schema_version"]) is not int
+            or item["schema_version"] != 1
+        ):
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_SCHEMA", item_path)
+        if (
+            item["cell_id"] != cell_id
+            or item["input_fingerprint"] != input_fingerprint
+        ):
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_CELL_BINDING", item_path)
+        if item["attempt_id"] != attempt_id:
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_ATTEMPT_BINDING", item_path)
+        checked_gate = _expect_text(
+            item["gate_id"], _ID_RE, "E_LEDGER_EVIDENCE_GATE", item_path
+        )
+        if gate_id is not None and checked_gate != gate_id:
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_GATE_BINDING", item_path)
+        allowed_gates = tuple(allowed_gate_ids)
+        if allowed_gates and checked_gate not in allowed_gates:
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_GATE_BINDING", item_path)
         kind = _expect_text(
             item["kind"], _ID_RE, "E_LEDGER_EVIDENCE_KIND", item_path
         )
@@ -277,7 +317,22 @@ def _evidence_records(value: Any, path: str) -> list[dict[str, Any]]:
             or item["bytes"] > MAX_EVIDENCE_BYTES
         ):
             raise LedgerAmbiguous("E_LEDGER_EVIDENCE_BYTES", item_path)
-        result.append({"kind": kind, "sha256": digest, "bytes": item["bytes"]})
+        binding = _expect_text(
+            item["binding_sha256"],
+            _SHA_RE,
+            "E_LEDGER_EVIDENCE_BINDING_HASH",
+            item_path,
+        )
+        basis = {field: item[field] for field in EVIDENCE_BINDING_FIELDS[:-1]}
+        try:
+            expected_binding = sha256_value(basis)
+        except MatrixModelError as exc:
+            raise LedgerAmbiguous(
+                "E_LEDGER_EVIDENCE_BINDING_VALUE", item_path
+            ) from exc
+        if binding != expected_binding:
+            raise LedgerAmbiguous("E_LEDGER_EVIDENCE_BINDING_DIGEST", item_path)
+        result.append(deepcopy(dict(item)))
     return result
 
 
@@ -288,6 +343,16 @@ class LedgerStore:
         candidate = Path(root)
         if not candidate.is_absolute():
             raise LedgerError("E_LEDGER_ROOT_NOT_ABSOLUTE", str(candidate))
+        root_existed = os.path.lexists(candidate)
+        existing_root_entries: set[str] = set()
+        if root_existed:
+            _assert_plain_directory(candidate)
+            try:
+                existing_root_entries = {
+                    entry.name for entry in os.scandir(candidate)
+                }
+            except OSError as exc:
+                raise LedgerError("E_LEDGER_ROOT_SCAN", str(candidate)) from exc
         self.root = candidate
         if create:
             try:
@@ -313,10 +378,50 @@ class LedgerStore:
             _assert_plain_directory(self.locks_root)
             _assert_plain_directory(self.staging_root)
             _assert_plain_directory(self.staging_recoveries_root)
+        self.root_record_path = self.root / "ledger-root.json"
+        if not self.root_record_path.exists():
+            if not create or existing_root_entries:
+                raise LedgerAmbiguous(
+                    "E_LEDGER_ROOT_RECEIPT_MISSING", str(self.root_record_path)
+                )
+            self._atomic_create(
+                self.root_record_path,
+                {
+                    "schema": LEDGER_ROOT_SCHEMA,
+                    "schema_version": SCHEMA_VERSION,
+                    "ledger_root_id": "ledger-root-"
+                    + uuid.uuid4().hex
+                    + uuid.uuid4().hex,
+                },
+            )
+        self.ledger_root_id = self._load_ledger_root_record()
         self.root_lock_path = self.locks_root / "ledger-root.lock"
         self._initialize_root_lock(create=create)
         self._assert_root_layout()
         self._validate_staging_recovery_archives(allow_pending=True)
+
+    def _load_ledger_root_record(self) -> str:
+        record = _read_record(self.root_record_path)
+        _expect_keys(
+            record,
+            ("schema", "schema_version", "ledger_root_id"),
+            "E_LEDGER_ROOT_RECEIPT_FIELDS",
+            str(self.root_record_path),
+        )
+        if (
+            record["schema"] != LEDGER_ROOT_SCHEMA
+            or type(record["schema_version"]) is not int
+            or record["schema_version"] != 1
+        ):
+            raise LedgerAmbiguous(
+                "E_LEDGER_ROOT_RECEIPT_SCHEMA", str(self.root_record_path)
+            )
+        return _expect_text(
+            record["ledger_root_id"],
+            _LEDGER_ROOT_RE,
+            "E_LEDGER_ROOT_RECEIPT_ID",
+            str(self.root_record_path),
+        )
 
     def _inside(self, path: Path) -> None:
         try:
@@ -438,9 +543,19 @@ class LedgerStore:
         _assert_plain_directory(self.root)
         _exact_entry_names(
             self.root,
-            (".locks", ".staging", ".staging-recoveries", "cells"),
+            (
+                ".locks",
+                ".staging",
+                ".staging-recoveries",
+                "cells",
+                "ledger-root.json",
+            ),
             "E_LEDGER_ROOT_LAYOUT",
         )
+        if self._load_ledger_root_record() != self.ledger_root_id:
+            raise LedgerAmbiguous(
+                "E_LEDGER_ROOT_RECEIPT_DRIFT", str(self.root_record_path)
+            )
         for path in (
             self.locks_root,
             self.staging_root,
@@ -1682,12 +1797,27 @@ class LedgerStore:
         )
         return attempt_path / "evidence" / f"{checked_kind}-{checked_digest}.blob"
 
+    def _evidence_receipt_path(
+        self, attempt_path: Path, kind: str, digest: str
+    ) -> Path:
+        checked_kind = _expect_text(
+            kind, _ID_RE, "E_LEDGER_EVIDENCE_KIND", "kind"
+        )
+        checked_digest = _expect_text(
+            digest, _SHA_RE, "E_LEDGER_EVIDENCE_HASH", "sha256"
+        )
+        return (
+            attempt_path
+            / "evidence"
+            / f"{checked_kind}-{checked_digest}.receipt.json"
+        )
+
     def _scan_evidence_directory(
         self, attempt_path: Path
-    ) -> dict[tuple[str, str], Path]:
+    ) -> dict[tuple[str, str], tuple[Path, Path]]:
         evidence_dir = attempt_path / "evidence"
         _assert_plain_directory(evidence_dir)
-        observed: dict[tuple[str, str], Path] = {}
+        partial: dict[tuple[str, str], dict[str, Path]] = {}
         try:
             entries = sorted(os.scandir(evidence_dir), key=lambda entry: entry.name)
         except OSError as exc:
@@ -1697,17 +1827,70 @@ class LedgerStore:
         for entry in entries:
             if ".partial-" in entry.name:
                 raise LedgerAmbiguous("E_LEDGER_PARTIAL_EVIDENCE", entry.path)
-            match = _EVIDENCE_FILE_RE.fullmatch(entry.name)
+            blob_match = _EVIDENCE_FILE_RE.fullmatch(entry.name)
+            receipt_match = _EVIDENCE_RECEIPT_FILE_RE.fullmatch(entry.name)
+            match = blob_match or receipt_match
             if match is None or not entry.is_file(follow_symlinks=False):
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_ENTRY", entry.path)
             path = Path(entry.path)
             if _is_reparse_or_link(path):
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_REPARSE", entry.path)
             key = (match.group(1), match.group(2))
-            if key in observed:
+            part = "blob" if blob_match is not None else "receipt"
+            pair = partial.setdefault(key, {})
+            if part in pair:
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_DUPLICATE", entry.path)
-            observed[key] = path
+            pair[part] = path
+        observed: dict[tuple[str, str], tuple[Path, Path]] = {}
+        for key, pair in partial.items():
+            if "blob" not in pair:
+                raise LedgerAmbiguous(
+                    "E_LEDGER_EVIDENCE_PAYLOAD_MISSING", str(evidence_dir)
+                )
+            if "receipt" not in pair:
+                raise LedgerAmbiguous(
+                    "E_LEDGER_EVIDENCE_RECEIPT_MISSING", str(evidence_dir)
+                )
+            observed[key] = (pair["blob"], pair["receipt"])
         return observed
+
+    def _read_evidence_receipt(
+        self,
+        receipt_path: Path,
+        *,
+        cell: MatrixCell,
+        attempt_id: str,
+        gate_id: str | None,
+        allowed_gate_ids: Iterable[str],
+    ) -> Mapping[str, Any]:
+        try:
+            raw = _read_record(receipt_path)
+        except LedgerError as exc:
+            raise LedgerAmbiguous(
+                "E_LEDGER_EVIDENCE_RECEIPT_MALFORMED", str(receipt_path)
+            ) from exc
+        try:
+            checked = validate_evidence_receipt(
+                raw,
+                cell,
+                self.ledger_root_id,
+                attempt_id=attempt_id,
+                gate_id=gate_id,
+                allowed_gate_ids=(tuple(allowed_gate_ids) or None),
+                path=str(receipt_path),
+            )
+        except MatrixModelError as exc:
+            code_by_model = {
+                "E_EVIDENCE_RECEIPT_FIELDS": "E_LEDGER_EVIDENCE_RECEIPT_FIELDS",
+                "E_EVIDENCE_RECEIPT_SCHEMA": "E_LEDGER_EVIDENCE_RECEIPT_SCHEMA",
+                "E_EVIDENCE_RECEIPT_ROOT": "E_LEDGER_EVIDENCE_RECEIPT_ROOT",
+                "E_EVIDENCE_RECEIPT_DIGEST": "E_LEDGER_EVIDENCE_RECEIPT_DIGEST",
+            }
+            code = code_by_model.get(
+                exc.code, "E_LEDGER_EVIDENCE_RECEIPT_BINDING"
+            )
+            raise LedgerAmbiguous(code, str(receipt_path)) from exc
+        return checked["evidence"]
 
     def _verify_evidence_blobs(
         self,
@@ -1715,18 +1898,60 @@ class LedgerStore:
         evidence: Any,
         path: str,
         *,
+        cell_id: str,
+        input_fingerprint: str,
+        attempt_id: str,
+        gate_id: str | None = None,
+        allowed_gate_ids: Iterable[str] = (),
         exact: bool = False,
         additional_exact_keys: Iterable[tuple[str, str]] = (),
     ) -> list[dict[str, Any]]:
-        records = _evidence_records(evidence, path)
+        records = _evidence_records(
+            evidence,
+            path,
+            cell_id=cell_id,
+            input_fingerprint=input_fingerprint,
+            attempt_id=attempt_id,
+            gate_id=gate_id,
+            allowed_gate_ids=allowed_gate_ids,
+        )
         observed = self._scan_evidence_directory(attempt_path)
-        expected_keys: set[tuple[str, str]] = set()
+        expected_records: dict[tuple[str, str], Mapping[str, Any]] = {}
         for record in records:
             key = (record["kind"], record["sha256"])
-            expected_keys.add(key)
-            blob = observed.get(key)
-            if blob is None:
+            expected_records[key] = record
+        expected_keys = set(expected_records)
+        expected_keys.update(additional_exact_keys)
+        cell = MatrixCell(
+            cell_id=cell_id,
+            input_fingerprint=input_fingerprint,
+            identity={},
+        )
+        verified_records: list[dict[str, Any]] = []
+        for key in expected_keys:
+            pair = observed.get(key)
+            if pair is None:
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_MISSING", path)
+            blob, receipt_path = pair
+            stored_record = self._read_evidence_receipt(
+                receipt_path,
+                cell=cell,
+                attempt_id=attempt_id,
+                gate_id=gate_id,
+                allowed_gate_ids=allowed_gate_ids,
+            )
+            if (
+                stored_record["kind"], stored_record["sha256"]
+            ) != key:
+                raise LedgerAmbiguous(
+                    "E_LEDGER_EVIDENCE_RECEIPT_PATH", str(receipt_path)
+                )
+            expected_record = expected_records.get(key)
+            if expected_record is not None and stored_record != expected_record:
+                raise LedgerAmbiguous(
+                    "E_LEDGER_EVIDENCE_RECEIPT_MISMATCH", str(receipt_path)
+                )
+            verified_records.append(deepcopy(dict(stored_record)))
             try:
                 size = blob.stat().st_size
                 digest = hashlib.sha256()
@@ -1738,12 +1963,40 @@ class LedgerStore:
                         digest.update(chunk)
             except OSError as exc:
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_READ", path) from exc
-            if size != record["bytes"] or digest.hexdigest() != record["sha256"]:
+            if (
+                size != stored_record["bytes"]
+                or digest.hexdigest() != stored_record["sha256"]
+            ):
                 raise LedgerAmbiguous("E_LEDGER_EVIDENCE_DIGEST", path)
-        expected_keys.update(additional_exact_keys)
         if exact and set(observed) != expected_keys:
             raise LedgerAmbiguous("E_LEDGER_EVIDENCE_SET", path)
-        return records
+        return verified_records
+
+    def _verify_all_stored_evidence(
+        self,
+        attempt_path: Path,
+        cell: MatrixCell,
+        attempt_id: str,
+    ) -> None:
+        observed = self._scan_evidence_directory(attempt_path)
+        records = self._verify_evidence_blobs(
+            attempt_path,
+            [],
+            str(attempt_path / "evidence"),
+            cell_id=cell.cell_id,
+            input_fingerprint=cell.input_fingerprint,
+            attempt_id=attempt_id,
+            allowed_gate_ids=cell.identity["required_gate_ids"],
+            exact=True,
+            additional_exact_keys=observed,
+        )
+        allowed_kinds = set(cell.identity["required_evidence_kinds"])
+        if cell.identity["test_execution"] == "MANUAL":
+            allowed_kinds.add("objective-result")
+        if any(record["kind"] not in allowed_kinds for record in records):
+            raise LedgerAmbiguous(
+                "E_LEDGER_EVIDENCE_RECEIPT_KIND", str(attempt_path / "evidence")
+            )
 
     def _validate_manual_verdict_blob(
         self,
@@ -1972,6 +2225,14 @@ class LedgerStore:
                 attempt_path,
                 event["evidence"],
                 entry.path,
+                cell_id=attempt["cell_id"],
+                input_fingerprint=attempt["input_fingerprint"],
+                attempt_id=attempt["attempt_id"],
+                gate_id=(
+                    event["gate_id"]
+                    if event["event_type"] == "GATE_PASSED"
+                    else None
+                ),
             )
             events.append(event)
             file_hashes.append(file_hash)
@@ -2027,7 +2288,16 @@ class LedgerStore:
             raise LedgerAmbiguous("E_LEDGER_EVENT_ENUM", path)
         if event["gate_id"] is not None:
             _expect_text(event["gate_id"], _ID_RE, "E_LEDGER_GATE_ID", path)
-        _evidence_records(event["evidence"], path)
+        _evidence_records(
+            event["evidence"],
+            path,
+            cell_id=attempt["cell_id"],
+            input_fingerprint=attempt["input_fingerprint"],
+            attempt_id=attempt["attempt_id"],
+            gate_id=(
+                event["gate_id"] if event["event_type"] == "GATE_PASSED" else None
+            ),
+        )
         if event["cell_result_sha256"] is not None:
             _expect_text(
                 event["cell_result_sha256"],
@@ -2115,7 +2385,12 @@ class LedgerStore:
                     raise LedgerAmbiguous("E_LEDGER_GATE_PASS_STATE", event["event_id"])
                 passed.append(gate)
                 for evidence_record in _evidence_records(
-                    event["evidence"], event["event_id"]
+                    event["evidence"],
+                    event["event_id"],
+                    cell_id=attempt["cell_id"],
+                    input_fingerprint=attempt["input_fingerprint"],
+                    attempt_id=attempt["attempt_id"],
+                    gate_id=gate,
                 ):
                     if any(
                         item["kind"] == evidence_record["kind"]
@@ -2141,7 +2416,12 @@ class LedgerStore:
                 cleanup = "FAIL"
             elif kind == "ATTEMPT_PASSED":
                 terminal_evidence = _evidence_records(
-                    event["evidence"], event["event_id"]
+                    event["evidence"],
+                    event["event_id"],
+                    cell_id=attempt["cell_id"],
+                    input_fingerprint=attempt["input_fingerprint"],
+                    attempt_id=attempt["attempt_id"],
+                    allowed_gate_ids=required_gates,
                 )
                 if (
                     gate is not None
@@ -2258,6 +2538,7 @@ class LedgerStore:
             input_fingerprint=cell_record["input_fingerprint"],
             identity=deepcopy(dict(identity)),
         )
+        self._verify_all_stored_evidence(path, cell, attempt_id)
         return number, path, attempt, cell, events, hashes, reduced
 
     def _validate_result_record(
@@ -2315,6 +2596,10 @@ class LedgerStore:
             attempt_path,
             checked["evidence"],
             str(result_path),
+            cell_id=cell.cell_id,
+            input_fingerprint=cell.input_fingerprint,
+            attempt_id=attempt["attempt_id"],
+            allowed_gate_ids=cell.identity["required_gate_ids"],
             exact=checked["status"] == "PASS",
             additional_exact_keys=manual_keys,
         )
@@ -2773,6 +3058,7 @@ class LedgerStore:
         cell: MatrixCell,
         attempt_id: str,
         *,
+        gate_id: str,
         kind: str,
         payload: bytes,
     ) -> Mapping[str, Any]:
@@ -2780,7 +3066,7 @@ class LedgerStore:
 
         with self._mutation_lock(cell.cell_id):
             return self._record_evidence(
-                cell, attempt_id, kind=kind, payload=payload
+                cell, attempt_id, gate_id=gate_id, kind=kind, payload=payload
             )
 
     def _record_evidence(
@@ -2788,6 +3074,7 @@ class LedgerStore:
         cell: MatrixCell,
         attempt_id: str,
         *,
+        gate_id: str,
         kind: str,
         payload: bytes,
     ) -> Mapping[str, Any]:
@@ -2802,7 +3089,7 @@ class LedgerStore:
         attempt = self._load_attempt_record(attempt_path, number, attempt_id)
         if attempt["input_fingerprint"] != cell.input_fingerprint:
             raise LedgerConflict("E_LEDGER_CELL_DRIFT", attempt_id)
-        _, _, _, stored_cell, _, _, reduced = self._load_attempt_state(
+        _, _, _, stored_cell, events, _, reduced = self._load_attempt_state(
             cell.cell_id, attempt_id
         )
         if reduced.terminal_event is not None or (attempt_path / "result.json").exists():
@@ -2810,20 +3097,75 @@ class LedgerStore:
         checked_kind = _expect_text(
             kind, _ID_RE, "E_LEDGER_EVIDENCE_KIND", "kind"
         )
+        checked_gate = _expect_text(
+            gate_id, _ID_RE, "E_LEDGER_EVIDENCE_GATE", "gate_id"
+        )
+        required_gates = tuple(stored_cell.identity["required_gate_ids"])
+        if checked_gate not in required_gates:
+            raise LedgerConflict(
+                "E_LEDGER_EVIDENCE_GATE_NOT_REQUIRED", checked_gate
+            )
         allowed_kinds = set(stored_cell.identity["required_evidence_kinds"])
         if stored_cell.identity["test_execution"] == "MANUAL":
             allowed_kinds.add("objective-result")
         if checked_kind not in allowed_kinds:
             raise LedgerConflict("E_LEDGER_EVIDENCE_NOT_REQUIRED", checked_kind)
+        active_gate: str | None = None
+        for event in events:
+            if event["event_type"] == "GATE_STARTED":
+                active_gate = event["gate_id"]
+            elif event["event_type"] in ("GATE_PASSED", "GATE_FAILED"):
+                active_gate = None
+        if active_gate != checked_gate:
+            raise LedgerConflict("E_LEDGER_EVIDENCE_GATE_NOT_OPEN", checked_gate)
         observed = self._scan_evidence_directory(attempt_path)
         if len(observed) >= MAX_EVIDENCE_ITEMS:
             raise LedgerConflict("E_LEDGER_EVIDENCE_COUNT", attempt_id)
         if any(existing_kind == checked_kind for existing_kind, _ in observed):
             raise LedgerConflict("E_LEDGER_EVIDENCE_KIND_EXISTS", checked_kind)
         digest = hashlib.sha256(payload).hexdigest()
+        try:
+            binding = make_evidence_binding(
+                stored_cell,
+                attempt_id,
+                checked_gate,
+                checked_kind,
+                digest,
+                len(payload),
+            )
+        except MatrixModelError as exc:
+            raise LedgerConflict(
+                "E_LEDGER_EVIDENCE_BINDING", checked_kind
+            ) from exc
+        try:
+            receipt = make_evidence_receipt(
+                binding,
+                stored_cell,
+                self.ledger_root_id,
+                attempt_id=attempt_id,
+                gate_id=checked_gate,
+            )
+        except MatrixModelError as exc:
+            raise LedgerConflict(
+                "E_LEDGER_EVIDENCE_RECEIPT", checked_kind
+            ) from exc
         target = self._evidence_path(attempt_path, checked_kind, digest)
+        receipt_target = self._evidence_receipt_path(
+            attempt_path, checked_kind, digest
+        )
+        self._atomic_create(receipt_target, receipt)
         self._atomic_create_bytes(target, payload)
-        return {"kind": checked_kind, "sha256": digest, "bytes": len(payload)}
+        self._verify_evidence_blobs(
+            attempt_path,
+            [binding],
+            str(receipt_target),
+            cell_id=stored_cell.cell_id,
+            input_fingerprint=stored_cell.input_fingerprint,
+            attempt_id=attempt_id,
+            gate_id=checked_gate,
+            allowed_gate_ids=required_gates,
+        )
+        return binding
 
     def record_result(
         self,
@@ -2901,6 +3243,10 @@ class LedgerStore:
                 attempt_path,
                 checked["evidence"],
                 str(result_path),
+                cell_id=cell.cell_id,
+                input_fingerprint=cell.input_fingerprint,
+                attempt_id=attempt["attempt_id"],
+                allowed_gate_ids=cell.identity["required_gate_ids"],
                 exact=checked["status"] == "PASS",
                 additional_exact_keys=manual_keys,
             )
@@ -2976,11 +3322,25 @@ class LedgerStore:
             attempt, events, required_gate_ids, required_evidence_kinds
         )
         evidence_list = [dict(item) for item in evidence]
-        _evidence_records(evidence_list, "evidence")
+        evidence_gate_id = gate_id if event_type == "GATE_PASSED" else None
+        _evidence_records(
+            evidence_list,
+            "evidence",
+            cell_id=cell.cell_id,
+            input_fingerprint=cell.input_fingerprint,
+            attempt_id=attempt_id,
+            gate_id=evidence_gate_id,
+            allowed_gate_ids=required_gate_ids,
+        )
         self._verify_evidence_blobs(
             attempt_path,
             evidence_list,
             "evidence",
+            cell_id=cell.cell_id,
+            input_fingerprint=cell.input_fingerprint,
+            attempt_id=attempt_id,
+            gate_id=evidence_gate_id,
+            allowed_gate_ids=required_gate_ids,
         )
         if gate_id is not None:
             _expect_text(gate_id, _ID_RE, "E_LEDGER_GATE_ID", "gate_id")
@@ -3096,9 +3456,19 @@ class LedgerStore:
     def _validation_layout(self, expected_cell_ids: set[str]) -> tuple[str, ...]:
         _exact_entry_names(
             self.root,
-            (".locks", ".staging", ".staging-recoveries", "cells"),
+            (
+                ".locks",
+                ".staging",
+                ".staging-recoveries",
+                "cells",
+                "ledger-root.json",
+            ),
             "E_LEDGER_ROOT_LAYOUT",
         )
+        if self._load_ledger_root_record() != self.ledger_root_id:
+            raise LedgerAmbiguous(
+                "E_LEDGER_ROOT_RECEIPT_DRIFT", str(self.root_record_path)
+            )
         self._validate_staging_recovery_archives()
         self._assert_staging_empty()
         try:
@@ -3132,6 +3502,18 @@ class LedgerStore:
             {"path": ".staging-recoveries", "kind": "directory"},
             {"path": "cells", "kind": "directory"},
         ]
+        root_record_bytes = _read_bounded_plain_bytes(
+            self.root_record_path,
+            "E_LEDGER_ROOT_RECEIPT_READ",
+        )
+        entries.append(
+            {
+                "path": "ledger-root.json",
+                "kind": "file",
+                "bytes": len(root_record_bytes),
+                "sha256": hashlib.sha256(root_record_bytes).hexdigest(),
+            }
+        )
 
         def visit(directory: Path, relative: str) -> None:
             _assert_plain_directory(directory)

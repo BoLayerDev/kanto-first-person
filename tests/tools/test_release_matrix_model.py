@@ -6,10 +6,10 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
-import tempfile
 import unittest
 from unittest import mock
 
+from tests.tools._scoped_test_directory import ScopedTestDirectory
 from tools.release_matrix import ledger
 from tools.release_matrix import model
 
@@ -29,13 +29,17 @@ def fresh_manifest():
     return json.loads(MATRIX_PATH.read_text(encoding="utf-8"))
 
 
-def evidence_for(cell):
+def evidence_for(cell, attempt_id):
+    gate_id = cell.identity["required_gate_ids"][0]
     return [
-        {
-            "kind": kind,
-            "sha256": "b" * 64 if kind == "manual-verdict" else "a" * 64,
-            "bytes": index + 1,
-        }
+        model.make_evidence_binding(
+            cell,
+            attempt_id,
+            gate_id,
+            kind,
+            "b" * 64 if kind == "manual-verdict" else "a" * 64,
+            index + 1,
+        )
         for index, kind in enumerate(cell.identity["required_evidence_kinds"])
     ]
 
@@ -55,7 +59,7 @@ def passing_result(cell, attempt_id):
         "status": "PASS",
         "cleanup": "PASS",
         "objective": cell.identity["test_execution"] == "OBJECTIVE",
-        "evidence": evidence_for(cell),
+        "evidence": evidence_for(cell, attempt_id),
         "manual_verdict_sha256": manual,
         "failure_code": None,
     }
@@ -204,6 +208,7 @@ class MatrixModelTests(unittest.TestCase):
             cell
             for cell in cls.cells
             if cell.identity["test_execution"] == "OBJECTIVE"
+            and cell.identity["game"]["id"] == "red"
         )
         cls.manual_cell = next(
             cell for cell in cls.cells if cell.identity["test_execution"] == "MANUAL"
@@ -813,7 +818,7 @@ class MatrixModelTests(unittest.TestCase):
 
         accepted = validate_with_powershell(MATRIX_PATH)
         self.assertEqual(accepted.returncode, 0, accepted.stderr)
-        with tempfile.TemporaryDirectory() as temporary:
+        with ScopedTestDirectory() as temporary:
             private_instance = Path(temporary) / "private-release.json"
             private_instance.write_text(
                 json.dumps(private_release_manifest()),
@@ -1049,7 +1054,7 @@ class MatrixModelTests(unittest.TestCase):
             "evidence": [copy.deepcopy(cell_result["evidence"][0])],
             "cell_result_sha256": None,
         }
-        with tempfile.TemporaryDirectory() as temporary:
+        with ScopedTestDirectory() as temporary:
             temporary_path = Path(temporary)
             for name, baseline, schema in (
                 ("cell-result", cell_result, SCHEMA_PATHS[1]),
@@ -1176,7 +1181,7 @@ class MatrixModelTests(unittest.TestCase):
 
     def test_public_status_requires_exact_validated_ledger_result_set(self):
         manifest = private_release_manifest()
-        temporary = tempfile.TemporaryDirectory()
+        temporary = ScopedTestDirectory()
         self.addCleanup(temporary.cleanup)
         store = ledger.LedgerStore(Path(temporary.name) / "ledger")
         result_set = store.validated_result_set(manifest)
@@ -1287,7 +1292,7 @@ class MatrixModelTests(unittest.TestCase):
 
         powershell = shutil.which("pwsh")
         if powershell is not None:
-            with tempfile.TemporaryDirectory() as temporary:
+            with ScopedTestDirectory() as temporary:
                 instance = Path(temporary) / "status.json"
                 schema_text = str(SCHEMA_PATHS[4]).replace("'", "''")
 
@@ -1389,7 +1394,7 @@ class MatrixModelTests(unittest.TestCase):
         ):
             model.validate_public_status(forged_status, manifest, missing_root)
 
-        with tempfile.TemporaryDirectory() as temporary:
+        with ScopedTestDirectory() as temporary:
             store = ledger.LedgerStore(Path(temporary) / "ledger")
             before = sorted(
                 path.relative_to(store.root).as_posix()
@@ -1427,7 +1432,7 @@ class MatrixModelTests(unittest.TestCase):
         cell = model.expand_cells(manifest)[0]
 
         with self.subTest(case="interrupted-staging-write"):
-            with tempfile.TemporaryDirectory() as temporary:
+            with ScopedTestDirectory() as temporary:
                 store = ledger.LedgerStore(Path(temporary) / "ledger")
                 (store.staging_root / "interrupted.partial").write_bytes(b"x")
                 with self.assertRaisesRegex(
@@ -1436,7 +1441,7 @@ class MatrixModelTests(unittest.TestCase):
                     model.validate_public_status(status, manifest, store.root)
 
         with self.subTest(case="legacy-attempt-partial"):
-            with tempfile.TemporaryDirectory() as temporary:
+            with ScopedTestDirectory() as temporary:
                 store = ledger.LedgerStore(Path(temporary) / "ledger")
                 attempt_id = store.begin_attempt(
                     cell,
@@ -1453,7 +1458,7 @@ class MatrixModelTests(unittest.TestCase):
                     model.validate_public_status(status, manifest, store.root)
 
         with self.subTest(case="cell-identity-mismatch"):
-            with tempfile.TemporaryDirectory() as temporary:
+            with ScopedTestDirectory() as temporary:
                 store = ledger.LedgerStore(Path(temporary) / "ledger")
                 store.begin_attempt(
                     cell,
@@ -1553,6 +1558,16 @@ class MatrixModelTests(unittest.TestCase):
             cell_schema["$defs"]["evidence"]["properties"]["bytes"]["maximum"],
             model.MAX_EVIDENCE_BYTES,
         )
+        for schema in (cell_schema, event_schema):
+            evidence_schema = schema["$defs"]["evidence"]
+            self.assertEqual(
+                tuple(evidence_schema["required"]), model.EVIDENCE_BINDING_FIELDS
+            )
+            self.assertEqual(
+                set(evidence_schema["properties"]),
+                set(model.EVIDENCE_BINDING_FIELDS),
+            )
+            self.assertFalse(evidence_schema["additionalProperties"])
         self.assertEqual(
             manual_schema["properties"]["criteria"]["maxItems"],
             model.MAX_MANUAL_CRITERIA,
@@ -1572,15 +1587,172 @@ class MatrixModelTests(unittest.TestCase):
 
         changed = copy.deepcopy(result)
         changed["evidence"][0]["kind"] = "wrong-report"
-        with self.assertRaisesRegex(model.MatrixModelError, "E_PASS_EVIDENCE_SET"):
+        with self.assertRaisesRegex(
+            model.MatrixModelError, "E_EVIDENCE_BINDING_DIGEST"
+        ):
             model.validate_cell_result(changed, cell)
 
         changed = copy.deepcopy(result)
-        duplicate = copy.deepcopy(changed["evidence"][0])
-        duplicate["sha256"] = "c" * 64
+        first = changed["evidence"][0]
+        duplicate = model.make_evidence_binding(
+            cell,
+            attempt_id,
+            first["gate_id"],
+            first["kind"],
+            "c" * 64,
+            first["bytes"],
+        )
         changed["evidence"].append(duplicate)
         with self.assertRaisesRegex(model.MatrixModelError, "E_DUPLICATE_EVIDENCE"):
             model.validate_cell_result(changed, cell)
+
+    def test_evidence_digest_cannot_replay_across_bound_dimensions(self):
+        source = self.objective_cell
+        attempt_id = model.make_attempt_id(
+            source, 1, "2026-08-23T12:00:00Z", "matrix-test-owner"
+        )
+        source_result = passing_result(source, attempt_id)
+        mutations = {
+            "game-red-to-blue": lambda identity: identity["game"].update(id="blue"),
+            "host": lambda identity: identity["host"].update(id="other-host"),
+            "engine": lambda identity: identity["engine"].update(id="other-engine"),
+            "tier": lambda identity: identity.update(tier="other-tier"),
+            "platform": lambda identity: identity["platform"].update(
+                id="other-platform"
+            ),
+            "runtime-source": lambda identity: identity.update(
+                runtime_source_commit="0" * 40
+            ),
+            "runtime-tree": lambda identity: identity.update(
+                runtime_source_tree="1" * 40
+            ),
+            "runtime-content": lambda identity: identity.update(
+                runtime_content_sha256="2" * 64
+            ),
+            "package-kind": lambda identity: identity.update(
+                package_kind="OTHER_PACKAGE"
+            ),
+            "package-content": lambda identity: identity.update(
+                package_sha256="3" * 64
+            ),
+        }
+        for name, mutate in mutations.items():
+            identity = copy.deepcopy(dict(source.identity))
+            mutate(identity)
+            fingerprint = model.sha256_value(identity)
+            target = model.MatrixCell(
+                cell_id=f"cell-{fingerprint}",
+                input_fingerprint=fingerprint,
+                identity=identity,
+            )
+            unchanged = passing_result(target, attempt_id)
+            unchanged["evidence"] = copy.deepcopy(source_result["evidence"])
+            self.assertEqual(
+                unchanged["evidence"][0]["sha256"],
+                source_result["evidence"][0]["sha256"],
+            )
+            with self.subTest(binding=name, replay="unchanged-record"):
+                with self.assertRaisesRegex(
+                    model.MatrixModelError, "E_EVIDENCE_BINDING_CELL"
+                ):
+                    model.validate_cell_result(unchanged, target)
+
+            relabeled = copy.deepcopy(unchanged)
+            for record in relabeled["evidence"]:
+                record["cell_id"] = target.cell_id
+                record["input_fingerprint"] = target.input_fingerprint
+            with self.subTest(binding=name, replay="relabeled-old-hash"):
+                with self.assertRaisesRegex(
+                    model.MatrixModelError, "E_EVIDENCE_BINDING_DIGEST"
+                ):
+                    model.validate_cell_result(relabeled, target)
+
+    def test_evidence_binding_rejects_malformed_attempt_gate_and_kind_replay(self):
+        cell = self.objective_cell
+        attempt_id = model.make_attempt_id(
+            cell, 1, "2026-08-23T12:00:00Z", "matrix-test-owner"
+        )
+        gate_id = cell.identity["required_gate_ids"][0]
+        baseline = evidence_for(cell, attempt_id)[0]
+        self.assertEqual(tuple(baseline), model.EVIDENCE_BINDING_FIELDS)
+        self.assertEqual(
+            baseline["binding_sha256"],
+            model.sha256_value(
+                {
+                    field: baseline[field]
+                    for field in model.EVIDENCE_BINDING_FIELDS[:-1]
+                }
+            ),
+        )
+
+        cases = {
+            "missing": (
+                lambda value: value.pop("kind"),
+                "E_EVIDENCE_BINDING_FIELDS",
+            ),
+            "extra": (
+                lambda value: value.update(extra="rejected"),
+                "E_EVIDENCE_BINDING_FIELDS",
+            ),
+            "boolean-schema-version": (
+                lambda value: value.update(schema_version=True),
+                "E_EVIDENCE_BINDING_SCHEMA",
+            ),
+            "boolean-bytes": (
+                lambda value: value.update(bytes=True),
+                "E_TYPE_INTEGER",
+            ),
+            "nan-bytes": (
+                lambda value: value.update(bytes=float("nan")),
+                "E_TYPE_INTEGER",
+            ),
+            "infinite-bytes": (
+                lambda value: value.update(bytes=float("inf")),
+                "E_TYPE_INTEGER",
+            ),
+            "attempt-replay": (
+                lambda value: value.update(attempt_id="attempt-" + "0" * 64),
+                "E_EVIDENCE_BINDING_ATTEMPT",
+            ),
+            "gate-replay": (
+                lambda value: value.update(gate_id="other-gate"),
+                "E_EVIDENCE_BINDING_GATE",
+            ),
+            "kind-relabel": (
+                lambda value: value.update(kind="other-report"),
+                "E_EVIDENCE_BINDING_DIGEST",
+            ),
+            "stale-binding": (
+                lambda value: value.update(binding_sha256="0" * 64),
+                "E_EVIDENCE_BINDING_DIGEST",
+            ),
+        }
+        for name, (mutate, code) in cases.items():
+            changed = copy.deepcopy(baseline)
+            mutate(changed)
+            with self.subTest(mutation=name):
+                with self.assertRaisesRegex(model.MatrixModelError, code):
+                    model.validate_evidence_binding(
+                        changed,
+                        cell,
+                        attempt_id=attempt_id,
+                        gate_id=gate_id,
+                    )
+
+        old_draft = {
+            "kind": baseline["kind"],
+            "sha256": baseline["sha256"],
+            "bytes": baseline["bytes"],
+        }
+        with self.assertRaisesRegex(
+            model.MatrixModelError, "E_EVIDENCE_BINDING_FIELDS"
+        ):
+            model.validate_evidence_binding(
+                old_draft,
+                cell,
+                attempt_id=attempt_id,
+                gate_id=gate_id,
+            )
 
     def test_objective_result_rejects_manual_substitution(self):
         cell = self.objective_cell
@@ -1657,6 +1829,140 @@ class MatrixModelTests(unittest.TestCase):
         )
         self.assertFalse({pattern for pattern in forbidden if pattern in raw})
 
+    def test_evidence_receipt_is_exact_canonical_and_root_scoped(self):
+        cell = self.objective_cell
+        attempt_id = model.make_attempt_id(
+            cell, 1, "2026-08-23T12:00:00Z", "matrix-test-owner"
+        )
+        gate_id = cell.identity["required_gate_ids"][0]
+        kind = cell.identity["required_evidence_kinds"][0]
+        binding = model.make_evidence_binding(
+            cell,
+            attempt_id,
+            gate_id,
+            kind,
+            "a" * 64,
+            17,
+        )
+        root_id = "ledger-root-" + "b" * 64
+        receipt = model.make_evidence_receipt(
+            binding,
+            cell,
+            root_id,
+            attempt_id=attempt_id,
+            gate_id=gate_id,
+        )
+        self.assertEqual(tuple(receipt), model.EVIDENCE_RECEIPT_FIELDS)
+        self.assertEqual(
+            model.validate_evidence_receipt(
+                receipt,
+                cell,
+                root_id,
+                attempt_id=attempt_id,
+                gate_id=gate_id,
+            ),
+            receipt,
+        )
+
+        mutations = (
+            (
+                "extra",
+                lambda value: value.update(extra="forbidden"),
+                "E_EVIDENCE_RECEIPT_FIELDS",
+            ),
+            (
+                "boolean-version",
+                lambda value: value.update(schema_version=True),
+                "E_EVIDENCE_RECEIPT_SCHEMA",
+            ),
+            (
+                "cross-root",
+                lambda value: None,
+                "E_EVIDENCE_RECEIPT_ROOT",
+            ),
+            (
+                "digest",
+                lambda value: value.update(receipt_sha256="0" * 64),
+                "E_EVIDENCE_RECEIPT_DIGEST",
+            ),
+        )
+        for name, mutate, code in mutations:
+            changed = copy.deepcopy(receipt)
+            mutate(changed)
+            checked_root = (
+                "ledger-root-" + "c" * 64 if name == "cross-root" else root_id
+            )
+            with self.subTest(mutation=name):
+                with self.assertRaisesRegex(model.MatrixModelError, code):
+                    model.validate_evidence_receipt(
+                        changed,
+                        cell,
+                        checked_root,
+                        attempt_id=attempt_id,
+                        gate_id=gate_id,
+                    )
+
+    def test_event_and_result_schemas_publish_the_exact_receipt_contract(self):
+        for path in SCHEMA_PATHS[1:3]:
+            schema = model.strict_json_load(path)
+            receipt = schema["$defs"]["evidence_receipt"]
+            self.assertFalse(receipt["additionalProperties"], path)
+            self.assertEqual(
+                receipt["required"], list(model.EVIDENCE_RECEIPT_FIELDS), path
+            )
+            self.assertEqual(
+                receipt["properties"]["schema"],
+                {"const": model.EVIDENCE_RECEIPT_SCHEMA},
+                path,
+            )
+            self.assertIn("cross-root receipts fail closed", schema["$comment"])
+
+    def test_objective_result_is_valid_only_inside_receipt_bindings(self):
+        def allows(schema, fragment, value):
+            if "$ref" in fragment:
+                prefix = "#/$defs/"
+                self.assertTrue(fragment["$ref"].startswith(prefix))
+                return allows(schema, schema["$defs"][fragment["$ref"][len(prefix) :]], value)
+            if "anyOf" in fragment:
+                return any(allows(schema, choice, value) for choice in fragment["anyOf"])
+            if "enum" in fragment:
+                return value in fragment["enum"]
+            if "const" in fragment:
+                return value == fragment["const"]
+            self.fail(f"unsupported kind schema: {fragment!r}")
+
+        for path in SCHEMA_PATHS[1:3]:
+            schema = model.strict_json_load(path)
+            definitions = schema["$defs"]
+            normal_binding = definitions["evidence"]
+            receipt_binding = definitions["receipt_evidence_binding"]
+            self.assertEqual(
+                schema["properties"]["evidence"]["items"],
+                {"$ref": "#/$defs/evidence"},
+                path,
+            )
+            self.assertEqual(
+                definitions["evidence_receipt"]["properties"]["evidence"],
+                {"$ref": "#/$defs/receipt_evidence_binding"},
+                path,
+            )
+            self.assertFalse(
+                allows(schema, normal_binding["properties"]["kind"], "objective-result"),
+                path,
+            )
+            self.assertTrue(
+                allows(schema, receipt_binding["properties"]["kind"], "objective-result"),
+                path,
+            )
+            self.assertTrue(
+                allows(schema, normal_binding["properties"]["kind"], "manual-verdict"),
+                path,
+            )
+            self.assertTrue(
+                allows(schema, receipt_binding["properties"]["kind"], "manual-verdict"),
+                path,
+            )
+
     def test_all_five_json_schemas_are_strict_and_versioned(self):
         for path in SCHEMA_PATHS:
             schema = model.strict_json_load(path)
@@ -1679,10 +1985,13 @@ class LedgerTests(unittest.TestCase):
     def setUpClass(cls):
         manifest = model.load_manifest(MATRIX_PATH)
         cells = model.expand_cells(manifest)
+        cls.manifest = manifest
+        cls.cells = cells
         cls.cell = next(
             cell
             for cell in cells
             if cell.identity["test_execution"] == "OBJECTIVE"
+            and cell.identity["game"]["id"] == "red"
         )
         cls.manual_cell = next(
             cell
@@ -1745,9 +2054,9 @@ class LedgerTests(unittest.TestCase):
         )
 
     def new_store(self):
-        temporary = tempfile.TemporaryDirectory()
-        store = ledger.LedgerStore(Path(temporary.name) / "state")
+        temporary = ScopedTestDirectory()
         self.addCleanup(temporary.cleanup)
+        store = ledger.LedgerStore(Path(temporary.name) / "state")
         return store
 
     def begin(self, store, number=1, recovery_id=None, minute=0):
@@ -1757,6 +2066,24 @@ class LedgerTests(unittest.TestCase):
             started_at=f"2026-08-23T12:{minute:02d}:00Z",
             owner_id="matrix-test-owner",
             recovery_id=recovery_id,
+        )
+
+    def changed_cell(self, source, mutate):
+        identity = copy.deepcopy(dict(source.identity))
+        mutate(identity)
+        fingerprint = model.sha256_value(identity)
+        return model.MatrixCell(
+            cell_id=f"cell-{fingerprint}",
+            input_fingerprint=fingerprint,
+            identity=identity,
+        )
+
+    def evidence_pair_paths(self, store, cell, attempt_id, record):
+        _, attempt_path = store._find_attempt(cell.cell_id, attempt_id)
+        stem = f"{record['kind']}-{record['sha256']}"
+        return (
+            attempt_path / "evidence" / f"{stem}.blob",
+            attempt_path / "evidence" / f"{stem}.receipt.json",
         )
 
     def recovery_review(
@@ -1921,15 +2248,6 @@ class LedgerTests(unittest.TestCase):
             owner_id="objective-runner",
             recovery_id=recovery_id,
         )
-        evidence = [
-            store.record_evidence(
-                cell,
-                attempt_id,
-                kind=kind,
-                payload=f"{kind}:{attempt_id}".encode("ascii"),
-            )
-            for kind in cell.identity["required_evidence_kinds"]
-        ]
         gate_id = cell.identity["required_gate_ids"][0]
         store.append_event(
             cell,
@@ -1938,6 +2256,16 @@ class LedgerTests(unittest.TestCase):
             gate_id=gate_id,
             recorded_at=event_times[0],
         )
+        evidence = [
+            store.record_evidence(
+                cell,
+                attempt_id,
+                gate_id=gate_id,
+                kind=kind,
+                payload=f"{kind}:{attempt_id}".encode("ascii"),
+            )
+            for kind in cell.identity["required_evidence_kinds"]
+        ]
         gate_event = "GATE_PASSED" if status == "PASS" else "GATE_FAILED"
         store.append_event(
             cell,
@@ -1997,6 +2325,14 @@ class LedgerTests(unittest.TestCase):
             started_at="2026-08-23T12:00:00Z",
             owner_id="matrix-test-owner",
         )
+        gate_id = cell.identity["required_gate_ids"][0]
+        store.append_event(
+            cell,
+            attempt_id,
+            event_type="GATE_STARTED",
+            gate_id=gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
         packet_kind = next(
             kind
             for kind in cell.identity["required_evidence_kinds"]
@@ -2005,6 +2341,7 @@ class LedgerTests(unittest.TestCase):
         packet = store.record_evidence(
             cell,
             attempt_id,
+            gate_id=gate_id,
             kind=packet_kind,
             payload=b"fixed-review-packet",
         )
@@ -2012,6 +2349,7 @@ class LedgerTests(unittest.TestCase):
             objective_record = store.record_evidence(
                 cell,
                 attempt_id,
+                gate_id=gate_id,
                 kind="objective-result",
                 payload=objective_raw,
             )
@@ -2036,18 +2374,11 @@ class LedgerTests(unittest.TestCase):
         verdict_record = store.record_evidence(
             cell,
             attempt_id,
+            gate_id=gate_id,
             kind="manual-verdict",
             payload=model.canonical_json_bytes(verdict),
         )
         evidence = [packet, verdict_record]
-        gate_id = cell.identity["required_gate_ids"][0]
-        store.append_event(
-            cell,
-            attempt_id,
-            event_type="GATE_STARTED",
-            gate_id=gate_id,
-            recorded_at="2026-08-23T12:01:00Z",
-        )
         store.append_event(
             cell,
             attempt_id,
@@ -2091,15 +2422,6 @@ class LedgerTests(unittest.TestCase):
         return self.cell.identity["required_gate_ids"][0]
 
     def pass_terminal(self, store, attempt_id, minute=0):
-        evidence = [
-            store.record_evidence(
-                self.cell,
-                attempt_id,
-                kind=kind,
-                payload=f"{kind}:{attempt_id}".encode("ascii"),
-            )
-            for kind in self.cell.identity["required_evidence_kinds"]
-        ]
         store.append_event(
             self.cell,
             attempt_id,
@@ -2107,6 +2429,16 @@ class LedgerTests(unittest.TestCase):
             gate_id=self.gate_id,
             recorded_at=f"2026-08-23T12:{minute + 1:02d}:00Z",
         )
+        evidence = [
+            store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id=self.gate_id,
+                kind=kind,
+                payload=f"{kind}:{attempt_id}".encode("ascii"),
+            )
+            for kind in self.cell.identity["required_evidence_kinds"]
+        ]
         store.append_event(
             self.cell,
             attempt_id,
@@ -2259,14 +2591,14 @@ class LedgerTests(unittest.TestCase):
             attempt_id = self.begin(store)
             self.pass_attempt(store, attempt_id)
             _, attempt_path = store._find_attempt(self.cell.cell_id, attempt_id)
-            blob = next((attempt_path / "evidence").iterdir())
+            blob = next((attempt_path / "evidence").glob("*.blob"))
             if mutation == "tamper":
                 raw = blob.read_bytes()
                 blob.write_bytes((b"X" if raw[:1] != b"X" else b"Y") + raw[1:])
                 code = "E_LEDGER_EVIDENCE_DIGEST"
             else:
                 blob.unlink()
-                code = "E_LEDGER_EVIDENCE_MISSING"
+                code = "E_LEDGER_EVIDENCE_PAYLOAD_MISSING"
             with self.subTest(mutation=mutation):
                 with self.assertRaisesRegex(ledger.LedgerAmbiguous, code):
                     store.inspect_attempt(self.cell.cell_id, attempt_id)
@@ -2279,10 +2611,853 @@ class LedgerTests(unittest.TestCase):
             store.record_evidence(
                 self.cell,
                 attempt_id,
+                gate_id=self.gate_id,
                 kind="unclaimed-report",
                 payload=b"unclaimed",
             )
         self.pass_attempt(store, attempt_id)
+
+    def test_record_evidence_requires_the_exact_open_required_gate(self):
+        store = self.new_store()
+        attempt_id = self.begin(store)
+        required_kind = self.cell.identity["required_evidence_kinds"][0]
+        with self.assertRaisesRegex(
+            ledger.LedgerConflict, "E_LEDGER_EVIDENCE_GATE_NOT_OPEN"
+        ):
+            store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id=self.gate_id,
+                kind=required_kind,
+                payload=b"synthetic-before-open",
+            )
+        with self.assertRaisesRegex(
+            ledger.LedgerConflict, "E_LEDGER_EVIDENCE_GATE_NOT_REQUIRED"
+        ):
+            store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id="other-gate",
+                kind=required_kind,
+                payload=b"synthetic-wrong-gate",
+            )
+        store.append_event(
+            self.cell,
+            attempt_id,
+            event_type="GATE_STARTED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        record = store.record_evidence(
+            self.cell,
+            attempt_id,
+            gate_id=self.gate_id,
+            kind=required_kind,
+            payload=b"synthetic-open-gate",
+        )
+        self.assertEqual(tuple(record), model.EVIDENCE_BINDING_FIELDS)
+        blob_path, receipt_path = self.evidence_pair_paths(
+            store, self.cell, attempt_id, record
+        )
+        self.assertEqual(blob_path.read_bytes(), b"synthetic-open-gate")
+        receipt = model.strict_json_load(receipt_path)
+        self.assertEqual(receipt["evidence"], record)
+        self.assertEqual(receipt["ledger_root_id"], store.ledger_root_id)
+        self.assertEqual(receipt_path.read_bytes(), model.canonical_json_bytes(receipt))
+        store.append_event(
+            self.cell,
+            attempt_id,
+            event_type="GATE_PASSED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:02:00Z",
+            evidence=[record],
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerConflict, "E_LEDGER_EVIDENCE_GATE_NOT_OPEN"
+        ):
+            store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id=self.gate_id,
+                kind=required_kind,
+                payload=b"synthetic-after-close",
+            )
+
+    def test_bad_bound_payload_hash_and_size_are_rejected_before_gate_pass(self):
+        for mutation in ("hash", "size"):
+            store = self.new_store()
+            attempt_id = self.begin(store)
+            store.append_event(
+                self.cell,
+                attempt_id,
+                event_type="GATE_STARTED",
+                gate_id=self.gate_id,
+                recorded_at="2026-08-23T12:01:00Z",
+            )
+            kind = self.cell.identity["required_evidence_kinds"][0]
+            record = store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id=self.gate_id,
+                kind=kind,
+                payload=b"synthetic-payload",
+            )
+            forged = model.make_evidence_binding(
+                self.cell,
+                attempt_id,
+                self.gate_id,
+                kind,
+                "0" * 64 if mutation == "hash" else record["sha256"],
+                record["bytes"] + 1 if mutation == "size" else record["bytes"],
+            )
+            code = (
+                "E_LEDGER_EVIDENCE_MISSING"
+                if mutation == "hash"
+                else "E_LEDGER_EVIDENCE_RECEIPT_MISMATCH"
+            )
+            with self.subTest(mutation=mutation):
+                with self.assertRaisesRegex(ledger.LedgerAmbiguous, code):
+                    store.append_event(
+                        self.cell,
+                        attempt_id,
+                        event_type="GATE_PASSED",
+                        gate_id=self.gate_id,
+                        recorded_at="2026-08-23T12:02:00Z",
+                        evidence=[forged],
+                    )
+            self.assertEqual(
+                store.inspect_attempt(self.cell.cell_id, attempt_id).state,
+                "AMBIGUOUS",
+            )
+
+    def test_old_three_field_evidence_requires_reviewed_recovery(self):
+        store = self.new_store()
+        attempt_id = self.begin(store)
+        self.pass_terminal(store, attempt_id)
+        _, attempt_path = store._find_attempt(self.cell.cell_id, attempt_id)
+        gate_event_path = sorted((attempt_path / "events").iterdir())[1]
+        event = model.strict_json_load(gate_event_path)
+        bound = event["evidence"][0]
+        event["evidence"][0] = {
+            "kind": bound["kind"],
+            "sha256": bound["sha256"],
+            "bytes": bound["bytes"],
+        }
+        gate_event_path.write_bytes(model.canonical_json_bytes(event))
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_FIELDS"
+        ):
+            store.inspect_attempt(self.cell.cell_id, attempt_id)
+        decision = store.resume_decision(self.cell)
+        self.assertEqual(decision["action"], "RECOVERY_REQUIRED")
+        self.assertEqual(decision["state"], "AMBIGUOUS")
+
+    def test_copied_raw_blob_and_record_cannot_pass_cross_game_or_be_ready(self):
+        source = self.cell
+        target = next(
+            cell
+            for cell in self.cells
+            if cell.identity["game"]["id"] == "blue"
+            and all(
+                cell.identity[key] == source.identity[key]
+                for key in source.identity
+                if key != "game"
+            )
+        )
+        store = self.new_store()
+        source_attempt = store.begin_attempt(
+            source,
+            attempt_number=1,
+            started_at="2026-08-23T12:00:00Z",
+            owner_id="synthetic-source-owner",
+        )
+        source_gate = source.identity["required_gate_ids"][0]
+        store.append_event(
+            source,
+            source_attempt,
+            event_type="GATE_STARTED",
+            gate_id=source_gate,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        kind = source.identity["required_evidence_kinds"][0]
+        source_record = store.record_evidence(
+            source,
+            source_attempt,
+            gate_id=source_gate,
+            kind=kind,
+            payload=b"synthetic-cross-game-payload",
+        )
+        _, source_path = store._find_attempt(source.cell_id, source_attempt)
+        source_blob = next((source_path / "evidence").glob("*.blob"))
+
+        target_attempt = store.begin_attempt(
+            target,
+            attempt_number=1,
+            started_at="2026-08-23T12:00:00Z",
+            owner_id="synthetic-target-owner",
+        )
+        target_gate = target.identity["required_gate_ids"][0]
+        store.append_event(
+            target,
+            target_attempt,
+            event_type="GATE_STARTED",
+            gate_id=target_gate,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        _, target_path = store._find_attempt(target.cell_id, target_attempt)
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_CELL_BINDING"
+        ):
+            store.append_event(
+                target,
+                target_attempt,
+                event_type="GATE_PASSED",
+                gate_id=target_gate,
+                recorded_at="2026-08-23T12:02:00Z",
+                evidence=[source_record],
+            )
+        shutil.copyfile(source_blob, target_path / "evidence" / source_blob.name)
+        recomputed = model.make_evidence_binding(
+            target,
+            target_attempt,
+            target_gate,
+            kind,
+            source_record["sha256"],
+            source_record["bytes"],
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_MISSING"
+        ):
+            store.append_event(
+                target,
+                target_attempt,
+                event_type="GATE_PASSED",
+                gate_id=target_gate,
+                recorded_at="2026-08-23T12:02:00Z",
+                evidence=[recomputed],
+            )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_MISSING"
+        ):
+            store.inspect_attempt(target.cell_id, target_attempt)
+        decision = store.resume_decision(target)
+        self.assertEqual(decision["action"], "RECOVERY_REQUIRED")
+        self.assertEqual(decision["state"], "AMBIGUOUS")
+        result_set = store.validated_result_set(self.manifest)
+        status = public_status(self.manifest, result_set)
+        self.assertEqual(status["readiness"], "NOT_READY")
+        self.assertEqual(
+            model.validate_public_status(status, self.manifest, store.root), status
+        )
+        forged_ready = copy.deepcopy(status)
+        forged_ready["readiness"] = "READY"
+        forged_ready["blockers"] = []
+        with self.assertRaisesRegex(model.MatrixModelError, "E_PUBLIC_READINESS"):
+            model.validate_public_status(forged_ready, self.manifest, store.root)
+
+    def test_copied_pair_and_recomputed_binding_fail_across_every_dimension(self):
+        red = self.cell
+        blue = self.changed_cell(
+            red, lambda identity: identity["game"].update(id="blue")
+        )
+        cases = (
+            ("red-to-blue", red, blue),
+            ("blue-to-red", blue, red),
+            (
+                "host",
+                red,
+                self.changed_cell(
+                    red, lambda identity: identity["host"].update(id="other-host")
+                ),
+            ),
+            (
+                "engine",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity["engine"].update(id="other-engine"),
+                ),
+            ),
+            (
+                "tier",
+                red,
+                self.changed_cell(
+                    red, lambda identity: identity.update(tier="other-tier")
+                ),
+            ),
+            (
+                "platform",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity["platform"].update(
+                        id="other-platform"
+                    ),
+                ),
+            ),
+            (
+                "runtime-source",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity.update(
+                        runtime_source_commit="0" * 40
+                    ),
+                ),
+            ),
+            (
+                "runtime-tree",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity.update(runtime_source_tree="1" * 40),
+                ),
+            ),
+            (
+                "runtime-content",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity.update(
+                        runtime_content_sha256="2" * 64
+                    ),
+                ),
+            ),
+            (
+                "package",
+                red,
+                self.changed_cell(
+                    red,
+                    lambda identity: identity.update(package_sha256="3" * 64),
+                ),
+            ),
+        )
+        for name, source, target in cases:
+            store = self.new_store()
+            source_attempt = store.begin_attempt(
+                source,
+                attempt_number=1,
+                started_at="2026-08-23T12:00:00Z",
+                owner_id="source-owner",
+            )
+            source_gate = source.identity["required_gate_ids"][0]
+            source_kind = source.identity["required_evidence_kinds"][0]
+            store.append_event(
+                source,
+                source_attempt,
+                event_type="GATE_STARTED",
+                gate_id=source_gate,
+                recorded_at="2026-08-23T12:01:00Z",
+            )
+            source_record = store.record_evidence(
+                source,
+                source_attempt,
+                gate_id=source_gate,
+                kind=source_kind,
+                payload=b"synthetic-dimension-replay",
+            )
+            source_blob, source_receipt = self.evidence_pair_paths(
+                store, source, source_attempt, source_record
+            )
+
+            target_attempt = store.begin_attempt(
+                target,
+                attempt_number=1,
+                started_at="2026-08-23T12:00:00Z",
+                owner_id="target-owner",
+            )
+            target_gate = target.identity["required_gate_ids"][0]
+            target_kind = target.identity["required_evidence_kinds"][0]
+            store.append_event(
+                target,
+                target_attempt,
+                event_type="GATE_STARTED",
+                gate_id=target_gate,
+                recorded_at="2026-08-23T12:01:00Z",
+            )
+            target_blob, target_receipt = self.evidence_pair_paths(
+                store,
+                target,
+                target_attempt,
+                {
+                    "kind": target_kind,
+                    "sha256": source_record["sha256"],
+                },
+            )
+            shutil.copyfile(source_blob, target_blob)
+            shutil.copyfile(source_receipt, target_receipt)
+            recomputed = model.make_evidence_binding(
+                target,
+                target_attempt,
+                target_gate,
+                target_kind,
+                source_record["sha256"],
+                source_record["bytes"],
+            )
+            with self.subTest(dimension=name):
+                with self.assertRaisesRegex(
+                    ledger.LedgerAmbiguous,
+                    "E_LEDGER_EVIDENCE_RECEIPT_BINDING",
+                ):
+                    store.append_event(
+                        target,
+                        target_attempt,
+                        event_type="GATE_PASSED",
+                        gate_id=target_gate,
+                        recorded_at="2026-08-23T12:02:00Z",
+                        evidence=[recomputed],
+                    )
+                with self.assertRaisesRegex(
+                    ledger.LedgerAmbiguous,
+                    "E_LEDGER_EVIDENCE_RECEIPT_BINDING",
+                ):
+                    store.inspect_attempt(target.cell_id, target_attempt)
+                decision = store.resume_decision(target)
+                self.assertEqual(decision["action"], "RECOVERY_REQUIRED")
+                self.assertEqual(decision["state"], "AMBIGUOUS")
+
+    def test_receipt_rejects_cross_root_attempt_gate_and_kind_replay(self):
+        cell = self.cell
+        source_store = self.new_store()
+        target_store = self.new_store()
+        source_attempt = self.begin(source_store)
+        target_attempt = self.begin(target_store)
+        self.assertEqual(source_attempt, target_attempt)
+        for store, attempt_id in (
+            (source_store, source_attempt),
+            (target_store, target_attempt),
+        ):
+            store.append_event(
+                cell,
+                attempt_id,
+                event_type="GATE_STARTED",
+                gate_id=self.gate_id,
+                recorded_at="2026-08-23T12:01:00Z",
+            )
+        record = source_store.record_evidence(
+            cell,
+            source_attempt,
+            gate_id=self.gate_id,
+            kind=cell.identity["required_evidence_kinds"][0],
+            payload=b"synthetic-cross-root",
+        )
+        source_pair = self.evidence_pair_paths(
+            source_store, cell, source_attempt, record
+        )
+        target_pair = self.evidence_pair_paths(
+            target_store, cell, target_attempt, record
+        )
+        for source_path, target_path in zip(source_pair, target_pair):
+            shutil.copyfile(source_path, target_path)
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_ROOT"
+        ):
+            target_store.append_event(
+                cell,
+                target_attempt,
+                event_type="GATE_PASSED",
+                gate_id=self.gate_id,
+                recorded_at="2026-08-23T12:02:00Z",
+                evidence=[record],
+            )
+
+        attempt_store = self.new_store()
+        first = self.begin(attempt_store)
+        attempt_store.append_event(
+            cell,
+            first,
+            event_type="GATE_STARTED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        first_record = attempt_store.record_evidence(
+            cell,
+            first,
+            gate_id=self.gate_id,
+            kind=cell.identity["required_evidence_kinds"][0],
+            payload=b"synthetic-attempt-replay",
+        )
+        first_pair = self.evidence_pair_paths(
+            attempt_store, cell, first, first_record
+        )
+        attempt_store.append_event(
+            cell,
+            first,
+            event_type="GATE_FAILED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:02:00Z",
+        )
+        attempt_store.append_event(
+            cell,
+            first,
+            event_type="CLEANUP_PASSED",
+            recorded_at="2026-08-23T12:03:00Z",
+        )
+        attempt_store.append_event(
+            cell,
+            first,
+            event_type="ATTEMPT_FAILED",
+            recorded_at="2026-08-23T12:04:00Z",
+        )
+        attempt_store.record_result(
+            cell,
+            first,
+            {
+                "schema": model.CELL_RESULT_SCHEMA,
+                "schema_version": 1,
+                "cell_id": cell.cell_id,
+                "input_fingerprint": cell.input_fingerprint,
+                "attempt_id": first,
+                "started_at": "2026-08-23T12:00:00Z",
+                "finished_at": "2026-08-23T12:04:00Z",
+                "status": "FAIL",
+                "cleanup": "PASS",
+                "objective": True,
+                "evidence": [],
+                "manual_verdict_sha256": None,
+                "failure_code": "synthetic-failure",
+            },
+        )
+        recovery = attempt_store.record_recovery(
+            cell,
+            first,
+            self.recovery_review(attempt_store, first),
+        )
+        second = self.begin(
+            attempt_store,
+            number=2,
+            recovery_id=recovery,
+            minute=6,
+        )
+        attempt_store.append_event(
+            cell,
+            second,
+            event_type="GATE_STARTED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:07:00Z",
+        )
+        second_pair = self.evidence_pair_paths(
+            attempt_store, cell, second, first_record
+        )
+        for source_path, target_path in zip(first_pair, second_pair):
+            shutil.copyfile(source_path, target_path)
+        recomputed_attempt = model.make_evidence_binding(
+            cell,
+            second,
+            self.gate_id,
+            first_record["kind"],
+            first_record["sha256"],
+            first_record["bytes"],
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_BINDING"
+        ):
+            attempt_store.append_event(
+                cell,
+                second,
+                event_type="GATE_PASSED",
+                gate_id=self.gate_id,
+                recorded_at="2026-08-23T12:08:00Z",
+                evidence=[recomputed_attempt],
+            )
+
+        two_gate_cell = self.changed_cell(
+            cell,
+            lambda identity: identity.update(
+                required_gate_ids=["gate-one", "gate-two"]
+            ),
+        )
+        gate_store = self.new_store()
+        gate_attempt = gate_store.begin_attempt(
+            two_gate_cell,
+            attempt_number=1,
+            started_at="2026-08-23T12:00:00Z",
+            owner_id="gate-owner",
+        )
+        gate_store.append_event(
+            two_gate_cell,
+            gate_attempt,
+            event_type="GATE_STARTED",
+            gate_id="gate-one",
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        gate_record = gate_store.record_evidence(
+            two_gate_cell,
+            gate_attempt,
+            gate_id="gate-one",
+            kind=two_gate_cell.identity["required_evidence_kinds"][0],
+            payload=b"synthetic-gate-replay",
+        )
+        gate_store.append_event(
+            two_gate_cell,
+            gate_attempt,
+            event_type="GATE_PASSED",
+            gate_id="gate-one",
+            recorded_at="2026-08-23T12:02:00Z",
+            evidence=[gate_record],
+        )
+        gate_store.append_event(
+            two_gate_cell,
+            gate_attempt,
+            event_type="GATE_STARTED",
+            gate_id="gate-two",
+            recorded_at="2026-08-23T12:03:00Z",
+        )
+        recomputed_gate = model.make_evidence_binding(
+            two_gate_cell,
+            gate_attempt,
+            "gate-two",
+            gate_record["kind"],
+            gate_record["sha256"],
+            gate_record["bytes"],
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_BINDING"
+        ):
+            gate_store.append_event(
+                two_gate_cell,
+                gate_attempt,
+                event_type="GATE_PASSED",
+                gate_id="gate-two",
+                recorded_at="2026-08-23T12:04:00Z",
+                evidence=[recomputed_gate],
+            )
+
+        first_kind = cell.identity["required_evidence_kinds"][0]
+        second_kind = "second-synthetic-report"
+        two_kind_cell = self.changed_cell(
+            cell,
+            lambda identity: identity.update(
+                required_evidence_kinds=[first_kind, second_kind]
+            ),
+        )
+        kind_store = self.new_store()
+        kind_attempt = kind_store.begin_attempt(
+            two_kind_cell,
+            attempt_number=1,
+            started_at="2026-08-23T12:00:00Z",
+            owner_id="kind-owner",
+        )
+        kind_gate = two_kind_cell.identity["required_gate_ids"][0]
+        kind_store.append_event(
+            two_kind_cell,
+            kind_attempt,
+            event_type="GATE_STARTED",
+            gate_id=kind_gate,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        kind_record = kind_store.record_evidence(
+            two_kind_cell,
+            kind_attempt,
+            gate_id=kind_gate,
+            kind=first_kind,
+            payload=b"synthetic-kind-replay",
+        )
+        kind_source_pair = self.evidence_pair_paths(
+            kind_store, two_kind_cell, kind_attempt, kind_record
+        )
+        kind_target_pair = self.evidence_pair_paths(
+            kind_store,
+            two_kind_cell,
+            kind_attempt,
+            {"kind": second_kind, "sha256": kind_record["sha256"]},
+        )
+        for source_path, target_path in zip(kind_source_pair, kind_target_pair):
+            shutil.copyfile(source_path, target_path)
+        recomputed_kind = model.make_evidence_binding(
+            two_kind_cell,
+            kind_attempt,
+            kind_gate,
+            second_kind,
+            kind_record["sha256"],
+            kind_record["bytes"],
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_RECEIPT_PATH"
+        ):
+            kind_store.append_event(
+                two_kind_cell,
+                kind_attempt,
+                event_type="GATE_PASSED",
+                gate_id=kind_gate,
+                recorded_at="2026-08-23T12:02:00Z",
+                evidence=[kind_record, recomputed_kind],
+            )
+
+    def test_receipt_missing_legacy_malformed_tampered_and_overwritten_fail_closed(self):
+        mutations = (
+            (
+                "missing",
+                lambda path, receipt, store, attempt: path.unlink(),
+                "E_LEDGER_EVIDENCE_RECEIPT_MISSING",
+            ),
+            (
+                "legacy",
+                lambda path, receipt, store, attempt: path.write_bytes(
+                    model.canonical_json_bytes(receipt["evidence"])
+                ),
+                "E_LEDGER_EVIDENCE_RECEIPT_FIELDS",
+            ),
+            (
+                "malformed",
+                lambda path, receipt, store, attempt: path.write_bytes(b"{\n"),
+                "E_LEDGER_EVIDENCE_RECEIPT_MALFORMED",
+            ),
+            (
+                "extra-field",
+                lambda path, receipt, store, attempt: (
+                    receipt.update(extra="forbidden"),
+                    path.write_bytes(model.canonical_json_bytes(receipt)),
+                ),
+                "E_LEDGER_EVIDENCE_RECEIPT_FIELDS",
+            ),
+            (
+                "tampered-binding",
+                lambda path, receipt, store, attempt: (
+                    receipt["evidence"].update(bytes=receipt["evidence"]["bytes"] + 1),
+                    path.write_bytes(model.canonical_json_bytes(receipt)),
+                ),
+                "E_LEDGER_EVIDENCE_RECEIPT_BINDING",
+            ),
+            (
+                "tampered-receipt-digest",
+                lambda path, receipt, store, attempt: (
+                    receipt.update(receipt_sha256="0" * 64),
+                    path.write_bytes(model.canonical_json_bytes(receipt)),
+                ),
+                "E_LEDGER_EVIDENCE_RECEIPT_DIGEST",
+            ),
+            (
+                "overwritten-valid-receipt",
+                lambda path, receipt, store, attempt: path.write_bytes(
+                    model.canonical_json_bytes(
+                        model.make_evidence_receipt(
+                            model.make_evidence_binding(
+                                self.cell,
+                                attempt,
+                                self.gate_id,
+                                receipt["evidence"]["kind"],
+                                receipt["evidence"]["sha256"],
+                                receipt["evidence"]["bytes"] + 1,
+                            ),
+                            self.cell,
+                            store.ledger_root_id,
+                            attempt_id=attempt,
+                            gate_id=self.gate_id,
+                        )
+                    )
+                ),
+                "E_LEDGER_EVIDENCE_RECEIPT_MISMATCH",
+            ),
+        )
+        for name, mutate, code in mutations:
+            store = self.new_store()
+            attempt_id = self.begin(store)
+            self.pass_attempt(store, attempt_id)
+            _, attempt_path = store._find_attempt(self.cell.cell_id, attempt_id)
+            result = model.strict_json_load(attempt_path / "result.json")
+            record = result["evidence"][0]
+            _, receipt_path = self.evidence_pair_paths(
+                store, self.cell, attempt_id, record
+            )
+            receipt = model.strict_json_load(receipt_path)
+            mutate(receipt_path, receipt, store, attempt_id)
+            with self.subTest(mutation=name, consumer="inspection"):
+                with self.assertRaisesRegex(ledger.LedgerAmbiguous, code):
+                    store.inspect_attempt(self.cell.cell_id, attempt_id)
+            decision = store.resume_decision(self.cell)
+            self.assertEqual(decision["action"], "RECOVERY_REQUIRED")
+            self.assertEqual(decision["state"], "AMBIGUOUS")
+            if name == "overwritten-valid-receipt":
+                result_set = store.validated_result_set(self.manifest)
+                self.assertGreaterEqual(
+                    dict(result_set.status_counts)["AMBIGUOUS"], 1
+                )
+                self.assertEqual(
+                    public_status(self.manifest, result_set)["readiness"],
+                    "NOT_READY",
+                )
+
+    def test_result_validation_requires_the_original_first_store_receipt(self):
+        store = self.new_store()
+        attempt_id = self.begin(store)
+        evidence = self.pass_terminal(store, attempt_id)
+        _, receipt_path = self.evidence_pair_paths(
+            store, self.cell, attempt_id, evidence[0]
+        )
+        replacement_binding = model.make_evidence_binding(
+            self.cell,
+            attempt_id,
+            self.gate_id,
+            evidence[0]["kind"],
+            evidence[0]["sha256"],
+            evidence[0]["bytes"] + 1,
+        )
+        receipt_path.write_bytes(
+            model.canonical_json_bytes(
+                model.make_evidence_receipt(
+                    replacement_binding,
+                    self.cell,
+                    store.ledger_root_id,
+                    attempt_id=attempt_id,
+                    gate_id=self.gate_id,
+                )
+            )
+        )
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous,
+            "E_LEDGER_EVIDENCE_RECEIPT_MISMATCH",
+        ):
+            store.record_result(
+                self.cell,
+                attempt_id,
+                self.passing_ledger_result(attempt_id, evidence),
+            )
+        self.assertFalse(
+            (store._find_attempt(self.cell.cell_id, attempt_id)[1] / "result.json").exists()
+        )
+
+    def test_interrupted_evidence_pair_publish_is_preserved_and_fail_closed(self):
+        store = self.new_store()
+        attempt_id = self.begin(store)
+        store.append_event(
+            self.cell,
+            attempt_id,
+            event_type="GATE_STARTED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
+        real_link = ledger.os.link
+
+        def fail_payload_link(source, target):
+            if str(target).endswith(".blob"):
+                raise OSError("injected payload publication failure")
+            return real_link(source, target)
+
+        with mock.patch.object(ledger.os, "link", side_effect=fail_payload_link):
+            with self.assertRaisesRegex(
+                ledger.LedgerAmbiguous, "E_LEDGER_ATOMIC_CREATE"
+            ):
+                store.record_evidence(
+                    self.cell,
+                    attempt_id,
+                    gate_id=self.gate_id,
+                    kind=self.cell.identity["required_evidence_kinds"][0],
+                    payload=b"synthetic-interrupted-pair",
+                )
+        self.assertTrue(list(store.staging_root.glob("*.partial")))
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_STAGING_NOT_EMPTY"
+        ):
+            store.inspect_attempt(self.cell.cell_id, attempt_id)
+        store.resolve_staging(self.staging_recovery_review(store))
+        with self.assertRaisesRegex(
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_PAYLOAD_MISSING"
+        ):
+            store.inspect_attempt(self.cell.cell_id, attempt_id)
+        decision = store.resume_decision(self.cell)
+        self.assertEqual(decision["action"], "RECOVERY_REQUIRED")
+        self.assertEqual(decision["state"], "AMBIGUOUS")
 
     def test_terminal_without_result_is_ambiguous_and_needs_recovery(self):
         store = self.new_store()
@@ -2296,17 +3471,30 @@ class LedgerTests(unittest.TestCase):
 
     def test_result_must_match_attempt_time_status_and_evidence(self):
         mutations = {
-            "attempt": lambda result: result.update(attempt_id="attempt-" + "0" * 64),
-            "start": lambda result: result.update(started_at="2026-08-23T11:59:59Z"),
-            "finish": lambda result: result.update(finished_at="2026-08-23T12:04:01Z"),
-            "status": lambda result: result.update(
-                status="FAIL", failure_code="wrong-terminal"
+            "attempt": (
+                lambda result: result.update(attempt_id="attempt-" + "0" * 64),
+                "E_LEDGER_RESULT_MODEL",
             ),
-            "evidence": lambda result: result["evidence"][0].update(
-                sha256="0" * 64
+            "start": (
+                lambda result: result.update(started_at="2026-08-23T11:59:59Z"),
+                "E_LEDGER_RESULT_BINDING",
+            ),
+            "finish": (
+                lambda result: result.update(finished_at="2026-08-23T12:04:01Z"),
+                "E_LEDGER_RESULT_BINDING",
+            ),
+            "status": (
+                lambda result: result.update(
+                    status="FAIL", failure_code="wrong-terminal"
+                ),
+                "E_LEDGER_RESULT_BINDING",
+            ),
+            "evidence": (
+                lambda result: result["evidence"][0].update(sha256="0" * 64),
+                "E_LEDGER_RESULT_MODEL",
             ),
         }
-        for name, mutate in mutations.items():
+        for name, (mutate, code) in mutations.items():
             store = self.new_store()
             attempt_id = self.begin(store)
             evidence = self.pass_terminal(store, attempt_id)
@@ -2314,7 +3502,7 @@ class LedgerTests(unittest.TestCase):
             mutate(result)
             with self.subTest(mutation=name):
                 with self.assertRaisesRegex(
-                    ledger.LedgerConflict, "E_LEDGER_RESULT_BINDING"
+                    ledger.LedgerConflict, code
                 ):
                     store.record_result(self.cell, attempt_id, result)
 
@@ -2370,6 +3558,14 @@ class LedgerTests(unittest.TestCase):
                 started_at="2026-08-23T12:00:00Z",
                 owner_id="matrix-test-owner",
             )
+            gate_id = cell.identity["required_gate_ids"][0]
+            store.append_event(
+                cell,
+                attempt_id,
+                event_type="GATE_STARTED",
+                gate_id=gate_id,
+                recorded_at="2026-08-23T12:01:00Z",
+            )
             packet_kind = next(
                 kind
                 for kind in cell.identity["required_evidence_kinds"]
@@ -2378,6 +3574,7 @@ class LedgerTests(unittest.TestCase):
             packet = store.record_evidence(
                 cell,
                 attempt_id,
+                gate_id=gate_id,
                 kind=packet_kind,
                 payload=b"fixed-review-packet",
             )
@@ -2405,18 +3602,11 @@ class LedgerTests(unittest.TestCase):
             verdict_record = store.record_evidence(
                 cell,
                 attempt_id,
+                gate_id=gate_id,
                 kind="manual-verdict",
                 payload=raw_verdict,
             )
             evidence = [packet, verdict_record]
-            gate_id = cell.identity["required_gate_ids"][0]
-            store.append_event(
-                cell,
-                attempt_id,
-                event_type="GATE_STARTED",
-                gate_id=gate_id,
-                recorded_at="2026-08-23T12:01:00Z",
-            )
             store.append_event(
                 cell,
                 attempt_id,
@@ -2471,6 +3661,14 @@ class LedgerTests(unittest.TestCase):
             started_at="2026-08-23T12:00:00Z",
             owner_id="matrix-test-owner",
         )
+        gate_id = cell.identity["required_gate_ids"][0]
+        store.append_event(
+            cell,
+            attempt_id,
+            event_type="GATE_STARTED",
+            gate_id=gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
         packet_kind = next(
             kind
             for kind in cell.identity["required_evidence_kinds"]
@@ -2479,12 +3677,14 @@ class LedgerTests(unittest.TestCase):
         packet = store.record_evidence(
             cell,
             attempt_id,
+            gate_id=gate_id,
             kind=packet_kind,
             payload=b"fixed-review-packet",
         )
         objective_record = store.record_evidence(
             cell,
             attempt_id,
+            gate_id=gate_id,
             kind="objective-result",
             payload=objective_raw,
         )
@@ -2505,18 +3705,11 @@ class LedgerTests(unittest.TestCase):
         verdict_record = store.record_evidence(
             cell,
             attempt_id,
+            gate_id=gate_id,
             kind="manual-verdict",
             payload=model.canonical_json_bytes(verdict),
         )
         evidence = [packet, verdict_record]
-        gate_id = cell.identity["required_gate_ids"][0]
-        store.append_event(
-            cell,
-            attempt_id,
-            event_type="GATE_STARTED",
-            gate_id=gate_id,
-            recorded_at="2026-08-23T12:01:00Z",
-        )
         store.append_event(
             cell,
             attempt_id,
@@ -2644,6 +3837,7 @@ class LedgerTests(unittest.TestCase):
             store.record_evidence(
                 self.cell,
                 attempt_id,
+                gate_id=self.gate_id,
                 kind="a" * 97,
                 payload=b"evidence",
             )
@@ -2821,6 +4015,7 @@ class LedgerTests(unittest.TestCase):
             lambda: store.record_evidence(
                 self.cell,
                 attempt_id,
+                gate_id=self.gate_id,
                 kind=self.cell.identity["required_evidence_kinds"][0],
                 payload=b"evidence",
             ),
@@ -3332,6 +4527,7 @@ class LedgerTests(unittest.TestCase):
             lambda: store.record_evidence(
                 self.cell,
                 first,
+                gate_id=self.gate_id,
                 kind=self.cell.identity["required_evidence_kinds"][0],
                 payload=b"late-evidence",
             ),
@@ -3354,6 +4550,7 @@ class LedgerTests(unittest.TestCase):
             lambda: store.record_evidence(
                 self.cell,
                 first,
+                gate_id=self.gate_id,
                 kind=self.cell.identity["required_evidence_kinds"][0],
                 payload=b"later-evidence",
             ),
@@ -3548,15 +4745,6 @@ class LedgerTests(unittest.TestCase):
     def test_terminal_pass_requires_exact_gate_evidence(self):
         store = self.new_store()
         attempt_id = self.begin(store)
-        evidence = [
-            store.record_evidence(
-                self.cell,
-                attempt_id,
-                kind=kind,
-                payload=f"{kind}:{attempt_id}".encode("ascii"),
-            )
-            for kind in self.cell.identity["required_evidence_kinds"]
-        ]
         store.append_event(
             self.cell,
             attempt_id,
@@ -3564,6 +4752,16 @@ class LedgerTests(unittest.TestCase):
             gate_id=self.gate_id,
             recorded_at="2026-08-23T12:01:00Z",
         )
+        evidence = [
+            store.record_evidence(
+                self.cell,
+                attempt_id,
+                gate_id=self.gate_id,
+                kind=kind,
+                payload=f"{kind}:{attempt_id}".encode("ascii"),
+            )
+            for kind in self.cell.identity["required_evidence_kinds"]
+        ]
         store.append_event(
             self.cell,
             attempt_id,
@@ -3581,7 +4779,7 @@ class LedgerTests(unittest.TestCase):
         wrong = copy.deepcopy(evidence[-1])
         wrong["sha256"] = "0" * 64
         with self.assertRaisesRegex(
-            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_MISSING"
+            ledger.LedgerAmbiguous, "E_LEDGER_EVIDENCE_BINDING_DIGEST"
         ):
             store.append_event(
                 self.cell,
@@ -3684,9 +4882,17 @@ class LedgerTests(unittest.TestCase):
         store = self.new_store()
         attempt_id = self.begin(store)
         required_kind = self.cell.identity["required_evidence_kinds"][0]
+        store.append_event(
+            self.cell,
+            attempt_id,
+            event_type="GATE_STARTED",
+            gate_id=self.gate_id,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
         first_record = store.record_evidence(
             self.cell,
             attempt_id,
+            gate_id=self.gate_id,
             kind=required_kind,
             payload=b"first",
         )
@@ -3696,6 +4902,7 @@ class LedgerTests(unittest.TestCase):
             store.record_evidence(
                 self.cell,
                 attempt_id,
+                gate_id=self.gate_id,
                 kind=required_kind,
                 payload=b"different-bytes",
             )
@@ -3705,6 +4912,7 @@ class LedgerTests(unittest.TestCase):
             store.record_evidence(
                 self.cell,
                 attempt_id,
+                gate_id=self.gate_id,
                 kind="poison-report",
                 payload=b"poison",
             )
@@ -3716,9 +4924,9 @@ class LedgerTests(unittest.TestCase):
             store.append_event(
                 self.cell,
                 attempt_id,
-                event_type="GATE_STARTED",
+                event_type="GATE_PASSED",
                 gate_id=self.gate_id,
-                recorded_at="2026-08-23T12:01:00Z",
+                recorded_at="2026-08-23T12:02:00Z",
                 evidence=[first_record, duplicate],
             )
 
@@ -3738,10 +4946,19 @@ class LedgerTests(unittest.TestCase):
             started_at="2026-08-23T12:00:00Z",
             owner_id="matrix-test-owner",
         )
+        forged_gate = forged.identity["required_gate_ids"][0]
+        store.append_event(
+            forged,
+            overflow_attempt,
+            event_type="GATE_STARTED",
+            gate_id=forged_gate,
+            recorded_at="2026-08-23T12:01:00Z",
+        )
         for index in range(model.MAX_EVIDENCE_ITEMS):
             store.record_evidence(
                 forged,
                 overflow_attempt,
+                gate_id=forged_gate,
                 kind=f"report-{index:02d}",
                 payload=f"payload-{index}".encode("ascii"),
             )
@@ -3751,6 +4968,7 @@ class LedgerTests(unittest.TestCase):
             store.record_evidence(
                 forged,
                 overflow_attempt,
+                gate_id=forged_gate,
                 kind=f"report-{model.MAX_EVIDENCE_ITEMS:02d}",
                 payload=b"overflow",
             )
@@ -3941,7 +5159,7 @@ class LedgerTests(unittest.TestCase):
 
     @unittest.skipUnless(hasattr(os, "symlink"), "symlink support is unavailable")
     def test_symlink_state_root_is_rejected_when_supported(self):
-        with tempfile.TemporaryDirectory() as temporary:
+        with ScopedTestDirectory() as temporary:
             base = Path(temporary)
             real = base / "real"
             real.mkdir()

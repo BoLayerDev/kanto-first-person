@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -15,6 +17,7 @@ import sys
 import tempfile
 from typing import NamedTuple
 import unicodedata
+from urllib.parse import unquote, urlsplit, urlunsplit
 import zipfile
 
 
@@ -25,6 +28,38 @@ PINNED_ENGINES = {
     "478e3bf8ebf7646edfda88320c6472cf32db2e67",
     "116a6ba450dd65f25c9be150952fc3c27be904c0",
 }
+GAME_ACCEPTANCE_GATES = {
+    "red_runtime_acceptance": "red",
+    "blue_runtime_acceptance": "blue",
+    "yellow_runtime_acceptance": "yellow",
+}
+GAME_ACCEPTANCE_LOCATORS = {
+    game: f"docs/release-matrix/game-acceptance/{game}.json"
+    for game in GAME_ACCEPTANCE_GATES.values()
+}
+GAME_RESULT_FIELDS = {
+    "schema",
+    "game",
+    "status",
+    "release_ready",
+    "required_cells",
+    "passed_cells",
+    "blockers",
+    "runtime_source_commit",
+    "runtime_source_tree",
+    "runtime_content_sha256",
+    "runtime_file_count",
+    "engine_commit",
+    "source_date_epoch",
+    "package_sha256",
+    "matrix_manifest_sha256",
+}
+RELEASE_MATRIX_GAME_CELL_COUNTS = {
+    "red": 5940,
+    "blue": 5940,
+    "yellow": 5940,
+}
+RELEASE_MATRIX_CELL_COUNT = 17820
 REQUIRED_RELEASE_GATES = (
     "companion_hosts",
     "corrected_feature_parity",
@@ -36,6 +71,7 @@ REQUIRED_RELEASE_GATES = (
     "uninstall_integrity",
     "engine_reaudit",
     "community_review",
+    *GAME_ACCEPTANCE_GATES,
 )
 REQUIRED_PRERELEASE_GATES = {
     "alpha": (
@@ -47,6 +83,7 @@ REQUIRED_PRERELEASE_GATES = {
         "package_reproducibility",
         "source_integrity",
         "known_limitations",
+        *GAME_ACCEPTANCE_GATES,
     ),
     "beta": (
         "asset_rights",
@@ -59,6 +96,7 @@ REQUIRED_PRERELEASE_GATES = {
         "source_integrity",
         "visual_acceptance",
         "known_limitations",
+        *GAME_ACCEPTANCE_GATES,
     ),
     "rc": REQUIRED_RELEASE_GATES,
 }
@@ -113,6 +151,23 @@ UTC_TIMESTAMP = re.compile(
     r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
 )
 EVIDENCE_KIND = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
+EVIDENCE_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+~-]{0,127}$")
+HTTPS_HOST = re.compile(
+    r"^(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*"
+    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$"
+)
+CREDENTIAL_LIKE = re.compile(
+    r"(?:"
+    r"gh[pousr]_[A-Za-z0-9]{20,}"
+    r"|github_pat_[A-Za-z0-9_]{20,}"
+    r"|sk-(?:proj-)?[A-Za-z0-9_-]{20,}"
+    r"|AKIA[0-9A-Z]{16}"
+    r"|-----BEGIN [A-Z ]*PRIVATE KEY-----"
+    r"|(?:password|passwd|pwd|api[_-]?key|secret|token)"
+    r"\s*[:=]\s*[^\s/&?#]+"
+    r")",
+    re.IGNORECASE,
+)
 OBJECT_ID = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
 ARTIFACT_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$")
 ARTIFACT_SUFFIXES = (
@@ -137,6 +192,28 @@ WINDOWS_DEVICE_NAMES = {
     "PRN",
     *(f"COM{suffix}" for suffix in WINDOWS_DEVICE_SUFFIXES),
     *(f"LPT{suffix}" for suffix in WINDOWS_DEVICE_SUFFIXES),
+}
+PRIVATE_EVIDENCE_COMPONENTS = {
+    "baserom",
+    "baseroms",
+    "cache",
+    "caches",
+    "private-fixtures",
+    "rom",
+    "roms",
+    "save",
+    "saves",
+    "pokemon roms",
+    "pokemon saves",
+}
+PRIVATE_INPUT_SUFFIXES = {
+    ".cache",
+    ".gb",
+    ".gba",
+    ".gbc",
+    ".rom",
+    ".sav",
+    ".srm",
 }
 
 
@@ -191,8 +268,16 @@ def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
     return result
 
 
+def reject_json_constant(value: str) -> object:
+    raise ValueError(f"non-standard JSON constant: {value}")
+
+
 def strict_json_loads(value: str) -> object:
-    return json.loads(value, object_pairs_hook=reject_duplicate_keys)
+    return json.loads(
+        value,
+        object_pairs_hook=reject_duplicate_keys,
+        parse_constant=reject_json_constant,
+    )
 
 
 def strict_json_bytes(value: bytes) -> object:
@@ -204,6 +289,76 @@ def strict_json_file(path: Path) -> object:
         return strict_json_loads(path.read_text(encoding="utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise RuntimeError(f"invalid or duplicate JSON in {path.name}") from error
+
+
+def validate_release_matrix_manifest(value: object) -> dict[str, object]:
+    MatrixModelError, validate_manifest = load_repository_release_matrix_validator()
+    try:
+        checked = validate_manifest(value)
+    except MatrixModelError as error:
+        raise RuntimeError(
+            "release blocked: release-matrix manifest is invalid"
+        ) from error
+    if not isinstance(checked, dict):
+        checked = dict(checked)
+    return checked
+
+
+def load_repository_release_matrix_validator() -> tuple[type[Exception], object]:
+    repository = Path(__file__).resolve().parents[1]
+    expected = repository / "tools" / "release_matrix" / "model.py"
+    try:
+        model_path = expected.resolve(strict=True)
+    except OSError as error:
+        raise RuntimeError(
+            "release blocked: canonical release-matrix validator is unavailable"
+        ) from error
+    if model_path != expected or not model_path.is_file():
+        raise RuntimeError(
+            "release blocked: canonical release-matrix validator is unavailable"
+        )
+    spec = importlib.util.spec_from_file_location(
+        "_kfp_repository_release_matrix_model",
+        model_path,
+    )
+    if (
+        spec is None
+        or spec.loader is None
+        or spec.origin is None
+        or Path(spec.origin).resolve() != model_path
+    ):
+        raise RuntimeError(
+            "release blocked: canonical release-matrix validator is unavailable"
+        )
+    module = importlib.util.module_from_spec(spec)
+    module_name = spec.name
+    previous = sys.modules.get(module_name)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as error:
+        raise RuntimeError(
+            "release blocked: canonical release-matrix validator is unavailable"
+        ) from error
+    finally:
+        if previous is None:
+            sys.modules.pop(module_name, None)
+        else:
+            sys.modules[module_name] = previous
+    origin = getattr(module, "__file__", None)
+    MatrixModelError = getattr(module, "MatrixModelError", None)
+    validate_manifest = getattr(module, "validate_manifest", None)
+    if (
+        not isinstance(origin, str)
+        or Path(origin).resolve() != model_path
+        or not isinstance(MatrixModelError, type)
+        or not issubclass(MatrixModelError, Exception)
+        or not callable(validate_manifest)
+    ):
+        raise RuntimeError(
+            "release blocked: canonical release-matrix validator is unavailable"
+        )
+    return MatrixModelError, validate_manifest
 
 
 def load_manifest(path: Path) -> dict[str, object]:
@@ -556,19 +711,45 @@ def verify_modpkg_runtime(modpkg: Path, staging: Path, files: list[str]) -> None
 
 
 def runtime_content_fingerprint(source: Path, files: list[str]) -> dict[str, object]:
+    return runtime_bytes_fingerprint(
+        [
+            (relative, source.joinpath(*relative.split("/")).read_bytes())
+            for relative in files
+        ]
+    )
+
+
+def runtime_content_fingerprint_from_ref(
+    source: Path, ref: str
+) -> dict[str, object]:
+    return runtime_bytes_fingerprint([
+        (
+            entry.path,
+            run_bytes("git", "cat-file", "blob", entry.object_id, cwd=source),
+        )
+        for entry in listed_runtime_entries_from_ref(source, ref)
+    ])
+
+
+def runtime_bytes_fingerprint(
+    items: list[tuple[str, bytes]],
+) -> dict[str, object]:
     digest = hashlib.sha256()
     digest.update(b"kfp-runtime-content-v1\0")
-    for relative in sorted(files):
+    seen: set[str] = set()
+    for relative, content in sorted(items):
         validate_relative_path(relative)
+        if relative in seen:
+            raise RuntimeError(f"duplicate runtime content path: {relative}")
+        seen.add(relative)
         path_bytes = relative.encode("utf-8")
-        content = source.joinpath(*relative.split("/")).read_bytes()
         digest.update(len(path_bytes).to_bytes(8, "big"))
         digest.update(path_bytes)
         digest.update(len(content).to_bytes(8, "big"))
         digest.update(content)
     return {
         "algorithm": "sha256-framed-path-content-v1",
-        "file_count": len(files),
+        "file_count": len(items),
         "sha256": digest.hexdigest(),
     }
 
@@ -611,18 +792,169 @@ def inside(child: Path, parent: Path) -> bool:
         return False
 
 
-def valid_evidence(value: object) -> bool:
-    if not isinstance(value, dict) or set(value) != {"kind", "locator", "sha256"}:
+def valid_evidence_components(value: str) -> bool:
+    components = value.split("/")
+    return (
+        bool(components)
+        and all(
+            EVIDENCE_COMPONENT.fullmatch(component) is not None
+            and component.rstrip(" .") == component
+            and component.split(".", 1)[0].upper() not in WINDOWS_DEVICE_NAMES
+            and component.casefold() not in PRIVATE_EVIDENCE_COMPONENTS
+            and Path(component).suffix.casefold() not in PRIVATE_INPUT_SUFFIXES
+            for component in components
+        )
+    )
+
+
+def valid_evidence_locator(value: object) -> bool:
+    if (
+        not isinstance(value, str)
+        or not (1 <= len(value) <= 512)
+        or value.strip() != value
+        or unicodedata.normalize("NFC", value) != value
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+    ):
+        return False
+    decoded = value
+    for _ in range(2):
+        expanded = unquote(decoded)
+        if expanded == decoded:
+            break
+        decoded = expanded
+    if (
+        decoded != value
+        or "\\" in decoded
+        or re.search(r"(?:^|[^A-Za-z0-9])[A-Za-z]:/", decoded) is not None
+        or "file:" in decoded.casefold()
+        or CREDENTIAL_LIKE.search(decoded) is not None
+    ):
+        return False
+    for prefix in ("evidence://", "private-evidence://", "docs/"):
+        if decoded.startswith(prefix):
+            return valid_evidence_components(decoded[len(prefix):])
+    try:
+        parsed = urlsplit(decoded)
+        port = parsed.port
+    except ValueError:
+        return False
+    host = parsed.hostname
+    expected_netloc = (
+        host if port is None else f"{host}:{port}"
+    ) if isinstance(host, str) else None
+    return (
+        parsed.scheme == "https"
+        and isinstance(host, str)
+        and HTTPS_HOST.fullmatch(host) is not None
+        and parsed.netloc == expected_netloc
+        and parsed.username is None
+        and parsed.password is None
+        and port in (None, 443)
+        and not parsed.query
+        and not parsed.fragment
+        and parsed.path.startswith("/")
+        and valid_evidence_components(parsed.path[1:])
+        and urlunsplit(parsed) == decoded
+    )
+
+
+def valid_utc_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or UTC_TIMESTAMP.fullmatch(value) is None:
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return True
+
+
+def valid_evidence_fields(value: object) -> bool:
+    if not isinstance(value, dict):
         return False
     kind, locator, digest = value["kind"], value["locator"], value["sha256"]
     return (
         isinstance(kind, str)
         and EVIDENCE_KIND.fullmatch(kind) is not None
-        and isinstance(locator, str)
-        and 1 <= len(locator) <= 512
-        and all(ord(character) >= 32 for character in locator)
+        and valid_evidence_locator(locator)
         and isinstance(digest, str)
         and HEX_64.fullmatch(digest) is not None
+    )
+
+
+def valid_evidence(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == {"kind", "locator", "sha256"}
+        and valid_evidence_fields(value)
+    )
+
+
+def valid_game_acceptance_evidence_shape(value: object) -> bool:
+    return (
+        isinstance(value, dict)
+        and set(value) == {"kind", "locator", "sha256", "game", "result"}
+        and valid_evidence_fields(value)
+        and value.get("kind") == "release_matrix_game_acceptance"
+    )
+
+
+def game_result_bytes(value: object) -> bytes | None:
+    try:
+        return (json.dumps(
+            value,
+            allow_nan=False,
+            ensure_ascii=True,
+            separators=(",", ":"),
+            sort_keys=True,
+        ) + "\n").encode("utf-8")
+    except (TypeError, ValueError):
+        return None
+
+
+def game_result_sha256(value: object) -> str | None:
+    encoded = game_result_bytes(value)
+    return sha256_bytes(encoded) if encoded is not None else None
+
+
+def valid_game_acceptance_evidence(value: object, expected_game: str) -> bool:
+    if not valid_game_acceptance_evidence_shape(value) or not isinstance(value, dict):
+        return False
+    result = value.get("result")
+    if not isinstance(result, dict) or set(result) != GAME_RESULT_FIELDS:
+        return False
+    required_cells = result.get("required_cells")
+    passed_cells = result.get("passed_cells")
+    blockers = result.get("blockers")
+    return (
+        value.get("game") == expected_game
+        and value.get("locator") == GAME_ACCEPTANCE_LOCATORS[expected_game]
+        and type(result.get("schema")) is int
+        and result.get("schema") == 1
+        and result.get("game") == expected_game
+        and result.get("status") == "PASS"
+        and result.get("release_ready") is True
+        and type(required_cells) is int
+        and required_cells > 0
+        and type(passed_cells) is int
+        and passed_cells == required_cells
+        and blockers == []
+        and isinstance(result.get("runtime_source_commit"), str)
+        and OBJECT_ID.fullmatch(result["runtime_source_commit"]) is not None
+        and isinstance(result.get("runtime_source_tree"), str)
+        and OBJECT_ID.fullmatch(result["runtime_source_tree"]) is not None
+        and isinstance(result.get("runtime_content_sha256"), str)
+        and HEX_64.fullmatch(result["runtime_content_sha256"]) is not None
+        and type(result.get("runtime_file_count")) is int
+        and result["runtime_file_count"] > 0
+        and isinstance(result.get("engine_commit"), str)
+        and result["engine_commit"] in PINNED_ENGINES
+        and type(result.get("source_date_epoch")) is int
+        and result["source_date_epoch"] >= 0
+        and isinstance(result.get("package_sha256"), str)
+        and HEX_64.fullmatch(result["package_sha256"]) is not None
+        and isinstance(result.get("matrix_manifest_sha256"), str)
+        and HEX_64.fullmatch(result["matrix_manifest_sha256"]) is not None
+        and game_result_sha256(result) == value.get("sha256")
     )
 
 
@@ -649,11 +981,19 @@ def validate_release_records(
     expected_tag: str,
     channel: str | None = None,
     required_gates: tuple[str, ...] | None = None,
-) -> None:
+    expected_engine_commit: str | None = None,
+    expected_epoch: int | None = None,
+    game_documents: dict[str, bytes] | None = None,
+    matrix_manifest_bytes: bytes | None = None,
+) -> dict[str, object]:
     selected_channel, _, selected_gates = release_policy(version)
     channel = channel or selected_channel
     required_gates = required_gates or selected_gates
-    if not isinstance(rights_record, dict) or rights_record.get("schema") != 1:
+    if (
+        not isinstance(rights_record, dict)
+        or type(rights_record.get("schema")) is not int
+        or rights_record.get("schema") != 1
+    ):
         raise RuntimeError("release blocked: rights approval schema is invalid")
     if rights_record.get("approved") is not True:
         raise RuntimeError(
@@ -665,7 +1005,11 @@ def validate_release_records(
     if not valid_evidence(rights_record.get("approval_record")):
         raise RuntimeError("release blocked: rights approval record is invalid")
 
-    if not isinstance(record, dict) or record.get("schema") != 1:
+    if (
+        not isinstance(record, dict)
+        or type(record.get("schema")) is not int
+        or record.get("schema") != 1
+    ):
         raise RuntimeError("release blocked: release gate ledger schema is invalid")
     if record.get("approved") is not True:
         raise RuntimeError("release blocked: release gate ledger is not approved")
@@ -676,7 +1020,7 @@ def validate_release_records(
     approved_by, approved_at = record.get("approved_by"), record.get("approved_at")
     if not isinstance(approved_by, str) or not (1 <= len(approved_by) <= 128):
         raise RuntimeError("release blocked: gate approval identity is invalid")
-    if not isinstance(approved_at, str) or UTC_TIMESTAMP.fullmatch(approved_at) is None:
+    if not valid_utc_timestamp(approved_at):
         raise RuntimeError("release blocked: gate approval timestamp is invalid")
     if record.get("tag") != expected_tag:
         raise RuntimeError("release blocked: gate ledger tag does not match manifest")
@@ -688,19 +1032,187 @@ def validate_release_records(
     for name in required_gates:
         gate = gates[name]
         evidence = gate.get("evidence") if isinstance(gate, dict) else None
+        evidence_is_valid = (
+            isinstance(evidence, list)
+            and bool(evidence)
+            and all(
+                valid_game_acceptance_evidence_shape(item)
+                if name in GAME_ACCEPTANCE_GATES
+                else valid_evidence(item)
+                for item in evidence
+            )
+        )
         if (
             not isinstance(gate, dict)
             or set(gate) != {"passed", "evidence"}
             or gate.get("passed") is not True
-            or not isinstance(evidence, list)
-            or not evidence
-            or not all(valid_evidence(item) for item in evidence)
+            or not evidence_is_valid
         ):
             incomplete.append(name)
     if incomplete:
         raise RuntimeError(
             "release blocked: incomplete gates: " + ", ".join(incomplete)
         )
+    invalid_game_evidence = []
+    package_hashes = set()
+    manifest_hashes = set()
+    runtime_source_commits = set()
+    runtime_source_trees = set()
+    runtime_content_hashes = set()
+    runtime_file_counts = set()
+    manifest_digest = (
+        sha256_bytes(matrix_manifest_bytes)
+        if isinstance(matrix_manifest_bytes, bytes)
+        else None
+    )
+    try:
+        matrix_manifest = validate_release_matrix_manifest(
+            strict_json_bytes(matrix_manifest_bytes)
+        ) if isinstance(matrix_manifest_bytes, bytes) else None
+    except (
+        UnicodeDecodeError,
+        json.JSONDecodeError,
+        ValueError,
+        RuntimeError,
+    ):
+        matrix_manifest = None
+    candidate = (
+        matrix_manifest.get("candidate")
+        if isinstance(matrix_manifest, dict)
+        else None
+    )
+    required_cell_set = (
+        matrix_manifest.get("required_cell_set")
+        if isinstance(matrix_manifest, dict)
+        else None
+    )
+    required_game_cells = (
+        required_cell_set.get("required_cells_by_game")
+        if isinstance(required_cell_set, dict)
+        else None
+    )
+    required_cell_count = (
+        required_cell_set.get("required_cell_count")
+        if isinstance(required_cell_set, dict)
+        else None
+    )
+    catalogs = (
+        matrix_manifest.get("catalogs")
+        if isinstance(matrix_manifest, dict)
+        else None
+    )
+    engines = catalogs.get("engines") if isinstance(catalogs, dict) else None
+    engine_is_bound = (
+        isinstance(engines, list)
+        and sum(
+            1
+            for engine in engines
+            if isinstance(engine, dict)
+            and engine.get("source_commit") == expected_engine_commit
+            and engine.get("binding_kind") == "PINNED_RUNTIME"
+        ) == 1
+    )
+    required_game_cells_are_exact = (
+        isinstance(required_game_cells, dict)
+        and set(required_game_cells) == set(RELEASE_MATRIX_GAME_CELL_COUNTS)
+        and all(
+            type(required_game_cells[game]) is int
+            and required_game_cells[game] == expected
+            for game, expected in RELEASE_MATRIX_GAME_CELL_COUNTS.items()
+        )
+    )
+    matrix_is_bound = (
+        isinstance(matrix_manifest, dict)
+        and matrix_manifest.get("schema") == "kfp.release-matrix.manifest.v1"
+        and type(matrix_manifest.get("schema_version")) is int
+        and matrix_manifest.get("schema_version") == 1
+        and matrix_manifest.get("mode") == "PRIVATE_RELEASE"
+        and matrix_manifest.get("release_eligible") is True
+        and isinstance(candidate, dict)
+        and candidate.get("package_kind") == "RELEASE_CANDIDATE"
+        and isinstance(candidate.get("runtime_source_commit"), str)
+        and OBJECT_ID.fullmatch(candidate["runtime_source_commit"]) is not None
+        and isinstance(candidate.get("runtime_source_tree"), str)
+        and OBJECT_ID.fullmatch(candidate["runtime_source_tree"]) is not None
+        and isinstance(candidate.get("runtime_content_sha256"), str)
+        and HEX_64.fullmatch(candidate["runtime_content_sha256"]) is not None
+        and isinstance(candidate.get("package_sha256"), str)
+        and HEX_64.fullmatch(candidate["package_sha256"]) is not None
+        and isinstance(required_cell_set, dict)
+        and required_cell_set.get("schema")
+        == "kfp.release-matrix.required-cell-set.v1"
+        and type(required_cell_set.get("schema_version")) is int
+        and required_cell_set.get("schema_version") == 1
+        and isinstance(required_cell_set.get("manifest_input_sha256"), str)
+        and HEX_64.fullmatch(required_cell_set["manifest_input_sha256"])
+        is not None
+        and isinstance(required_cell_set.get("required_cell_ids_sha256"), str)
+        and HEX_64.fullmatch(required_cell_set["required_cell_ids_sha256"])
+        is not None
+        and required_game_cells_are_exact
+        and type(required_cell_count) is int
+        and required_cell_count == RELEASE_MATRIX_CELL_COUNT
+        and engine_is_bound
+    )
+    for name, game in GAME_ACCEPTANCE_GATES.items():
+        if name not in required_gates:
+            continue
+        evidence = gates[name]["evidence"]
+        item = evidence[0] if len(evidence) == 1 else None
+        result = item.get("result") if isinstance(item, dict) else None
+        document = game_documents.get(game) if isinstance(game_documents, dict) else None
+        expected_document = game_result_bytes(result)
+        if (
+            not valid_game_acceptance_evidence(item, game)
+            or not isinstance(document, bytes)
+            or expected_document is None
+            or document != expected_document
+            or sha256_bytes(document) != item.get("sha256")
+            or not matrix_is_bound
+            or result.get("runtime_source_commit")
+            != candidate.get("runtime_source_commit")
+            or result.get("runtime_source_tree")
+            != candidate.get("runtime_source_tree")
+            or result.get("runtime_content_sha256")
+            != candidate.get("runtime_content_sha256")
+            or result.get("engine_commit") != expected_engine_commit
+            or result.get("source_date_epoch") != expected_epoch
+            or result.get("required_cells") != required_game_cells.get(game)
+            or result.get("matrix_manifest_sha256") != manifest_digest
+            or result.get("package_sha256") != candidate.get("package_sha256")
+        ):
+            invalid_game_evidence.append(name)
+            continue
+        package_hashes.add(result["package_sha256"])
+        manifest_hashes.add(result["matrix_manifest_sha256"])
+        runtime_source_commits.add(result["runtime_source_commit"])
+        runtime_source_trees.add(result["runtime_source_tree"])
+        runtime_content_hashes.add(result["runtime_content_sha256"])
+        runtime_file_counts.add(result["runtime_file_count"])
+    if invalid_game_evidence:
+        raise RuntimeError(
+            "release blocked: invalid game acceptance evidence: "
+            + ", ".join(invalid_game_evidence)
+        )
+    if (
+        len(package_hashes) != 1
+        or len(manifest_hashes) != 1
+        or len(runtime_source_commits) != 1
+        or len(runtime_source_trees) != 1
+        or len(runtime_content_hashes) != 1
+        or len(runtime_file_counts) != 1
+    ):
+        raise RuntimeError("release blocked: game acceptance bindings disagree")
+    return {
+        "package_sha256": package_hashes.pop(),
+        "matrix_manifest_sha256": manifest_hashes.pop(),
+        "runtime_source_commit": runtime_source_commits.pop(),
+        "runtime_source_tree": runtime_source_trees.pop(),
+        "runtime_content_sha256": runtime_content_hashes.pop(),
+        "runtime_file_count": runtime_file_counts.pop(),
+        "engine_commit": expected_engine_commit,
+        "source_date_epoch": expected_epoch,
+    }
 
 
 def require_release_approval(
@@ -708,7 +1220,9 @@ def require_release_approval(
     version: str,
     source_commit: str,
     trusted_signing_key: str | None,
-) -> dict[str, str]:
+    engine_commit: str,
+    source_date_epoch: int,
+) -> dict[str, object]:
     expected_tag = "v" + version
     channel, ledger_path, required_gates = release_policy(version)
     trusted = (trusted_signing_key or "").replace(" ", "").upper()
@@ -724,6 +1238,19 @@ def require_release_approval(
         )
         ledger_bytes = run_bytes(
             "git", "show", f"{expected_tag}:{ledger_path}", cwd=source
+        )
+        game_documents = {
+            game: run_bytes(
+                "git",
+                "show",
+                f"{expected_tag}:{GAME_ACCEPTANCE_LOCATORS[game]}",
+                cwd=source,
+            )
+            for game in GAME_ACCEPTANCE_LOCATORS
+        }
+        matrix_manifest_bytes = run_bytes(
+            "git", "show", f"{expected_tag}:docs/release-matrix/matrix-v1.json",
+            cwd=source,
         )
     except subprocess.CalledProcessError as error:
         raise RuntimeError(
@@ -745,14 +1272,37 @@ def require_release_approval(
         record = strict_json_bytes(ledger_bytes)
     except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as error:
         raise RuntimeError("release blocked: tagged approval JSON is invalid") from error
-    validate_release_records(
+    game_bindings = validate_release_records(
         rights_record,
         record,
         version,
         expected_tag,
         channel,
         required_gates,
+        engine_commit,
+        source_date_epoch,
+        game_documents,
+        matrix_manifest_bytes,
     )
+    runtime_source_commit = str(game_bindings["runtime_source_commit"])
+    try:
+        runtime_source_tree = run(
+            "git", "rev-parse", f"{runtime_source_commit}^{{tree}}", cwd=source
+        )
+        run(
+            "git", "merge-base", "--is-ancestor", runtime_source_commit,
+            tag_commit, cwd=source,
+        )
+    except subprocess.CalledProcessError as error:
+        raise RuntimeError(
+            "release blocked: frozen runtime source is not an ancestor of the tag"
+        ) from error
+    if runtime_source_tree != game_bindings["runtime_source_tree"]:
+        raise RuntimeError("release blocked: frozen runtime source tree is invalid")
+    runtime_content = runtime_content_fingerprint_from_ref(
+        source, runtime_source_commit
+    )
+    verify_accepted_runtime(game_bindings, runtime_content)
 
     return {
         "tag": expected_tag,
@@ -761,7 +1311,46 @@ def require_release_approval(
         "signing_key_fingerprint": trusted,
         "rights_sha256": sha256_bytes(rights_bytes),
         "ledger_sha256": sha256_bytes(ledger_bytes),
+        "package_sha256": game_bindings["package_sha256"],
+        "matrix_manifest_sha256": game_bindings["matrix_manifest_sha256"],
+        "runtime_source_commit": runtime_source_commit,
+        "runtime_source_tree": runtime_source_tree,
+        "runtime_content_sha256": game_bindings["runtime_content_sha256"],
+        "runtime_file_count": game_bindings["runtime_file_count"],
+        "engine_commit": engine_commit,
+        "source_date_epoch": source_date_epoch,
     }
+
+
+def verify_accepted_package(
+    release_approval: dict[str, object] | None,
+    actual_sha256: str,
+) -> None:
+    if (
+        release_approval is not None
+        and actual_sha256 != release_approval.get("package_sha256")
+    ):
+        raise RuntimeError(
+            "release blocked: built package does not match accepted runtime package"
+        )
+
+
+def verify_accepted_runtime(
+    release_approval: dict[str, object] | None,
+    runtime_content: dict[str, object],
+) -> None:
+    if release_approval is None:
+        return
+    if (
+        runtime_content.get("algorithm") != "sha256-framed-path-content-v1"
+        or runtime_content.get("sha256")
+        != release_approval.get("runtime_content_sha256")
+        or runtime_content.get("file_count")
+        != release_approval.get("runtime_file_count")
+    ):
+        raise RuntimeError(
+            "release blocked: tagged runtime content differs from accepted source"
+        )
 
 
 def main() -> int:
@@ -813,6 +1402,8 @@ def main() -> int:
             )
         )
 
+    epoch = resolve_epoch(args.epoch, os.environ)
+
     release_approval = None
     if args.release:
         release_approval = require_release_approval(
@@ -820,9 +1411,9 @@ def main() -> int:
             manifest_for_build["version"],
             source_commit,
             args.trusted_signing_key,
+            engine_commit,
+            epoch,
         )
-
-    epoch = resolve_epoch(args.epoch, os.environ)
 
     manifest = manifest_for_build
     stem = f"{manifest['id']}-{manifest['version']}"
@@ -880,8 +1471,10 @@ def main() -> int:
                 "sha256": sha256(path),
             })
         runtime_content = runtime_content_fingerprint(staging, files)
+        verify_accepted_runtime(release_approval, runtime_content)
 
     artifact_hashes = {path.name: sha256(path) for path in (modpkg, root_zip)}
+    verify_accepted_package(release_approval, artifact_hashes[modpkg.name])
     sums.write_text(
         "".join(f"{digest}  {name}\n" for name, digest in sorted(artifact_hashes.items())),
         encoding="utf-8",

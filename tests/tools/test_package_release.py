@@ -4,7 +4,9 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
+import types
 import unittest
 from unittest import mock
 import zipfile
@@ -24,9 +26,162 @@ EVIDENCE = {
     "locator": "evidence://release/test-report",
     "sha256": "b" * 64,
 }
+RUNTIME_SOURCE_COMMIT = "d" * 40
+RUNTIME_SOURCE_TREE = "b" * 40
+RUNTIME_CONTENT_SHA256 = "c" * 64
+RUNTIME_FILE_COUNT = 42
+ENGINE_COMMIT = sorted(PACKAGE_RELEASE.PINNED_ENGINES)[0]
+SOURCE_DATE_EPOCH = 1787270400
+PACKAGE_SHA256 = "e" * 64
+TAG_COMMIT = "f" * 40
+MATRIX_INPUT_SHA256 = "1" * 64
+MATRIX_CELL_IDS_SHA256 = "2" * 64
+MATRIX_ADAPTER_SHA256 = "3" * 64
 
 
-def approved_records(version="2.0.0", channel="stable"):
+def matrix_manifest(
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    package_sha256=PACKAGE_SHA256,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+):
+    return {
+        "schema": "kfp.release-matrix.manifest.v1",
+        "schema_version": 1,
+        "manifest_id": "kfp-alpha-release-matrix-v1",
+        "created_at": "2026-08-23T12:00:00Z",
+        "mode": "PRIVATE_RELEASE",
+        "release_eligible": True,
+        "candidate": {
+            "runtime_source_commit": runtime_source_commit,
+            "runtime_source_tree": runtime_source_tree,
+            "runtime_content_sha256": runtime_content_sha256,
+            "package_kind": "RELEASE_CANDIDATE",
+            "package_sha256": package_sha256,
+            "adapter_version": "1.0.0",
+            "adapter_sha256": MATRIX_ADAPTER_SHA256,
+        },
+        "required_cell_set": {
+            "schema": "kfp.release-matrix.required-cell-set.v1",
+            "schema_version": 1,
+            "manifest_input_sha256": MATRIX_INPUT_SHA256,
+            "required_cell_count": PACKAGE_RELEASE.RELEASE_MATRIX_CELL_COUNT,
+            "required_cell_ids_sha256": MATRIX_CELL_IDS_SHA256,
+            "required_cells_by_game": dict(
+                PACKAGE_RELEASE.RELEASE_MATRIX_GAME_CELL_COUNTS
+            ),
+        },
+        "catalogs": {
+            "engines": [
+                {
+                    "id": "selected-engine",
+                    "source_commit": engine_commit,
+                    "binding_kind": "PINNED_RUNTIME",
+                }
+            ]
+        },
+        "release_policy": {"cross_dimension_evidence": "REJECT"},
+    }
+
+
+def validate_matrix_fixture(value):
+    if not isinstance(value, dict):
+        raise RuntimeError("invalid fixture matrix")
+    required = value.get("required_cell_set")
+    if (
+        not isinstance(required, dict)
+        or required.get("manifest_input_sha256") != MATRIX_INPUT_SHA256
+        or required.get("required_cell_ids_sha256") != MATRIX_CELL_IDS_SHA256
+    ):
+        raise RuntimeError("invalid fixture matrix binding")
+    return json.loads(json.dumps(value))
+
+
+def matrix_bytes(
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    package_sha256=PACKAGE_SHA256,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+):
+    return (json.dumps(
+        matrix_manifest(
+            runtime_source_commit,
+            runtime_source_tree,
+            runtime_content_sha256,
+            runtime_file_count,
+            package_sha256,
+            engine_commit,
+            source_date_epoch,
+        ),
+        separators=(",", ":"),
+        sort_keys=True,
+    ) + "\n").encode()
+
+
+def game_evidence(
+    game,
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+    package_sha256=PACKAGE_SHA256,
+):
+    manifest_sha256 = hashlib.sha256(
+        matrix_bytes(
+            runtime_source_commit,
+            runtime_source_tree,
+            runtime_content_sha256,
+            runtime_file_count,
+            package_sha256,
+            engine_commit,
+            source_date_epoch,
+        )
+    ).hexdigest()
+    result = {
+        "schema": 1,
+        "game": game,
+        "status": "PASS",
+        "release_ready": True,
+        "required_cells": PACKAGE_RELEASE.RELEASE_MATRIX_GAME_CELL_COUNTS[game],
+        "passed_cells": PACKAGE_RELEASE.RELEASE_MATRIX_GAME_CELL_COUNTS[game],
+        "blockers": [],
+        "runtime_source_commit": runtime_source_commit,
+        "runtime_source_tree": runtime_source_tree,
+        "runtime_content_sha256": runtime_content_sha256,
+        "runtime_file_count": runtime_file_count,
+        "engine_commit": engine_commit,
+        "source_date_epoch": source_date_epoch,
+        "package_sha256": package_sha256,
+        "matrix_manifest_sha256": manifest_sha256,
+    }
+    return {
+        "kind": "release_matrix_game_acceptance",
+        "locator": PACKAGE_RELEASE.GAME_ACCEPTANCE_LOCATORS[game],
+        "sha256": PACKAGE_RELEASE.game_result_sha256(result),
+        "game": game,
+        "result": result,
+    }
+
+
+def approved_records(
+    version="2.0.0",
+    channel="stable",
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+    package_sha256=PACKAGE_SHA256,
+):
     rights = {
         "schema": 1,
         "approved": True,
@@ -38,10 +193,21 @@ def approved_records(version="2.0.0", channel="stable"):
         if channel == "stable"
         else PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES[channel]
     )
-    gates = {
-        name: {"passed": True, "evidence": [dict(EVIDENCE)]}
-        for name in required_gates
-    }
+    gates = {}
+    for name in required_gates:
+        evidence = dict(EVIDENCE)
+        if name in PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES:
+            evidence = game_evidence(
+                PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES[name],
+                runtime_source_commit,
+                runtime_source_tree,
+                runtime_content_sha256,
+                runtime_file_count,
+                engine_commit,
+                source_date_epoch,
+                package_sha256,
+            )
+        gates[name] = {"passed": True, "evidence": [evidence]}
     ledger = {
         "schema": 1,
         "approved": True,
@@ -56,6 +222,88 @@ def approved_records(version="2.0.0", channel="stable"):
         ledger["release_version"] = version
         ledger["tag"] = "v" + version
     return rights, ledger
+
+
+def game_documents(
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+    package_sha256=PACKAGE_SHA256,
+):
+    return {
+        game: PACKAGE_RELEASE.game_result_bytes(
+            game_evidence(
+                game,
+                runtime_source_commit,
+                runtime_source_tree,
+                runtime_content_sha256,
+                runtime_file_count,
+                engine_commit,
+                source_date_epoch,
+                package_sha256,
+            )["result"]
+        )
+        for game in PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES.values()
+    }
+
+
+def validate_records(
+    rights,
+    ledger,
+    version,
+    expected_tag,
+    runtime_source_commit=RUNTIME_SOURCE_COMMIT,
+    runtime_source_tree=RUNTIME_SOURCE_TREE,
+    runtime_content_sha256=RUNTIME_CONTENT_SHA256,
+    runtime_file_count=RUNTIME_FILE_COUNT,
+    engine_commit=ENGINE_COMMIT,
+    source_date_epoch=SOURCE_DATE_EPOCH,
+    package_sha256=PACKAGE_SHA256,
+    manifest=None,
+    documents=None,
+):
+    with mock.patch.object(
+        PACKAGE_RELEASE,
+        "validate_release_matrix_manifest",
+        side_effect=validate_matrix_fixture,
+    ):
+        return PACKAGE_RELEASE.validate_release_records(
+            rights,
+            ledger,
+            version,
+            expected_tag,
+            expected_engine_commit=engine_commit,
+            expected_epoch=source_date_epoch,
+            game_documents=(
+                game_documents(
+                    runtime_source_commit,
+                    runtime_source_tree,
+                    runtime_content_sha256,
+                    runtime_file_count,
+                    engine_commit,
+                    source_date_epoch,
+                    package_sha256,
+                )
+                if documents is None
+                else documents
+            ),
+            matrix_manifest_bytes=(
+                matrix_bytes(
+                    runtime_source_commit,
+                    runtime_source_tree,
+                    runtime_content_sha256,
+                    runtime_file_count,
+                    package_sha256,
+                    engine_commit,
+                    source_date_epoch,
+                )
+                if manifest is None
+                else manifest
+            ),
+        )
 
 
 def run_git(repo, *args):
@@ -208,7 +456,11 @@ class ReleaseGateTests(unittest.TestCase):
             "package_reproducibility",
             "source_integrity",
         }
-        open_gates = {"released_hosts", "migration_safety"}
+        open_gates = {
+            "released_hosts",
+            "migration_safety",
+            *PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES,
+        }
         self.assertEqual(
             {name for name, gate in ledger["gates"].items() if gate["passed"]},
             passed,
@@ -583,11 +835,451 @@ class ReleaseGateTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "unsupported prerelease channel"):
             PACKAGE_RELEASE.release_policy("2.0.0-preview.1")
 
+    def test_every_public_channel_requires_separate_game_acceptance(self):
+        expected = set(PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES)
+        self.assertEqual(len(expected), 3)
+        self.assertTrue(expected.issubset(PACKAGE_RELEASE.REQUIRED_RELEASE_GATES))
+        for channel, gates in PACKAGE_RELEASE.REQUIRED_PRERELEASE_GATES.items():
+            with self.subTest(channel=channel):
+                self.assertTrue(expected.issubset(gates))
+
+    def test_release_rejects_cross_game_or_untyped_game_evidence(self):
+        version = "2.0.0-alpha.1"
+        for value in ("yellow", True, None):
+            rights, ledger = approved_records(version, "alpha")
+            ledger["gates"]["red_runtime_acceptance"]["evidence"][0]["game"] = value
+            with self.subTest(game=value), self.assertRaisesRegex(
+                RuntimeError,
+                "invalid game acceptance evidence: red_runtime_acceptance",
+            ):
+                validate_records(
+                    rights, ledger, version, "v" + version
+                )
+
+    def test_game_results_are_distinct_and_content_bound(self):
+        rights, ledger = approved_records("2.0.0-alpha.1", "alpha")
+        evidence = [
+            ledger["gates"][name]["evidence"][0]
+            for name in PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES
+        ]
+        self.assertEqual(len({item["locator"] for item in evidence}), 3)
+        self.assertEqual(len({item["sha256"] for item in evidence}), 3)
+        validate_records(
+            rights, ledger, "2.0.0-alpha.1", "v2.0.0-alpha.1"
+        )
+
+        yellow = json.loads(json.dumps(
+            ledger["gates"]["yellow_runtime_acceptance"]["evidence"][0]
+        ))
+        yellow["game"] = "red"
+        ledger["gates"]["red_runtime_acceptance"]["evidence"] = [yellow]
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence: red_runtime_acceptance",
+        ):
+            validate_records(
+                rights, ledger, "2.0.0-alpha.1", "v2.0.0-alpha.1"
+            )
+
+    def test_game_gate_rejects_duplicates_missing_documents_and_tampering(self):
+        rights, ledger = approved_records()
+        red_gate = ledger["gates"]["red_runtime_acceptance"]
+        red_gate["evidence"].append(json.loads(json.dumps(red_gate["evidence"][0])))
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence: red_runtime_acceptance",
+        ):
+            validate_records(rights, ledger, "2.0.0", "v2.0.0")
+
+        rights, ledger = approved_records()
+        documents = game_documents()
+        documents.pop("blue")
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence: blue_runtime_acceptance",
+        ):
+            validate_records(
+                rights, ledger, "2.0.0", "v2.0.0", documents=documents
+            )
+
+        documents = game_documents()
+        documents["yellow"] += b" "
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence: yellow_runtime_acceptance",
+        ):
+            validate_records(
+                rights, ledger, "2.0.0", "v2.0.0", documents=documents
+            )
+
+    def test_game_result_bindings_reject_recomputed_mismatches(self):
+        mutations = (
+            ("runtime_source_commit", "a" * 40),
+            ("runtime_source_tree", "a" * 40),
+            ("runtime_content_sha256", "a" * 64),
+            ("runtime_file_count", 1),
+            ("engine_commit", sorted(PACKAGE_RELEASE.PINNED_ENGINES)[1]),
+            ("source_date_epoch", SOURCE_DATE_EPOCH + 1),
+            ("package_sha256", "a" * 64),
+            ("matrix_manifest_sha256", "a" * 64),
+            ("required_cells", 1),
+        )
+        for field, value in mutations:
+            rights, ledger = approved_records()
+            item = ledger["gates"]["red_runtime_acceptance"]["evidence"][0]
+            item["result"][field] = value
+            if field == "required_cells":
+                item["result"]["passed_cells"] = value
+            item["sha256"] = PACKAGE_RELEASE.game_result_sha256(item["result"])
+            documents = game_documents()
+            documents["red"] = PACKAGE_RELEASE.game_result_bytes(item["result"])
+            expected_error = (
+                "game acceptance bindings disagree"
+                if field == "runtime_file_count"
+                else "invalid game acceptance evidence: red_runtime_acceptance"
+            )
+            with self.subTest(field=field), self.assertRaisesRegex(
+                RuntimeError,
+                expected_error,
+            ):
+                validate_records(
+                    rights,
+                    ledger,
+                    "2.0.0",
+                    "v2.0.0",
+                    documents=documents,
+                )
+
+    def test_matrix_manifest_and_built_package_are_exact_bindings(self):
+        rights, ledger = approved_records()
+        altered = matrix_manifest()
+        altered["release_eligible"] = False
+        altered_bytes = (json.dumps(
+            altered, separators=(",", ":"), sort_keys=True
+        ) + "\n").encode()
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence",
+        ):
+            validate_records(
+                rights,
+                ledger,
+                "2.0.0",
+                "v2.0.0",
+                manifest=altered_bytes,
+            )
+
+        PACKAGE_RELEASE.verify_accepted_package(
+            {"package_sha256": PACKAGE_SHA256}, PACKAGE_SHA256
+        )
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "built package does not match accepted runtime package",
+        ):
+            PACKAGE_RELEASE.verify_accepted_package(
+                {"package_sha256": PACKAGE_SHA256}, "a" * 64
+            )
+
+        accepted_runtime = {
+            "runtime_content_sha256": RUNTIME_CONTENT_SHA256,
+            "runtime_file_count": RUNTIME_FILE_COUNT,
+        }
+        runtime_content = {
+            "algorithm": "sha256-framed-path-content-v1",
+            "sha256": RUNTIME_CONTENT_SHA256,
+            "file_count": RUNTIME_FILE_COUNT,
+        }
+        PACKAGE_RELEASE.verify_accepted_runtime(
+            accepted_runtime, runtime_content
+        )
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "tagged runtime content differs from accepted source",
+        ):
+            PACKAGE_RELEASE.verify_accepted_runtime(
+                accepted_runtime,
+                {**runtime_content, "sha256": "a" * 64},
+            )
+
+    def test_release_matrix_validator_dependency_fails_closed(self):
+        unavailable = {
+            "release_matrix": None,
+            "release_matrix.model": None,
+            "tools.release_matrix": None,
+            "tools.release_matrix.model": None,
+        }
+        with mock.patch.dict(sys.modules, unavailable):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "canonical release-matrix validator is unavailable",
+            ):
+                PACKAGE_RELEASE.validate_release_matrix_manifest(
+                    matrix_manifest()
+                )
+
+    def test_release_matrix_validator_rejects_ambient_unqualified_package(self):
+        ambient_package = types.ModuleType("release_matrix")
+        ambient_package.__path__ = []
+        ambient_model = types.ModuleType("release_matrix.model")
+        ambient_calls = []
+
+        class AmbientMatrixModelError(ValueError):
+            pass
+
+        def ambient_validate(value):
+            ambient_calls.append(value)
+            return value
+
+        ambient_model.MatrixModelError = AmbientMatrixModelError
+        ambient_model.validate_manifest = ambient_validate
+        with mock.patch.dict(
+            sys.modules,
+            {
+                "release_matrix": ambient_package,
+                "release_matrix.model": ambient_model,
+            },
+        ):
+            with self.assertRaisesRegex(
+                RuntimeError,
+                "canonical release-matrix validator is unavailable",
+            ):
+                PACKAGE_RELEASE.validate_release_matrix_manifest(
+                    matrix_manifest()
+                )
+        self.assertEqual(ambient_calls, [])
+
+    def test_matrix_rejects_fully_recomputed_incomplete_or_unknown_cell_sets(self):
+        mutations = (
+            (
+                "one cell per game",
+                lambda manifest: manifest["required_cell_set"].update({
+                    "required_cell_count": 3,
+                    "required_cells_by_game": {
+                        "red": 1,
+                        "blue": 1,
+                        "yellow": 1,
+                    },
+                }),
+            ),
+            (
+                "unknown manifest input",
+                lambda manifest: manifest["required_cell_set"].update(
+                    manifest_input_sha256="a" * 64
+                ),
+            ),
+            (
+                "unknown required cells",
+                lambda manifest: manifest["required_cell_set"].update(
+                    required_cell_ids_sha256="a" * 64
+                ),
+            ),
+        )
+        for label, mutate in mutations:
+            manifest = matrix_manifest()
+            mutate(manifest)
+            manifest_bytes = (json.dumps(
+                manifest, separators=(",", ":"), sort_keys=True
+            ) + "\n").encode()
+            manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+            rights, ledger = approved_records()
+            documents = {}
+            game_counts = manifest["required_cell_set"]["required_cells_by_game"]
+            for gate, game in PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES.items():
+                item = ledger["gates"][gate]["evidence"][0]
+                result = item["result"]
+                result["required_cells"] = game_counts[game]
+                result["passed_cells"] = game_counts[game]
+                result["matrix_manifest_sha256"] = manifest_sha256
+                item["sha256"] = PACKAGE_RELEASE.game_result_sha256(result)
+                documents[game] = PACKAGE_RELEASE.game_result_bytes(result)
+            with self.subTest(label=label), self.assertRaisesRegex(
+                RuntimeError,
+                "invalid game acceptance evidence",
+            ):
+                validate_records(
+                    rights,
+                    ledger,
+                    "2.0.0",
+                    "v2.0.0",
+                    manifest=manifest_bytes,
+                    documents=documents,
+                )
+
+        manifest = matrix_manifest()
+        manifest["required_cell_set"]["required_cells_by_game"] = {
+            game: float(count)
+            for game, count in PACKAGE_RELEASE.RELEASE_MATRIX_GAME_CELL_COUNTS.items()
+        }
+        manifest_bytes = (json.dumps(
+            manifest, separators=(",", ":"), sort_keys=True
+        ) + "\n").encode()
+        manifest_sha256 = hashlib.sha256(manifest_bytes).hexdigest()
+        rights, ledger = approved_records()
+        documents = {}
+        for gate, game in PACKAGE_RELEASE.GAME_ACCEPTANCE_GATES.items():
+            item = ledger["gates"][gate]["evidence"][0]
+            item["result"]["matrix_manifest_sha256"] = manifest_sha256
+            item["sha256"] = PACKAGE_RELEASE.game_result_sha256(item["result"])
+            documents[game] = PACKAGE_RELEASE.game_result_bytes(item["result"])
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "invalid game acceptance evidence",
+        ):
+            validate_records(
+                rights,
+                ledger,
+                "2.0.0",
+                "v2.0.0",
+                manifest=manifest_bytes,
+                documents=documents,
+            )
+
+    def test_game_result_rejects_private_locator_and_stale_hash(self):
+        rights, ledger = approved_records()
+        red = ledger["gates"]["red_runtime_acceptance"]["evidence"][0]
+        for mutation in (
+            lambda item: item.update(locator=r"C:\Users\person\Pokemon ROMs\red.gb"),
+            lambda item: item["result"].update(passed_cells=99),
+            lambda item: item["result"].update(release_ready=1),
+            lambda item: item["result"].update(schema=True),
+        ):
+            candidate = json.loads(json.dumps(red))
+            mutation(candidate)
+            ledger["gates"]["red_runtime_acceptance"]["evidence"] = [candidate]
+            with self.assertRaisesRegex(
+                RuntimeError,
+                (
+                    "(?:incomplete gates|invalid game acceptance evidence): "
+                    "red_runtime_acceptance"
+                ),
+            ):
+                validate_records(
+                    rights, ledger, "2.0.0", "v2.0.0"
+                )
+        ledger["gates"]["red_runtime_acceptance"]["evidence"] = [red]
+
+    def test_generic_evidence_locator_is_public_safe_and_fail_closed(self):
+        safe = (
+            "evidence://release/test-report",
+            (
+                "private-evidence://source-integrity/"
+                "2026-08-22-cfc045b/source-integrity.json"
+            ),
+            "docs/release-evidence/alpha-readiness-2026-08-22.json",
+            (
+                "https://github.com/BoLayerDev/kanto-first-person/"
+                "releases/tag/v2.0.0"
+            ),
+        )
+        for locator in safe:
+            with self.subTest(locator=locator):
+                self.assertTrue(PACKAGE_RELEASE.valid_evidence_locator(locator))
+
+        synthetic_windows_path = (
+            "C:" + "\\Users\\person\\Pokemon ROMs\\red.gb"
+        )
+        unsafe = (
+            synthetic_windows_path,
+            "evidence://release/" + synthetic_windows_path,
+            "/home/person/roms/red.gb",
+            "private-evidence:///home/person/roms/red.gb",
+            "private-evidence://runtime/roms/red.gb",
+            "docs/release-evidence/cache/state.json",
+            "docs/release-evidence/cache./state.json",
+            "docs/release-evidence/red.sav",
+            "docs/release-evidence/red.sav.",
+            "docs/release-evidence/CON.json",
+            "docs/release-evidence/report%2Ejson",
+            "evidence://release/C%3A%2FUsers%2Fperson%2Fred.gb",
+            "file:" + "///home/person/red.gb",
+            "\\\\server\\share\\red.sav",
+            "evidence://release/" + "password" + "=synthetic-value",
+            "evidence://release/ghp_" + "A" * 24,
+            "evidence://release/github_pat_" + "A" * 24,
+            "evidence://release/sk-" + "A" * 24,
+            "evidence://release/AKIA" + "A" * 16,
+            "evidence://release/-----BEGIN-PRIVATE-KEY-----",
+            "https://user:" + "synthetic@example.com/report.json",
+            " https://example.com/report.json",
+            "https://example.com/report.json ",
+            "https://example.com:/report.json",
+            "https://example.com/report.json?",
+            "https://example.com/report.json#",
+            True,
+            None,
+        )
+        for locator in unsafe:
+            with self.subTest(locator=locator):
+                self.assertFalse(PACKAGE_RELEASE.valid_evidence_locator(locator))
+
+        rights, ledger = approved_records("2.0.0-alpha.1", "alpha")
+        ledger["gates"]["migration_safety"]["evidence"][0][
+            "locator"
+        ] = synthetic_windows_path
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "incomplete gates: migration_safety",
+        ):
+            validate_records(
+                rights, ledger, "2.0.0-alpha.1", "v2.0.0-alpha.1"
+            )
+
+    def test_release_approval_timestamp_is_a_real_utc_instant(self):
+        self.assertTrue(
+            PACKAGE_RELEASE.valid_utc_timestamp("2024-02-29T23:59:59Z")
+        )
+        invalid = (
+            "2026-99-99T99:99:99Z",
+            "2026-02-29T00:00:00Z",
+            "2026-01-01T24:00:00Z",
+            "2026-01-01T23:59:60Z",
+            "2026-01-01T00:00:00+00:00",
+            True,
+            None,
+        )
+        for timestamp in invalid:
+            with self.subTest(timestamp=timestamp):
+                self.assertFalse(PACKAGE_RELEASE.valid_utc_timestamp(timestamp))
+
+        rights, ledger = approved_records()
+        ledger["approved_at"] = "2026-99-99T99:99:99Z"
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "gate approval timestamp is invalid",
+        ):
+            validate_records(rights, ledger, "2.0.0", "v2.0.0")
+
+    def test_release_records_reject_boolean_schema_versions(self):
+        rights, ledger = approved_records()
+        rights["schema"] = True
+        with self.assertRaisesRegex(RuntimeError, "rights approval schema"):
+            validate_records(
+                rights, ledger, "2.0.0", "v2.0.0"
+            )
+
+        rights, ledger = approved_records()
+        ledger["schema"] = True
+        with self.assertRaisesRegex(RuntimeError, "gate ledger schema"):
+            validate_records(
+                rights, ledger, "2.0.0", "v2.0.0"
+            )
+
+    def test_release_rejects_generic_evidence_for_a_game_gate(self):
+        rights, ledger = approved_records()
+        ledger["gates"]["blue_runtime_acceptance"]["evidence"] = [dict(EVIDENCE)]
+        with self.assertRaisesRegex(
+            RuntimeError,
+            "incomplete gates: blue_runtime_acceptance",
+        ):
+            validate_records(
+                rights, ledger, "2.0.0", "v2.0.0"
+            )
+
     def test_approval_schema_rejects_weak_hashes_and_evidence(self):
         rights, ledger = approved_records()
         rights["evidence_sha256"] = "A" * 64
         with self.assertRaisesRegex(RuntimeError, "rights evidence hash"):
-            PACKAGE_RELEASE.validate_release_records(
+            validate_records(
                 rights, ledger, "2.0.0", "v2.0.0"
             )
 
@@ -596,13 +1288,15 @@ class ReleaseGateTests(unittest.TestCase):
             None
         ]
         with self.assertRaisesRegex(RuntimeError, "incomplete gates"):
-            PACKAGE_RELEASE.validate_release_records(
+            validate_records(
                 rights, ledger, "2.0.0", "v2.0.0"
             )
 
     def test_complete_signed_tag_approval_uses_tagged_records(self):
+        commit = TAG_COMMIT
         rights, ledger = approved_records()
-        commit = "d" * 40
+        documents = game_documents()
+        manifest = matrix_bytes()
 
         def fake_run(*args, cwd, env=None):
             command = tuple(args[1:])
@@ -614,6 +1308,12 @@ class ReleaseGateTests(unittest.TestCase):
                 return commit
             if command == ("verify-tag", "--raw", "v2.0.0"):
                 return "[GNUPG:] VALIDSIG " + FINGERPRINT + " 2026"
+            if command == ("rev-parse", f"{RUNTIME_SOURCE_COMMIT}^{{tree}}"):
+                return RUNTIME_SOURCE_TREE
+            if command == (
+                "merge-base", "--is-ancestor", RUNTIME_SOURCE_COMMIT, commit
+            ):
+                return ""
             raise AssertionError(command)
 
         def fake_run_bytes(*args, cwd):
@@ -622,22 +1322,43 @@ class ReleaseGateTests(unittest.TestCase):
                 return json.dumps(rights, sort_keys=True).encode()
             if target.endswith("release-gates.json"):
                 return json.dumps(ledger, sort_keys=True).encode()
+            if target.endswith("docs/release-matrix/matrix-v1.json"):
+                return manifest
+            for game, locator in PACKAGE_RELEASE.GAME_ACCEPTANCE_LOCATORS.items():
+                if target.endswith(locator):
+                    return documents[game]
             raise AssertionError(target)
 
+        accepted_runtime = {
+            "algorithm": "sha256-framed-path-content-v1",
+            "sha256": RUNTIME_CONTENT_SHA256,
+            "file_count": RUNTIME_FILE_COUNT,
+        }
         with mock.patch.object(PACKAGE_RELEASE, "run", side_effect=fake_run), \
                 mock.patch.object(
                     PACKAGE_RELEASE, "run_bytes", side_effect=fake_run_bytes
+                ), mock.patch.object(
+                    PACKAGE_RELEASE,
+                    "runtime_content_fingerprint_from_ref",
+                    return_value=accepted_runtime,
+                ), mock.patch.object(
+                    PACKAGE_RELEASE,
+                    "validate_release_matrix_manifest",
+                    side_effect=validate_matrix_fixture,
                 ):
             approval = PACKAGE_RELEASE.require_release_approval(
-                Path("signed-source"), "2.0.0", commit, FINGERPRINT
+                Path("signed-source"), "2.0.0", commit, FINGERPRINT,
+                ENGINE_COMMIT, SOURCE_DATE_EPOCH,
             )
         self.assertEqual(approval["tag_commit"], commit)
         self.assertEqual(approval["signing_key_fingerprint"], FINGERPRINT)
 
     def test_complete_signed_alpha_uses_tagged_prerelease_ledger(self):
         version = "2.0.0-alpha.1"
-        rights, ledger = approved_records(version, "alpha")
         commit = "e" * 40
+        rights, ledger = approved_records(version, "alpha")
+        documents = game_documents()
+        manifest = matrix_bytes()
 
         def fake_run(*args, cwd, env=None):
             command = tuple(args[1:])
@@ -649,6 +1370,12 @@ class ReleaseGateTests(unittest.TestCase):
                 return commit
             if command == ("verify-tag", "--raw", "v" + version):
                 return "[GNUPG:] VALIDSIG " + FINGERPRINT + " 2026"
+            if command == ("rev-parse", f"{RUNTIME_SOURCE_COMMIT}^{{tree}}"):
+                return RUNTIME_SOURCE_TREE
+            if command == (
+                "merge-base", "--is-ancestor", RUNTIME_SOURCE_COMMIT, commit
+            ):
+                return ""
             raise AssertionError(command)
 
         def fake_run_bytes(*args, cwd):
@@ -657,14 +1384,33 @@ class ReleaseGateTests(unittest.TestCase):
                 return json.dumps(rights, sort_keys=True).encode()
             if target.endswith("prerelease-gates.json"):
                 return json.dumps(ledger, sort_keys=True).encode()
+            if target.endswith("docs/release-matrix/matrix-v1.json"):
+                return manifest
+            for game, locator in PACKAGE_RELEASE.GAME_ACCEPTANCE_LOCATORS.items():
+                if target.endswith(locator):
+                    return documents[game]
             raise AssertionError(target)
 
+        accepted_runtime = {
+            "algorithm": "sha256-framed-path-content-v1",
+            "sha256": RUNTIME_CONTENT_SHA256,
+            "file_count": RUNTIME_FILE_COUNT,
+        }
         with mock.patch.object(PACKAGE_RELEASE, "run", side_effect=fake_run), \
                 mock.patch.object(
                     PACKAGE_RELEASE, "run_bytes", side_effect=fake_run_bytes
+                ), mock.patch.object(
+                    PACKAGE_RELEASE,
+                    "runtime_content_fingerprint_from_ref",
+                    return_value=accepted_runtime,
+                ), mock.patch.object(
+                    PACKAGE_RELEASE,
+                    "validate_release_matrix_manifest",
+                    side_effect=validate_matrix_fixture,
                 ):
             approval = PACKAGE_RELEASE.require_release_approval(
-                Path("signed-source"), version, commit, FINGERPRINT
+                Path("signed-source"), version, commit, FINGERPRINT,
+                ENGINE_COMMIT, SOURCE_DATE_EPOCH,
             )
         self.assertEqual(approval["channel"], "alpha")
         self.assertEqual(approval["tag"], "v" + version)
@@ -672,12 +1418,21 @@ class ReleaseGateTests(unittest.TestCase):
     def test_release_needs_an_external_trusted_signer(self):
         with self.assertRaisesRegex(RuntimeError, "trusted signing-key"):
             PACKAGE_RELEASE.require_release_approval(
-                Path("source"), "2.0.0", "d" * 40, None
+                Path("source"), "2.0.0", TAG_COMMIT, None,
+                ENGINE_COMMIT, SOURCE_DATE_EPOCH,
             )
 
     def test_strict_json_rejects_duplicate_keys(self):
         with self.assertRaisesRegex(ValueError, "duplicate JSON key"):
             PACKAGE_RELEASE.strict_json_loads('{"permissions":[],"permissions":["filesystem"]}')
+        for constant in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(constant=constant), self.assertRaisesRegex(
+                ValueError,
+                "non-standard JSON constant",
+            ):
+                PACKAGE_RELEASE.strict_json_loads(
+                    '{"release_eligible":true,"extra":' + constant + "}"
+                )
 
     def test_manifest_rejects_unsafe_artifact_components(self):
         self.assertEqual(
@@ -1014,6 +1769,38 @@ class ReleaseGateTests(unittest.TestCase):
                     root, ["a.txt", "b.txt"]
                 )["sha256"],
             )
+
+    def test_frozen_git_ref_fingerprint_matches_its_exact_runtime_blobs(self):
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            repo, commit = create_minimal_runtime_repo(root)
+            staging = root / "staging"
+            staging.mkdir()
+            with minimal_runtime_constants():
+                files = PACKAGE_RELEASE.copy_runtime_from_ref(
+                    repo, commit, staging
+                )
+                expected = PACKAGE_RELEASE.runtime_content_fingerprint(
+                    staging, files
+                )
+                actual = PACKAGE_RELEASE.runtime_content_fingerprint_from_ref(
+                    repo, commit
+                )
+                self.assertEqual(actual, expected)
+
+                (repo / "src" / "Main.lua").write_bytes(b"return false\n")
+                run_git(repo, "add", "src/Main.lua")
+                run_git(
+                    repo,
+                    "commit",
+                    "--quiet",
+                    "-m",
+                    "test(fixture): change runtime",
+                )
+                changed = PACKAGE_RELEASE.runtime_content_fingerprint_from_ref(
+                    repo, run_git(repo, "rev-parse", "HEAD")
+                )
+                self.assertNotEqual(changed["sha256"], expected["sha256"])
 
     def test_deterministic_zip_ignores_mtime_and_input_order(self):
         with tempfile.TemporaryDirectory() as raw:

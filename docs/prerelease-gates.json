@@ -24,6 +24,10 @@
       ],
       "passed": true
     },
+    "blue_runtime_acceptance": {
+      "evidence": [],
+      "passed": false
+    },
     "companion_contracts": {
       "evidence": [
         {
@@ -68,6 +72,10 @@
       ],
       "passed": true
     },
+    "red_runtime_acceptance": {
+      "evidence": [],
+      "passed": false
+    },
     "source_integrity": {
       "evidence": [
         {
@@ -77,6 +85,10 @@
         }
       ],
       "passed": true
+    },
+    "yellow_runtime_acceptance": {
+      "evidence": [],
+      "passed": false
     }
   },
   "release_version": "2.0.0-alpha.1",

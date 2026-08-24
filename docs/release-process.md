@@ -12,10 +12,33 @@ required for every public package.
 | Release candidate | `2.0.0-rc.1` | `docs/prerelease-gates.json` | Prerelease |
 | Stable | `2.0.0` | `docs/release-gates.json` | Release |
 
-All channels require approved asset rights and compatible owner-published host
-releases. Alpha also requires automated tests, companion contract evidence,
-migration safety, reproducible packaging, source integrity, and a complete
-known-limitations record. Later channels add
+All channels require approved asset rights, compatible owner-published host
+releases, and separate runtime acceptance for Pokemon Red, Blue, and Yellow.
+Evidence for one game cannot approve another game. Each game record must cover
+the required hosts, engine pins, quality tiers, claimed platforms, visual and
+lifecycle checks, performance, transitions, configuration migration, rollback,
+and uninstall integrity. Synthetic tests can verify the runner but cannot replace
+private validation with a legally owned game import. Public records must not
+contain ROMs, saves, caches, private paths, or raw private captures.
+The signed ledger binds each game to its own public-safe result at
+`docs/release-matrix/game-acceptance/<game>.json`. The embedded result has an
+exact canonical SHA-256, a complete positive cell count, no blockers, and exact
+source, package, and matrix-manifest bindings. A relabeled or reused result fails
+validation. The three game records must bind the same frozen runtime commit,
+tree, framed runtime-content SHA-256, file count, pinned engine, build epoch,
+candidate package, and release-eligible matrix manifest. The frozen runtime
+commit must be an ancestor of the signed evidence tag. The manifest must name
+candidate-specific matrix-input and cell-set SHA-256 values derived by the
+canonical release-matrix model. A private candidate cannot reuse public
+synthetic fixture hashes. The derived set must contain exactly 17,820 cells,
+with 5,940 cells for each game. The packager reads each fixed result and the
+manifest from the signed tag, validates the full matrix model, and checks their
+exact bytes and hashes. It rejects the final `.modpkg` unless both its runtime
+content and package SHA-256 equal the candidate that passed runtime acceptance.
+
+Alpha also requires automated tests, companion contract evidence, migration
+safety, reproducible packaging, source integrity, and a complete known-
+limitations record. Later channels add
 visual, parity, platform, performance, leak, uninstall, engine, and community
 evidence. A prerelease ledger cannot approve a stable package.
 

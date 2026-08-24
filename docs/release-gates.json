@@ -26,6 +26,10 @@
       "evidence": [],
       "passed": false
     },
+    "blue_runtime_acceptance": {
+      "evidence": [],
+      "passed": false
+    },
     "engine_reaudit": {
       "evidence": [
         {
@@ -48,11 +52,19 @@
       "evidence": [],
       "passed": false
     },
+    "red_runtime_acceptance": {
+      "evidence": [],
+      "passed": false
+    },
     "uninstall_integrity": {
       "evidence": [],
       "passed": false
     },
     "visual_acceptance": {
+      "evidence": [],
+      "passed": false
+    },
+    "yellow_runtime_acceptance": {
       "evidence": [],
       "passed": false
     }

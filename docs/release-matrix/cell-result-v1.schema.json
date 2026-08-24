@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BoLayerDev/kanto-first-person/blob/v2-rewrite/docs/release-matrix/cell-result-v1.schema.json",
+  "title": "KFP release matrix cell result v1",
+  "description": "One terminal result bound to one immutable matrix cell and attempt.",
+  "$comment": "Native validation enforces the manual/objective boundary. Exact cell identity, required evidence order, chronology, and verdict hash equality MUST also pass tools.release_matrix.model.validate_cell_result and LedgerStore.inspect_attempt.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "schema_version",
+    "cell_id",
+    "input_fingerprint",
+    "attempt_id",
+    "started_at",
+    "finished_at",
+    "status",
+    "cleanup",
+    "objective",
+    "evidence",
+    "manual_verdict_sha256",
+    "failure_code"
+  ],
+  "properties": {
+    "schema": { "const": "kfp.release-matrix.cell-result.v1" },
+    "schema_version": { "const": 1 },
+    "cell_id": { "$ref": "#/$defs/cell_id" },
+    "input_fingerprint": { "$ref": "#/$defs/sha256" },
+    "attempt_id": { "$ref": "#/$defs/attempt_id" },
+    "started_at": { "$ref": "#/$defs/timestamp" },
+    "finished_at": { "$ref": "#/$defs/timestamp" },
+    "status": {
+      "enum": ["PASS", "FAIL", "BLOCKED", "AMBIGUOUS", "MISSING", "SKIPPED", "NOT_RUN"]
+    },
+    "cleanup": { "enum": ["PASS", "FAIL", "UNKNOWN", "NOT_RUN"] },
+    "objective": { "type": "boolean" },
+    "evidence": {
+      "type": "array",
+      "maxItems": 32,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/evidence" },
+      "allOf": [
+        { "contains": { "type": "object", "properties": { "kind": { "const": "environment-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "install-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "state-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "lifecycle-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "scene-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "packet-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "config-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "audio-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "sanitized-log-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "capture-index" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "performance-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "uncached-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "transition-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "soak-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "resource-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "migration-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "rollback-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "uninstall-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "reproducibility-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "privacy-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "schema-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "cleanup-report" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "visual-review-packet" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "manual-verdict" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 },
+        { "contains": { "type": "object", "properties": { "kind": { "const": "physical-review-packet" } }, "required": ["kind"] }, "minContains": 0, "maxContains": 1 }
+      ]
+    },
+    "manual_verdict_sha256": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/sha256" }
+      ]
+    },
+    "failure_code": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/id" }
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "status": { "const": "PASS" } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "cleanup": { "const": "PASS" },
+          "evidence": { "minItems": 1 },
+          "failure_code": { "type": "null" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "not": { "const": "PASS" } } },
+        "required": ["status"]
+      },
+      "then": {
+        "properties": {
+          "failure_code": { "$ref": "#/$defs/id" }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "objective": { "const": true } },
+        "required": ["objective"]
+      },
+      "then": {
+        "properties": {
+          "manual_verdict_sha256": { "type": "null" },
+          "evidence": {
+            "not": {
+              "contains": {
+                "type": "object",
+                "properties": { "kind": { "const": "manual-verdict" } },
+                "required": ["kind"]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "objective": { "const": false },
+          "status": { "const": "PASS" }
+        },
+        "required": ["objective", "status"]
+      },
+      "then": {
+        "properties": {
+          "manual_verdict_sha256": { "$ref": "#/$defs/sha256" },
+          "evidence": {
+            "allOf": [
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": { "kind": { "const": "manual-verdict" } },
+                  "required": ["kind"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              },
+              {
+                "contains": {
+                  "type": "object",
+                  "properties": {
+                    "kind": {
+                      "enum": ["visual-review-packet", "physical-review-packet"]
+                    }
+                  },
+                  "required": ["kind"]
+                },
+                "minContains": 1,
+                "maxContains": 1
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 96,
+      "pattern": "^[a-z0-9]+(?:[._-][a-z0-9]+)*$"
+    },
+    "sha256": {
+      "type": "string",
+      "minLength": 64,
+      "maxLength": 64,
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "cell_id": {
+      "type": "string",
+      "minLength": 69,
+      "maxLength": 69,
+      "pattern": "^cell-[0-9a-f]{64}$"
+    },
+    "attempt_id": {
+      "type": "string",
+      "minLength": 72,
+      "maxLength": 72,
+      "pattern": "^attempt-[0-9a-f]{64}$"
+    },
+    "timestamp": {
+      "type": "string",
+      "minLength": 20,
+      "maxLength": 20,
+      "format": "date-time",
+      "pattern": "^(?:(?:(?:[0-9]{3}[1-9]|[0-9]{2}[1-9][0-9]|[0-9][1-9][0-9]{2}|[1-9][0-9]{3})-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12][0-9]|3[01])|(?:0[469]|11)-(?:0[1-9]|[12][0-9]|30)|02-(?:0[1-9]|1[0-9]|2[0-8])))|(?:(?:[0-9]{2}(?:0[48]|[2468][048]|[13579][26])|(?:0[48]|[2468][048]|[13579][26])00)-02-29))T(?:[01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "sha256", "bytes"],
+      "properties": {
+        "kind": { "$ref": "#/$defs/evidence_kind" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "bytes": { "type": "integer", "minimum": 1, "maximum": 1099511627776 }
+      }
+    },
+    "evidence_kind": {
+      "enum": ["environment-report","install-report","state-report","lifecycle-report","scene-report","packet-report","config-report","audio-report","sanitized-log-report","capture-index","performance-report","uncached-report","transition-report","soak-report","resource-report","migration-report","rollback-report","uninstall-report","reproducibility-report","privacy-report","schema-report","cleanup-report","visual-review-packet","manual-verdict","physical-review-packet"]
+    }
+  }
+}

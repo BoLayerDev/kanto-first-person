@@ -1,0 +1,614 @@
+{
+  "schema": "kfp.release-matrix.manifest.v1",
+  "schema_version": 1,
+  "manifest_id": "kfp-alpha-release-matrix-v1",
+  "created_at": "2026-08-23T12:00:00Z",
+  "mode": "PUBLIC_SYNTHETIC",
+  "release_eligible": false,
+  "candidate": {
+    "runtime_source_commit": "f84679c70c64ac7ee3380c2f3185c6ae237c6da9",
+    "runtime_source_tree": "132490d94e75fe9abd1c268bc1bc896a93e93ff8",
+    "runtime_content_sha256": "957f5ae3025adacf4fc4c57c347854814d955e22f174eaa3603957391f370ad6",
+    "package_kind": "SYNTHETIC_FIXTURE",
+    "package_sha256": "9dbfe518f33edf9c8a8be2a0bea5e0cc37f3cda7da1b3a19a90636362f1e7647",
+    "adapter_version": "1.0.0",
+    "adapter_sha256": "6f68da1e15edfe54bbbde627acf4e9cebdca02a591c05c6833832506d5c5ca34"
+  },
+  "binding_acquisition": {
+    "schema": "kfp.release-matrix.binding-acquisition.v1",
+    "schema_version": 1,
+    "state": "PUBLIC_SYNTHETIC",
+    "binding_count": 52,
+    "binding_set_sha256": "ba19faba48c1a463b23ffdc3474225fad85cfe0f9eaac8985508a41fcb90796e",
+    "acquisition_record_schema": null,
+    "acquisition_record_sha256": null
+  },
+  "required_cell_set": {
+    "schema": "kfp.release-matrix.required-cell-set.v1",
+    "schema_version": 1,
+    "manifest_input_sha256": "9a751514cbd49e160eb9a874850622fac886666c6a8285d6df6be57422a5f7db",
+    "required_cell_count": 17820,
+    "required_cell_ids_sha256": "e952178256e2a6e00aad0a36feff833bfac2532726d9d3096da4a2453d3c0591",
+    "required_cells_by_game": {
+      "red": 5940,
+      "blue": 5940,
+      "yellow": 5940
+    }
+  },
+  "catalogs": {
+    "games": [
+      {
+        "id": "red",
+        "label": "Pokemon Red",
+        "adapter_id": "red-opaque-v1",
+        "adapter_sha256": "16b741d9919f92c6329bc1bc90d9478291e1e10aff045d763379945c2147b48a",
+        "private_input": "OPAQUE_RUNTIME_ONLY"
+      },
+      {
+        "id": "blue",
+        "label": "Pokemon Blue",
+        "adapter_id": "blue-opaque-v1",
+        "adapter_sha256": "2ee8b7a40eb2fb540d06c7f28dfa273ac406df5cca5fcf0319a2c15824593237",
+        "private_input": "OPAQUE_RUNTIME_ONLY"
+      },
+      {
+        "id": "yellow",
+        "label": "Pokemon Yellow",
+        "adapter_id": "yellow-opaque-v1",
+        "adapter_sha256": "8dad65257bb2a1454d77df778a5885b9a88e9cfeacc9fc6c69b9acb4103dda6e",
+        "private_input": "OPAQUE_RUNTIME_ONLY"
+      }
+    ],
+    "hosts": [
+      {
+        "id": "battle-art-1.9.8",
+        "label": "Battle Art 1.9.8",
+        "version": "1.9.8",
+        "source_commit": "6586ef5f7a86c1bfefcea931bd6571538c9f8d15",
+        "package_sha256": "28c06d4153087be28891090d2d85d039f7cd81ba69f74c56a069016b3adf58bd",
+        "released": true,
+        "eligible": true,
+        "exclusion_reason": null
+      },
+      {
+        "id": "dramaless-v2.0.3",
+        "label": "Dramaless 2.0.3",
+        "version": "2.0.3",
+        "source_commit": "23750150ae6f939e09f9ac6ca6d80c382ec9997a",
+        "package_sha256": "89f6fa078c78a6f6e34c98074ea50ff4f971eead992f27684b52eae0f4f5a1a2",
+        "released": true,
+        "eligible": false,
+        "exclusion_reason": "The released package lacks the approved companion runtime"
+      }
+    ],
+    "engines": [
+      {
+        "id": "gen1recomp-v0.2.17",
+        "label": "Gen1recomp 0.2.17",
+        "version": "0.2.17",
+        "source_commit": "44f4680b24823629489ed5a2adad648d0dceb640",
+        "runtime_sha256": "78fb9161ee49bc5a4bf8eadeba537aad5831253006abf30eb5cb83cb57699408",
+        "binding_kind": "SYNTHETIC_FIXTURE"
+      },
+      {
+        "id": "gen1recomp-v0.2.18",
+        "label": "Gen1recomp 0.2.18",
+        "version": "0.2.18",
+        "source_commit": "70d7b6383e2c005857013dc897fd096886b08f0b",
+        "runtime_sha256": "3d0efef014b8fba68773662a3b5015424c2c3888bc65f08620e7505f272a5aaa",
+        "binding_kind": "SYNTHETIC_FIXTURE"
+      },
+      {
+        "id": "gen1recomp-v0.2.19",
+        "label": "Gen1recomp 0.2.19",
+        "version": "0.2.19",
+        "source_commit": "116a6ba450dd65f25c9be150952fc3c27be904c0",
+        "runtime_sha256": "5f1acfc7d2199b0f79f72b2caabfbca924f04456a027691f2f4f191cc201b404",
+        "binding_kind": "SYNTHETIC_FIXTURE"
+      },
+      {
+        "id": "gen1recomp-dev-baseline",
+        "label": "Gen1recomp dev baseline",
+        "version": "dev-baseline",
+        "source_commit": "06e06e305bbcefe97c216a31bb25265ffb5e6b18",
+        "runtime_sha256": "f07e1493e00b6da4eb6048c7e03b5831f650bef5133ad3cf2d2691617ed8a3de",
+        "binding_kind": "SYNTHETIC_FIXTURE"
+      },
+      {
+        "id": "gen1recomp-dev-current",
+        "label": "Gen1recomp dev current",
+        "version": "dev-current",
+        "source_commit": "478e3bf8ebf7646edfda88320c6472cf32db2e67",
+        "runtime_sha256": "86e84e35e3b9c9f6ddb1adf22bc6373e775af4b445efdcb3fc23e4e52b9934d5",
+        "binding_kind": "SYNTHETIC_FIXTURE"
+      }
+    ],
+    "tiers": [
+      { "id": "low", "label": "Low" },
+      { "id": "balanced", "label": "Balanced" },
+      { "id": "high", "label": "High" }
+    ],
+    "platforms": [
+      {
+        "id": "windows",
+        "label": "Windows",
+        "claimed": true,
+        "adapter_id": "windows-v1",
+        "adapter_sha256": "35e2cc3225d324ccad076216a18cdffd9e4e2c740eaab312396e69090fbbfe63",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "linux-x86-64",
+        "label": "Linux x86 64",
+        "claimed": true,
+        "adapter_id": "linux-x86-64-v1",
+        "adapter_sha256": "b597a9b201de8e9763858382cd3e0795e1b83b888e72f3fe9d995d46f55df4d9",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "linux-arm64",
+        "label": "Linux arm64",
+        "claimed": true,
+        "adapter_id": "linux-arm64-v1",
+        "adapter_sha256": "1ed48cefbe531d0c4211523a05a9cf5ba4c3e3101fd289f41c4c3af3b4fe743b",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "macos-x86-64",
+        "label": "macOS x86 64",
+        "claimed": true,
+        "adapter_id": "macos-x86-64-v1",
+        "adapter_sha256": "bc9aa5b97ffd94c7a8be0063f88b9277970375d3a8b725b7e99ccd1cb7a51bb8",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "macos-arm64",
+        "label": "macOS arm64",
+        "claimed": true,
+        "adapter_id": "macos-arm64-v1",
+        "adapter_sha256": "ef9339b84ad977a3c3e0bd130b9bef369dc56d61c25b3d15840a4a5811956021",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "android",
+        "label": "Android",
+        "claimed": true,
+        "adapter_id": "android-v1",
+        "adapter_sha256": "befad2e817a5f1ea55ea8224da1719e91a7307517f4251fe620bb62d0908de91",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "ios-love12",
+        "label": "iOS LOVE 12",
+        "claimed": true,
+        "adapter_id": "ios-love12-v1",
+        "adapter_sha256": "fb4669100c83ee29d4ffd12bafe62da2ccb40e2f9691bd4fc1f6507c9364348c",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "xbox-uwp",
+        "label": "Xbox UWP",
+        "claimed": true,
+        "adapter_id": "xbox-uwp-v1",
+        "adapter_sha256": "3a59a50d08f7927026441e1e2e70e03451cf54c836694ba7784eb2253979560a",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "nintendo-switch",
+        "label": "Nintendo Switch",
+        "claimed": true,
+        "adapter_id": "nintendo-switch-v1",
+        "adapter_sha256": "b86d85ac1c676ab72f871ec79513f13a25f074fc84f4920b3991eba6d002e9c0",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "portmaster",
+        "label": "PortMaster",
+        "claimed": true,
+        "adapter_id": "portmaster-v1",
+        "adapter_sha256": "dc60d9ffc93a6d02ec6363f898aa8a6f3a40a54c85c140be86c9b26b80cde394",
+        "physical_confirmation_required": true
+      },
+      {
+        "id": "anbernic-stock",
+        "label": "Anbernic stock",
+        "claimed": true,
+        "adapter_id": "anbernic-stock-v1",
+        "adapter_sha256": "0accd49551d1dc3048944059b29eaa8fcdf58ffa1f1bb4af65c3d586fa84e86f",
+        "physical_confirmation_required": true
+      }
+    ],
+    "host_modes": [
+      {
+        "id": "no-host",
+        "label": "No compatible host",
+        "fixture_sha256": "e497fffe1fff86b3cf43be8e0001a3231bd93296cc6d25dee20833258e6485ce"
+      },
+      {
+        "id": "one-host",
+        "label": "One compatible host",
+        "fixture_sha256": "e43a9fa32d92453106d7dfd045f342d80a35ba765a516bccb1292690b8a555fb"
+      },
+      {
+        "id": "multi-host",
+        "label": "Multiple compatible hosts",
+        "fixture_sha256": "0655588523e9281ef4009a36413dc74b2aab072c7d03a3972af763cb570ce2d1"
+      },
+      {
+        "id": "fault-isolation",
+        "label": "Injected host or KFP fault",
+        "fixture_sha256": "2895a694708f26872b6dd72fcf40c5f158b5cc974918b44031aaa3753ce4b757"
+      }
+    ],
+    "test_points": [
+      {
+        "id": "environment-binding",
+        "kind": "environment",
+        "label": "Environment and hash binding",
+        "required_input_hashes": [{ "id": "contract", "sha256": "c8ba85122b3dac594fe5ef3c4c42b3e4ce4ed6f4ffb09303f8011667026a9545" }]
+      },
+      {
+        "id": "clean-install",
+        "kind": "install",
+        "label": "Clean install state",
+        "required_input_hashes": [{ "id": "contract", "sha256": "7201c7b6e12913dd13d8c5edd1d4ed84e19f3269cb89fe9049dd4395b33b1b41" }]
+      },
+      {
+        "id": "enable-disable",
+        "kind": "install",
+        "label": "Enable disable and KFP off state",
+        "required_input_hashes": [{ "id": "contract", "sha256": "2a2f04c30f76b4876f3134f18e8ece7a2be1dc0021989fe22c1a3258b50be1ba" }]
+      },
+      {
+        "id": "lifecycle-control",
+        "kind": "lifecycle",
+        "label": "Host and KFP lifecycle control",
+        "required_input_hashes": [{ "id": "contract", "sha256": "115be82f95615bc0d9259476cdb1f7a61d77b768360034b775d24e081065ba38" }]
+      },
+      {
+        "id": "route-pallet-bedroom",
+        "kind": "route",
+        "label": "Pallet bedroom entry",
+        "required_input_hashes": [{ "id": "route", "sha256": "8f7513e52d79e017b87790fecce28b15c896010ebabdd7c4646349c488b38fd6" }]
+      },
+      {
+        "id": "route-pallet-outdoor",
+        "kind": "route",
+        "label": "Pallet outdoor entry",
+        "required_input_hashes": [{ "id": "route", "sha256": "98132a28fa68d5679d32457d57c190e405cba53604795e82b6825f92d3050b0d" }]
+      },
+      {
+        "id": "route-viridian-forest",
+        "kind": "route",
+        "label": "Viridian Forest entry",
+        "required_input_hashes": [{ "id": "route", "sha256": "4980d13df46618b5eb17e81a23ba9a690e35d80e84a67c31b939c76cecf37061" }]
+      },
+      {
+        "id": "route-mt-moon",
+        "kind": "route",
+        "label": "Mt Moon cave entry",
+        "required_input_hashes": [{ "id": "route", "sha256": "858047bc177445e2117153cb90b7ce88278dda20294021f8750b301f79bad0d6" }]
+      },
+      {
+        "id": "route-celadon-mart",
+        "kind": "route",
+        "label": "Celadon Mart entry",
+        "required_input_hashes": [{ "id": "route", "sha256": "ca7c26ffc9921208faf0bcb5c0a1ad7a25f0ee8a49cab65a5866e6930ff4eef8" }]
+      },
+      {
+        "id": "packet-golden",
+        "kind": "scene",
+        "label": "Packet and golden comparison",
+        "required_input_hashes": [{ "id": "golden", "sha256": "d965cd9a6614c9ee676bbc79142d9b3a674fb159e7659f1c3b7afeb686e76c24" }]
+      },
+      {
+        "id": "config-audio",
+        "kind": "config",
+        "label": "Config migration and KFP only audio",
+        "required_input_hashes": [{ "id": "contract", "sha256": "c1a5d7a4af79c6be5c8fde4240ac7117b9727a13c06d82567529233ff7aebea3" }]
+      },
+      {
+        "id": "logs-captures",
+        "kind": "environment",
+        "label": "Sanitized logs and captures",
+        "required_input_hashes": [{ "id": "contract", "sha256": "965ddf772e3ce2517b45beeedafb04bab0580210673d835f3752b8ad4336b22d" }]
+      },
+      {
+        "id": "performance-native",
+        "kind": "performance",
+        "label": "Native performance sampling",
+        "required_input_hashes": [{ "id": "contract", "sha256": "d32de03d110ceefbbaf3a6588847ae2b98831702facc15b280f789c990103dba" }]
+      },
+      {
+        "id": "uncached-entry",
+        "kind": "performance",
+        "label": "Uncached scene entry",
+        "required_input_hashes": [{ "id": "contract", "sha256": "536ecbe7070366f073f886fcff104190a5316d8470ad55ea5af8e9d86abd65fd" }]
+      },
+      {
+        "id": "transitions-100",
+        "kind": "transition",
+        "label": "One hundred transitions",
+        "required_input_hashes": [{ "id": "contract", "sha256": "7264445dd1e888ec82b170aa7c7a9486be92e7dd401726286dd24723ac3bf334" }]
+      },
+      {
+        "id": "soak-30m",
+        "kind": "soak",
+        "label": "Thirty minute soak",
+        "required_input_hashes": [{ "id": "contract", "sha256": "4ea71ae7673e2eced0d3c70eb96747ee653e22bde61930da052c9355d3872609" }]
+      },
+      {
+        "id": "leak-resource",
+        "kind": "performance",
+        "label": "Leak and resource cleanup",
+        "required_input_hashes": [{ "id": "contract", "sha256": "bf50ac8046d4784ef5eb4cdfd927abbbda5f02b700381c762fd374ada49ad50c" }]
+      },
+      {
+        "id": "migration-previous",
+        "kind": "migration",
+        "label": "Migration from previous KFP",
+        "required_input_hashes": [{ "id": "contract", "sha256": "e3fbd28a143f2ac789d198f5dab2acde8d1ee80077e1f20829385fc3b5e634b9" }]
+      },
+      {
+        "id": "rollback-previous",
+        "kind": "rollback",
+        "label": "Rollback to previous KFP",
+        "required_input_hashes": [{ "id": "contract", "sha256": "9343c4f28c11ed4b5f1863e97228b5f789edf2b997497b3bde0f5c9ec6be7c6f" }]
+      },
+      {
+        "id": "uninstall-integrity",
+        "kind": "uninstall",
+        "label": "Uninstall integrity",
+        "required_input_hashes": [{ "id": "contract", "sha256": "ba3c836a44d5b1f6a7f8f29a0d28eff018a7762f54356e0f3a02bedfe3f799c1" }]
+      },
+      {
+        "id": "package-reproducibility",
+        "kind": "package",
+        "label": "Package and hash reproducibility",
+        "required_input_hashes": [{ "id": "contract", "sha256": "5b195db0468a3b04dc0a686638ba4cb50a2a030255d10197b7bba45229060021" }]
+      },
+      {
+        "id": "privacy-scan",
+        "kind": "privacy",
+        "label": "Privacy ROM secret and path scan",
+        "required_input_hashes": [{ "id": "contract", "sha256": "d35da2828946ac94052e4b9dba1dad6ad1f752bdbdb5ab63542edd6e3ae691bc" }]
+      },
+      {
+        "id": "schema-validation",
+        "kind": "schema",
+        "label": "Evidence schema validation",
+        "required_input_hashes": [{ "id": "contract", "sha256": "6d39a84e1b17d33dc8e128f398f6984e6c0eef6fb437251e772c3b74e0db28d3" }]
+      },
+      {
+        "id": "cleanup",
+        "kind": "cleanup",
+        "label": "Process and resource cleanup",
+        "required_input_hashes": [{ "id": "contract", "sha256": "7f5fb710c83255e19abf9fd5812e5e703a9645b3ea01e09d57abf8f82dbd0b0b" }]
+      },
+      {
+        "id": "human-visual-review",
+        "kind": "review",
+        "label": "Fixed visual review packet",
+        "required_input_hashes": [{ "id": "contract", "sha256": "90ce401faae60527152a9f89f88eae31976f2ffd19330e740d948d255f6a257d" }]
+      },
+      {
+        "id": "physical-platform-review",
+        "kind": "review",
+        "label": "Physical platform confirmation",
+        "required_input_hashes": [{ "id": "contract", "sha256": "aa1aafaec6336b4aeeb9d155a68519a679cdc5fd5f19e2ed7dd802d4995daf26" }]
+      }
+    ],
+    "test_classes": [
+      {
+        "id": "environment-binding",
+        "label": "Environment and artifact binding",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host", "one-host"],
+        "test_points": ["environment-binding"],
+        "evidence_kinds": ["environment-report"]
+      },
+      {
+        "id": "install-state",
+        "label": "Install state",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host", "one-host"],
+        "test_points": ["clean-install"],
+        "evidence_kinds": ["install-report"]
+      },
+      {
+        "id": "enable-disable-state",
+        "label": "Enable disable and KFP off state",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host", "one-host", "multi-host"],
+        "test_points": ["enable-disable"],
+        "evidence_kinds": ["state-report"]
+      },
+      {
+        "id": "lifecycle",
+        "label": "Lifecycle and fault isolation",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host", "one-host", "multi-host", "fault-isolation"],
+        "test_points": ["lifecycle-control"],
+        "evidence_kinds": ["lifecycle-report"]
+      },
+      {
+        "id": "route-scene",
+        "label": "Route and scene traversal",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["route-pallet-bedroom", "route-pallet-outdoor", "route-viridian-forest", "route-mt-moon", "route-celadon-mart"],
+        "evidence_kinds": ["scene-report"]
+      },
+      {
+        "id": "packet-golden",
+        "label": "Packet and golden comparison",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["packet-golden"],
+        "evidence_kinds": ["packet-report"]
+      },
+      {
+        "id": "config-audio",
+        "label": "Config migration and KFP only audio",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["config-audio"],
+        "evidence_kinds": ["config-report", "audio-report"]
+      },
+      {
+        "id": "logs-captures",
+        "label": "Sanitized logs and captures",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["logs-captures"],
+        "evidence_kinds": ["sanitized-log-report", "capture-index"]
+      },
+      {
+        "id": "performance-native",
+        "label": "Native performance",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["performance-native"],
+        "evidence_kinds": ["performance-report"]
+      },
+      {
+        "id": "uncached-entry",
+        "label": "Uncached scene entry",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["uncached-entry"],
+        "evidence_kinds": ["uncached-report"]
+      },
+      {
+        "id": "transitions-100",
+        "label": "One hundred transitions",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["transitions-100"],
+        "evidence_kinds": ["transition-report"]
+      },
+      {
+        "id": "soak-30m",
+        "label": "Thirty minute soak",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["soak-30m"],
+        "evidence_kinds": ["soak-report"]
+      },
+      {
+        "id": "leak-resource",
+        "label": "Leak and resource checks",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["leak-resource"],
+        "evidence_kinds": ["resource-report"]
+      },
+      {
+        "id": "migration",
+        "label": "Migration",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["migration-previous"],
+        "evidence_kinds": ["migration-report"]
+      },
+      {
+        "id": "rollback",
+        "label": "Rollback",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["rollback-previous"],
+        "evidence_kinds": ["rollback-report"]
+      },
+      {
+        "id": "uninstall-integrity",
+        "label": "Uninstall integrity",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["uninstall-integrity"],
+        "evidence_kinds": ["uninstall-report"]
+      },
+      {
+        "id": "package-reproducibility",
+        "label": "Package reproducibility",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host"],
+        "test_points": ["package-reproducibility"],
+        "evidence_kinds": ["reproducibility-report"]
+      },
+      {
+        "id": "privacy-scan",
+        "label": "Privacy and protected content scan",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host"],
+        "test_points": ["privacy-scan"],
+        "evidence_kinds": ["privacy-report"]
+      },
+      {
+        "id": "schema-validation",
+        "label": "Schema validation",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host"],
+        "test_points": ["schema-validation"],
+        "evidence_kinds": ["schema-report"]
+      },
+      {
+        "id": "cleanup",
+        "label": "Process and resource cleanup",
+        "execution": "OBJECTIVE",
+        "required": true,
+        "host_modes": ["no-host", "one-host", "multi-host", "fault-isolation"],
+        "test_points": ["cleanup"],
+        "evidence_kinds": ["cleanup-report"]
+      },
+      {
+        "id": "human-visual-review",
+        "label": "Human visual review",
+        "execution": "MANUAL",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["human-visual-review"],
+        "evidence_kinds": ["visual-review-packet", "manual-verdict"]
+      },
+      {
+        "id": "physical-platform-review",
+        "label": "Physical platform confirmation",
+        "execution": "MANUAL",
+        "required": true,
+        "host_modes": ["one-host"],
+        "test_points": ["physical-platform-review"],
+        "evidence_kinds": ["physical-review-packet", "manual-verdict"]
+      }
+    ]
+  },
+  "release_policy": {
+    "required_games": ["red", "blue", "yellow"],
+    "required_tiers": ["low", "balanced", "high"],
+    "required_engine_ids": ["gen1recomp-v0.2.17", "gen1recomp-v0.2.18", "gen1recomp-v0.2.19", "gen1recomp-dev-baseline", "gen1recomp-dev-current"],
+    "required_platforms": ["windows", "linux-x86-64", "linux-arm64", "macos-x86-64", "macos-arm64", "android", "ios-love12", "xbox-uwp", "nintendo-switch", "portmaster", "anbernic-stock"],
+    "required_test_classes": ["environment-binding", "install-state", "enable-disable-state", "lifecycle", "route-scene", "packet-golden", "config-audio", "logs-captures", "performance-native", "uncached-entry", "transitions-100", "soak-30m", "leak-resource", "migration", "rollback", "uninstall-integrity", "package-reproducibility", "privacy-scan", "schema-validation", "cleanup", "human-visual-review", "physical-platform-review"],
+    "required_host_modes": ["no-host", "one-host", "multi-host", "fault-isolation"],
+    "non_pass_states_block_release": ["FAIL", "BLOCKED", "AMBIGUOUS", "MISSING", "SKIPPED", "NOT_RUN"],
+    "missing_cell_state": "BLOCKED",
+    "manual_cannot_replace_objective": true,
+    "cross_dimension_evidence": "REJECT"
+  }
+}

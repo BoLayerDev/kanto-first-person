@@ -1,0 +1,37 @@
+{
+  "checkpoint_id": "config-round-trip",
+  "cleanup": "PASS",
+  "engine": {
+    "id": "gen1recomp",
+    "label": "Gen1Recomp",
+    "version": "0.2.19"
+  },
+  "evidence": [
+    {
+      "id": "config-balanced-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/config-balanced/assertion",
+      "sha256": "a413354bfc1410aa3cc03a362a8eab93733701825e77a3f9108520910719c471"
+    }
+  ],
+  "gate_id": "config",
+  "host": {
+    "eligibility": "ELIGIBLE",
+    "id": "battle-art",
+    "label": "Battle Art",
+    "release": "1.9.8"
+  },
+  "package": {
+    "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+  },
+  "quality": "Balanced",
+  "result_id": "config-balanced-battle-art",
+  "schema": 1,
+  "source": {
+    "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+    "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+  },
+  "status": "PASS",
+  "suite_id": "alpha-quality-synthetic-v1",
+  "summary": "Synthetic Balanced configuration round trip passed with cleanup complete."
+}

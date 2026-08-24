@@ -1,0 +1,267 @@
+{
+  "checkpoints": [
+    "audio-kfp-owned-mix",
+    "camera-bedroom-entry",
+    "companion-battle-art-contract",
+    "companion-dramaless-release",
+    "companion-no-host-fail-closed",
+    "config-round-trip"
+  ],
+  "engines": [
+    {
+      "id": "gen1recomp",
+      "label": "Gen1Recomp",
+      "version": "0.2.19"
+    }
+  ],
+  "evidence_references": [
+    {
+      "id": "audio-high-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/audio-high/assertion",
+      "sha256": "c75666928cba236bd5602f1bb48651f9d2b783e94a947f4811e58c32eaba65da"
+    },
+    {
+      "id": "camera-low-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/camera-low/assertion",
+      "sha256": "fc026b92f1b832ce2cf632c9102ace9c02ecca2c4bec3264dc08deb89e12dbb7"
+    },
+    {
+      "id": "companion-battle-art-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-battle-art/assertion",
+      "sha256": "b68f4b7ee45928e1e08bd1293ae24991b7865e8316d02149e303898b6ba0c8e3"
+    },
+    {
+      "id": "companion-dramaless-ineligible-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-dramaless-ineligible/assertion",
+      "sha256": "f5bf5181616c8e8043633317949cba978fac5bac5668ca9478eacb7f19f318f8"
+    },
+    {
+      "id": "companion-no-host-control-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-no-host-control/assertion",
+      "sha256": "97425cf9e648cee03ab2d774467c57d300abc38e54f7bf6b9b73c97398634117"
+    },
+    {
+      "id": "config-balanced-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/config-balanced/assertion",
+      "sha256": "a413354bfc1410aa3cc03a362a8eab93733701825e77a3f9108520910719c471"
+    }
+  ],
+  "gates": [
+    {
+      "counts": {
+        "fail": 0,
+        "ineligible": 0,
+        "pass": 1,
+        "total": 1
+      },
+      "gate_id": "camera",
+      "required": true,
+      "result_ids": [
+        "camera-low-battle-art"
+      ],
+      "status": "PASS"
+    },
+    {
+      "counts": {
+        "fail": 0,
+        "ineligible": 0,
+        "pass": 1,
+        "total": 1
+      },
+      "gate_id": "config",
+      "required": true,
+      "result_ids": [
+        "config-balanced-battle-art"
+      ],
+      "status": "PASS"
+    },
+    {
+      "counts": {
+        "fail": 0,
+        "ineligible": 0,
+        "pass": 1,
+        "total": 1
+      },
+      "gate_id": "audio",
+      "required": true,
+      "result_ids": [
+        "audio-high-battle-art"
+      ],
+      "status": "PASS"
+    },
+    {
+      "counts": {
+        "fail": 0,
+        "ineligible": 1,
+        "pass": 2,
+        "total": 3
+      },
+      "gate_id": "companion",
+      "required": true,
+      "result_ids": [
+        "companion-battle-art-balanced",
+        "companion-dramaless-ineligible",
+        "companion-kfp-no-host-control"
+      ],
+      "status": "BLOCKED"
+    }
+  ],
+  "generated_by": "tools/generate_alpha_quality_status.py",
+  "hosts": [
+    {
+      "eligibility": "ELIGIBLE",
+      "id": "battle-art",
+      "label": "Battle Art",
+      "release": "1.9.8"
+    },
+    {
+      "eligibility": "INELIGIBLE",
+      "id": "dramaless",
+      "label": "Dramaless",
+      "release": "unreleased"
+    },
+    {
+      "eligibility": "CONTROL",
+      "id": "kfp-no-host",
+      "label": "KFP no-host fail-closed control",
+      "release": "none"
+    }
+  ],
+  "packages": [
+    {
+      "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+    }
+  ],
+  "qualities": [
+    "Low",
+    "Balanced",
+    "High"
+  ],
+  "readiness_status": "NOT READY",
+  "release_status": "NOT RELEASED",
+  "results": [
+    {
+      "checkpoint_id": "audio-kfp-owned-mix",
+      "cleanup": "PASS",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "audio-high-assertion"
+      ],
+      "gate_id": "audio",
+      "host_id": "battle-art",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "High",
+      "result_id": "audio-high-battle-art",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "PASS",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Synthetic High quality KFP-owned audio contract passed with cleanup complete."
+    },
+    {
+      "checkpoint_id": "camera-bedroom-entry",
+      "cleanup": "PASS",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "camera-low-assertion"
+      ],
+      "gate_id": "camera",
+      "host_id": "battle-art",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "Low",
+      "result_id": "camera-low-battle-art",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "PASS",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Synthetic Low quality camera contract passed with cleanup complete."
+    },
+    {
+      "checkpoint_id": "companion-battle-art-contract",
+      "cleanup": "PASS",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "companion-battle-art-assertion"
+      ],
+      "gate_id": "companion",
+      "host_id": "battle-art",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "Balanced",
+      "result_id": "companion-battle-art-balanced",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "PASS",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Synthetic Battle Art 1.9.8 companion contract passed with cleanup complete."
+    },
+    {
+      "checkpoint_id": "companion-dramaless-release",
+      "cleanup": "NOT_APPLICABLE",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "companion-dramaless-ineligible-assertion"
+      ],
+      "gate_id": "companion",
+      "host_id": "dramaless",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "High",
+      "result_id": "companion-dramaless-ineligible",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "INELIGIBLE",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Dramaless remains ineligible until a public host release is available."
+    },
+    {
+      "checkpoint_id": "companion-no-host-fail-closed",
+      "cleanup": "PASS",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "companion-no-host-control-assertion"
+      ],
+      "gate_id": "companion",
+      "host_id": "kfp-no-host",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "Low",
+      "result_id": "companion-kfp-no-host-control",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "PASS",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Synthetic KFP no-host control failed closed and cleaned up without host access."
+    },
+    {
+      "checkpoint_id": "config-round-trip",
+      "cleanup": "PASS",
+      "engine_id": "gen1recomp",
+      "evidence_ids": [
+        "config-balanced-assertion"
+      ],
+      "gate_id": "config",
+      "host_id": "battle-art",
+      "package_sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620",
+      "quality": "Balanced",
+      "result_id": "config-balanced-battle-art",
+      "source_commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "status": "PASS",
+      "suite_id": "alpha-quality-synthetic-v1",
+      "summary": "Synthetic Balanced configuration round trip passed with cleanup complete."
+    }
+  ],
+  "schema": 1,
+  "sources": [
+    {
+      "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+      "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+    }
+  ],
+  "summary": {
+    "failed_results": 0,
+    "ineligible_results": 1,
+    "passed_results": 5,
+    "required_gates": 4,
+    "required_gates_passed": 3,
+    "total_results": 6
+  }
+}

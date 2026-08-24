@@ -1,0 +1,37 @@
+{
+  "checkpoint_id": "companion-no-host-fail-closed",
+  "cleanup": "PASS",
+  "engine": {
+    "id": "gen1recomp",
+    "label": "Gen1Recomp",
+    "version": "0.2.19"
+  },
+  "evidence": [
+    {
+      "id": "companion-no-host-control-assertion",
+      "kind": "synthetic-assertion",
+      "reference": "public-evidence://synthetic/alpha/companion-no-host-control/assertion",
+      "sha256": "97425cf9e648cee03ab2d774467c57d300abc38e54f7bf6b9b73c97398634117"
+    }
+  ],
+  "gate_id": "companion",
+  "host": {
+    "eligibility": "CONTROL",
+    "id": "kfp-no-host",
+    "label": "KFP no-host fail-closed control",
+    "release": "none"
+  },
+  "package": {
+    "sha256": "f31044dfcc4dcdd3a68536424293058aec70b0390f99ed243e1af18189b5e620"
+  },
+  "quality": "Low",
+  "result_id": "companion-kfp-no-host-control",
+  "schema": 1,
+  "source": {
+    "commit_sha": "e540c3b3de25caa5fa855dd6c3c702449ed9e72c",
+    "tree_sha": "cdc415907e244cbce7ff9e46f1dffdbdee07d713"
+  },
+  "status": "PASS",
+  "suite_id": "alpha-quality-synthetic-v1",
+  "summary": "Synthetic KFP no-host control failed closed and cleaned up without host access."
+}

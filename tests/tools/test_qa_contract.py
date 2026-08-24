@@ -904,7 +904,21 @@ class QaContractTest(unittest.TestCase):
         )
         if version is None:
             self.skipTest("jsonschema dependency is not available in this interpreter")
-        self.assertEqual(version, "4.25.1")
+        self.assertIsInstance(version, str)
+        self.assertTrue(version)
+        self.assertEqual(errors, [])
+
+    def test_schema_meta_validation_accepts_compatible_older_dependency_version(self):
+        with mock.patch("importlib.metadata.version", return_value="4.10.3"):
+            version, errors = meta_validate_schemas(
+                {
+                    "runtime-result.schema.json": self.runtime_schema,
+                    "defect-ledger.schema.json": self.defect_schema,
+                }
+            )
+        if version is None:
+            self.skipTest("jsonschema dependency is not available in this interpreter")
+        self.assertEqual(version, "4.10.3")
         self.assertEqual(errors, [])
 
     def test_runtime_schema_explicitly_requires_semantic_validation(self):

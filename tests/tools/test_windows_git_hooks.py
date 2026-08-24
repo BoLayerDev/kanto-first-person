@@ -28,8 +28,11 @@ from hooklib import (  # noqa: E402
 class WindowsGitHookUnitTests(unittest.TestCase):
     def test_declares_and_runs_supported_python(self):
         self.assertEqual(SUPPORTED_PYTHON, (3, 14))
-        self.assertEqual(sys.version_info[:2], SUPPORTED_PYTHON)
-        require_supported_python()
+        if sys.version_info[:2] == SUPPORTED_PYTHON:
+            require_supported_python()
+        else:
+            with self.assertRaisesRegex(HookFailure, "Python 3.14"):
+                require_supported_python()
         self.assertEqual((ROOT / ".python-version").read_text(encoding="utf-8").strip(), "3.14")
         for name in ("pre-commit", "commit-msg", "pre-push"):
             first = (HOOKS / name).read_text(encoding="utf-8").splitlines()[0]
@@ -67,6 +70,7 @@ class WindowsGitHookUnitTests(unittest.TestCase):
             parse_push_lines(["refs/heads/topic only-two\n"])
 
 
+@unittest.skipUnless(os.name == "nt", "native Windows Git hook integration")
 class WindowsGitHookIntegrationTests(unittest.TestCase):
     def setUp(self):
         self.assertTrue(PYTHON.is_file(), "C:/Windows/py.exe is required")
